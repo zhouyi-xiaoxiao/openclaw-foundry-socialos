@@ -309,6 +309,52 @@ function renderEventCards(events) {
     .join('')}</div>`;
 }
 
+function renderPackageHighlights(publishPackage) {
+  const detailGroups = [
+    ['Image Ideas', publishPackage.imageIdeas],
+    ['Asset Checklist', publishPackage.assetChecklist],
+    ['Cover Hooks', publishPackage.coverHooks],
+    ['Visual Storyboard', publishPackage.visualStoryboard],
+    ['Caption Variants', publishPackage.captionVariants],
+    ['Article Outline', publishPackage.articleOutline],
+    ['Section Bullets', publishPackage.sectionBullets],
+    ['Codex Assist', publishPackage.codexAssist],
+  ].filter(([, items]) => Array.isArray(items) && items.length);
+
+  const detailNotes = [
+    ['Lead Paragraph', publishPackage.leadParagraph],
+    ['Comment Prompt', publishPackage.commentPrompt],
+    ['First Comment', publishPackage.firstComment],
+  ].filter(([, value]) => typeof value === 'string' && value.trim());
+
+  if (!detailGroups.length && !detailNotes.length) return '';
+
+  return `
+    <div class="package-highlights">
+      ${detailGroups
+        .map(
+          ([title, items]) => `
+            <section class="detail-card">
+              <h4>${escapeHtml(title)}</h4>
+              <ul class="compact-list">${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+            </section>
+          `
+        )
+        .join('')}
+      ${detailNotes
+        .map(
+          ([title, value]) => `
+            <section class="detail-card">
+              <h4>${escapeHtml(title)}</h4>
+              <p>${escapeHtml(value)}</p>
+            </section>
+          `
+        )
+        .join('')}
+    </div>
+  `;
+}
+
 function renderDraftCards(drafts) {
   if (!drafts.length) return renderEmptyState('No drafts generated yet.');
   return `<div class="draft-grid">${drafts
@@ -338,6 +384,7 @@ function renderDraftCards(drafts) {
               ? `<ol class="step-list">${steps.map((step) => `<li>${escapeHtml(step)}</li>`).join('')}</ol>`
               : ''
           }
+          ${renderPackageHighlights(publishPackage)}
           <form class="api-form compact-form" data-api-form="true" data-endpoint="/publish/queue">
             <input type="hidden" name="draftId" value="${escapeHtml(draft.draftId)}" />
             <input type="hidden" name="mode" value="dry-run" />
@@ -974,6 +1021,18 @@ async function renderSettingsPage(page) {
               </div>
               <div class="form-result" data-form-result></div>
             </form>
+            <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
+              <input type="hidden" name="command" value="ADD_TASK" />
+              ${renderFormField(
+                'Create Foundry Task',
+                '<input name="taskText" type="text" placeholder="Implement live publish preflight for X" />',
+                'Add a new queue item so the first-layer Foundry cluster can pick it up next.'
+              )}
+              <div class="inline-actions">
+                <button type="submit">Add Task</button>
+              </div>
+              <div class="form-result" data-form-result></div>
+            </form>
           </div>
         `,
         'Operate the loop without leaving the product workspace.'
@@ -1540,6 +1599,22 @@ function renderLayout({ currentPath, title, body }) {
         display: grid;
         gap: 8px;
         margin: 14px 0;
+      }
+      .package-highlights {
+        display: grid;
+        gap: 10px;
+        margin: 14px 0;
+      }
+      .detail-card {
+        padding: 14px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid rgba(22, 33, 50, 0.08);
+      }
+      .detail-card h4 {
+        margin: 0 0 8px;
+        font-size: 15px;
+        font-family: "IBM Plex Sans", "Noto Sans SC", sans-serif;
       }
       .step-list,
       .compact-list,
