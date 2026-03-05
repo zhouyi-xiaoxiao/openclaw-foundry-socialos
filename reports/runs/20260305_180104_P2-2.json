@@ -1,0 +1,29 @@
+{
+  "runId": "20260305_180104_P2-2",
+  "taskId": "P2-2",
+  "taskText": "- [ ] P2-2 Ins/小红书/朋友圈发布包优化",
+  "status": "blocked",
+  "summary": "P2-2 deferred by policy (external credentials/integration dependency)",
+  "why": "Live/external publish work requires explicit credentials and higher-risk integration pass",
+  "risk": "medium",
+  "verify": "QUEUE.md + runtime dry-run policy",
+  "next": "autofix task created; continue with lower-risk backlog in next run",
+  "startedAt": "2026-03-05T18:01:04Z",
+  "finishedAt": "2026-03-05T18:01:05Z",
+  "durationMs": 1000,
+  "stages": {
+    "plan": "pass",
+    "coder": "fail",
+    "tester": "pending",
+    "reviewer": "pending",
+    "gitSync": "fetch-failed",
+    "push": "pending"
+  },
+  "lock": {
+    "status": "acquired",
+    "staleRecovered": "false",
+    "ownerPid": "",
+    "ownerAlive": "unknown",
+    "ownerHeartbeatAgeSec": ""
+  }
+}

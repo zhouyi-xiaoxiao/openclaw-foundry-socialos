@@ -101,7 +101,7 @@
     }
   },
   "cron": {
-    "maxConcurrentRuns": 2,
+    "maxConcurrentRuns": 1,
     "sessionRetention": "6h",
     "runLog": {
       "maxBytes": "2mb",

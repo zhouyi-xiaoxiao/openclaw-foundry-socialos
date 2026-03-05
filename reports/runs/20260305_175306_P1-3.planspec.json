@@ -1,0 +1,21 @@
+{
+  "summary": "- [ ] P1-3 weekly mirror 自动生成与证据跳转",
+  "filesToChange": [
+    "socialos/apps/api/server.mjs",
+    "scripts/tests/weekly_mirror_smoke.mjs"
+  ],
+  "commands": [
+    "bash scripts/test.sh"
+  ],
+  "tests": [
+    "bash scripts/test.sh"
+  ],
+  "rollback": [
+    "Mark blocked and create autofix task"
+  ],
+  "digestBullets": [
+    "single queue item",
+    "policy gate",
+    "digest+run report"
+  ]
+}

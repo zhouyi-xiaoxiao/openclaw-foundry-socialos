@@ -1,0 +1,29 @@
+{
+  "runId": "20260305_175603_P2-1",
+  "taskId": "P2-1",
+  "taskText": "- [ ] P2-1 X/LinkedIn live 发布（凭据可用时）",
+  "status": "blocked",
+  "summary": "P2-1 deferred by policy (external credentials/integration dependency)",
+  "why": "Live/external publish work requires explicit credentials and higher-risk integration pass",
+  "risk": "medium",
+  "verify": "QUEUE.md + runtime dry-run policy",
+  "next": "autofix task created; continue with lower-risk backlog in next run",
+  "startedAt": "2026-03-05T17:56:03Z",
+  "finishedAt": "2026-03-05T17:56:03Z",
+  "durationMs": 0,
+  "stages": {
+    "plan": "pass",
+    "coder": "fail",
+    "tester": "pending",
+    "reviewer": "pending",
+    "gitSync": "fetch-failed",
+    "push": "pending"
+  },
+  "lock": {
+    "status": "acquired",
+    "staleRecovered": "false",
+    "ownerPid": "",
+    "ownerAlive": "unknown",
+    "ownerHeartbeatAgeSec": ""
+  }
+}

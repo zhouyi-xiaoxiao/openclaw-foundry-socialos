@@ -2,6 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TZ_NAME="Europe/London"
 
 eval "$("${SCRIPT_DIR}/00_discover_gateway.sh" --exports-only)"
@@ -36,6 +37,8 @@ upsert_job() {
       --cron "${cron_expr}" \
       --tz "${TZ_NAME}" \
       --agent "forge_orchestrator" \
+      --light-context \
+      --thinking minimal \
       --session isolated \
       --session-key "${session_key}" \
       --message "${message}" \
@@ -49,6 +52,8 @@ upsert_job() {
       --cron "${cron_expr}" \
       --tz "${TZ_NAME}" \
       --agent "forge_orchestrator" \
+      --light-context \
+      --thinking minimal \
       --session isolated \
       --session-key "${session_key}" \
       --message "${message}" \
@@ -58,8 +63,8 @@ upsert_job() {
   fi
 }
 
-upsert_job "DEVLOOP_REALTIME" "*/30 * * * * *" "RUN_DEVLOOP_ONCE" "900" "agent:forge_orchestrator:main"
-upsert_job "DIGEST_PERIODIC" "0 */15 * * * *" "SEND_DIGEST_NOTIFICATION" "120" "agent:forge_orchestrator:main"
+upsert_job "DEVLOOP_REALTIME" "*/30 * * * * *" "Execute exactly: bash ${REPO_ROOT}/scripts/foundry_dispatch.sh RUN_DEVLOOP_ONCE" "90" "agent:forge_orchestrator:dispatch-v3"
+upsert_job "DIGEST_PERIODIC" "0 */15 * * * *" "Execute exactly: bash ${REPO_ROOT}/scripts/foundry_dispatch.sh SEND_DIGEST_NOTIFICATION" "45" "agent:forge_orchestrator:digest-v3"
 
 echo "Cron jobs configured."
 openclaw cron list --all --json

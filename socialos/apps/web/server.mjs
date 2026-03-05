@@ -4,6 +4,11 @@ import { fileURLToPath } from 'node:url';
 
 export const LOOPBACK_HOST = '127.0.0.1';
 export const DEFAULT_PORT = Number(process.env.SOCIALOS_WEB_PORT || 4173);
+export const DEFAULT_API_PORT = Number(process.env.SOCIALOS_API_PORT || 8787);
+export const DEFAULT_API_BASE_URL = readOptionalString(
+  process.env.SOCIALOS_API_BASE_URL,
+  `http://${LOOPBACK_HOST}:${DEFAULT_API_PORT}`
+);
 
 const PAGE_DEFINITIONS = [
   {
@@ -103,6 +108,12 @@ const PAGE_HINTS = {
 
 const PAGE_BY_PATH = new Map(DASHBOARD_PAGES.map((page) => [page.path, page]));
 
+function readOptionalString(value, fallback) {
+  if (typeof value !== 'string') return fallback;
+  const trimmed = value.trim();
+  return trimmed || fallback;
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll('&', '&amp;')
@@ -139,7 +150,176 @@ function renderNavigation(currentPath) {
   }).join('');
 }
 
-function renderPageBody(page) {
+async function fetchJsonSafe(pathname) {
+  try {
+    const response = await fetch(`${DEFAULT_API_BASE_URL}${pathname}`);
+    const payload = await response.json();
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: `${pathname} failed (${response.status})`,
+        payload,
+      };
+    }
+    return {
+      ok: true,
+      payload,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: `${pathname} unavailable: ${error instanceof Error ? error.message : String(error)}`,
+      payload: null,
+    };
+  }
+}
+
+function formatDuration(value) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return 'n/a';
+  if (value < 1000) return `${Math.round(value)}ms`;
+  return `${(value / 1000).toFixed(2)}s`;
+}
+
+function renderStatusRow(label, value) {
+  return `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`;
+}
+
+async function renderDevDigestBody(page) {
+  const [statusRes, runsRes, blockedRes, digestRes] = await Promise.all([
+    fetchJsonSafe('/ops/status'),
+    fetchJsonSafe('/ops/runs?limit=8'),
+    fetchJsonSafe('/ops/blocked'),
+    fetchJsonSafe('/dev-digest?limit=8'),
+  ]);
+
+  if (!statusRes.ok) {
+    return `
+      <header>
+        <h1>${escapeHtml(page.title)}</h1>
+        <p>${escapeHtml(page.summary)}</p>
+      </header>
+      <section>
+        <h2>Runtime Health</h2>
+        <p>Unable to read ops status from ${escapeHtml(DEFAULT_API_BASE_URL)}.</p>
+        <p><code>${escapeHtml(statusRes.error || 'unknown error')}</code></p>
+      </section>
+    `;
+  }
+
+  const status = statusRes.payload || {};
+  const blockedTasks = blockedRes.ok ? blockedRes.payload?.blockedTasks || [] : [];
+  const runs = runsRes.ok ? runsRes.payload?.runs || [] : [];
+  const digests = digestRes.ok ? digestRes.payload?.digests || [] : [];
+  const latestRun = status.latestRun || runs[0] || null;
+
+  const blockedListHtml = blockedTasks.length
+    ? `<ul>${blockedTasks
+        .slice(0, 8)
+        .map(
+          (item) =>
+            `<li>line ${escapeHtml(String(item.line))}: ${escapeHtml(readOptionalString(item.task, 'blocked'))}</li>`
+        )
+        .join('')}</ul>`
+    : '<p>No blocked tasks.</p>';
+
+  const runListHtml = runs.length
+    ? `<ul>${runs
+        .slice(0, 8)
+        .map((run) => {
+          const runId = readOptionalString(run.runId, 'unknown');
+          const taskId = readOptionalString(run.taskId, 'n/a');
+          const runStatus = readOptionalString(run.status, 'unknown');
+          const duration = formatDuration(run.durationMs);
+          const summary = readOptionalString(run.summary, 'n/a');
+          return `<li><code>${escapeHtml(runId)}</code> · ${escapeHtml(taskId)} · ${escapeHtml(
+            runStatus
+          )} · ${escapeHtml(duration)}<br/><small>${escapeHtml(summary)}</small></li>`;
+        })
+        .join('')}</ul>`
+    : '<p>No run history found yet.</p>';
+
+  const digestListHtml = digests.length
+    ? `<ul>${digests
+        .slice(0, 6)
+        .map((item) => {
+          const what = readOptionalString(item.what, 'n/a');
+          const risk = readOptionalString(item.risk, 'n/a');
+          const verify = readOptionalString(item.verify, 'n/a');
+          return `<li><strong>${escapeHtml(what)}</strong><br/><small>risk=${escapeHtml(
+            risk
+          )} · verify=${escapeHtml(verify)}</small></li>`;
+        })
+        .join('')}</ul>`
+    : '<p>No digest records in DB yet.</p>';
+
+  const statusRows = [
+    renderStatusRow('Mode', readOptionalString(status.mode, 'unknown')),
+    renderStatusRow('Publish Mode', readOptionalString(status.publishMode, 'dry-run')),
+    renderStatusRow('Queue Pending', String(status.queue?.pending ?? 0)),
+    renderStatusRow('Queue In Progress', String(status.queue?.inProgress ?? 0)),
+    renderStatusRow('Queue Blocked', String(status.queue?.blocked ?? 0)),
+    renderStatusRow('Queue Done', String(status.queue?.done ?? 0)),
+    renderStatusRow('Current Task', readOptionalString(status.queue?.currentTask, 'none')),
+    renderStatusRow('Lock Present', String(Boolean(status.lock?.present))),
+    renderStatusRow('Lock Owner PID', readOptionalString(String(status.lock?.ownerPid ?? ''), 'n/a')),
+    renderStatusRow('Lock Heartbeat Age', readOptionalString(String(status.lock?.heartbeatAgeSec ?? ''), 'n/a')),
+    renderStatusRow(
+      'Consecutive Failures',
+      String(status.health?.consecutiveFailures ?? 0)
+    ),
+    renderStatusRow(
+      'Latest Run Duration',
+      formatDuration(status.health?.latestRunDurationMs)
+    ),
+  ].join('');
+
+  return `
+    <header>
+      <h1>${escapeHtml(page.title)}</h1>
+      <p>${escapeHtml(page.summary)}</p>
+      <p>API base: <code>${escapeHtml(DEFAULT_API_BASE_URL)}</code></p>
+    </header>
+    <section>
+      <h2>Runtime Health</h2>
+      <table>
+        <tbody>${statusRows}</tbody>
+      </table>
+    </section>
+    <section>
+      <h2>Latest Run</h2>
+      ${
+        latestRun
+          ? `<p><code>${escapeHtml(readOptionalString(latestRun.runId, 'unknown'))}</code> · ${escapeHtml(
+              readOptionalString(latestRun.status, 'unknown')
+            )} · ${escapeHtml(formatDuration(latestRun.durationMs))}</p>
+             <p>${escapeHtml(readOptionalString(latestRun.summary, 'n/a'))}</p>`
+          : '<p>No run yet.</p>'
+      }
+    </section>
+    <section>
+      <h2>Blocked Tasks</h2>
+      ${blockedListHtml}
+    </section>
+    <section>
+      <h2>Recent Runs</h2>
+      ${runListHtml}
+    </section>
+    <section>
+      <h2>Dev Digest (DB)</h2>
+      ${digestListHtml}
+    </section>
+    <section>
+      <h2>Digest Snapshot</h2>
+      <pre>${escapeHtml(readOptionalString(status.latestDigest, '(empty)'))}</pre>
+    </section>
+  `;
+}
+
+async function renderPageBody(page) {
+  if (page.id === 'dev-digest') {
+    return renderDevDigestBody(page);
+  }
+
   const hints = PAGE_HINTS[page.id] ?? ['Placeholder panel'];
   const hintItems = hints.map((hint) => `<li>${escapeHtml(hint)}</li>`).join('');
 
@@ -235,6 +415,33 @@ function renderLayout({ currentPath, title, body }) {
       li {
         margin-bottom: 8px;
       }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 7px 8px;
+        border-bottom: 1px solid #25365f;
+        vertical-align: top;
+      }
+      th {
+        color: #b7c5ea;
+        font-weight: 600;
+        width: 220px;
+      }
+      pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: #0b1430;
+        border: 1px solid #263864;
+        border-radius: 10px;
+        padding: 12px;
+      }
+      small {
+        color: #9caad3;
+      }
       footer {
         margin-top: 28px;
         font-size: 12px;
@@ -304,13 +511,14 @@ async function routeRequest(req, res) {
 
   const page = PAGE_BY_PATH.get(pathname);
   if (page) {
+    const body = await renderPageBody(page);
     sendHtml(
       res,
       200,
       renderLayout({
         currentPath: page.path,
         title: page.title,
-        body: renderPageBody(page),
+        body,
       })
     );
     return;

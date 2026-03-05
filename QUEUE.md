@@ -25,7 +25,7 @@ Legend:
 - [x] P0-4 Dashboard v0 页面骨架可用
   - Done When:
     - Quick Capture / People / Events / Drafts / Queue / Self Mirror / Dev Digest 页面可打开
-- [!] P0-5 blocked - reviewer policy fail: API CORS '*' broadens localhost exposure (7 平台草稿生成（中英+风格模板）)
+- [x] P0-5 7 平台草稿生成（中英+风格模板）（已解除 CORS blocker）
   - Done When:
     - 一次 event 可生成 7 平台 drafts 入库
     - 草稿可预览复制，L1 发布包可生成
@@ -39,17 +39,53 @@ Legend:
 
 ## P1（演示增强）
 - [x] P1-1 compliance 规则：各平台字数/标签/格式检查
-- [ ] P1-2 People hybrid 搜索增强：keyword+vector evidence 展示
-- [ ] P1-3 weekly mirror 自动生成与证据跳转
-- [ ] P1-4 demo/README 完善：一键复现脚本与演示文档
+- [x] P1-2 People hybrid 搜索增强：keyword+vector evidence 展示
+- [x] P1-3 weekly mirror 自动生成与证据跳转
+- [x] P1-4 demo/README 完善：一键复现脚本与演示文档
 
 ## P2（可扩展）
-- [ ] P2-1 X/LinkedIn live 发布（凭据可用时）
-- [ ] P2-2 Ins/小红书/朋友圈发布包优化
-- [ ] P2-3 公众号图文包增强
-- [ ] P2-4 DB 升级 Postgres + pgvector（可选）
+- [!] P2-1 X/LinkedIn live 发布（凭据可用时）
+- [!] P2-2 Ins/小红书/朋友圈发布包优化
+- [!] P2-3 公众号图文包增强
+- [!] P2-4 DB 升级 Postgres + pgvector（可选）
 
 ## Orchestrator Ops
 - [x] OPS-1 DEVLOOP_REALTIME + DIGEST_PERIODIC cron 对齐（no-deliver）
 - [x] OPS-2 GitHub 自动 push 集成（fetch/rebase/push + push blocked digest）
 - [x] OPS-3 PAUSE/RESUME 机制（.foundry/PAUSED）
+
+## Auto Optimization Pool
+- [x] AUTO-OPT-TEST-DEBT 自动执行测试债清理循环
+  - Done When:
+    - `bash scripts/test.sh` 通过并记录 run 报告
+- [ ] AUTO-OPT-PERF-DEBT 自动执行 embedding/perf 复盘
+  - Done When:
+    - `bash scripts/bench_embeddings.sh` 完成并输出建议
+- [ ] AUTO-OPT-DOC-DEBT 自动执行文档一致性体检
+  - Done When:
+    - `node scripts/tests/docs_demo_smoke.mjs` 通过
+- [ ] AUTO-OPT-OBS-DEBT 自动执行可观测性体检
+  - Done When:
+    - `/ops/status`、`/ops/runs`、`/ops/blocked` 冒烟通过
+- [ ] AUTO-OPT-BLOCKED-TRIAGE 自动处理 blocked 并生成 autofix 任务
+  - Done When:
+    - 若存在 blocked，生成至少 1 条 `AUTOFIX-*` 任务
+    - 若不存在 blocked，写入 run 记录确认空阻塞
+
+## AutoFix Backlog
+- [ ] AUTOFIX-P2_1-175603 P2-1 deferred by policy (external credentials/integration dependency)
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+- [ ] AUTOFIX-P2_2-180105 P2-2 deferred by policy (external credentials/integration dependency)
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+- [ ] AUTOFIX-P2_3-180110 P2-3 deferred by policy (external credentials/integration dependency)
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+- [ ] AUTOFIX-P2_4-180133 P2-4 deferred by policy (external credentials/integration dependency)
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass

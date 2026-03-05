@@ -24,6 +24,6 @@
 ## Continuous Foundry loop
 - Trigger: `RUN_DEVLOOP_ONCE` (manual) + `DEVLOOP_REALTIME` cron every 30s
 - Single-run contract: 1 queue item per run
-- No-task contract: auto-seed/reopen `AUTO-OPT-CONTINUOUS`, execute optimization in same run (no idle spinning)
+- No-task contract: auto-reopen optimization pool lanes (`AUTO-OPT-*`) and execute one lane in same run (no idle spinning)
 - Failure contract: mark blocked, rollback, no infinite retry
 - Push contract: fetch/rebase before run; push main + tags after successful merge
