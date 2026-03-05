@@ -77,7 +77,7 @@ Legend:
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
-- [ ] AUTOFIX-P2_2-180105 P2-2 deferred by policy (external credentials/integration dependency)
+- [x] AUTOFIX-P2_2-180105 P2-2 deferred by policy (external credentials/integration dependency)
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass

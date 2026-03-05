@@ -643,6 +643,12 @@ attempt_push() {
     return 0
   fi
 
+  if ! git -C "${REPO_ROOT}" remote get-url origin >/dev/null 2>&1; then
+    STAGE_PUSH="skipped:no-origin"
+    RUN_NEXT="configure git remote 'origin' to enable auto push"
+    return 0
+  fi
+
   if git -C "${REPO_ROOT}" push origin main >/tmp/socialos_push.log 2>&1; then
     git -C "${REPO_ROOT}" push --tags origin >/tmp/socialos_push_tags.log 2>&1 || true
     STAGE_PUSH="pass"

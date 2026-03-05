@@ -1,0 +1,29 @@
+{
+  "runId": "20260305_180358_AUTOFIX-P2_1-175603",
+  "taskId": "AUTOFIX-P2_1-175603",
+  "taskText": "- [ ] AUTOFIX-P2_1-175603 P2-1 deferred by policy (external credentials/integration dependency)",
+  "status": "success",
+  "summary": "push blocked",
+  "why": "git push origin main failed",
+  "risk": "medium",
+  "verify": "/tmp/socialos_push.log",
+  "next": "fix remote/auth and retry in next cron cycle",
+  "startedAt": "2026-03-05T18:03:58Z",
+  "finishedAt": "2026-03-05T18:04:05Z",
+  "durationMs": 7000,
+  "stages": {
+    "plan": "pass",
+    "coder": "pass",
+    "tester": "pass",
+    "reviewer": "pass",
+    "gitSync": "fetch-failed",
+    "push": "blocked:push-failed"
+  },
+  "lock": {
+    "status": "acquired",
+    "staleRecovered": "false",
+    "ownerPid": "",
+    "ownerAlive": "unknown",
+    "ownerHeartbeatAgeSec": ""
+  }
+}
