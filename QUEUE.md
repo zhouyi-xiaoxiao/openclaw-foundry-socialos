@@ -89,7 +89,7 @@ Legend:
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
-- [ ] AUTOFIX-AUTO_OPT_BLOCKED_TRIAGE-180334 Auto-triage from blocked item: - [!] P2-1 X/LinkedIn live 发布（凭据可用时）
+- [x] AUTOFIX-AUTO_OPT_BLOCKED_TRIAGE-180334 Auto-triage from blocked item: - [!] P2-1 X/LinkedIn live 发布（凭据可用时）
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
