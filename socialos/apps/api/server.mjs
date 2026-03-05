@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 
@@ -16,6 +17,8 @@ const LOCK_DIR_PATH = path.join(REPO_ROOT, '.locks/devloop.lock');
 const LOCK_META_PATH = path.join(REPO_ROOT, '.locks/devloop.lock/meta.env');
 const PAUSE_FLAG_PATH = path.join(REPO_ROOT, '.foundry/PAUSED');
 const MODE_OVERRIDE_PATH = path.join(REPO_ROOT, '.foundry/PUBLISH_MODE');
+const FOUNDRY_CONFIG_PATH = path.join(REPO_ROOT, 'foundry/openclaw.foundry.json5');
+const FOUNDRY_DISPATCH_PATH = path.join(REPO_ROOT, 'scripts/foundry_dispatch.sh');
 
 export const LOOPBACK_HOST = '127.0.0.1';
 export const DEFAULT_PORT = Number(process.env.SOCIALOS_API_PORT || 8787);
@@ -152,6 +155,98 @@ const PLATFORM_ALIAS_TO_ID = (() => {
 
   return aliasMap;
 })();
+
+const PLATFORM_PRODUCT_CAPABILITIES = Object.freeze({
+  instagram: Object.freeze({
+    supportLevel: 'L1 Assisted',
+    lane: 'publish-package',
+    entryTarget: 'Instagram app composer',
+    liveEligible: false,
+    blockedBy: 'final publish stays manual',
+  }),
+  x: Object.freeze({
+    supportLevel: 'L2 Auto Publish (credentials gated)',
+    lane: 'publisher',
+    entryTarget: 'X web/API publishing lane',
+    liveEligible: true,
+    blockedBy: 'requires live mode + credentials',
+  }),
+  linkedin: Object.freeze({
+    supportLevel: 'L2 Auto Publish (credentials gated)',
+    lane: 'publisher',
+    entryTarget: 'LinkedIn post workflow',
+    liveEligible: true,
+    blockedBy: 'requires live mode + credentials',
+  }),
+  zhihu: Object.freeze({
+    supportLevel: 'L1 Assisted',
+    lane: 'publish-package',
+    entryTarget: 'Zhihu editor',
+    liveEligible: false,
+    blockedBy: 'final publish stays manual',
+  }),
+  xiaohongshu: Object.freeze({
+    supportLevel: 'L1 Assisted+',
+    lane: 'publish-package',
+    entryTarget: 'Xiaohongshu mobile composer',
+    liveEligible: false,
+    blockedBy: 'manual media + final publish step',
+  }),
+  wechat_moments: Object.freeze({
+    supportLevel: 'L1 Assisted+',
+    lane: 'publish-package',
+    entryTarget: 'WeChat Moments mobile composer',
+    liveEligible: false,
+    blockedBy: 'manual mobile-only publish',
+  }),
+  wechat_official: Object.freeze({
+    supportLevel: 'L1.5 Rich Article Package',
+    lane: 'publish-package',
+    entryTarget: 'WeChat Official Account backend',
+    liveEligible: false,
+    blockedBy: 'manual article assembly + final publish',
+  }),
+});
+
+const FOUNDRY_AGENT_RESPONSIBILITIES = Object.freeze({
+  forge_orchestrator: Object.freeze({
+    title: 'Orchestrator',
+    responsibility: '拆目标、排优先级、把产品任务拆成 coder/tester/reviewer 可执行单元',
+  }),
+  forge_coder: Object.freeze({
+    title: 'Coder',
+    responsibility: '实现 API、UI、runtime、docs 等代码变更',
+  }),
+  forge_tester: Object.freeze({
+    title: 'Tester',
+    responsibility: '跑 smoke/e2e/reviewer gate，确认功能闭环没断',
+  }),
+  forge_reviewer: Object.freeze({
+    title: 'Reviewer',
+    responsibility: '检查策略、安全边界、回归风险和质量门',
+  }),
+});
+
+const CODEX_PARTICIPATION = Object.freeze({
+  canOwn: [
+    '跨文件架构重构',
+    'UI 工作台产品化',
+    'API 设计与实现',
+    'Foundry 编排与控制面接入',
+    '测试补齐与回归定位',
+    'blocked 根因分析与 dry-run 解锁',
+  ],
+  goodAt: [
+    '把模糊需求拆成可执行 backlog',
+    '在不破坏现有闭环的前提下增量改造',
+    '补 runtime / UI / docs / tests 的整链路一致性',
+  ],
+  stillNeedsHuman: [
+    '真实平台凭据与登录态',
+    '是否允许 live publish 的业务决策',
+    '需要你拍板的品牌表达和最终内容判断',
+  ],
+});
 
 class HttpError extends Error {
   constructor(statusCode, message, details = undefined) {
