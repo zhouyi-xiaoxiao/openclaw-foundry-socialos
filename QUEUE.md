@@ -50,6 +50,6 @@ Legend:
 - [ ] P2-4 DB 升级 Postgres + pgvector（可选）
 
 ## Orchestrator Ops
-- [ ] OPS-1 DEVLOOP_REALTIME + DIGEST_PERIODIC cron 对齐（no-deliver）
-- [ ] OPS-2 GitHub 自动 push 集成（fetch/rebase/push + push blocked digest）
-- [ ] OPS-3 PAUSE/RESUME 机制（.foundry/PAUSED）
+- [x] OPS-1 DEVLOOP_REALTIME + DIGEST_PERIODIC cron 对齐（no-deliver）
+- [x] OPS-2 GitHub 自动 push 集成（fetch/rebase/push + push blocked digest）
+- [x] OPS-3 PAUSE/RESUME 机制（.foundry/PAUSED）

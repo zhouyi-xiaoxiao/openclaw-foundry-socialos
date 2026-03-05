@@ -1,5 +1,6 @@
-Run: 20260305_024143
-Status: SKIPPED_LOCKED
-Task: none
-Summary: RUN_DEVLOOP_ONCE skipped because .locks/devloop.lock already exists.
-Report: /Users/zhouyixiaoxiao/openclaw-foundry-socialos/reports/runs/20260305_024143_LOCKED.md
+Run: 20260305_0440_BOOTSTRAP
+What: P0-1 runtime skeleton + autopilot ops baseline
+Why: Initialized socialos runtime/docs/queue/scripts and enabled cron loops
+Risk: medium
+Verify: ./scripts/test.sh ; cron list
+Next: Implement P0-2 plugin executable tools + permission e2e

@@ -10,10 +10,12 @@ else
   echo "mode: RUNNING"
 fi
 
-echo "\nCurrent queue head:"
+echo
+echo "Current queue head:"
 grep -nE '^- \[( |-|!)\] ' "${REPO_ROOT}/QUEUE.md" | head -n 5 || true
 
-echo "\nLatest digest:"
+echo
+echo "Latest digest:"
 if [[ -f "${LATEST}" ]]; then
   sed -n '1,8p' "${LATEST}"
 else
