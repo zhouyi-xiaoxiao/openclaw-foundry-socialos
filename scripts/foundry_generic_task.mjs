@@ -7,10 +7,7 @@ import {
   createAutofixBacklogEntry,
   DEFAULT_AUTONOMY_MODE,
   ensureFoundryRuntimeDirs,
-  readLlmTaskHealthSnapshot,
   readStructuredTask,
-  resolveFoundryRuntimePaths,
-  setStructuredTaskStatus,
   updateStructuredTask,
   writeLlmTaskHealthSnapshot,
 } from '../socialos/lib/foundry-tasks.mjs';
@@ -478,7 +475,6 @@ function writeMockArtifact(task, paths) {
 function finalizeTaskFailure(task, summary, reason, options = {}) {
   const managedByDevloop = Boolean(options.managedByDevloop);
   const patch = {
-    status: 'blocked',
     execution: {
       ...(task.execution || {}),
       lastResult: {
@@ -490,10 +486,24 @@ function finalizeTaskFailure(task, summary, reason, options = {}) {
     },
   };
 
-  updateStructuredTask(task.taskId, patch, {
-    repoRoot: options.repoRoot,
-    syncQueue: !managedByDevloop,
-  });
+  if (managedByDevloop) {
+    updateStructuredTask(task.taskId, patch, {
+      repoRoot: options.repoRoot,
+      syncQueue: false,
+    });
+  } else {
+    updateStructuredTask(
+      task.taskId,
+      {
+        ...patch,
+        status: 'blocked',
+      },
+      {
+        repoRoot: options.repoRoot,
+        syncQueue: true,
+      }
+    );
+  }
 
   if (!managedByDevloop) {
     createAutofixBacklogEntry(task.taskId, summary, { repoRoot: options.repoRoot });
@@ -501,17 +511,18 @@ function finalizeTaskFailure(task, summary, reason, options = {}) {
 }
 
 function finalizeTaskSuccess(task, execution, options = {}) {
-  updateStructuredTask(
-    task.taskId,
-    {
-      status: 'done',
-      execution,
-    },
-    {
-      repoRoot: options.repoRoot,
-      syncQueue: !options.managedByDevloop,
-    }
-  );
+  const patch = {
+    execution,
+  };
+
+  if (!options.managedByDevloop) {
+    patch.status = 'done';
+  }
+
+  updateStructuredTask(task.taskId, patch, {
+    repoRoot: options.repoRoot,
+    syncQueue: !options.managedByDevloop,
+  });
 }
 
 function outputResult(result, outputPath) {

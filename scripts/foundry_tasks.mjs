@@ -5,6 +5,7 @@ import {
   listStructuredTasks,
   readStructuredTask,
   resolveFoundryRuntimePaths,
+  setStructuredTaskStatus,
 } from '../socialos/lib/foundry-tasks.mjs';
 
 function usage() {
@@ -13,6 +14,7 @@ function usage() {
   node scripts/foundry_tasks.mjs create --json '{"title":"...","goal":"..."}'
   node scripts/foundry_tasks.mjs list [--limit 20]
   node scripts/foundry_tasks.mjs get --task-id TASK-20260305210101
+  node scripts/foundry_tasks.mjs mark --task-id TASK-20260305210101 --status done|blocked|in_progress|pending
   node scripts/foundry_tasks.mjs paths`);
 }
 
@@ -94,6 +96,20 @@ async function main() {
 
   if (command === 'paths') {
     writeJson({ ok: true, paths: resolveFoundryRuntimePaths() });
+    return;
+  }
+
+  if (command === 'mark') {
+    const taskId = String(args['task-id'] || args.taskId || '').trim();
+    const status = String(args.status || '').trim();
+    if (!taskId) {
+      throw new Error('--task-id is required');
+    }
+    if (!status) {
+      throw new Error('--status is required');
+    }
+    const task = setStructuredTaskStatus(taskId, status);
+    writeJson({ ok: true, task });
     return;
   }
 
