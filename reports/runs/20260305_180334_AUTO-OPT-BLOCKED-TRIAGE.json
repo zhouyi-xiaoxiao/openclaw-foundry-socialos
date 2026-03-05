@@ -1,0 +1,29 @@
+{
+  "runId": "20260305_180334_AUTO-OPT-BLOCKED-TRIAGE",
+  "taskId": "AUTO-OPT-BLOCKED-TRIAGE",
+  "taskText": "- [ ] AUTO-OPT-BLOCKED-TRIAGE 自动处理 blocked 并生成 autofix 任务",
+  "status": "success",
+  "summary": "push blocked",
+  "why": "git push origin main failed",
+  "risk": "medium",
+  "verify": "/tmp/socialos_push.log",
+  "next": "fix remote/auth and retry in next cron cycle",
+  "startedAt": "2026-03-05T18:03:34Z",
+  "finishedAt": "2026-03-05T18:03:38Z",
+  "durationMs": 4000,
+  "stages": {
+    "plan": "pass",
+    "coder": "pass",
+    "tester": "pass",
+    "reviewer": "pass",
+    "gitSync": "fetch-failed",
+    "push": "blocked:push-failed"
+  },
+  "lock": {
+    "status": "acquired",
+    "staleRecovered": "false",
+    "ownerPid": "",
+    "ownerAlive": "unknown",
+    "ownerHeartbeatAgeSec": ""
+  }
+}

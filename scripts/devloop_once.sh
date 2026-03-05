@@ -217,6 +217,11 @@ finish_run() {
 
 create_autofix_task() {
   local reason="$1"
+
+  if grep -F -- "${reason}" "${QUEUE_FILE}" >/dev/null 2>&1; then
+    return 0
+  fi
+
   local autofix_id
   autofix_id="AUTOFIX-${TASK_ID//[^A-Za-z0-9]/_}-$(date +%H%M%S)"
 

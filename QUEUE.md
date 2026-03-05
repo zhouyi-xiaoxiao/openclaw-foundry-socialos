@@ -73,7 +73,7 @@ Legend:
     - 若不存在 blocked，写入 run 记录确认空阻塞
 
 ## AutoFix Backlog
-- [ ] AUTOFIX-P2_1-175603 P2-1 deferred by policy (external credentials/integration dependency)
+- [x] AUTOFIX-P2_1-175603 P2-1 deferred by policy (external credentials/integration dependency)
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
