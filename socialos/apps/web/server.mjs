@@ -544,10 +544,84 @@ function renderClusterCards(cluster) {
     .join('')}</div>`;
 }
 
-function renderCodexSummary(codex) {
+function renderFoundryTaskCards(tasks) {
+  if (!tasks.length) return renderEmptyState('No structured Foundry tasks yet.');
+  return `<div class="stack">${tasks
+    .map(
+      (task) => `
+        <article class="stack-card">
+          <div class="stack-meta">
+            <strong>${escapeHtml(task.title || task.taskId)}</strong>
+            <span>${escapeHtml(formatDateTime(task.createdAt))}</span>
+          </div>
+          <div class="chip-row">
+            ${renderPill(task.status || 'pending', task.status === 'done' ? 'good' : task.status === 'blocked' ? 'warn' : 'soft')}
+            ${renderPill(task.scope || 'socialos', 'accent')}
+            ${renderPill(task.intakeMode || 'quick', 'soft')}
+          </div>
+          <p>${escapeHtml(task.goal || task.title || '')}</p>
+          <small>${escapeHtml((task.preferredTests || []).join(' | ') || 'bash scripts/test.sh')}</small>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
+function renderFoundryExecutionSurface(cluster) {
+  const llmTaskHealth = cluster?.llmTaskHealth || {};
+  const supportedScopes = Array.isArray(cluster?.supportedScopes) ? cluster.supportedScopes : [];
+  const lastRun = cluster?.lastGenericTaskRun;
+  const statusTone =
+    llmTaskHealth.status === 'ok' || llmTaskHealth.status === 'mock'
+      ? 'good'
+      : llmTaskHealth.status === 'unknown'
+        ? 'soft'
+        : 'warn';
+
+  return `
+    <div class="grid two-up">
+      <article class="panel inset-panel">
+        <div class="panel-head">
+          <div>
+            <h3>Foundry Responsibilities</h3>
+          </div>
+        </div>
+        <ul class="compact-list">
+          <li>接收 quick / structured 产品任务</li>
+          <li>生成 PlanSpec 并驱动 orchestrator/coder/tester/reviewer</li>
+          <li>持续巡检、写 run report、同步 digest</li>
+        </ul>
+      </article>
+      <article class="panel inset-panel">
+        <div class="panel-head">
+          <div>
+            <h3>Execution Health</h3>
+          </div>
+        </div>
+        <div class="chip-row">
+          ${renderPill(
+            cluster?.genericTaskExecutionEnabled ? 'generic execute on' : 'generic execute off',
+            cluster?.genericTaskExecutionEnabled ? 'good' : 'warn'
+          )}
+          ${renderPill(`llm-task ${llmTaskHealth.status || 'unknown'}`, statusTone)}
+          ${renderPill(cluster?.defaultAutonomyMode || 'direct-execute', 'accent')}
+        </div>
+        <ul class="compact-list">
+          <li><strong>Health:</strong> ${escapeHtml(llmTaskHealth.summary || 'No probe yet.')}</li>
+          <li><strong>Reason:</strong> ${escapeHtml(llmTaskHealth.reason || 'waiting for first probe')}</li>
+          <li><strong>Checked:</strong> ${escapeHtml(formatDateTime(llmTaskHealth.checkedAt))}</li>
+          <li><strong>Supported scopes:</strong> ${escapeHtml(supportedScopes.join(', ') || 'socialos')}</li>
+          <li><strong>Last generic run:</strong> ${escapeHtml(lastRun?.taskId || 'none yet')}</li>
+        </ul>
+      </article>
+    </div>
+  `;
+}
+
+function renderOperatingSplit(codex) {
   const canOwn = Array.isArray(codex?.canOwn) ? codex.canOwn : [];
   const goodAt = Array.isArray(codex?.goodAt) ? codex.goodAt : [];
-  const needsHuman = Array.isArray(codex?.stillNeedsHuman) ? codex.stillNeedsHuman : [];
+  const stillNeedsHuman = Array.isArray(codex?.stillNeedsHuman) ? codex.stillNeedsHuman : [];
 
   return `
     <div class="grid three-up">
@@ -561,10 +635,14 @@ function renderCodexSummary(codex) {
       )}
       ${renderPanel(
         'Still Needs You',
-        `<ul class="compact-list">${needsHuman.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
+        `<ul class="compact-list">${stillNeedsHuman.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
       )}
     </div>
   `;
+}
+
+function renderCodexSummary(codex) {
+  return renderOperatingSplit(codex);
 }
 
 async function renderQuickCapturePage(page) {

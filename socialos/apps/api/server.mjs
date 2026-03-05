@@ -1784,6 +1784,18 @@ async function routeRequest(req, res, statements) {
     return;
   }
 
+  if (method === 'GET' && pathname === '/ops/tasks') {
+    const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 12, 100);
+    const tasks = listStructuredTasks({ repoRoot: REPO_ROOT, limit });
+    sendJson(res, 200, {
+      limit,
+      count: tasks.length,
+      tasks,
+      foundry: buildFoundryClusterSummary(),
+    });
+    return;
+  }
+
   if (method === 'GET' && pathname === '/ops/runs') {
     const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 10, 100);
     const runs = listRecentRunReports(limit);
@@ -2006,12 +2018,38 @@ async function routeRequest(req, res, statements) {
   if (method === 'POST' && pathname === '/ops/dispatch') {
     const body = await readJsonBody(req);
     const command = resolveDispatchCommand(body);
+    if (command.startsWith('ADD_TASK:')) {
+      const task = createOpsTaskFromBody({
+        taskText: command.slice('ADD_TASK:'.length),
+        intakeMode: 'quick',
+      });
+      sendJson(res, 201, {
+        command,
+        output: `Task added: ${task.taskId}`,
+        task,
+        ops: buildOpsStatus(),
+        cluster: buildFoundryClusterSummary(),
+      });
+      return;
+    }
+
     const result = runFoundryDispatch(command);
     sendJson(res, 200, {
       command,
       output: result.output,
       ops: buildOpsStatus(),
       cluster: buildFoundryClusterSummary(),
+    });
+    return;
+  }
+
+  if (method === 'POST' && pathname === '/ops/tasks') {
+    const body = await readJsonBody(req);
+    const task = createOpsTaskFromBody(body);
+    sendJson(res, 201, {
+      task,
+      foundry: buildFoundryClusterSummary(),
+      ops: buildOpsStatus(),
     });
     return;
   }
