@@ -51,7 +51,7 @@ Legend:
 ## P2（可扩展）
 - [!] P2-1 X/LinkedIn live 发布（凭据可用时）
 - [x] P2-2 Ins/小红书/朋友圈发布包优化
-- [ ] P2-3 公众号图文包增强
+- [x] P2-3 公众号图文包增强
 - [!] P2-4 DB 升级 Postgres + pgvector（可选）
 
 ## Orchestrator Ops

@@ -1,0 +1,29 @@
+{
+  "runId": "20260305_200404_P2-2",
+  "taskId": "P2-2",
+  "taskText": "- [ ] P2-2 Ins/小红书/朋友圈发布包优化",
+  "status": "success",
+  "summary": "P2-2 assisted publish packages verified for Instagram / Xiaohongshu / Moments",
+  "why": "Local-first package generation now covers the richer operator bundles without waiting on live credentials",
+  "risk": "low",
+  "verify": "/tmp/socialos_20260305_200404_P2-2.log",
+  "next": "configure git remote 'origin' to enable auto push",
+  "startedAt": "2026-03-05T20:04:04Z",
+  "finishedAt": "2026-03-05T20:04:09Z",
+  "durationMs": 5000,
+  "stages": {
+    "plan": "pass",
+    "coder": "pass",
+    "tester": "pass",
+    "reviewer": "pass",
+    "gitSync": "fetch-failed",
+    "push": "skipped:no-origin"
+  },
+  "lock": {
+    "status": "acquired",
+    "staleRecovered": "false",
+    "ownerPid": "",
+    "ownerAlive": "unknown",
+    "ownerHeartbeatAgeSec": ""
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "summary": "- [ ] P2-3 公众号图文包增强",
+  "filesToChange": [
+    "socialos/apps/api/server.mjs",
+    "socialos/apps/web/server.mjs",
+    "scripts/tests/product_workspace_smoke.mjs"
+  ],
+  "commands": [
+    "node scripts/tests/product_workspace_smoke.mjs",
+    "node scripts/tests/web_routes_smoke.mjs"
+  ],
+  "tests": [
+    "node scripts/tests/product_workspace_smoke.mjs",
+    "node scripts/tests/web_routes_smoke.mjs",
+    "bash scripts/test.sh"
+  ],
+  "rollback": [
+    "Mark blocked and create autofix task"
+  ],
+  "digestBullets": [
+    "single queue item",
+    "policy gate",
+    "digest+run report"
+  ]
+}
