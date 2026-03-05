@@ -1,6 +1,6 @@
-Run: 20260305_070156_P0-5
-What: P0-5 implementation/tests passed but policy review failed; merge blocked
-Why: Reviewer flagged API `CORS: *` as broadening localhost external exposure via browser cross-origin access
-Risk: high (security posture regression)
-Verify: reports/runs/20260305_070156_P0-5.md
-Next: tighten API CORS to loopback allowlist, avoid absolute path leakage, then re-queue P0-5
+Run: 20260305_084410_P0-6
+What: Completed P0-6 Queue→Publish default dry-run flow with Approve execution path persisting PublishTask/Audit/DevDigest
+Why: Enable closed-loop approve-to-execution workflow while preserving safe-by-default delivery behavior
+Risk: low (future live dispatch integration must retain current gating/no-deliver safeguards)
+Verify: openclaw config validate; bash scripts/test.sh; node scripts/tests/e2e_smoke.mjs
+Next: continue to next unchecked queue item (P0-7)

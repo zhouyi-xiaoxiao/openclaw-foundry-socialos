@@ -17,6 +17,17 @@ export const DEFAULT_DB_PATH = path.resolve(
 );
 
 const MAX_BODY_BYTES = 256 * 1024;
+const DEFAULT_PUBLISH_MODE = 'dry-run';
+const LIVE_PUBLISH_MODE = 'live';
+const HIGH_FREQUENCY_MARKERS = new Set([
+  'high',
+  'high-frequency',
+  'high_frequency',
+  'realtime',
+  'real-time',
+  'cron',
+  'burst',
+]);
 
 class HttpError extends Error {
   constructor(statusCode, message) {
@@ -56,6 +67,78 @@ function readOptionalString(value, fallback) {
   return trimmed || fallback;
 }
 
+function readOptionalBoolean(value, fallback = false) {
+  return typeof value === 'boolean' ? value : fallback;
+}
+
+function normalizePublishMode(value, fallback = DEFAULT_PUBLISH_MODE) {
+  if (typeof value !== 'string') return fallback;
+  const normalized = value.trim().toLowerCase();
+  return normalized === LIVE_PUBLISH_MODE ? LIVE_PUBLISH_MODE : DEFAULT_PUBLISH_MODE;
+}
+
+function safeParseJsonObject(value, fallback = {}) {
+  if (typeof value !== 'string' || !value.trim()) return { ...fallback };
+
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed;
+    }
+  } catch {
+    return { ...fallback };
+  }
+
+  return { ...fallback };
+}
+
+function readEnvFlag(name) {
+  const raw = process.env[name];
+  if (typeof raw !== 'string') return false;
+  const normalized = raw.trim().toLowerCase();
+  return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
+}
+
+function isLiveEnvironmentEnabled() {
+  const publishMode = readOptionalString(process.env.PUBLISH_MODE, '').toLowerCase();
+  if (publishMode === LIVE_PUBLISH_MODE) return true;
+  return readEnvFlag('SOCIALOS_ENABLE_LIVE_PUBLISH');
+}
+
+function isHighFrequencyText(value) {
+  if (typeof value !== 'string') return false;
+  return HIGH_FREQUENCY_MARKERS.has(value.trim().toLowerCase());
+}
+
+function readHighFrequencyHint(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
+
+  const tags = Array.isArray(payload.tags) ? payload.tags : [];
+
+  return (
+    readOptionalBoolean(payload.highFrequency, false) ||
+    isHighFrequencyText(payload.frequency) ||
+    isHighFrequencyText(payload.cadence) ||
+    isHighFrequencyText(payload.schedule) ||
+    tags.some((tag) => isHighFrequencyText(tag))
+  );
+}
+
+function buildQueueMetadata(body) {
+  const highFrequency = readHighFrequencyHint(body);
+  const requestedNoDeliver = readOptionalBoolean(body.noDeliver, false);
+  const frequency = readOptionalString(body.frequency, highFrequency ? 'high-frequency' : 'normal');
+  const cadence = readOptionalString(body.cadence, frequency);
+
+  return {
+    source: 'api.publish_queue',
+    frequency,
+    cadence,
+    highFrequency,
+    noDeliver: highFrequency || requestedNoDeliver,
+  };
+}
+
 async function readJsonBody(req) {
   let raw = '';
   for await (const chunk of req) {
@@ -82,14 +165,12 @@ function initDb(dbPath) {
 
 function buildStatements(db) {
   return {
-    insertAudit: db.prepare(
-      'INSERT INTO Audit(id, action, payload, created_at) VALUES(?, ?, ?, ?)'
-    ),
+    db,
+
+    insertAudit: db.prepare('INSERT INTO Audit(id, action, payload, created_at) VALUES(?, ?, ?, ?)'),
     selectAuditById: db.prepare('SELECT id FROM Audit WHERE id = ? LIMIT 1'),
 
-    insertEvent: db.prepare(
-      'INSERT INTO Event(id, title, payload, created_at) VALUES(?, ?, ?, ?)'
-    ),
+    insertEvent: db.prepare('INSERT INTO Event(id, title, payload, created_at) VALUES(?, ?, ?, ?)'),
     selectEventById: db.prepare('SELECT id, title FROM Event WHERE id = ? LIMIT 1'),
 
     insertDraft: db.prepare(
@@ -98,6 +179,34 @@ function buildStatements(db) {
 
     insertQueueTask: db.prepare(
       'INSERT INTO PublishTask(id, draft_id, platform, mode, status, result, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)'
+    ),
+
+    selectQueueTaskById: db.prepare(`
+      SELECT
+        task.id,
+        task.draft_id,
+        task.platform,
+        task.mode,
+        task.status,
+        task.result,
+        task.created_at,
+        task.updated_at,
+        draft.event_id,
+        draft.language,
+        draft.content,
+        draft.metadata
+      FROM PublishTask AS task
+      INNER JOIN PostDraft AS draft ON draft.id = task.draft_id
+      WHERE task.id = ?
+      LIMIT 1
+    `),
+
+    updateQueueTaskExecution: db.prepare(
+      'UPDATE PublishTask SET mode = ?, status = ?, result = ?, updated_at = ? WHERE id = ?'
+    ),
+
+    insertDigest: db.prepare(
+      'INSERT INTO DevDigest(id, run_id, what, why, risk, verify, next, created_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)'
     ),
   };
 }
@@ -130,9 +239,7 @@ async function routeRequest(req, res, statements) {
     const title = requireString(body.title, 'title');
 
     const captureId =
-      typeof body.captureId === 'string' && body.captureId.trim()
-        ? body.captureId.trim()
-        : null;
+      typeof body.captureId === 'string' && body.captureId.trim() ? body.captureId.trim() : null;
 
     if (captureId) {
       const captureRow = statements.selectAuditById.get(captureId);
@@ -160,9 +267,10 @@ async function routeRequest(req, res, statements) {
     if (!event) throw new HttpError(404, 'eventId not found');
 
     const platform = readOptionalString(body.platform, 'x');
-    const mode = readOptionalString(body.mode, 'dry-run');
+    const mode = normalizePublishMode(body.mode);
     const language = readOptionalString(body.language, 'en');
     const content = readOptionalString(body.content, event.title);
+    const metadata = buildQueueMetadata(body);
 
     const createdAt = nowIso();
     const draftId = makeId('draft');
@@ -172,7 +280,7 @@ async function routeRequest(req, res, statements) {
       platform,
       language,
       content,
-      JSON.stringify({ source: 'api.publish_queue' }),
+      JSON.stringify(metadata),
       createdAt
     );
 
@@ -193,6 +301,164 @@ async function routeRequest(req, res, statements) {
       draftId,
       status: 'queued',
       mode,
+      delivery: {
+        noDeliver: metadata.noDeliver,
+        highFrequency: metadata.highFrequency,
+      },
+    });
+    return;
+  }
+
+  if (method === 'POST' && pathname === '/publish/approve') {
+    const body = await readJsonBody(req);
+    const taskId = requireString(body.taskId, 'taskId');
+
+    const task = statements.selectQueueTaskById.get(taskId);
+    if (!task) throw new HttpError(404, 'taskId not found');
+
+    if (task.status !== 'queued') {
+      throw new HttpError(409, `task is not approvable (status=${task.status})`);
+    }
+
+    const requestedMode = normalizePublishMode(
+      typeof body.mode === 'string' ? body.mode : task.mode,
+      DEFAULT_PUBLISH_MODE
+    );
+
+    const liveGate = {
+      envEnabled: isLiveEnvironmentEnabled(),
+      uiEnabled: readOptionalBoolean(body.liveEnabled, false),
+      credentialsReady: readOptionalBoolean(body.credentialsReady, false),
+    };
+
+    const liveAllowed =
+      requestedMode === LIVE_PUBLISH_MODE &&
+      liveGate.envEnabled &&
+      liveGate.uiEnabled &&
+      liveGate.credentialsReady;
+
+    const effectiveMode = liveAllowed ? LIVE_PUBLISH_MODE : DEFAULT_PUBLISH_MODE;
+
+    const draftMetadata = safeParseJsonObject(task.metadata);
+    const highFrequency = readHighFrequencyHint(draftMetadata) || readHighFrequencyHint(body);
+    const stickyNoDeliver =
+      readOptionalBoolean(draftMetadata.noDeliver, false) || readOptionalBoolean(body.noDeliver, false);
+    const noDeliver = highFrequency || stickyNoDeliver || effectiveMode !== LIVE_PUBLISH_MODE;
+
+    const dispatchEligible = effectiveMode === LIVE_PUBLISH_MODE && !noDeliver;
+    const dispatched = false;
+
+    let dispatchReason = 'publisher_execution_simulated';
+    if (noDeliver) {
+      if (highFrequency) {
+        dispatchReason = 'high_frequency_no_deliver';
+      } else if (effectiveMode !== LIVE_PUBLISH_MODE) {
+        dispatchReason = 'dry_run_default';
+      } else {
+        dispatchReason = 'no_deliver_flagged';
+      }
+    }
+
+    const timestamp = nowIso();
+    const runId = makeId('publishrun');
+    const approveAuditId = makeId('audit');
+    const executeAuditId = makeId('audit');
+    const digestId = makeId('digest');
+    const approvedBy = readOptionalString(body.approvedBy, 'api');
+
+    const executionPayload = {
+      taskId,
+      draftId: task.draft_id,
+      platform: task.platform,
+      runId,
+      status: 'executed',
+      requestedMode,
+      mode: effectiveMode,
+      approvedBy,
+      approvedAt: timestamp,
+      publisher: 'publisher.workflow',
+      liveGate,
+      delivery: {
+        noDeliver,
+        highFrequency,
+        dispatchEligible,
+        dispatched,
+        reason: dispatchReason,
+      },
+    };
+
+    const nextStatus = 'executed';
+    const mergedResult = {
+      ...safeParseJsonObject(task.result),
+      approval: {
+        approvedBy,
+        approvedAt: timestamp,
+        auditId: approveAuditId,
+      },
+      execution: {
+        ...executionPayload,
+        auditId: executeAuditId,
+      },
+      digestId,
+      auditIds: [approveAuditId, executeAuditId],
+    };
+
+    statements.db.exec('BEGIN');
+    try {
+      statements.insertAudit.run(
+        approveAuditId,
+        'publish_approve',
+        JSON.stringify({
+          taskId,
+          draftId: task.draft_id,
+          approvedBy,
+          requestedMode,
+          approvedAt: timestamp,
+        }),
+        timestamp
+      );
+
+      statements.updateQueueTaskExecution.run(
+        effectiveMode,
+        nextStatus,
+        JSON.stringify(mergedResult),
+        timestamp,
+        taskId
+      );
+
+      statements.insertAudit.run(executeAuditId, 'publish_execute', JSON.stringify(executionPayload), timestamp);
+
+      statements.insertDigest.run(
+        digestId,
+        runId,
+        `Approve→publish executed for ${taskId}`,
+        'Approved task promoted through publisher workflow',
+        noDeliver ? 'low' : 'medium',
+        `PublishTask status=${nextStatus} mode=${effectiveMode} noDeliver=${noDeliver}`,
+        `Inspect Audit ${executeAuditId} for delivery trace`,
+        timestamp
+      );
+
+      statements.db.exec('COMMIT');
+    } catch (error) {
+      statements.db.exec('ROLLBACK');
+      throw error;
+    }
+
+    sendJson(res, 200, {
+      taskId,
+      draftId: task.draft_id,
+      runId,
+      mode: effectiveMode,
+      status: nextStatus,
+      auditIds: [approveAuditId, executeAuditId],
+      digestId,
+      delivery: {
+        noDeliver,
+        highFrequency,
+        dispatchEligible,
+        dispatched,
+      },
     });
     return;
   }
@@ -275,9 +541,10 @@ Usage:
   node socialos/apps/api/server.mjs [--port <port>] [--db <sqlite_path>]
 
 Endpoints:
-  POST /capture        -> writes Audit row
-  POST /events         -> writes Event row
-  POST /publish/queue  -> writes PostDraft + PublishTask rows
+  POST /capture         -> writes Audit row
+  POST /events          -> writes Event row
+  POST /publish/queue   -> writes PostDraft + PublishTask rows
+  POST /publish/approve -> executes publisher workflow + writes Audit + DevDigest
   GET  /health
 
 Defaults:

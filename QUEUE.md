@@ -29,7 +29,7 @@ Legend:
   - Done When:
     - 一次 event 可生成 7 平台 drafts 入库
     - 草稿可预览复制，L1 发布包可生成
-- [ ] P0-6 Queue→Publish（默认 dry-run）
+- [x] P0-6 Queue→Publish（默认 dry-run）
   - Done When:
     - Approve→PublishTask→publisher 执行→audit + digest 落库
 - [ ] P0-7 Embeddings 选择产品化
