@@ -1,0 +1,18 @@
+{
+  "summary": "- [ ] AUTOFIX-AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439-195507 Coder stage failed for AUTOFIX-AUTOFIX_AUTO_OPT_TEST_DEBT_195409-195439",
+  "filesToChange": [],
+  "commands": [
+    "bash scripts/test.sh"
+  ],
+  "tests": [
+    "bash scripts/test.sh"
+  ],
+  "rollback": [
+    "Mark blocked and create autofix task"
+  ],
+  "digestBullets": [
+    "single queue item",
+    "policy gate",
+    "digest+run report"
+  ]
+}

@@ -15,96 +15,53 @@ const PAGE_DEFINITIONS = [
     id: 'quick-capture',
     title: 'Quick Capture',
     path: '/quick-capture',
-    summary: 'Capture quick notes and seed person + self memory extraction.',
+    summary: 'Capture notes, turn them into structured memory, and seed the rest of the loop.',
   },
   {
     id: 'people',
     title: 'People',
     path: '/people',
-    summary: 'Browse person cards, identity links, and follow-up signals.',
+    summary: 'Search people memory, review evidence, and add follow-up cards that the system can reuse.',
   },
   {
     id: 'events',
     title: 'Events',
     path: '/events',
-    summary: 'Create campaign events and inspect timeline context.',
+    summary: 'Create campaign events from captures and keep the pipeline moving into draft generation.',
   },
   {
     id: 'drafts',
     title: 'Drafts',
     path: '/drafts',
-    summary: 'Preview generated cross-platform post drafts before queueing.',
+    summary: 'Generate 7-platform publish packages, inspect support level, and queue the drafts that are ready.',
   },
   {
     id: 'queue',
     title: 'Queue',
     path: '/queue',
-    summary: 'Review publish tasks with dry-run/live status and audit hooks.',
+    summary: 'Approve queued drafts, watch dry-run versus live gates, and inspect execution traces.',
   },
   {
     id: 'self-mirror',
     title: 'Self Mirror',
     path: '/self-mirror',
-    summary: 'Inspect self-checkins and weekly mirror insight cards.',
+    summary: 'Review recent check-ins and regenerate the weekly mirror when you want a fresh synthesis.',
   },
   {
     id: 'dev-digest',
     title: 'Dev Digest',
     path: '/dev-digest',
-    summary: 'Read recent devloop run summaries, risks, and next steps.',
+    summary: 'Track run reports, blocked items, and what the devloop is doing instead of idle spinning.',
   },
   {
     id: 'settings',
     title: 'Settings',
     path: '/settings',
-    summary: 'Configure runtime switches including embeddings mode and fallback behavior.',
+    summary: 'Operate Foundry, inspect the first-layer cluster, and see exactly where Codex can help.',
   },
 ];
 
 export const DASHBOARD_PAGES = PAGE_DEFINITIONS.map((page) => ({ ...page }));
-
-const PAGE_HINTS = {
-  'quick-capture': [
-    'Capture input box placeholder',
-    'Person card extraction preview slot',
-    'Self check-in extraction preview slot',
-  ],
-  people: [
-    'People search placeholder (keyword / hybrid)',
-    'Timeline + identity evidence cards',
-    'Next follow-up recommendation area',
-  ],
-  events: [
-    'Event list and detail split-view placeholder',
-    'Campaign planning metadata slot',
-    'Draft generation trigger placeholder',
-  ],
-  drafts: [
-    'Draft table placeholder (platform / language / status)',
-    'Draft preview/editor slot',
-    'Copy + queue action bar placeholder',
-  ],
-  queue: [
-    'Queued publish task list placeholder',
-    'Mode/status filters (dry-run/live)',
-    'Audit result panel placeholder',
-  ],
-  'self-mirror': [
-    'Weekly mirror summary card placeholder',
-    'Energy/emotion trend placeholder',
-    'Actionable next-experiment panel placeholder',
-  ],
-  'dev-digest': [
-    'Digest feed placeholder',
-    'What/Why/Risk/Verify/Next card layout placeholder',
-    'Latest run metadata panel placeholder',
-  ],
-  settings: [
-    'Embeddings provider selector placeholder (auto/openai/local)',
-    'Fallback behavior hint: no key => keyword/hybrid remains available',
-    'Bench script entrypoint placeholder (`./scripts/bench_embeddings.sh`)',
-  ],
-};
 
 const PAGE_BY_PATH = new Map(DASHBOARD_PAGES.map((page) => [page.path, page]));
 
@@ -121,6 +78,60 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function formatDateTime(value) {
+  if (typeof value !== 'string' || !value.trim()) return 'n/a';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('en-GB', {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function formatDuration(value) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return 'n/a';
+  if (value < 1000) return `${Math.round(value)}ms`;
+  return `${(value / 1000).toFixed(2)}s`;
+}
+
+function truncate(value, maxLength = 220) {
+  const text = readOptionalString(value, '');
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+}
+
+function safeJson(value, fallback = {}) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return fallback;
+  return value;
+}
+
+async function fetchJsonSafe(pathname) {
+  try {
+    const response = await fetch(`${DEFAULT_API_BASE_URL}${pathname}`);
+    const text = await response.text();
+    const payload = text ? JSON.parse(text) : {};
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: `${pathname} failed (${response.status})`,
+        payload,
+      };
+    }
+
+    return { ok: true, payload };
+  } catch (error) {
+    return {
+      ok: false,
+      error: `${pathname} unavailable: ${error instanceof Error ? error.message : String(error)}`,
+      payload: null,
+    };
+  }
 }
 
 function sendHtml(res, statusCode, html, headers = {}) {
@@ -143,6 +154,13 @@ function sendRedirect(res, statusCode, location) {
   );
 }
 
+function normalizePath(pathname) {
+  if (pathname.length > 1 && pathname.endsWith('/')) {
+    return pathname.slice(0, -1);
+  }
+  return pathname;
+}
+
 function renderNavigation(currentPath) {
   return DASHBOARD_PAGES.map((page) => {
     const active = currentPath === page.path ? 'nav-link active' : 'nav-link';
@@ -150,41 +168,679 @@ function renderNavigation(currentPath) {
   }).join('');
 }
 
-async function fetchJsonSafe(pathname) {
-  try {
-    const response = await fetch(`${DEFAULT_API_BASE_URL}${pathname}`);
-    const payload = await response.json();
-    if (!response.ok) {
-      return {
-        ok: false,
-        error: `${pathname} failed (${response.status})`,
-        payload,
-      };
-    }
-    return {
-      ok: true,
-      payload,
-    };
-  } catch (error) {
-    return {
-      ok: false,
-      error: `${pathname} unavailable: ${error instanceof Error ? error.message : String(error)}`,
-      payload: null,
-    };
-  }
+function renderPill(label, tone = 'neutral') {
+  return `<span class="pill tone-${tone}">${escapeHtml(label)}</span>`;
 }
 
-function formatDuration(value) {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return 'n/a';
-  if (value < 1000) return `${Math.round(value)}ms`;
-  return `${(value / 1000).toFixed(2)}s`;
+function renderMetric(value, label) {
+  return `<div class="metric"><strong>${escapeHtml(value)}</strong><span>${escapeHtml(label)}</span></div>`;
 }
 
-function renderStatusRow(label, value) {
-  return `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`;
+function renderPanel(title, body, subtitle = '') {
+  return `
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>${escapeHtml(title)}</h2>
+          ${subtitle ? `<p class="panel-subtitle">${escapeHtml(subtitle)}</p>` : ''}
+        </div>
+      </div>
+      ${body}
+    </section>
+  `;
 }
 
-async function renderDevDigestBody(page) {
+function renderHero(page, metricsHtml = '', asideHtml = '') {
+  return `
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">SocialOS Product Workspace</p>
+        <h1>${escapeHtml(page.title)}</h1>
+        <p>${escapeHtml(page.summary)}</p>
+        <p class="api-hint">API base: <code>${escapeHtml(DEFAULT_API_BASE_URL)}</code></p>
+      </div>
+      <div class="hero-rail">
+        ${metricsHtml ? `<div class="metric-strip">${metricsHtml}</div>` : ''}
+        ${asideHtml}
+      </div>
+    </header>
+  `;
+}
+
+function renderFormField(label, control, hint = '') {
+  return `
+    <label class="field">
+      <span>${escapeHtml(label)}</span>
+      ${control}
+      ${hint ? `<small>${escapeHtml(hint)}</small>` : ''}
+    </label>
+  `;
+}
+
+function renderEmptyState(message) {
+  return `<div class="empty-state"><p>${escapeHtml(message)}</p></div>`;
+}
+
+function renderCaptureCards(captures) {
+  if (!captures.length) return renderEmptyState('No captures yet.');
+  return `<div class="stack">${captures
+    .map(
+      (capture) => `
+        <article class="stack-card">
+          <div class="stack-meta">
+            ${renderPill(capture.source || 'manual', 'accent')}
+            <span>${escapeHtml(formatDateTime(capture.createdAt))}</span>
+          </div>
+          <p>${escapeHtml(truncate(capture.text, 220))}</p>
+          <code>${escapeHtml(capture.captureId)}</code>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
+function renderCheckinCards(checkins) {
+  if (!checkins.length) return renderEmptyState('No self check-ins yet.');
+  return `<div class="stack">${checkins
+    .map(
+      (checkin) => `
+        <article class="stack-card">
+          <div class="stack-meta">
+            ${renderPill(`energy ${checkin.energy}`, checkin.energy >= 0 ? 'good' : 'warn')}
+            <span>${escapeHtml(formatDateTime(checkin.createdAt))}</span>
+          </div>
+          <p>${escapeHtml(truncate(checkin.reflection, 180))}</p>
+          <small>${escapeHtml((checkin.emotions || []).join(', ') || 'neutral')}</small>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
+function renderPeopleCards(people, showScore = false) {
+  if (!people.length) return renderEmptyState('No people cards match this query.');
+  return `<div class="stack">${people
+    .map((person) => {
+      const tags = Array.isArray(person.tags) ? person.tags : [];
+      const score = showScore && typeof person.score === 'number' ? person.score.toFixed(3) : null;
+      return `
+        <article class="stack-card">
+          <div class="stack-meta">
+            <strong>${escapeHtml(person.name)}</strong>
+            <span>${escapeHtml(formatDateTime(person.updatedAt || person.createdAt))}</span>
+          </div>
+          ${score ? `<p class="score">score ${escapeHtml(score)}</p>` : ''}
+          <p>${escapeHtml(truncate(person.notes || '', 180) || 'No notes yet.')}</p>
+          <div class="chip-row">
+            ${(tags.length ? tags : ['no-tags']).map((tag) => renderPill(tag, 'soft')).join('')}
+          </div>
+        </article>
+      `;
+    })
+    .join('')}</div>`;
+}
+
+function renderEventCards(events) {
+  if (!events.length) return renderEmptyState('No events yet.');
+  return `<div class="stack">${events
+    .map((event) => {
+      const payload = safeJson(event.payload, {});
+      const detailPreview = truncate(
+        Object.entries(payload.details || payload)
+          .slice(0, 4)
+          .map(([key, value]) => `${key}: ${typeof value === 'string' ? value : JSON.stringify(value)}`)
+          .join(' | '),
+        180
+      );
+      return `
+        <article class="stack-card">
+          <div class="stack-meta">
+            <strong>${escapeHtml(event.title)}</strong>
+            <span>${escapeHtml(formatDateTime(event.createdAt))}</span>
+          </div>
+          <p>${escapeHtml(detailPreview || 'No structured payload yet.')}</p>
+          <div class="inline-actions">
+            <a class="mini-link" href="/drafts?eventId=${encodeURIComponent(event.eventId)}">Open in Drafts</a>
+            <code>${escapeHtml(event.eventId)}</code>
+          </div>
+        </article>
+      `;
+    })
+    .join('')}</div>`;
+}
+
+function renderDraftCards(drafts) {
+  if (!drafts.length) return renderEmptyState('No drafts generated yet.');
+  return `<div class="draft-grid">${drafts
+    .map((draft) => {
+      const capability = safeJson(draft.capability, {});
+      const publishPackage = safeJson(draft.publishPackage, {});
+      const steps = Array.isArray(publishPackage.steps) ? publishPackage.steps : [];
+      return `
+        <article class="draft-card">
+          <div class="draft-head">
+            <div>
+              <p class="card-kicker">${escapeHtml(draft.eventTitle || draft.eventId || 'untitled event')}</p>
+              <h3>${escapeHtml(draft.platformLabel)} · ${escapeHtml(draft.language)}</h3>
+            </div>
+            <div class="chip-row">
+              ${renderPill(capability.supportLevel || 'L0 Draft', capability.liveEligible ? 'accent' : 'soft')}
+              ${renderPill(draft.platform, 'neutral')}
+            </div>
+          </div>
+          <pre>${escapeHtml(draft.content)}</pre>
+          <div class="package-meta">
+            <p><strong>Entry:</strong> ${escapeHtml(publishPackage.entryTarget || capability.entryTarget || 'manual')}</p>
+            <p><strong>Blocked By:</strong> ${escapeHtml(publishPackage.blockedBy || capability.blockedBy || 'n/a')}</p>
+          </div>
+          ${
+            steps.length
+              ? `<ol class="step-list">${steps.map((step) => `<li>${escapeHtml(step)}</li>`).join('')}</ol>`
+              : ''
+          }
+          <form class="api-form compact-form" data-api-form="true" data-endpoint="/publish/queue">
+            <input type="hidden" name="draftId" value="${escapeHtml(draft.draftId)}" />
+            <input type="hidden" name="mode" value="dry-run" />
+            <div class="inline-actions">
+              <button type="submit">Queue Draft</button>
+              <code>${escapeHtml(draft.draftId)}</code>
+            </div>
+            <div class="form-result" data-form-result></div>
+          </form>
+        </article>
+      `;
+    })
+    .join('')}</div>`;
+}
+
+function renderQueueCards(queueTasks, publishMode) {
+  if (!queueTasks.length) return renderEmptyState('No queue tasks yet.');
+  return `<div class="stack">${queueTasks
+    .map((task) => {
+      const result = safeJson(task.result, {});
+      const execution = safeJson(result.execution, {});
+      const liveFallbackReason = safeJson(execution.liveFallbackReason, {});
+      const queued = task.status === 'queued';
+      return `
+        <article class="stack-card queue-card">
+          <div class="stack-meta">
+            <strong>${escapeHtml(task.eventTitle || task.platformLabel)}</strong>
+            <span>${escapeHtml(formatDateTime(task.updatedAt))}</span>
+          </div>
+          <div class="chip-row">
+            ${renderPill(task.status, queued ? 'warn' : 'good')}
+            ${renderPill(task.mode, task.mode === 'live' ? 'accent' : 'soft')}
+            ${renderPill(task.capability?.supportLevel || 'L0 Draft', 'neutral')}
+          </div>
+          <p>${escapeHtml(truncate(task.content, 220))}</p>
+          <small>draft ${escapeHtml(task.draftId)} · current workspace publish mode ${escapeHtml(publishMode)}</small>
+          ${
+            queued
+              ? `
+                <form class="api-form compact-form" data-api-form="true" data-endpoint="/publish/approve">
+                  <input type="hidden" name="taskId" value="${escapeHtml(task.taskId)}" />
+                  <input type="hidden" name="approvedBy" value="dashboard" />
+                  <div class="form-grid compact-grid">
+                    ${renderFormField(
+                      'Mode',
+                      `<select name="mode">
+                        <option value="dry-run">dry-run</option>
+                        <option value="live">live</option>
+                      </select>`
+                    )}
+                    ${renderFormField(
+                      'Live Gate',
+                      `<label class="toggle"><input type="checkbox" name="liveEnabled" value="true" /> <span>UI live intent</span></label>`
+                    )}
+                    ${renderFormField(
+                      'Credentials',
+                      `<label class="toggle"><input type="checkbox" name="credentialsReady" value="true" /> <span>credentials ready</span></label>`
+                    )}
+                  </div>
+                  <div class="inline-actions">
+                    <button type="submit">Approve + Execute</button>
+                    <code>${escapeHtml(task.taskId)}</code>
+                  </div>
+                  <div class="form-result" data-form-result></div>
+                </form>
+              `
+              : `
+                <div class="result-block">
+                  <p><strong>Run:</strong> ${escapeHtml(execution.runId || 'n/a')}</p>
+                  <p><strong>Delivery:</strong> ${escapeHtml(
+                    execution.delivery?.reason || result.execution?.delivery?.reason || 'n/a'
+                  )}</p>
+                  ${
+                    Object.keys(liveFallbackReason).length
+                      ? `<p><strong>Live Fallback:</strong> env=${escapeHtml(
+                          String(Boolean(liveFallbackReason.envEnabled))
+                        )} · ui=${escapeHtml(String(Boolean(liveFallbackReason.uiEnabled)))} · creds=${escapeHtml(
+                          String(Boolean(liveFallbackReason.credentialsReady))
+                        )}</p>`
+                      : ''
+                  }
+                </div>
+              `
+          }
+        </article>
+      `;
+    })
+    .join('')}</div>`;
+}
+
+function renderMirrorBlock(mirrorPayload) {
+  const latestMirror = mirrorPayload.latestMirror || null;
+  const checkins = Array.isArray(mirrorPayload.checkins) ? mirrorPayload.checkins : [];
+
+  return `
+    <div class="grid two-up">
+      ${renderPanel(
+        'Weekly Mirror',
+        latestMirror
+          ? `<pre>${escapeHtml(latestMirror.content)}</pre><small>${escapeHtml(
+              formatDateTime(latestMirror.createdAt)
+            )}</small>`
+          : renderEmptyState('No mirror generated yet.')
+      )}
+      ${renderPanel('Recent Check-ins', renderCheckinCards(checkins.slice(0, 8)))}
+    </div>
+  `;
+}
+
+function renderDigestRunList(runs) {
+  if (!runs.length) return renderEmptyState('No run history yet.');
+  return `<div class="stack">${runs
+    .map(
+      (run) => `
+        <article class="stack-card">
+          <div class="stack-meta">
+            <code>${escapeHtml(run.runId || 'unknown')}</code>
+            <span>${escapeHtml(formatDuration(run.durationMs))}</span>
+          </div>
+          <div class="chip-row">
+            ${renderPill(run.status || 'unknown', run.status === 'success' ? 'good' : 'warn')}
+            ${renderPill(run.taskId || 'n/a', 'soft')}
+          </div>
+          <p>${escapeHtml(run.summary || 'n/a')}</p>
+          <small>${escapeHtml(run.next || 'n/a')}</small>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
+function renderBlockedList(blocked) {
+  if (!blocked.length) return renderEmptyState('No blocked queue items right now.');
+  return `<ul class="blocked-list">${blocked
+    .map((item) => `<li><strong>line ${escapeHtml(String(item.line))}</strong> ${escapeHtml(item.task)}</li>`)
+    .join('')}</ul>`;
+}
+
+function renderClusterCards(cluster) {
+  const agents = Array.isArray(cluster?.agents) ? cluster.agents : [];
+  if (!agents.length) return renderEmptyState('Foundry cluster is not configured.');
+  return `<div class="cluster-grid">${agents
+    .map(
+      (agent) => `
+        <article class="cluster-card">
+          <p class="card-kicker">${escapeHtml(agent.roleTitle || agent.id)}</p>
+          <h3>${escapeHtml(agent.name || agent.id)}</h3>
+          <p>${escapeHtml(agent.responsibility || 'custom lane')}</p>
+          <ul class="compact-list">
+            <li><strong>Model:</strong> ${escapeHtml(agent.model || 'n/a')}</li>
+            <li><strong>Tools:</strong> ${escapeHtml(agent.toolProfile || 'n/a')}</li>
+            <li><strong>Workspace:</strong> ${escapeHtml(agent.workspace || 'n/a')}</li>
+          </ul>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
+function renderCodexSummary(codex) {
+  const canOwn = Array.isArray(codex?.canOwn) ? codex.canOwn : [];
+  const goodAt = Array.isArray(codex?.goodAt) ? codex.goodAt : [];
+  const needsHuman = Array.isArray(codex?.stillNeedsHuman) ? codex.stillNeedsHuman : [];
+
+  return `
+    <div class="grid three-up">
+      ${renderPanel(
+        'Codex Can Own',
+        `<ul class="compact-list">${canOwn.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
+      )}
+      ${renderPanel(
+        'Codex Is Best At',
+        `<ul class="compact-list">${goodAt.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
+      )}
+      ${renderPanel(
+        'Still Needs You',
+        `<ul class="compact-list">${needsHuman.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
+      )}
+    </div>
+  `;
+}
+
+async function renderQuickCapturePage(page) {
+  const [capturesRes, mirrorRes] = await Promise.all([
+    fetchJsonSafe('/captures?limit=8'),
+    fetchJsonSafe('/self-mirror'),
+  ]);
+  const captures = capturesRes.ok ? capturesRes.payload.captures || [] : [];
+  const checkins = mirrorRes.ok ? mirrorRes.payload.checkins || [] : [];
+
+  return `
+    ${renderHero(
+      page,
+      [
+        renderMetric(String(captures.length), 'recent captures'),
+        renderMetric(String(checkins.length), 'recent check-ins'),
+      ].join('')
+    )}
+    <div class="grid two-up">
+      ${renderPanel(
+        'Capture Input',
+        `
+          <form class="api-form" data-api-form="true" data-endpoint="/capture">
+            ${renderFormField(
+              'What happened?',
+              '<textarea name="text" rows="8" placeholder="Met someone interesting, shipped something, felt stretched, noticed a pattern..."></textarea>',
+              'This creates both an Audit capture and a SelfCheckin row.'
+            )}
+            ${renderFormField(
+              'Source',
+              '<input name="source" type="text" value="dashboard" />'
+            )}
+            <div class="inline-actions">
+              <button type="submit">Save Capture</button>
+            </div>
+            <div class="form-result" data-form-result></div>
+          </form>
+        `,
+        'Seed the system with raw signal.'
+      )}
+      ${renderPanel('Fresh Energy Signal', renderCheckinCards(checkins.slice(0, 4)), 'Latest mirror inputs')}
+    </div>
+    ${renderPanel('Recent Captures', renderCaptureCards(captures))}
+  `;
+}
+
+async function renderPeoplePage(page, requestUrl) {
+  const query = readOptionalString(requestUrl.searchParams.get('q'), '');
+  const [recentRes, searchRes] = await Promise.all([
+    fetchJsonSafe('/people?limit=8'),
+    query ? fetchJsonSafe(`/people?query=${encodeURIComponent(query)}&limit=8`) : Promise.resolve(null),
+  ]);
+
+  const recentPeople = recentRes?.ok ? recentRes.payload.people || [] : [];
+  const searchPayload = searchRes?.ok ? searchRes.payload : null;
+  const searchResults = searchPayload?.results || [];
+
+  return `
+    ${renderHero(
+      page,
+      [
+        renderMetric(String(recentPeople.length), 'people cards'),
+        renderMetric(query ? String(searchResults.length) : '0', 'search hits'),
+      ].join('')
+    )}
+    <div class="grid two-up">
+      ${renderPanel(
+        'Search People Memory',
+        `
+          <form class="query-form" method="GET" action="/people">
+            ${renderFormField(
+              'Query',
+              `<input name="q" type="text" value="${escapeHtml(query)}" placeholder="hackathon growth person, investor from last week, product designer..." />`,
+              'This uses keyword/hybrid retrieval and returns evidence-backed results.'
+            )}
+            <div class="inline-actions">
+              <button type="submit">Search</button>
+              <a class="mini-link" href="/people">Reset</a>
+            </div>
+          </form>
+          ${
+            query
+              ? `<div class="info-callout">retrieval: ${escapeHtml(
+                  searchPayload?.retrieval?.mode || 'keyword'
+                )} · provider ${escapeHtml(searchPayload?.retrieval?.effectiveProvider || 'local')}</div>`
+              : ''
+          }
+          ${query ? renderPeopleCards(searchResults, true) : renderEmptyState('Run a search to see ranked evidence.')}
+        `,
+        'Ask for people by topic, context, or memory fragment.'
+      )}
+      ${renderPanel(
+        'Add / Update Person Card',
+        `
+          <form class="api-form" data-api-form="true" data-endpoint="/people/upsert">
+            ${renderFormField('Name', '<input name="name" type="text" placeholder="Annie Case" />')}
+            ${renderFormField('Tags', '<input name="tags" type="text" placeholder="growth, founder, london" />', 'Comma-separated')}
+            ${renderFormField('Notes', '<textarea name="notes" rows="5" placeholder="Met at..., talked about..., follow up on..."></textarea>')}
+            ${renderFormField('Next Follow-up', '<input name="nextFollowUpAt" type="datetime-local" />')}
+            <div class="inline-actions">
+              <button type="submit">Save Person</button>
+            </div>
+            <div class="form-result" data-form-result></div>
+          </form>
+        `,
+        'Manual cards make the People page useful immediately.'
+      )}
+    </div>
+    ${renderPanel('Recent People', renderPeopleCards(recentPeople))}
+  `;
+}
+
+async function renderEventsPage(page) {
+  const [capturesRes, eventsRes] = await Promise.all([
+    fetchJsonSafe('/captures?limit=8'),
+    fetchJsonSafe('/events?limit=8'),
+  ]);
+  const captures = capturesRes.ok ? capturesRes.payload.captures || [] : [];
+  const events = eventsRes.ok ? eventsRes.payload.events || [] : [];
+
+  const captureOptions = ['<option value="">No linked capture</option>']
+    .concat(
+      captures.map(
+        (capture) =>
+          `<option value="${escapeHtml(capture.captureId)}">${escapeHtml(
+            truncate(capture.text, 70) || capture.captureId
+          )}</option>`
+      )
+    )
+    .join('');
+
+  return `
+    ${renderHero(
+      page,
+      [renderMetric(String(events.length), 'recent events'), renderMetric(String(captures.length), 'capture candidates')].join('')
+    )}
+    <div class="grid two-up">
+      ${renderPanel(
+        'Create Event',
+        `
+          <form class="api-form" data-api-form="true" data-endpoint="/events" data-json-fields="payload">
+            ${renderFormField('Title', '<input name="title" type="text" placeholder="OpenClaw SocialOS product push" />')}
+            ${renderFormField('Capture Seed', `<select name="captureId">${captureOptions}</select>`)}
+            ${renderFormField(
+              'Payload JSON',
+              '<textarea name="payload" rows="8">{\n  "audience": "builders and collaborators",\n  "goal": "ship a more operational dashboard",\n  "details": {\n    "focus": "ui + blocked unlocks + foundry workboard"\n  }\n}</textarea>',
+              'This becomes event context for draft generation.'
+            )}
+            <div class="inline-actions">
+              <button type="submit">Create Event</button>
+            </div>
+            <div class="form-result" data-form-result></div>
+          </form>
+        `,
+        'Events are the handoff point from captures into campaigns.'
+      )}
+      ${renderPanel('Recent Captures', renderCaptureCards(captures.slice(0, 4)), 'Choose one as context if it helps')}
+    </div>
+    ${renderPanel('Recent Events', renderEventCards(events))}
+  `;
+}
+
+async function renderDraftsPage(page, requestUrl) {
+  const selectedEventId = readOptionalString(requestUrl.searchParams.get('eventId'), '');
+  const [eventsRes, draftsRes] = await Promise.all([
+    fetchJsonSafe('/events?limit=12'),
+    fetchJsonSafe(`/drafts?limit=24${selectedEventId ? `&eventId=${encodeURIComponent(selectedEventId)}` : ''}`),
+  ]);
+  const events = eventsRes.ok ? eventsRes.payload.events || [] : [];
+  const drafts = draftsRes.ok ? draftsRes.payload.drafts || [] : [];
+
+  const eventOptions = events.length
+    ? events
+        .map(
+          (event) =>
+            `<option value="${escapeHtml(event.eventId)}"${
+              event.eventId === selectedEventId ? ' selected' : ''
+            }>${escapeHtml(event.title)}</option>`
+        )
+        .join('')
+    : '<option value="">No events yet</option>';
+
+  return `
+    ${renderHero(
+      page,
+      [renderMetric(String(events.length), 'events ready'), renderMetric(String(drafts.length), 'drafts visible')].join(''),
+      `<div class="info-card"><strong>Unlock path</strong><p>These publish packages are the L1/L1.5 implementation path for blocked channels before credentials are ready.</p></div>`
+    )}
+    <div class="grid two-up">
+      ${renderPanel(
+        'Generate Publish Packages',
+        `
+          <form class="api-form" data-api-form="true" data-endpoint="/drafts/generate">
+            ${renderFormField('Event', `<select name="eventId">${eventOptions}</select>`)}
+            ${renderFormField(
+              'Languages',
+              `<select name="languages">
+                <option value="en">English</option>
+                <option value="zh">Chinese</option>
+                <option value="bilingual">Bilingual</option>
+              </select>`
+            )}
+            ${renderFormField('Angle', '<input name="angle" type="text" value="operator update" />')}
+            ${renderFormField('Tone', '<input name="tone" type="text" value="clear" />')}
+            ${renderFormField('Audience', '<input name="audience" type="text" value="builders, collaborators, future users" />')}
+            ${renderFormField('CTA', '<input name="cta" type="text" placeholder="Reply if you want to compare notes." />')}
+            <fieldset class="field">
+              <span>Platforms</span>
+              <div class="check-grid">
+                <label><input type="checkbox" name="platforms" value="instagram" checked /> Instagram</label>
+                <label><input type="checkbox" name="platforms" value="x" checked /> X</label>
+                <label><input type="checkbox" name="platforms" value="linkedin" checked /> LinkedIn</label>
+                <label><input type="checkbox" name="platforms" value="zhihu" checked /> Zhihu</label>
+                <label><input type="checkbox" name="platforms" value="xiaohongshu" checked /> Xiaohongshu</label>
+                <label><input type="checkbox" name="platforms" value="wechat_moments" checked /> WeChat Moments</label>
+                <label><input type="checkbox" name="platforms" value="wechat_official" checked /> WeChat Official</label>
+              </div>
+            </fieldset>
+            <div class="inline-actions">
+              <button type="submit">Generate Drafts</button>
+            </div>
+            <div class="form-result" data-form-result></div>
+          </form>
+        `,
+        'This is now the real 7-platform workbench instead of a placeholder.'
+      )}
+      ${renderPanel(
+        'Event Feed',
+        events.length
+          ? `<div class="stack">${events
+              .map(
+                (event) => `
+                  <article class="stack-card">
+                    <div class="stack-meta">
+                      <strong>${escapeHtml(event.title)}</strong>
+                      <span>${escapeHtml(formatDateTime(event.createdAt))}</span>
+                    </div>
+                    <div class="inline-actions">
+                      <a class="mini-link" href="/drafts?eventId=${encodeURIComponent(event.eventId)}">Filter drafts</a>
+                      <code>${escapeHtml(event.eventId)}</code>
+                    </div>
+                  </article>
+                `
+              )
+              .join('')}</div>`
+          : renderEmptyState('Create an event first.'),
+        'Pick an event and generate package variants.'
+      )}
+    </div>
+    ${renderPanel(
+      selectedEventId ? `Draft Library for ${selectedEventId}` : 'Draft Library',
+      renderDraftCards(drafts),
+      'Each card shows support level, publishing entrypoint, and queue action.'
+    )}
+  `;
+}
+
+async function renderQueuePage(page) {
+  const [queueRes, runtimeRes] = await Promise.all([
+    fetchJsonSafe('/queue/tasks?limit=24'),
+    fetchJsonSafe('/settings/runtime'),
+  ]);
+  const queueTasks = queueRes.ok ? queueRes.payload.queueTasks || [] : [];
+  const runtime = runtimeRes.ok ? runtimeRes.payload : {};
+  const publishMode = runtime.publishMode || 'dry-run';
+
+  return `
+    ${renderHero(
+      page,
+      [
+        renderMetric(String(queueTasks.filter((task) => task.status === 'queued').length), 'queued'),
+        renderMetric(String(queueTasks.filter((task) => task.status !== 'queued').length), 'executed'),
+        renderMetric(String(runtime.ops?.queue?.blocked ?? 0), 'blocked product items'),
+      ].join(''),
+      `<div class="info-card"><strong>Current publish mode</strong><p>${escapeHtml(
+        publishMode
+      )} · live still requires env + UI intent + credentials.</p></div>`
+    )}
+    ${renderPanel(
+      'Queue Tasks',
+      renderQueueCards(queueTasks, publishMode),
+      'Approve in dry-run by default, or explicitly attempt live with all gates enabled.'
+    )}
+  `;
+}
+
+async function renderSelfMirrorPage(page) {
+  const mirrorRes = await fetchJsonSafe('/self-mirror');
+  const payload = mirrorRes.ok ? mirrorRes.payload : { latestMirror: null, checkins: [] };
+
+  return `
+    ${renderHero(
+      page,
+      [
+        renderMetric(String((payload.checkins || []).length), 'check-ins'),
+        renderMetric(payload.latestMirror ? '1' : '0', 'latest mirror'),
+      ].join('')
+    )}
+    ${renderPanel(
+      'Generate Mirror',
+      `
+        <form class="api-form" data-api-form="true" data-endpoint="/self-mirror/generate">
+          ${renderFormField(
+            'Range',
+            `<select name="range">
+              <option value="last-7d">last-7d</option>
+              <option value="last-14d">last-14d</option>
+              <option value="last-30d">last-30d</option>
+            </select>`
+          )}
+          <div class="inline-actions">
+            <button type="submit">Generate Mirror</button>
+          </div>
+          <div class="form-result" data-form-result></div>
+        </form>
+      `,
+      'Rebuild the weekly synthesis from current check-ins and capture backfill.'
+    )}
+    ${renderMirrorBlock(payload)}
+  `;
+}
+
+async function renderDevDigestPage(page) {
   const [statusRes, runsRes, blockedRes, digestRes] = await Promise.all([
     fetchJsonSafe('/ops/status'),
     fetchJsonSafe('/ops/runs?limit=8'),
@@ -192,146 +848,331 @@ async function renderDevDigestBody(page) {
     fetchJsonSafe('/dev-digest?limit=8'),
   ]);
 
-  if (!statusRes.ok) {
-    return `
-      <header>
-        <h1>${escapeHtml(page.title)}</h1>
-        <p>${escapeHtml(page.summary)}</p>
-      </header>
-      <section>
-        <h2>Runtime Health</h2>
-        <p>Unable to read ops status from ${escapeHtml(DEFAULT_API_BASE_URL)}.</p>
-        <p><code>${escapeHtml(statusRes.error || 'unknown error')}</code></p>
-      </section>
-    `;
-  }
-
-  const status = statusRes.payload || {};
-  const blockedTasks = blockedRes.ok ? blockedRes.payload?.blockedTasks || [] : [];
-  const runs = runsRes.ok ? runsRes.payload?.runs || [] : [];
-  const digests = digestRes.ok ? digestRes.payload?.digests || [] : [];
+  const status = statusRes.ok ? statusRes.payload : {};
+  const runs = runsRes.ok ? runsRes.payload.runs || [] : [];
+  const blocked = blockedRes.ok ? blockedRes.payload.blockedTasks || [] : [];
+  const digests = digestRes.ok ? digestRes.payload.digests || [] : [];
   const latestRun = status.latestRun || runs[0] || null;
 
-  const blockedListHtml = blockedTasks.length
-    ? `<ul>${blockedTasks
-        .slice(0, 8)
-        .map(
-          (item) =>
-            `<li>line ${escapeHtml(String(item.line))}: ${escapeHtml(readOptionalString(item.task, 'blocked'))}</li>`
-        )
-        .join('')}</ul>`
-    : '<p>No blocked tasks.</p>';
-
-  const runListHtml = runs.length
-    ? `<ul>${runs
-        .slice(0, 8)
-        .map((run) => {
-          const runId = readOptionalString(run.runId, 'unknown');
-          const taskId = readOptionalString(run.taskId, 'n/a');
-          const runStatus = readOptionalString(run.status, 'unknown');
-          const duration = formatDuration(run.durationMs);
-          const summary = readOptionalString(run.summary, 'n/a');
-          return `<li><code>${escapeHtml(runId)}</code> · ${escapeHtml(taskId)} · ${escapeHtml(
-            runStatus
-          )} · ${escapeHtml(duration)}<br/><small>${escapeHtml(summary)}</small></li>`;
-        })
-        .join('')}</ul>`
-    : '<p>No run history found yet.</p>';
-
-  const digestListHtml = digests.length
-    ? `<ul>${digests
-        .slice(0, 6)
-        .map((item) => {
-          const what = readOptionalString(item.what, 'n/a');
-          const risk = readOptionalString(item.risk, 'n/a');
-          const verify = readOptionalString(item.verify, 'n/a');
-          return `<li><strong>${escapeHtml(what)}</strong><br/><small>risk=${escapeHtml(
-            risk
-          )} · verify=${escapeHtml(verify)}</small></li>`;
-        })
-        .join('')}</ul>`
-    : '<p>No digest records in DB yet.</p>';
-
-  const statusRows = [
-    renderStatusRow('Mode', readOptionalString(status.mode, 'unknown')),
-    renderStatusRow('Publish Mode', readOptionalString(status.publishMode, 'dry-run')),
-    renderStatusRow('Queue Pending', String(status.queue?.pending ?? 0)),
-    renderStatusRow('Queue In Progress', String(status.queue?.inProgress ?? 0)),
-    renderStatusRow('Queue Blocked', String(status.queue?.blocked ?? 0)),
-    renderStatusRow('Queue Done', String(status.queue?.done ?? 0)),
-    renderStatusRow('Current Task', readOptionalString(status.queue?.currentTask, 'none')),
-    renderStatusRow('Lock Present', String(Boolean(status.lock?.present))),
-    renderStatusRow('Lock Owner PID', readOptionalString(String(status.lock?.ownerPid ?? ''), 'n/a')),
-    renderStatusRow('Lock Heartbeat Age', readOptionalString(String(status.lock?.heartbeatAgeSec ?? ''), 'n/a')),
-    renderStatusRow(
-      'Consecutive Failures',
-      String(status.health?.consecutiveFailures ?? 0)
-    ),
-    renderStatusRow(
-      'Latest Run Duration',
-      formatDuration(status.health?.latestRunDurationMs)
-    ),
-  ].join('');
-
   return `
-    <header>
-      <h1>${escapeHtml(page.title)}</h1>
-      <p>${escapeHtml(page.summary)}</p>
-      <p>API base: <code>${escapeHtml(DEFAULT_API_BASE_URL)}</code></p>
-    </header>
-    <section>
-      <h2>Runtime Health</h2>
-      <table>
-        <tbody>${statusRows}</tbody>
-      </table>
-    </section>
-    <section>
-      <h2>Latest Run</h2>
-      ${
+    ${renderHero(
+      page,
+      [
+        renderMetric(readOptionalString(status.mode, 'unknown'), 'mode'),
+        renderMetric(String(status.queue?.blocked ?? 0), 'blocked'),
+        renderMetric(formatDuration(status.health?.latestRunDurationMs), 'latest run'),
+      ].join('')
+    )}
+    <div class="grid two-up">
+      ${renderPanel(
+        'Latest Run',
         latestRun
-          ? `<p><code>${escapeHtml(readOptionalString(latestRun.runId, 'unknown'))}</code> · ${escapeHtml(
-              readOptionalString(latestRun.status, 'unknown')
-            )} · ${escapeHtml(formatDuration(latestRun.durationMs))}</p>
-             <p>${escapeHtml(readOptionalString(latestRun.summary, 'n/a'))}</p>`
-          : '<p>No run yet.</p>'
-      }
-    </section>
-    <section>
-      <h2>Blocked Tasks</h2>
-      ${blockedListHtml}
-    </section>
-    <section>
-      <h2>Recent Runs</h2>
-      ${runListHtml}
-    </section>
-    <section>
-      <h2>Dev Digest (DB)</h2>
-      ${digestListHtml}
-    </section>
-    <section>
-      <h2>Digest Snapshot</h2>
-      <pre>${escapeHtml(readOptionalString(status.latestDigest, '(empty)'))}</pre>
-    </section>
+          ? `
+              <div class="stack-card">
+                <div class="stack-meta">
+                  <code>${escapeHtml(latestRun.runId || 'unknown')}</code>
+                  <span>${escapeHtml(latestRun.status || 'unknown')}</span>
+                </div>
+                <p>${escapeHtml(latestRun.summary || 'n/a')}</p>
+                <small>${escapeHtml(latestRun.next || 'n/a')}</small>
+              </div>
+            `
+          : renderEmptyState('No run report yet.')
+      )}
+      ${renderPanel(
+        'Blocked Queue Head',
+        renderBlockedList(blocked.slice(0, 6)),
+        'These are the remaining non-automation blockers.'
+      )}
+    </div>
+    ${renderPanel('Recent Runs', renderDigestRunList(runs))}
+    ${renderPanel(
+      'Digest Feed',
+      digests.length
+        ? `<div class="stack">${digests
+            .map(
+              (item) => `
+                <article class="stack-card">
+                  <div class="stack-meta">
+                    <strong>${escapeHtml(item.what)}</strong>
+                    <span>${escapeHtml(formatDateTime(item.created_at || item.createdAt))}</span>
+                  </div>
+                  <p>${escapeHtml(item.why || '')}</p>
+                  <div class="chip-row">
+                    ${renderPill(item.risk || 'n/a', item.risk === 'low' ? 'good' : 'warn')}
+                    ${renderPill(item.verify || 'verify', 'soft')}
+                  </div>
+                </article>
+              `
+            )
+            .join('')}</div>`
+        : renderEmptyState('No digest rows yet.'),
+      'DB-backed digests mirror the latest markdown summary.'
+    )}
+    ${renderPanel('Digest Snapshot', `<pre>${escapeHtml(readOptionalString(status.latestDigest, '(empty)'))}</pre>`)}
   `;
 }
 
-async function renderPageBody(page) {
-  if (page.id === 'dev-digest') {
-    return renderDevDigestBody(page);
-  }
-
-  const hints = PAGE_HINTS[page.id] ?? ['Placeholder panel'];
-  const hintItems = hints.map((hint) => `<li>${escapeHtml(hint)}</li>`).join('');
+async function renderSettingsPage(page) {
+  const runtimeRes = await fetchJsonSafe('/settings/runtime');
+  const clusterRes = await fetchJsonSafe('/ops/cluster');
+  const runtime = runtimeRes.ok ? runtimeRes.payload : {};
+  const cluster = clusterRes.ok ? clusterRes.payload.foundry : runtime.foundry;
+  const codex = clusterRes.ok ? clusterRes.payload.codex : runtime.codex;
+  const blocked = clusterRes.ok ? clusterRes.payload.blocked || [] : [];
+  const embeddings = runtime.embeddings || {};
 
   return `
-    <header>
-      <h1>${escapeHtml(page.title)}</h1>
-      <p>${escapeHtml(page.summary)}</p>
-    </header>
-    <section>
-      <h2>Dashboard v0 skeleton</h2>
-      <ul>${hintItems}</ul>
-    </section>
+    ${renderHero(
+      page,
+      [
+        renderMetric(runtime.publishMode || 'dry-run', 'publish mode'),
+        renderMetric(embeddings.effectiveProvider || 'local', 'embeddings'),
+        renderMetric(String((cluster?.agents || []).length), 'foundry lanes'),
+      ].join(''),
+      `<div class="info-card"><strong>First-layer Foundry</strong><p>The cluster can now be treated as an execution surface, not just a background loop.</p></div>`
+    )}
+    <div class="grid two-up">
+      ${renderPanel(
+        'Runtime Controls',
+        `
+          <div class="control-stack">
+            <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
+              <input type="hidden" name="command" value="RUN_DEVLOOP_ONCE" />
+              <button type="submit">Run Devloop Once</button>
+              <div class="form-result" data-form-result></div>
+            </form>
+            <div class="inline-actions stretch">
+              <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
+                <input type="hidden" name="command" value="PAUSE_DEVLOOP" />
+                <button type="submit">Pause</button>
+                <div class="form-result" data-form-result></div>
+              </form>
+              <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
+                <input type="hidden" name="command" value="RESUME_DEVLOOP" />
+                <button type="submit">Resume</button>
+                <div class="form-result" data-form-result></div>
+              </form>
+              <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
+                <input type="hidden" name="command" value="STATUS" />
+                <button type="submit">Refresh Status</button>
+                <div class="form-result" data-form-result></div>
+              </form>
+            </div>
+            <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
+              <input type="hidden" name="command" value="SET_PUBLISH_MODE" />
+              ${renderFormField(
+                'Publish Mode',
+                `<select name="mode">
+                  <option value="dry-run"${runtime.publishMode === 'dry-run' ? ' selected' : ''}>dry-run</option>
+                  <option value="live"${runtime.publishMode === 'live' ? ' selected' : ''}>live</option>
+                </select>`,
+                'Changing this only flips the runtime mode file; live still needs credentials.'
+              )}
+              <div class="inline-actions">
+                <button type="submit">Set Publish Mode</button>
+              </div>
+              <div class="form-result" data-form-result></div>
+            </form>
+          </div>
+        `,
+        'Operate the loop without leaving the product workspace.'
+      )}
+      ${renderPanel(
+        'Embeddings + Safety',
+        `
+          <ul class="compact-list">
+            <li><strong>Requested:</strong> ${escapeHtml(embeddings.requestedProvider || 'auto')}</li>
+            <li><strong>Effective:</strong> ${escapeHtml(embeddings.effectiveProvider || 'local')}</li>
+            <li><strong>Retrieval:</strong> ${escapeHtml(embeddings.retrievalMode || 'hybrid-keyword')}</li>
+            <li><strong>Semantic boost:</strong> ${escapeHtml(String(Boolean(embeddings.semanticBoostEnabled)))}</li>
+            <li><strong>Live env enabled:</strong> ${escapeHtml(String(Boolean(runtime.liveEnvironmentEnabled)))}</li>
+          </ul>
+          <div class="chip-row">
+            ${renderPill(`blocked items ${blocked.length}`, blocked.length ? 'warn' : 'good')}
+            ${renderPill('loopback only', 'soft')}
+          </div>
+        `,
+        'Operational truth for the current runtime.'
+      )}
+    </div>
+    ${renderPanel('Foundry Cluster', renderClusterCards(cluster), 'Each lane has a role now visible in the product.')}
+    ${renderCodexSummary(codex)}
+    ${renderPanel('Blocked Surface', renderBlockedList(blocked), 'This is the remaining queue you still need to push through credentials or platform-specific decisions.')}
+  `;
+}
+
+async function renderPageBody(page, requestUrl) {
+  switch (page.id) {
+    case 'quick-capture':
+      return renderQuickCapturePage(page);
+    case 'people':
+      return renderPeoplePage(page, requestUrl);
+    case 'events':
+      return renderEventsPage(page);
+    case 'drafts':
+      return renderDraftsPage(page, requestUrl);
+    case 'queue':
+      return renderQueuePage(page);
+    case 'self-mirror':
+      return renderSelfMirrorPage(page);
+    case 'dev-digest':
+      return renderDevDigestPage(page);
+    case 'settings':
+      return renderSettingsPage(page);
+    default:
+      return `
+        ${renderHero(page)}
+        ${renderPanel('Page Unavailable', renderEmptyState('No renderer implemented for this page.'))}
+      `;
+  }
+}
+
+function renderClientScript() {
+  return `
+    <script>
+      const apiBase = ${JSON.stringify(DEFAULT_API_BASE_URL)};
+      const flashKey = 'socialos.dashboard.flash';
+
+      function parseMaybeJson(text) {
+        try {
+          return text ? JSON.parse(text) : {};
+        } catch {
+          return { raw: text };
+        }
+      }
+
+      function formDataToJson(form) {
+        const data = {};
+        const formData = new FormData(form);
+        for (const [key, rawValue] of formData.entries()) {
+          let value = rawValue;
+          if (value === 'true') value = true;
+          if (value === 'false') value = false;
+
+          if (Object.prototype.hasOwnProperty.call(data, key)) {
+            if (!Array.isArray(data[key])) data[key] = [data[key]];
+            data[key].push(value);
+          } else {
+            data[key] = value;
+          }
+        }
+
+        const jsonFields = (form.dataset.jsonFields || '')
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean);
+
+        for (const field of jsonFields) {
+          if (typeof data[field] === 'string' && data[field].trim()) {
+            data[field] = JSON.parse(data[field]);
+          }
+        }
+
+        return data;
+      }
+
+      function flashMessage(flash) {
+        const banner = document.querySelector('[data-flash]');
+        if (!banner || !flash) return;
+        banner.hidden = false;
+        banner.className = flash.ok ? 'flash ok' : 'flash fail';
+        banner.innerHTML = '<strong>' + (flash.ok ? 'Updated' : 'Action failed') + '</strong><span>' + String(flash.message || 'No message') + '</span>';
+      }
+
+      function consumeFlash() {
+        const raw = sessionStorage.getItem(flashKey);
+        if (!raw) return;
+        sessionStorage.removeItem(flashKey);
+        try {
+          flashMessage(JSON.parse(raw));
+        } catch {}
+      }
+
+      async function submitApiForm(form, submitter) {
+        const endpoint = form.dataset.endpoint;
+        const resultNode = form.querySelector('[data-form-result]');
+        const payload = formDataToJson(form);
+
+        if (!endpoint) return;
+
+        if (submitter) {
+          submitter.disabled = true;
+          submitter.dataset.originalLabel = submitter.textContent;
+          submitter.textContent = 'Working...';
+        }
+
+        try {
+          const response = await fetch(apiBase + endpoint, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          const text = await response.text();
+          const parsed = parseMaybeJson(text);
+          const message =
+            parsed.summary ||
+            parsed.output ||
+            parsed.error ||
+            parsed.action ||
+            parsed.taskId ||
+            parsed.person?.name ||
+            parsed.personId ||
+            parsed.count ||
+            'Request completed';
+
+          if (resultNode) {
+            resultNode.innerHTML = '<pre>' + String(JSON.stringify(parsed, null, 2))
+              .replaceAll('&', '&amp;')
+              .replaceAll('<', '&lt;')
+              .replaceAll('>', '&gt;') + '</pre>';
+          }
+
+          sessionStorage.setItem(
+            flashKey,
+            JSON.stringify({
+              ok: response.ok,
+              message,
+            })
+          );
+
+          if (response.ok) {
+            window.location.reload();
+            return;
+          }
+        } catch (error) {
+          if (resultNode) {
+            resultNode.innerHTML = '<pre>' + String(error.message || error)
+              .replaceAll('&', '&amp;')
+              .replaceAll('<', '&lt;')
+              .replaceAll('>', '&gt;') + '</pre>';
+          }
+          sessionStorage.setItem(
+            flashKey,
+            JSON.stringify({
+              ok: false,
+              message: error.message || String(error),
+            })
+          );
+        } finally {
+          if (submitter) {
+            submitter.disabled = false;
+            submitter.textContent = submitter.dataset.originalLabel || 'Submit';
+          }
+        }
+      }
+
+      document.addEventListener('submit', (event) => {
+        const form = event.target;
+        if (!(form instanceof HTMLFormElement)) return;
+        if (!form.dataset.apiForm) return;
+        event.preventDefault();
+        submitApiForm(form, event.submitter || form.querySelector('button[type="submit"]'));
+      });
+
+      consumeFlash();
+    </script>
   `;
 }
 
@@ -341,161 +1182,469 @@ function renderLayout({ currentPath, title, body }) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${escapeHtml(title)} · SocialOS Dashboard</title>
+    <title>${escapeHtml(title)} · SocialOS Workspace</title>
     <style>
       :root {
-        color-scheme: light dark;
+        --bg: #f4efe5;
+        --ink: #162132;
+        --ink-soft: #4e5d73;
+        --panel: rgba(255, 250, 242, 0.84);
+        --panel-strong: rgba(255, 247, 236, 0.94);
+        --line: rgba(22, 33, 50, 0.12);
+        --nav-bg: rgba(16, 26, 44, 0.9);
+        --nav-ink: #eef5ff;
+        --accent: #156f6a;
+        --accent-soft: #daf4f1;
+        --warn: #b55d34;
+        --warn-soft: #f8e3d7;
+        --good: #2e7d51;
+        --good-soft: #dff2e7;
+        --shadow: 0 20px 70px rgba(18, 33, 49, 0.12);
       }
       * {
         box-sizing: border-box;
       }
       body {
         margin: 0;
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-        background: #0b1020;
-        color: #e8ebf5;
+        color: var(--ink);
+        font-family: "Avenir Next", "IBM Plex Sans", "Noto Sans SC", sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(21, 111, 106, 0.12), transparent 26%),
+          radial-gradient(circle at bottom right, rgba(181, 93, 52, 0.14), transparent 28%),
+          linear-gradient(180deg, #fcf8f0 0%, #f3ede2 100%);
       }
-      .app {
+      .shell {
         min-height: 100vh;
         display: grid;
-        grid-template-columns: minmax(210px, 250px) 1fr;
+        grid-template-columns: minmax(240px, 280px) 1fr;
       }
       nav {
-        border-right: 1px solid #1f2942;
-        padding: 20px 14px;
-        background: #0f1730;
+        position: sticky;
+        top: 0;
+        align-self: start;
+        min-height: 100vh;
+        padding: 28px 20px;
+        color: var(--nav-ink);
+        background:
+          linear-gradient(180deg, rgba(13, 24, 39, 0.98), rgba(18, 34, 56, 0.92));
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
       }
       .brand {
-        font-size: 14px;
-        letter-spacing: 0.1em;
+        margin: 0 0 18px;
+        font-size: 11px;
+        letter-spacing: 0.18em;
         text-transform: uppercase;
-        color: #aab5d2;
-        margin: 0 0 14px;
+        opacity: 0.7;
+      }
+      .brand-title {
+        margin: 0 0 24px;
+        font-size: 26px;
+        font-family: "Iowan Old Style", "Palatino Linotype", serif;
       }
       .nav-link {
         display: block;
-        color: #d2d9ec;
+        padding: 12px 14px;
+        margin-bottom: 6px;
+        border-radius: 16px;
+        color: inherit;
         text-decoration: none;
-        border-radius: 10px;
-        padding: 9px 10px;
-        margin-bottom: 4px;
         border: 1px solid transparent;
+        transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
       }
       .nav-link:hover {
-        border-color: #2d3b63;
-        background: #182447;
+        transform: translateX(2px);
+        background: rgba(255, 255, 255, 0.07);
+        border-color: rgba(255, 255, 255, 0.08);
       }
       .nav-link.active {
-        border-color: #5d7fd6;
-        background: #1d2d5b;
-        color: #ffffff;
+        background: rgba(255, 255, 255, 0.14);
+        border-color: rgba(255, 255, 255, 0.18);
+      }
+      .nav-footer {
+        margin-top: 28px;
+        padding-top: 18px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: 13px;
+        line-height: 1.5;
+        opacity: 0.78;
       }
       main {
-        padding: 28px;
+        padding: 32px;
+      }
+      .flash {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 14px 16px;
+        margin-bottom: 18px;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+      }
+      .flash.ok {
+        border-color: rgba(46, 125, 81, 0.2);
+        background: var(--good-soft);
+      }
+      .flash.fail {
+        border-color: rgba(181, 93, 52, 0.22);
+        background: var(--warn-soft);
+      }
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+      .hero-copy,
+      .hero-rail,
+      .panel,
+      .info-card {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+      }
+      .hero-copy {
+        border-radius: 28px;
+        padding: 30px;
+      }
+      .hero-rail {
+        border-radius: 28px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .eyebrow,
+      .card-kicker {
+        margin: 0 0 8px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+      }
+      h1, h2, h3 {
+        margin: 0;
+        font-family: "Iowan Old Style", "Palatino Linotype", serif;
+        font-weight: 600;
       }
       h1 {
-        margin: 0 0 8px;
+        margin-bottom: 10px;
+        font-size: clamp(34px, 5vw, 54px);
       }
       h2 {
-        margin-top: 28px;
-        font-size: 1rem;
-        color: #c9d4f2;
+        font-size: 24px;
+      }
+      h3 {
+        font-size: 22px;
       }
       p {
-        margin-top: 0;
-        color: #c4ccea;
-        max-width: 66ch;
+        margin: 0;
+        color: var(--ink-soft);
+        line-height: 1.65;
       }
-      section {
-        border: 1px solid #28355d;
-        border-radius: 14px;
-        padding: 16px 18px;
-        background: #101a37;
+      .api-hint {
+        margin-top: 14px;
       }
-      li {
-        margin-bottom: 8px;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      th,
-      td {
-        text-align: left;
-        padding: 7px 8px;
-        border-bottom: 1px solid #25365f;
-        vertical-align: top;
-      }
-      th {
-        color: #b7c5ea;
-        font-weight: 600;
-        width: 220px;
+      code,
+      pre,
+      select,
+      input,
+      textarea,
+      button {
+        font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
       }
       pre {
+        margin: 0;
         white-space: pre-wrap;
         word-break: break-word;
-        background: #0b1430;
-        border: 1px solid #263864;
-        border-radius: 10px;
-        padding: 12px;
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(18, 33, 50, 0.92);
+        color: #eef4ff;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        overflow: auto;
       }
-      small {
-        color: #9caad3;
+      .metric-strip {
+        display: grid;
+        gap: 10px;
+      }
+      .metric {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding: 12px 14px;
+        border-radius: 18px;
+        background: var(--panel-strong);
+        border: 1px solid var(--line);
+      }
+      .metric strong {
+        font-size: 24px;
+        color: var(--ink);
+      }
+      .metric span {
+        color: var(--ink-soft);
+        font-size: 13px;
+      }
+      .panel {
+        border-radius: 24px;
+        padding: 22px;
+      }
+      .panel-head {
+        margin-bottom: 18px;
+      }
+      .panel-subtitle {
+        margin-top: 8px;
+      }
+      .grid {
+        display: grid;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+      .two-up {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .three-up {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .field {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+      .field > span {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .field small {
+        color: var(--ink-soft);
+      }
+      input,
+      textarea,
+      select {
+        width: 100%;
+        border: 1px solid rgba(22, 33, 50, 0.14);
+        border-radius: 16px;
+        padding: 12px 14px;
+        background: rgba(255, 255, 255, 0.78);
+        color: var(--ink);
+      }
+      textarea {
+        resize: vertical;
+      }
+      fieldset.field {
+        border: 1px solid rgba(22, 33, 50, 0.12);
+        border-radius: 18px;
+        padding: 14px;
+      }
+      button,
+      .mini-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      button {
+        padding: 11px 16px;
+        color: white;
+        background: linear-gradient(135deg, #135d6a, #2e8076);
+        box-shadow: 0 10px 24px rgba(21, 111, 106, 0.18);
+      }
+      button:hover {
+        filter: brightness(1.03);
+      }
+      button:disabled {
+        opacity: 0.65;
+        cursor: wait;
+      }
+      .mini-link {
+        padding: 9px 14px;
+        border-color: rgba(22, 33, 50, 0.12);
+        background: rgba(255, 255, 255, 0.72);
+        color: var(--ink);
+      }
+      .inline-actions,
+      .chip-row,
+      .stack-meta {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .stretch {
+        align-items: stretch;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 12px;
+        border: 1px solid transparent;
+      }
+      .tone-accent {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .tone-soft,
+      .tone-neutral {
+        background: rgba(22, 33, 50, 0.06);
+        color: var(--ink-soft);
+      }
+      .tone-good {
+        background: var(--good-soft);
+        color: var(--good);
+      }
+      .tone-warn {
+        background: var(--warn-soft);
+        color: var(--warn);
+      }
+      .stack,
+      .draft-grid,
+      .cluster-grid,
+      .control-stack {
+        display: grid;
+        gap: 14px;
+      }
+      .stack-card,
+      .draft-card,
+      .cluster-card,
+      .info-card,
+      .empty-state,
+      .result-block {
+        border-radius: 20px;
+        padding: 16px;
+        border: 1px solid rgba(22, 33, 50, 0.1);
+        background: var(--panel-strong);
+      }
+      .score {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .draft-grid,
+      .cluster-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .draft-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        align-items: flex-start;
+        margin-bottom: 12px;
+      }
+      .package-meta {
+        display: grid;
+        gap: 8px;
+        margin: 14px 0;
+      }
+      .step-list,
+      .compact-list,
+      .blocked-list {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--ink-soft);
+        line-height: 1.7;
+      }
+      .query-form,
+      .api-form {
+        display: grid;
+        gap: 10px;
+      }
+      .compact-form {
+        gap: 12px;
+      }
+      .compact-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .form-result pre {
+        margin-top: 6px;
+        max-height: 260px;
+      }
+      .check-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .toggle {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .info-callout {
+        margin-top: 12px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(21, 111, 106, 0.08);
+        border: 1px solid rgba(21, 111, 106, 0.14);
+        color: var(--accent);
       }
       footer {
-        margin-top: 28px;
-        font-size: 12px;
-        color: #95a3cd;
+        margin-top: 24px;
+        color: var(--ink-soft);
+        font-size: 13px;
       }
-      @media (max-width: 820px) {
-        .app {
+      @media (max-width: 1080px) {
+        .shell {
           grid-template-columns: 1fr;
         }
         nav {
-          border-right: 0;
-          border-bottom: 1px solid #1f2942;
-          position: sticky;
-          top: 0;
-          z-index: 2;
+          min-height: auto;
+          position: static;
+        }
+        .hero,
+        .two-up,
+        .three-up,
+        .draft-grid,
+        .cluster-grid,
+        .compact-grid {
+          grid-template-columns: 1fr;
         }
       }
     </style>
   </head>
   <body>
-    <div class="app">
+    <div class="shell">
       <nav>
-        <p class="brand">SocialOS</p>
+        <p class="brand">Local-first social operating system</p>
+        <h2 class="brand-title">SocialOS</h2>
         ${renderNavigation(currentPath)}
+        <div class="nav-footer">
+          <p>Foundry now keeps the loop warm.</p>
+          <p>Codex can work across UI, API, tests, and orchestration.</p>
+        </div>
       </nav>
       <main>
+        <div class="flash" data-flash hidden></div>
         ${body}
-        <footer>Dashboard v0 skeleton · loopback local UI</footer>
+        <footer>Product workspace on loopback · capture → people → event → drafts → queue → mirror → digest</footer>
       </main>
     </div>
+    ${renderClientScript()}
   </body>
 </html>`;
 }
 
-function normalizePath(pathname) {
-  if (pathname.length > 1 && pathname.endsWith('/')) {
-    return pathname.slice(0, -1);
-  }
-  return pathname;
-}
-
 async function routeRequest(req, res) {
   const method = req.method || 'GET';
-  const rawPath = new URL(req.url || '/', 'http://localhost').pathname;
+  const requestUrl = new URL(req.url || '/', 'http://localhost');
+  const rawPath = requestUrl.pathname;
   const pathname = normalizePath(rawPath);
 
   if (method !== 'GET') {
-    sendHtml(res, 405, renderLayout({
-      currentPath: '',
-      title: 'Method Not Allowed',
-      body: '<h1>Method Not Allowed</h1><p>This dashboard skeleton only serves GET routes.</p>',
-    }), {
-      allow: 'GET',
-    });
+    sendHtml(
+      res,
+      405,
+      renderLayout({
+        currentPath: '',
+        title: 'Method Not Allowed',
+        body: '<h1>Method Not Allowed</h1><p>This dashboard only serves GET routes and delegates mutations to the local API.</p>',
+      }),
+      { allow: 'GET' }
+    );
     return;
   }
 
@@ -511,7 +1660,7 @@ async function routeRequest(req, res) {
 
   const page = PAGE_BY_PATH.get(pathname);
   if (page) {
-    const body = await renderPageBody(page);
+    const body = await renderPageBody(page, requestUrl);
     sendHtml(
       res,
       200,
@@ -596,7 +1745,7 @@ export async function startWebServer({ port = DEFAULT_PORT, quiet = false } = {}
 }
 
 function printHelp() {
-  console.log(`SocialOS dashboard skeleton server (loopback-only)
+  console.log(`SocialOS product workspace server (loopback-only)
 
 Usage:
   node socialos/apps/web/server.mjs [--port <port>]

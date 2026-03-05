@@ -55,7 +55,7 @@ Legend:
 - [x] OPS-3 PAUSE/RESUME 机制（.foundry/PAUSED）
 
 ## Auto Optimization Pool
-- [x] AUTO-OPT-TEST-DEBT 自动执行测试债清理循环
+- [!] AUTO-OPT-TEST-DEBT 自动执行测试债清理循环
   - Done When:
     - `bash scripts/test.sh` 通过并记录 run 报告
 - [x] AUTO-OPT-PERF-DEBT 自动执行 embedding/perf 复盘
@@ -90,6 +90,34 @@ Legend:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
 - [x] AUTOFIX-AUTO_OPT_BLOCKED_TRIAGE-180334 Auto-triage from blocked item: - [!] P2-1 X/LinkedIn live 发布（凭据可用时）
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+- [!] AUTOFIX-AUTO_OPT_TEST_DEBT-195409 Coder stage failed for AUTO-OPT-TEST-DEBT
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+- [!] AUTOFIX-AUTOFIX_AUTO_OPT_TEST_DEBT_195409-195439 Coder stage failed for AUTOFIX-AUTO_OPT_TEST_DEBT-195409
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+- [!] AUTOFIX-AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439-195507 Coder stage failed for AUTOFIX-AUTOFIX_AUTO_OPT_TEST_DEBT_195409-195439
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+- [!] AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507-195536 Coder stage failed for AUTOFIX-AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439-195507
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+- [!] AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507_195536-195608 Coder stage failed for AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507-195536
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+- [!] AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507_195536_195608-195637 Coder stage failed for AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507_195536-195608
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+- [x] AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507_195536_195608_195637-195708 Coder stage failed for AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507_195536_195608-195637
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
