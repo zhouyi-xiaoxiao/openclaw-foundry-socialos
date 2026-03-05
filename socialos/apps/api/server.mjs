@@ -1276,6 +1276,7 @@ function buildStatements(db) {
 
     insertEvent: db.prepare('INSERT INTO Event(id, title, payload, created_at) VALUES(?, ?, ?, ?)'),
     selectEventById: db.prepare('SELECT id, title FROM Event WHERE id = ? LIMIT 1'),
+    selectEventDetailById: db.prepare('SELECT id, title, payload, created_at FROM Event WHERE id = ? LIMIT 1'),
     listRecentEvents: db.prepare(`
       SELECT id, title, payload, created_at
       FROM Event
@@ -1499,8 +1500,93 @@ async function routeRequest(req, res, statements) {
     return;
   }
 
+  if (method === 'GET' && pathname === '/captures') {
+    const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 12, 50);
+    const captures = statements.listRecentCaptures.all(limit).map(formatCaptureRow);
+    sendJson(res, 200, { limit, count: captures.length, captures });
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/events') {
+    const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 12, 50);
+    const events = statements.listRecentEvents.all(limit).map(formatEventRow);
+    sendJson(res, 200, { limit, count: events.length, events });
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/people') {
+    const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 8, 50);
+    const query = readOptionalString(requestUrl.searchParams.get('query'), '');
+
+    if (!query) {
+      const people = statements.listRecentPeople.all(limit).map(formatPersonRow);
+      sendJson(res, 200, { query: '', count: people.length, people, retrieval: null });
+      return;
+    }
+
+    const pattern = `%${query.toLowerCase()}%`;
+    const embeddingsSettings = resolveEmbeddingsSettings();
+    const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+    const rows = statements.searchPeopleByKeyword.all(pattern, pattern, pattern, limit * 3);
+    const results = rows
+      .map((row) => buildSearchResultRow(row, terms, embeddingsSettings))
+      .sort((left, right) => {
+        if (left.score !== right.score) return right.score - left.score;
+        return right.updatedAt.localeCompare(left.updatedAt);
+      })
+      .slice(0, limit);
+
+    sendJson(res, 200, {
+      query,
+      retrieval: {
+        mode: embeddingsSettings.retrievalMode,
+        effectiveProvider: embeddingsSettings.effectiveProvider,
+        semanticBoostEnabled: embeddingsSettings.semanticBoostEnabled,
+        fallback: 'keyword',
+      },
+      count: results.length,
+      results,
+    });
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/drafts') {
+    const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 24, 100);
+    const eventId = readOptionalString(requestUrl.searchParams.get('eventId'), '');
+    const platform = readOptionalString(requestUrl.searchParams.get('platform'), '').toLowerCase();
+    const drafts = statements.listRecentDrafts
+      .all(limit * 3)
+      .map(formatDraftRow)
+      .filter((draft) => !eventId || draft.eventId === eventId)
+      .filter((draft) => !platform || draft.platform === platform)
+      .slice(0, limit);
+    sendJson(res, 200, { limit, count: drafts.length, drafts });
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/queue/tasks') {
+    const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 24, 100);
+    const statusFilter = readOptionalString(requestUrl.searchParams.get('status'), '').toLowerCase();
+    const queueTasks = statements.listRecentQueueTasks
+      .all(limit * 3)
+      .map(formatQueueTaskRow)
+      .filter((task) => !statusFilter || task.status.toLowerCase() === statusFilter)
+      .slice(0, limit);
+    sendJson(res, 200, { limit, count: queueTasks.length, queueTasks });
+    return;
+  }
+
   if (method === 'GET' && pathname === '/ops/status') {
     sendJson(res, 200, buildOpsStatus());
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/ops/cluster') {
+    sendJson(res, 200, {
+      foundry: buildFoundryClusterSummary(),
+      codex: buildCodexLayerSummary(),
+      blocked: parseBlockedTasks(readTextFileOrDefault(QUEUE_PATH, ''), 20),
+    });
     return;
   }
 
@@ -1520,6 +1606,18 @@ async function routeRequest(req, res, statements) {
 
   if (method === 'GET' && pathname === '/settings/embeddings') {
     sendJson(res, 200, resolveEmbeddingsSettings());
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/settings/runtime') {
+    sendJson(res, 200, {
+      publishMode: readMode(),
+      liveEnvironmentEnabled: isLiveEnvironmentEnabled(),
+      embeddings: resolveEmbeddingsSettings(),
+      foundry: buildFoundryClusterSummary(),
+      codex: buildCodexLayerSummary(),
+      ops: buildOpsStatus(),
+    });
     return;
   }
 
@@ -1609,6 +1707,121 @@ async function routeRequest(req, res, statements) {
     return;
   }
 
+  if (method === 'POST' && pathname === '/people/upsert') {
+    const body = await readJsonBody(req);
+    const now = nowIso();
+    const personId =
+      typeof body.personId === 'string' && body.personId.trim() ? body.personId.trim() : makeId('person');
+    const name = requireString(body.name, 'name');
+    const tags = normalizeStringList(body.tags);
+    const notes = readOptionalString(body.notes, '');
+    const nextFollowUpAt = readOptionalString(body.nextFollowUpAt, '') || null;
+    const existing = statements.selectPersonById.get(personId);
+
+    if (existing) {
+      statements.updatePerson.run(
+        name,
+        JSON.stringify(tags),
+        notes,
+        nextFollowUpAt,
+        now,
+        personId
+      );
+    } else {
+      statements.insertPerson.run(
+        personId,
+        name,
+        JSON.stringify(tags),
+        notes,
+        nextFollowUpAt,
+        now,
+        now
+      );
+    }
+
+    const row = statements.selectPersonById.get(personId);
+    sendJson(res, existing ? 200 : 201, {
+      person: formatPersonRow(row),
+      action: existing ? 'updated' : 'created',
+    });
+    return;
+  }
+
+  if (method === 'POST' && pathname === '/drafts/generate') {
+    const body = await readJsonBody(req);
+    const eventId = requireString(body.eventId, 'eventId');
+    const event = statements.selectEventDetailById.get(eventId);
+    if (!event) throw new HttpError(404, 'eventId not found');
+
+    const platforms = normalizePlatformList(body.platforms);
+    const languages = normalizeDraftLanguages(body.languages || body.language);
+    const generatedDrafts = [];
+
+    for (const platformId of platforms) {
+      const platformRule = resolvePlatformRule(platformId);
+      for (const language of languages) {
+        const content = buildDraftContent(platformRule, event, language, body);
+        const capability = getPlatformCapability(platformRule.id);
+        const publishPackage = buildPublishPackage(platformRule, event, language, content, body);
+        const draftId = makeId('draft');
+        const createdAt = nowIso();
+        const metadata = {
+          source: 'api.drafts_generate',
+          capability,
+          publishPackage,
+          generation: {
+            tone: readOptionalString(body.tone, ''),
+            angle: readOptionalString(body.angle, ''),
+            audience: readOptionalString(body.audience, ''),
+          },
+        };
+
+        statements.insertDraft.run(
+          draftId,
+          eventId,
+          platformRule.id,
+          language,
+          content,
+          JSON.stringify(metadata),
+          createdAt
+        );
+
+        generatedDrafts.push(
+          formatDraftRow({
+            id: draftId,
+            event_id: eventId,
+            event_title: event.title,
+            platform: platformRule.id,
+            language,
+            content,
+            metadata: JSON.stringify(metadata),
+            created_at: createdAt,
+          })
+        );
+      }
+    }
+
+    sendJson(res, 201, {
+      eventId,
+      count: generatedDrafts.length,
+      drafts: generatedDrafts,
+    });
+    return;
+  }
+
+  if (method === 'POST' && pathname === '/ops/dispatch') {
+    const body = await readJsonBody(req);
+    const command = resolveDispatchCommand(body);
+    const result = runFoundryDispatch(command);
+    sendJson(res, 200, {
+      command,
+      output: result.output,
+      ops: buildOpsStatus(),
+      cluster: buildFoundryClusterSummary(),
+    });
+    return;
+  }
+
   if (method === 'POST' && pathname === '/capture') {
     const body = await readJsonBody(req);
     const text = requireString(body.text, 'text');
@@ -1693,16 +1906,35 @@ async function routeRequest(req, res, statements) {
 
   if (method === 'POST' && pathname === '/publish/queue') {
     const body = await readJsonBody(req);
-    const eventId = requireString(body.eventId, 'eventId');
+    const draftIdInput =
+      typeof body.draftId === 'string' && body.draftId.trim() ? body.draftId.trim() : null;
 
-    const event = statements.selectEventById.get(eventId);
-    if (!event) throw new HttpError(404, 'eventId not found');
+    let eventId = null;
+    let platformRule;
+    let platform;
+    let language;
+    let content;
+    let draftId = draftIdInput;
 
-    const platformRule = resolvePlatformRule(body.platform);
-    const platform = platformRule.id;
+    if (draftIdInput) {
+      const existingDraft = statements.selectDraftById.get(draftIdInput);
+      if (!existingDraft) throw new HttpError(404, 'draftId not found');
+      eventId = existingDraft.event_id;
+      platformRule = resolvePlatformRule(existingDraft.platform);
+      platform = platformRule.id;
+      language = existingDraft.language;
+      content = existingDraft.content;
+    } else {
+      eventId = requireString(body.eventId, 'eventId');
+      const event = statements.selectEventById.get(eventId);
+      if (!event) throw new HttpError(404, 'eventId not found');
+      platformRule = resolvePlatformRule(body.platform);
+      platform = platformRule.id;
+      language = readOptionalString(body.language, 'en');
+      content = readOptionalString(body.content, event.title);
+    }
+
     const mode = normalizePublishMode(body.mode);
-    const language = readOptionalString(body.language, 'en');
-    const content = readOptionalString(body.content, event.title);
     const compliance = validateQueueContentCompliance(platformRule, content);
 
     if (!compliance.ok) {
@@ -1715,18 +1947,20 @@ async function routeRequest(req, res, statements) {
     }
 
     const metadata = buildQueueMetadata(body);
-
     const createdAt = nowIso();
-    const draftId = makeId('draft');
-    statements.insertDraft.run(
-      draftId,
-      eventId,
-      platform,
-      language,
-      content,
-      JSON.stringify(metadata),
-      createdAt
-    );
+
+    if (!draftIdInput) {
+      draftId = makeId('draft');
+      statements.insertDraft.run(
+        draftId,
+        eventId,
+        platform,
+        language,
+        content,
+        JSON.stringify(metadata),
+        createdAt
+      );
+    }
 
     const taskId = makeId('queue');
     statements.insertQueueTask.run(
@@ -1782,6 +2016,14 @@ async function routeRequest(req, res, statements) {
       liveGate.credentialsReady;
 
     const effectiveMode = liveAllowed ? LIVE_PUBLISH_MODE : DEFAULT_PUBLISH_MODE;
+    const liveFallbackReason =
+      requestedMode === LIVE_PUBLISH_MODE && !liveAllowed
+        ? {
+            envEnabled: liveGate.envEnabled,
+            uiEnabled: liveGate.uiEnabled,
+            credentialsReady: liveGate.credentialsReady,
+          }
+        : null;
 
     const draftMetadata = safeParseJsonObject(task.metadata);
     const highFrequency = readHighFrequencyHint(draftMetadata) || readHighFrequencyHint(body);
@@ -1842,6 +2084,7 @@ async function routeRequest(req, res, statements) {
       execution: {
         ...executionPayload,
         auditId: executeAuditId,
+        liveFallbackReason,
       },
       digestId,
       auditIds: [approveAuditId, executeAuditId],
@@ -1897,6 +2140,7 @@ async function routeRequest(req, res, statements) {
       status: nextStatus,
       auditIds: [approveAuditId, executeAuditId],
       digestId,
+      liveFallbackReason,
       delivery: {
         noDeliver,
         highFrequency,
