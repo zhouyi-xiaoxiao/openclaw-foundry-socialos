@@ -30,6 +30,7 @@
       }
     },
     list: [
+      // publish_execute is publisher-only; non-publisher agents explicitly deny it.
       {
         id: "orchestrator",
         name: "orchestrator",
@@ -78,6 +79,7 @@
         }
       },
       {
+        // publisher is the only agent with publish_execute visibility.
         id: "publisher",
         name: "publisher",
         tools: {

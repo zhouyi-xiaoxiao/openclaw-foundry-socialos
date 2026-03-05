@@ -1,11 +1,24 @@
 # socialos-tools (plugin skeleton)
 
-This plugin declares the SocialOS business tools and their side-effect levels.
+This plugin is the SocialOS business-tool registry.
 
-- CRM / People
-- Self model
-- Campaign drafting
-- Queue / Publish
-- Audit / DevDigest
+## Registered tools
 
-`publish_execute` is intentionally optional and expected to be visible only for `publisher` agent.
+- `crm_upsert_person`
+- `crm_search_person`
+- `crm_link_identity`
+- `self_log_checkin`
+- `self_generate_weekly_mirror`
+- `event_create`
+- `event_update`
+- `draft_create`
+- `draft_list`
+- `publish_queue_task`
+- `publish_execute` (optional)
+- `audit_log_append`
+- `dev_digest_append`
+
+## Policy notes
+
+- `publish_execute` is optional in the plugin contract (`tool-manifest.json` + `tools.schema.json`).
+- Runtime policy must keep `publish_execute` visible to `publisher` only.

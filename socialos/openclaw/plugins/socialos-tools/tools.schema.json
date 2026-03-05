@@ -32,7 +32,6 @@
     "draft_create",
     "draft_list",
     "publish_queue_task",
-    "publish_execute",
     "audit_log_append",
     "dev_digest_append"
   ],

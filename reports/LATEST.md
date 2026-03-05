@@ -1,6 +1,6 @@
-Run: 20260305_043824_P0-2
-What: push blocked
-Why: git push origin main failed
-Risk: medium
-Verify: See /tmp/socialos_push.log
-Next: Fix remote/auth, next cron retries
+Run: 20260305_043844_P0-2
+What: Completed P0-2 socialos-tools plugin contract
+Why: Enforced full tool registration + publish_execute optional + publisher-only visibility
+Risk: low
+Verify: node scripts/tests/runtime_policy_check.mjs && bash scripts/test.sh
+Next: Move to next pending queue item (P0-3)
