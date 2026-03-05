@@ -33,7 +33,16 @@ Default bind is `127.0.0.1` (no external exposure).
     - key present: `retrieval.mode=hybrid-semantic` (automatic semantic boost on top of keyword recall)
 - `POST /publish/queue`
   - input: `{ "eventId": "...", "platform": "x", "mode": "dry-run|live", "language": "en", "content": "...", "frequency": "optional" }`
-  - write: `PostDraft(...)` then `PublishTask(...)`
+  - supported normalized platforms:
+    - `instagram`, `x`, `linkedin`, `zhihu`, `xiaohongshu`, `wechat_moments`, `wechat_official`
+  - aliases are normalized before validation/queueing (for example: `twitter` → `x`, `xhs` → `xiaohongshu`, `wechat-moments` → `wechat_moments`, `official-account` → `wechat_official`)
+  - compliance checks are deterministic and platform-scoped:
+    - max character length
+    - max hashtag count
+    - simple format checks (markdown links, fenced code blocks, raw HTML tags, malformed hashtag syntax)
+  - on compliance violation returns `422` with:
+    - `{ "error": "platform compliance failed", "platform": "<normalized>", "issues": [{ "code": "...", "message": "..." }] }`
+  - on success write: `PostDraft(...)` then `PublishTask(...)`
   - default mode remains `dry-run` when mode is omitted or invalid
   - high-frequency payloads are tagged `noDeliver`
 - `POST /publish/approve`

@@ -38,7 +38,7 @@ Legend:
     - 无 key 可搜索（keyword/hybrid），有 key 自动增强
 
 ## P1（演示增强）
-- [ ] P1-1 compliance 规则：各平台字数/标签/格式检查
+- [x] P1-1 compliance 规则：各平台字数/标签/格式检查
 - [ ] P1-2 People hybrid 搜索增强：keyword+vector evidence 展示
 - [ ] P1-3 weekly mirror 自动生成与证据跳转
 - [ ] P1-4 demo/README 完善：一键复现脚本与演示文档

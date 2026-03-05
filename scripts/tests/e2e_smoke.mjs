@@ -46,6 +46,37 @@ async function postJson(baseUrl, route, payload) {
   return json;
 }
 
+async function postJsonExpectError(baseUrl, route, payload, expectedStatus = 400) {
+  const response = await fetch(`${baseUrl}${route}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  const raw = await response.text();
+  let json = {};
+
+  if (raw) {
+    try {
+      json = JSON.parse(raw);
+    } catch {
+      throw new Error(`non-JSON error response from ${route}: ${raw}`);
+    }
+  }
+
+  if (response.ok) {
+    throw new Error(`${route} expected error ${expectedStatus} but succeeded`);
+  }
+
+  if (response.status !== expectedStatus) {
+    throw new Error(
+      `${route} expected status ${expectedStatus} but got ${response.status}: ${raw || 'no body'}`
+    );
+  }
+
+  return json;
+}
+
 async function getJson(baseUrl, route) {
   const response = await fetch(`${baseUrl}${route}`);
   const raw = await response.text();
@@ -85,6 +116,7 @@ async function main() {
 
   try {
     assert(api.host === LOOPBACK_HOST, `API host must stay loopback-only (${LOOPBACK_HOST})`);
+    db = new DatabaseSync(dbPath);
 
     const capture = await postJson(api.baseUrl, '/capture', {
       text: `quick capture ${tag}`,
@@ -98,6 +130,141 @@ async function main() {
       payload: { flow: 'capture->event->queue->approve' },
     });
     assert(typeof event.eventId === 'string', 'eventId missing');
+
+    const platformPassCases = [
+      { input: 'instagram', normalized: 'instagram', content: `IG pass ${tag} #ok` },
+      { input: 'twitter', normalized: 'x', content: `X pass ${tag} #ok` },
+      { input: 'linkedin', normalized: 'linkedin', content: `LinkedIn pass ${tag} #career` },
+      { input: 'zhihu', normalized: 'zhihu', content: `知乎 pass ${tag} #知识` },
+      { input: 'xhs', normalized: 'xiaohongshu', content: `小红书 pass ${tag} #生活` },
+      { input: 'wechat-moments', normalized: 'wechat_moments', content: `Moments pass ${tag} #daily` },
+      {
+        input: 'official-account',
+        normalized: 'wechat_official',
+        content: `Official pass ${tag} #update`,
+      },
+    ];
+
+    for (const platformCase of platformPassCases) {
+      const passQueue = await postJson(api.baseUrl, '/publish/queue', {
+        eventId: event.eventId,
+        platform: platformCase.input,
+        language: 'en',
+        content: platformCase.content,
+      });
+
+      assert(typeof passQueue.taskId === 'string', `taskId missing for ${platformCase.input}`);
+      assert(passQueue.status === 'queued', `queue status mismatch for ${platformCase.input}`);
+
+      const passQueueRow = db
+        .prepare('SELECT id, platform FROM PublishTask WHERE id = ? LIMIT 1')
+        .get(passQueue.taskId);
+      assert(passQueueRow?.id === passQueue.taskId, `queue row missing for ${platformCase.input}`);
+      assert(
+        passQueueRow?.platform === platformCase.normalized,
+        `platform normalization mismatch for ${platformCase.input}`
+      );
+    }
+
+    const xOverflow = await postJsonExpectError(
+      api.baseUrl,
+      '/publish/queue',
+      {
+        eventId: event.eventId,
+        platform: 'twitter',
+        language: 'en',
+        content: 'x'.repeat(281),
+      },
+      422
+    );
+
+    assert(xOverflow.error === 'platform compliance failed', 'x overflow error message mismatch');
+    assert(xOverflow.platform === 'x', 'x overflow platform normalization mismatch');
+    assert(Array.isArray(xOverflow.issues) && xOverflow.issues.length > 0, 'x overflow issues missing');
+    assert(
+      xOverflow.issues.some((issue) => issue.code === 'content_too_long'),
+      'x overflow should report content_too_long'
+    );
+    assert(
+      xOverflow.issues.every(
+        (issue) => typeof issue.code === 'string' && typeof issue.message === 'string'
+      ),
+      'x overflow issues should contain {code, message}'
+    );
+
+    const instagramOverflowHashtags = Array.from({ length: 31 }, (_, index) => `#tag${index}`).join(' ');
+    const instagramHashtagOverflow = await postJsonExpectError(
+      api.baseUrl,
+      '/publish/queue',
+      {
+        eventId: event.eventId,
+        platform: 'instagram',
+        language: 'en',
+        content: instagramOverflowHashtags,
+      },
+      422
+    );
+
+    assert(
+      instagramHashtagOverflow.error === 'platform compliance failed',
+      'instagram hashtag overflow error message mismatch'
+    );
+    assert(
+      instagramHashtagOverflow.platform === 'instagram',
+      'instagram hashtag overflow platform mismatch'
+    );
+    assert(
+      Array.isArray(instagramHashtagOverflow.issues) && instagramHashtagOverflow.issues.length > 0,
+      'instagram hashtag overflow issues missing'
+    );
+    assert(
+      instagramHashtagOverflow.issues.some((issue) => issue.code === 'hashtag_limit_exceeded'),
+      'instagram hashtag overflow should report hashtag_limit_exceeded'
+    );
+
+    const invalidFormat = await postJsonExpectError(
+      api.baseUrl,
+      '/publish/queue',
+      {
+        eventId: event.eventId,
+        platform: 'linkedin',
+        language: 'en',
+        content: `Invalid format ${tag} [docs](https://example.com)`,
+      },
+      422
+    );
+
+    assert(
+      invalidFormat.issues.some((issue) => issue.code === 'format_markdown_link_not_allowed'),
+      'markdown links should trigger format_markdown_link_not_allowed'
+    );
+
+    const invalidHashtagFormat = await postJsonExpectError(
+      api.baseUrl,
+      '/publish/queue',
+      {
+        eventId: event.eventId,
+        platform: 'x',
+        language: 'en',
+        content: `Invalid hashtag ${tag} # invalid`,
+      },
+      422
+    );
+
+    assert(
+      invalidHashtagFormat.issues.some((issue) => issue.code === 'hashtag_format_invalid'),
+      'malformed hashtags should trigger hashtag_format_invalid'
+    );
+
+    const xBoundaryQueue = await postJson(api.baseUrl, '/publish/queue', {
+      eventId: event.eventId,
+      platform: 'x',
+      language: 'en',
+      content: 'x'.repeat(280),
+    });
+
+    assert(typeof xBoundaryQueue.taskId === 'string', 'x boundary queue taskId missing');
+    assert(xBoundaryQueue.status === 'queued', 'x boundary queue should be accepted');
 
     const queue = await postJson(api.baseUrl, '/publish/queue', {
       eventId: event.eventId,
@@ -124,8 +291,6 @@ async function main() {
     assert(typeof approve.runId === 'string', 'approve runId missing');
     assert(approve.delivery?.noDeliver === true, 'dry-run task must be no-deliver');
     assert(approve.delivery?.dispatched === false, 'dry-run task must not be externally dispatched');
-
-    db = new DatabaseSync(dbPath);
 
     const captureRow = db
       .prepare('SELECT id, action FROM Audit WHERE id = ? LIMIT 1')

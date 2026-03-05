@@ -7,8 +7,12 @@
 - **infra/db**: SQLite-first local persistence
 - **reports/**: human-readable and machine-readable run summaries
 
-Publish pipeline (P0-6):
-- `POST /publish/queue` writes `PostDraft` + queued `PublishTask`
+Publish pipeline (P0-6, P1-1 compliance gate):
+- `POST /publish/queue` first runs deterministic platform compliance, then writes `PostDraft` + queued `PublishTask` on success
+  - normalized platforms: `instagram`, `x`, `linkedin`, `zhihu`, `xiaohongshu`, `wechat_moments`, `wechat_official`
+  - checks: character limit, hashtag-count limit, and simple format checks (markdown link, fenced code, raw HTML, malformed hashtag)
+  - violations are rejected with `HTTP 422`:
+    - `{ error: "platform compliance failed", platform: <normalized>, issues: [{ code, message }] }`
 - `POST /publish/approve` performs Approve → publisher workflow execution
 - execution persists:
   - `PublishTask.status/result` update

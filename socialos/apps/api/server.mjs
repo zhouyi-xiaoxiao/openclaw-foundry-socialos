@@ -38,11 +38,119 @@ const SUPPORTED_EMBEDDINGS_PROVIDERS = new Set([
   EMBEDDINGS_PROVIDER_LOCAL,
 ]);
 
+const FORMAT_RULES = Object.freeze({
+  markdown_link: Object.freeze({
+    description: 'markdown links ([text](url)) are not supported',
+    pattern: /\[[^\]]+\]\((?:https?:\/\/|mailto:)[^)]+\)/iu,
+  }),
+  fenced_code: Object.freeze({
+    description: 'fenced code blocks (```...```) are not supported',
+    pattern: /```/u,
+  }),
+  html_tag: Object.freeze({
+    description: 'raw HTML tags are not supported',
+    pattern: /<[^>]+>/u,
+  }),
+});
+
+const PLATFORM_COMPLIANCE_RULES = Object.freeze({
+  instagram: Object.freeze({
+    id: 'instagram',
+    label: 'Instagram',
+    maxLength: 2200,
+    maxHashtags: 30,
+    forbiddenFormats: ['markdown_link', 'fenced_code', 'html_tag'],
+  }),
+  x: Object.freeze({
+    id: 'x',
+    label: 'X',
+    maxLength: 280,
+    maxHashtags: 10,
+    forbiddenFormats: ['markdown_link', 'fenced_code', 'html_tag'],
+  }),
+  linkedin: Object.freeze({
+    id: 'linkedin',
+    label: 'LinkedIn',
+    maxLength: 3000,
+    maxHashtags: 5,
+    forbiddenFormats: ['markdown_link', 'fenced_code', 'html_tag'],
+  }),
+  zhihu: Object.freeze({
+    id: 'zhihu',
+    label: '知乎',
+    maxLength: 20000,
+    maxHashtags: 10,
+    forbiddenFormats: ['markdown_link', 'fenced_code', 'html_tag'],
+  }),
+  xiaohongshu: Object.freeze({
+    id: 'xiaohongshu',
+    label: '小红书',
+    maxLength: 1000,
+    maxHashtags: 20,
+    forbiddenFormats: ['markdown_link', 'fenced_code', 'html_tag'],
+  }),
+  wechat_moments: Object.freeze({
+    id: 'wechat_moments',
+    label: '微信朋友圈',
+    maxLength: 2000,
+    maxHashtags: 10,
+    forbiddenFormats: ['markdown_link', 'fenced_code', 'html_tag'],
+  }),
+  wechat_official: Object.freeze({
+    id: 'wechat_official',
+    label: '微信公众号',
+    maxLength: 20000,
+    maxHashtags: 10,
+    forbiddenFormats: ['markdown_link', 'fenced_code', 'html_tag'],
+  }),
+});
+
+const PLATFORM_ALIASES = Object.freeze({
+  instagram: ['instagram', 'ig', 'ins'],
+  x: ['x', 'twitter', 'x.com'],
+  linkedin: ['linkedin', 'linked-in'],
+  zhihu: ['zhihu', '知乎'],
+  xiaohongshu: ['xiaohongshu', 'xhs', 'xiao_hong_shu', 'xiao hong shu', '小红书'],
+  wechat_moments: [
+    'wechat_moments',
+    'wechat-moments',
+    'wechat moments',
+    'moments',
+    '朋友圈',
+    '微信朋友圈',
+  ],
+  wechat_official: [
+    'wechat_official',
+    'wechat-official',
+    'wechat official',
+    'official-account',
+    'official account',
+    '公众号',
+    '微信公众号',
+  ],
+});
+
+const SUPPORTED_QUEUE_PLATFORMS = Object.freeze(Object.keys(PLATFORM_COMPLIANCE_RULES));
+
+const PLATFORM_ALIAS_TO_ID = (() => {
+  const aliasMap = new Map();
+
+  for (const [platformId, aliases] of Object.entries(PLATFORM_ALIASES)) {
+    aliasMap.set(platformId, platformId);
+    for (const alias of aliases) {
+      aliasMap.set(alias.toLowerCase(), platformId);
+    }
+  }
+
+  return aliasMap;
+})();
+
 class HttpError extends Error {
-  constructor(statusCode, message) {
+  constructor(statusCode, message, details = undefined) {
     super(message);
     this.name = 'HttpError';
     this.statusCode = statusCode;
+    this.details = details;
   }
 }
 
@@ -145,6 +253,95 @@ function buildQueueMetadata(body) {
     cadence,
     highFrequency,
     noDeliver: highFrequency || requestedNoDeliver,
+  };
+}
+
+function resolvePlatformRule(rawPlatform) {
+  const requestedPlatform = readOptionalString(rawPlatform, 'x');
+  const lookupKey = requestedPlatform.toLowerCase();
+  const platformId = PLATFORM_ALIAS_TO_ID.get(lookupKey) || lookupKey;
+  const rule = PLATFORM_COMPLIANCE_RULES[platformId];
+
+  if (!rule) {
+    throw new HttpError(400, 'unsupported platform', {
+      platform: requestedPlatform,
+      supportedPlatforms: SUPPORTED_QUEUE_PLATFORMS,
+    });
+  }
+
+  return {
+    ...rule,
+    requestedPlatform,
+  };
+}
+
+function countCharacters(value) {
+  return Array.from(value).length;
+}
+
+function countHashSymbols(value) {
+  const matches = value.match(/#/g);
+  return matches ? matches.length : 0;
+}
+
+function extractHashtags(value) {
+  return Array.from(value.matchAll(/#([\p{L}\p{N}_]{1,64})/gu), (match) => match[1]);
+}
+
+function detectForbiddenFormatIssues(content, forbiddenFormats) {
+  const issues = [];
+
+  for (const formatId of forbiddenFormats) {
+    const rule = FORMAT_RULES[formatId];
+    if (!rule) continue;
+
+    if (rule.pattern.test(content)) {
+      issues.push({
+        code: `format_${formatId}_not_allowed`,
+        message: rule.description,
+      });
+    }
+  }
+
+  return issues;
+}
+
+function validateQueueContentCompliance(platformRule, content) {
+  const characterCount = countCharacters(content);
+  const hashtags = extractHashtags(content);
+  const hashtagCount = hashtags.length;
+  const hashSymbolCount = countHashSymbols(content);
+
+  const issues = [];
+
+  if (characterCount > platformRule.maxLength) {
+    issues.push({
+      code: 'content_too_long',
+      message: `content exceeds ${platformRule.maxLength} characters for ${platformRule.id}`,
+    });
+  }
+
+  if (hashtagCount > platformRule.maxHashtags) {
+    issues.push({
+      code: 'hashtag_limit_exceeded',
+      message: `hashtag count exceeds ${platformRule.maxHashtags} for ${platformRule.id}`,
+    });
+  }
+
+  if (hashSymbolCount > hashtagCount) {
+    issues.push({
+      code: 'hashtag_format_invalid',
+      message: 'hashtags must match #<letters|numbers|underscore> without spaces',
+    });
+  }
+
+  issues.push(...detectForbiddenFormatIssues(content, platformRule.forbiddenFormats));
+
+  return {
+    ok: issues.length === 0,
+    characterCount,
+    hashtagCount,
+    issues,
   };
 }
 
@@ -405,10 +602,22 @@ async function routeRequest(req, res, statements) {
     const event = statements.selectEventById.get(eventId);
     if (!event) throw new HttpError(404, 'eventId not found');
 
-    const platform = readOptionalString(body.platform, 'x');
+    const platformRule = resolvePlatformRule(body.platform);
+    const platform = platformRule.id;
     const mode = normalizePublishMode(body.mode);
     const language = readOptionalString(body.language, 'en');
     const content = readOptionalString(body.content, event.title);
+    const compliance = validateQueueContentCompliance(platformRule, content);
+
+    if (!compliance.ok) {
+      sendJson(res, 422, {
+        error: 'platform compliance failed',
+        platform,
+        issues: compliance.issues,
+      });
+      return;
+    }
+
     const metadata = buildQueueMetadata(body);
 
     const createdAt = nowIso();
@@ -618,7 +827,13 @@ export function createApiServer({ dbPath = DEFAULT_DB_PATH } = {}) {
         if (statusCode === 500) {
           console.error('[socialos-api] uncaught error:', error);
         }
-        sendJson(res, statusCode, { error: message });
+
+        const payload = { error: message };
+        if (error instanceof HttpError && error.details !== undefined) {
+          payload.details = error.details;
+        }
+
+        sendJson(res, statusCode, payload);
       });
   });
 
@@ -685,7 +900,7 @@ Endpoints:
   POST /capture             -> writes Audit row
   POST /events              -> writes Event row
   POST /people/search       -> keyword/hybrid search with auto semantic enhancement when key exists
-  POST /publish/queue       -> writes PostDraft + PublishTask rows
+  POST /publish/queue       -> validates platform compliance + writes PostDraft + PublishTask rows
   POST /publish/approve     -> executes publisher workflow + writes Audit + DevDigest
 
 Defaults:
