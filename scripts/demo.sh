@@ -40,8 +40,13 @@ start_server_if_needed() {
     return 0
   fi
 
-  nohup "$@" >"${log_file}" 2>&1 &
+  if command -v setsid >/dev/null 2>&1; then
+    nohup setsid "$@" >"${log_file}" 2>&1 < /dev/null &
+  else
+    nohup "$@" >"${log_file}" 2>&1 < /dev/null &
+  fi
   local pid="$!"
+  disown "${pid}" >/dev/null 2>&1 || true
   echo "${pid}" > "${pid_file}"
   echo "started ${name} (pid=${pid}, log=${log_file})"
 }
