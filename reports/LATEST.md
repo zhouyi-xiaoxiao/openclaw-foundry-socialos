@@ -1,6 +1,6 @@
-Run: 20260305_063420_P0-4
-What: Completed P0-4 dashboard v0 skeleton with seven openable routes and shared nav/layout
-Why: Delivered a loopback-only UI shell so core SocialOS workflows have a concrete dashboard surface for next iterations
-Risk: low
-Verify: openclaw config validate && node scripts/tests/web_routes_smoke.mjs && bash scripts/test.sh
-Next: Move to next pending queue item (P0-5)
+Run: 20260305_070156_P0-5
+What: P0-5 implementation/tests passed but policy review failed; merge blocked
+Why: Reviewer flagged API `CORS: *` as broadening localhost external exposure via browser cross-origin access
+Risk: high (security posture regression)
+Verify: reports/runs/20260305_070156_P0-5.md
+Next: tighten API CORS to loopback allowlist, avoid absolute path leakage, then re-queue P0-5

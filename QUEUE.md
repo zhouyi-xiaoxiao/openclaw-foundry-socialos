@@ -25,7 +25,7 @@ Legend:
 - [x] P0-4 Dashboard v0 页面骨架可用
   - Done When:
     - Quick Capture / People / Events / Drafts / Queue / Self Mirror / Dev Digest 页面可打开
-- [ ] P0-5 7 平台草稿生成（中英+风格模板）
+- [!] P0-5 blocked - reviewer policy fail: API CORS '*' broadens localhost exposure (7 平台草稿生成（中英+风格模板）)
   - Done When:
     - 一次 event 可生成 7 平台 drafts 入库
     - 草稿可预览复制，L1 发布包可生成

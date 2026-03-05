@@ -1,0 +1,35 @@
+{
+  "taskId": "P0-5",
+  "summary": "实现单事件生成 7 平台草稿（中英双语 + 风格模板）并打通预览复制与 L1 发布包生成的端到端闭环。",
+  "filesToChange": [
+    "socialos/apps/api/server.mjs",
+    "socialos/apps/web/server.mjs",
+    "scripts/tests/e2e_smoke.mjs",
+    "scripts/test.sh",
+    "socialos/apps/api/README.md",
+    "socialos/apps/web/README.md"
+  ],
+  "commandsToRun": [
+    "bash scripts/test.sh",
+    "node scripts/tests/e2e_smoke.mjs"
+  ],
+  "testsToRun": [
+    "创建单个 event 后调用草稿生成接口，断言 7 平台草稿入库成功",
+    "调用 drafts 查询接口，断言 zh/en 预览结构完整且可用于复制",
+    "调用 L1 package 生成接口，断言 packageId、items(7) 与落盘文件路径有效",
+    "执行 scripts/test.sh 与 e2e_smoke 并全部通过"
+  ],
+  "rollbackPlan": [
+    "git checkout -- socialos/apps/api/server.mjs socialos/apps/web/server.mjs scripts/tests/e2e_smoke.mjs scripts/test.sh socialos/apps/api/README.md socialos/apps/web/README.md",
+    "若已提交：git revert <P0-5_commit_sha>",
+    "若出现系统性回归：git reset --hard <lkg_tag> 并重新验证测试"
+  ],
+  "digestBullets": [
+    "新增单事件 7 平台草稿生成能力（zh/en + styleTemplate/version）",
+    "新增草稿预览/复制数据结构，支持前端直接消费",
+    "新增 L1 发布包生成并返回包路径与条目",
+    "Dashboard 草稿页支持生成、语言切换、复制与发布包预览",
+    "e2e smoke 覆盖“生成草稿→预览→打包”主链路",
+    "scripts/test.sh 纳入 P0-5 回归校验"
+  ]
+}
