@@ -1276,6 +1276,34 @@ function buildStatements(db) {
 
     insertEvent: db.prepare('INSERT INTO Event(id, title, payload, created_at) VALUES(?, ?, ?, ?)'),
     selectEventById: db.prepare('SELECT id, title FROM Event WHERE id = ? LIMIT 1'),
+    listRecentEvents: db.prepare(`
+      SELECT id, title, payload, created_at
+      FROM Event
+      ORDER BY created_at DESC
+      LIMIT ?
+    `),
+
+    insertPerson: db.prepare(`
+      INSERT INTO Person(id, name, tags, notes, next_follow_up_at, created_at, updated_at)
+      VALUES(?, ?, ?, ?, ?, ?, ?)
+    `),
+    updatePerson: db.prepare(`
+      UPDATE Person
+      SET name = ?, tags = ?, notes = ?, next_follow_up_at = ?, updated_at = ?
+      WHERE id = ?
+    `),
+    selectPersonById: db.prepare(`
+      SELECT id, name, tags, notes, next_follow_up_at, created_at, updated_at
+      FROM Person
+      WHERE id = ?
+      LIMIT 1
+    `),
+    listRecentPeople: db.prepare(`
+      SELECT id, name, tags, notes, next_follow_up_at, created_at, updated_at
+      FROM Person
+      ORDER BY updated_at DESC
+      LIMIT ?
+    `),
 
     searchPeopleByKeyword: db.prepare(`
       SELECT id, name, tags, notes, next_follow_up_at, updated_at
@@ -1288,10 +1316,52 @@ function buildStatements(db) {
     insertDraft: db.prepare(
       'INSERT INTO PostDraft(id, event_id, platform, language, content, metadata, created_at) VALUES(?, ?, ?, ?, ?, ?, ?)'
     ),
+    selectDraftById: db.prepare(`
+      SELECT id, event_id, platform, language, content, metadata, created_at
+      FROM PostDraft
+      WHERE id = ?
+      LIMIT 1
+    `),
+    listRecentDrafts: db.prepare(`
+      SELECT
+        draft.id,
+        draft.event_id,
+        draft.platform,
+        draft.language,
+        draft.content,
+        draft.metadata,
+        draft.created_at,
+        event.title AS event_title
+      FROM PostDraft AS draft
+      LEFT JOIN Event AS event ON event.id = draft.event_id
+      ORDER BY draft.created_at DESC
+      LIMIT ?
+    `),
 
     insertQueueTask: db.prepare(
       'INSERT INTO PublishTask(id, draft_id, platform, mode, status, result, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)'
     ),
+    listRecentQueueTasks: db.prepare(`
+      SELECT
+        task.id,
+        task.draft_id,
+        task.platform,
+        task.mode,
+        task.status,
+        task.result,
+        task.created_at,
+        task.updated_at,
+        draft.event_id,
+        draft.language,
+        draft.content,
+        draft.metadata,
+        event.title AS event_title
+      FROM PublishTask AS task
+      INNER JOIN PostDraft AS draft ON draft.id = task.draft_id
+      LEFT JOIN Event AS event ON event.id = draft.event_id
+      ORDER BY task.updated_at DESC
+      LIMIT ?
+    `),
 
     selectQueueTaskById: db.prepare(`
       SELECT
@@ -1346,6 +1416,76 @@ function buildStatements(db) {
       ORDER BY created_at DESC
       LIMIT 1
     `),
+  };
+}
+
+function formatCaptureRow(row) {
+  const payload = safeParseJsonObject(row.payload, {});
+  return {
+    captureId: row.id,
+    text: readOptionalString(payload.text, ''),
+    source: readOptionalString(payload.source, 'manual'),
+    createdAt: row.created_at,
+  };
+}
+
+function formatEventRow(row) {
+  return {
+    eventId: row.id,
+    title: row.title,
+    payload: safeParseJsonObject(row.payload, {}),
+    createdAt: row.created_at,
+  };
+}
+
+function formatPersonRow(row) {
+  return {
+    personId: row.id,
+    name: row.name,
+    tags: parseJsonStringArray(row.tags),
+    notes: readOptionalString(row.notes, ''),
+    nextFollowUpAt: row.next_follow_up_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function formatDraftRow(row) {
+  const metadata = safeParseJsonObject(row.metadata, {});
+  return {
+    draftId: row.id,
+    eventId: row.event_id,
+    eventTitle: readOptionalString(row.event_title, ''),
+    platform: row.platform,
+    platformLabel: formatPlatformLabel(row.platform),
+    language: row.language,
+    content: row.content,
+    metadata,
+    capability: metadata.capability || getPlatformCapability(row.platform),
+    publishPackage: metadata.publishPackage || null,
+    createdAt: row.created_at,
+  };
+}
+
+function formatQueueTaskRow(row) {
+  const metadata = safeParseJsonObject(row.metadata, {});
+  const result = safeParseJsonObject(row.result, {});
+  return {
+    taskId: row.id,
+    draftId: row.draft_id,
+    eventId: row.event_id,
+    eventTitle: readOptionalString(row.event_title, ''),
+    platform: row.platform,
+    platformLabel: formatPlatformLabel(row.platform),
+    language: row.language,
+    mode: row.mode,
+    status: row.status,
+    content: row.content,
+    metadata,
+    result,
+    capability: metadata.capability || getPlatformCapability(row.platform),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
