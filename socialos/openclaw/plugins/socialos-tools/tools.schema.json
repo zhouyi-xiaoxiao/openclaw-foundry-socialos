@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "socialos-tools",
+  "type": "object",
+  "properties": {
+    "crm_upsert_person": {"type": "object", "description": "upsert person profile", "x-sideEffect": "write"},
+    "crm_search_person": {"type": "object", "description": "search people with evidence", "x-sideEffect": "read"},
+    "crm_link_identity": {"type": "object", "description": "bind platform identity", "x-sideEffect": "write"},
+
+    "self_log_checkin": {"type": "object", "description": "record self check-in", "x-sideEffect": "write"},
+    "self_generate_weekly_mirror": {"type": "object", "description": "generate weekly mirror", "x-sideEffect": "write"},
+
+    "event_create": {"type": "object", "description": "create event", "x-sideEffect": "write"},
+    "event_update": {"type": "object", "description": "update event", "x-sideEffect": "write"},
+    "draft_create": {"type": "object", "description": "create post draft", "x-sideEffect": "write"},
+    "draft_list": {"type": "object", "description": "list drafts", "x-sideEffect": "read"},
+
+    "publish_queue_task": {"type": "object", "description": "enqueue publish task", "x-sideEffect": "write"},
+    "publish_execute": {"type": "object", "description": "execute publish task", "x-sideEffect": "external", "x-optional": true},
+
+    "audit_log_append": {"type": "object", "description": "append audit record", "x-sideEffect": "write"},
+    "dev_digest_append": {"type": "object", "description": "append dev digest", "x-sideEffect": "write"}
+  },
+  "required": [
+    "crm_upsert_person",
+    "crm_search_person",
+    "crm_link_identity",
+    "self_log_checkin",
+    "self_generate_weekly_mirror",
+    "event_create",
+    "event_update",
+    "draft_create",
+    "draft_list",
+    "publish_queue_task",
+    "publish_execute",
+    "audit_log_append",
+    "dev_digest_append"
+  ],
+  "additionalProperties": false
+}

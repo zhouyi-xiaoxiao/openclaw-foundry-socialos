@@ -1,0 +1,110 @@
+{
+  env: {
+    vars: {
+      PUBLISH_MODE: "dry-run",
+      EMBEDDINGS_PROVIDER: "auto",
+      OPENAI_EMBEDDING_MODEL: "text-embedding-3-small",
+      LOCAL_EMBEDDING_MODEL: "strong",
+      DUAL_INDEX: "0"
+    }
+  },
+  agents: {
+    defaults: {
+      model: "openai-codex/gpt-5.3-codex",
+      workspace: "/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos",
+      memorySearch: {
+        enabled: true,
+        sources: ["memory"],
+        provider: "local",
+        fallback: "openai",
+        query: {
+          maxResults: 8,
+          minScore: 0.2,
+          hybrid: {
+            enabled: true,
+            vectorWeight: 0.65,
+            textWeight: 0.35,
+            candidateMultiplier: 3
+          }
+        }
+      }
+    },
+    list: [
+      {
+        id: "orchestrator",
+        name: "orchestrator",
+        tools: {
+          profile: "minimal",
+          alsoAllow: [
+            "llm-task",
+            "memory_search",
+            "memory_get",
+            "sessions_spawn",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send"
+          ],
+          deny: ["browser", "exec", "publish_execute", "message"],
+          exec: { host: "gateway", security: "deny", ask: "always" }
+        }
+      },
+      {
+        id: "people-memory",
+        name: "people-memory",
+        tools: {
+          profile: "coding",
+          allow: ["read", "write", "edit", "crm_upsert_person", "crm_link_identity", "crm_search_person", "audit_log_append"],
+          deny: ["publish_execute", "browser", "message"],
+          exec: { host: "gateway", security: "allowlist", ask: "on-miss" }
+        }
+      },
+      {
+        id: "self-model",
+        name: "self-model",
+        tools: {
+          profile: "coding",
+          allow: ["read", "write", "edit", "self_log_checkin", "self_generate_weekly_mirror", "audit_log_append"],
+          deny: ["publish_execute", "browser", "message"],
+          exec: { host: "gateway", security: "allowlist", ask: "on-miss" }
+        }
+      },
+      {
+        id: "compliance",
+        name: "compliance",
+        tools: {
+          profile: "minimal",
+          alsoAllow: ["read", "crm_search_person", "draft_list", "memory_search", "memory_get"],
+          deny: ["write", "edit", "publish_execute", "browser", "exec", "message"]
+        }
+      },
+      {
+        id: "publisher",
+        name: "publisher",
+        tools: {
+          profile: "full",
+          alsoAllow: [
+            "publish_queue_task",
+            "publish_execute",
+            "audit_log_append",
+            "dev_digest_append",
+            "browser"
+          ],
+          deny: ["gateway", "nodes"],
+          exec: { host: "gateway", security: "allowlist", ask: "always" }
+        }
+      }
+    ]
+  },
+  plugins: {
+    entries: {
+      "socialos-tools": {
+        enabled: true,
+        config: {
+          dbPath: "/Users/zhouyixiaoxiao/openclaw-foundry-socialos/infra/db/socialos.db",
+          publishModeDefault: "dry-run",
+          schemaPath: "/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/openclaw/plugins/socialos-tools/tools.schema.json"
+        }
+      }
+    }
+  }
+}

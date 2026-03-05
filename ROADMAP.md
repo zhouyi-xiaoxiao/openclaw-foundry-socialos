@@ -1,16 +1,29 @@
-# SocialOS Runtime Roadmap
+# SocialOS Runtime Roadmap (Autopilot)
 
-## Near-term (1-2 weeks)
-- Stabilize Foundry orchestration loop and rollback behavior.
-- Add deterministic test harness for devloop-generated changes.
-- Introduce policy guardrails for tool scope and config drift.
+## Phase P0 — End-to-end local-first MVP
+1. Runtime skeleton + agent policies + publish safety gates
+2. socialos-tools plugin contract + dry-run publish path
+3. SQLite domain model + API minimal loop
+4. Dashboard pages (capture/people/events/drafts/queue/mirror/digest)
+5. 7-platform draft generation templates
+6. Queue→publish audit trail + dev digest productization
+7. Embeddings provider abstraction + fallback + bench
 
-## Mid-term (1-2 months)
-- Build SocialOS runtime kernel (task graph, memory adapter, plugin bus).
-- Add role-aware agent contracts and sandboxed execution lanes.
-- Add replayable incident timeline for every automated merge.
+## Phase P1 — Demo quality + quality gates
+1. Compliance checks per platform
+2. Better hybrid retrieval + evidence UI
+3. Weekly mirror automation and explainability
+4. Demo scripts, docs polish, reproducibility hardening
 
-## Long-term
-- Adaptive scheduling by repo activity and risk score.
-- Multi-repo federation with shared policy packs.
-- Continuous self-tuning benchmark suite for model/tool routing.
+## Phase P2 — Optional production expansion
+1. Live publish connectors for X/LinkedIn (credential-gated)
+2. Assisted package upgrades for Ins/小红书/朋友圈/公众号
+3. Postgres + pgvector migration path
+4. Operational scaling guardrails
+
+## Continuous Foundry loop
+- Trigger: `RUN_DEVLOOP_ONCE` (manual) + `DEVLOOP_REALTIME` cron every 30s
+- Single-run contract: 1 queue item per run
+- No-task contract: NOOP + digest update + exit success
+- Failure contract: mark blocked, rollback, no infinite retry
+- Push contract: fetch/rebase before run; push main + tags after successful merge

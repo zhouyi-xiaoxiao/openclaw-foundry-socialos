@@ -1,0 +1,8 @@
+{
+  "name": "socialos-tools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SocialOS tool schema skeleton for OpenClaw runtime",
+  "main": "tool-manifest.json",
+  "type": "module"
+}

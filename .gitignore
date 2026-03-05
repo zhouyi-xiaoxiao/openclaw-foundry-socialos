@@ -10,3 +10,9 @@ foundry/WORKSPACE_FOUNDY/*/IDENTITY.md
 foundry/WORKSPACE_FOUNDY/*/SOUL.md
 foundry/WORKSPACE_FOUNDY/*/TOOLS.md
 foundry/WORKSPACE_FOUNDY/*/USER.md
+.foundry/PAUSED
+*.env
+.env
+.env.local
+.openclaw/
+

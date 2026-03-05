@@ -1,0 +1,19 @@
+{
+  "name": "socialos-tools",
+  "version": "0.1.0",
+  "tools": [
+    {"name":"crm_upsert_person","optional":false,"sideEffect":"write"},
+    {"name":"crm_search_person","optional":false,"sideEffect":"read"},
+    {"name":"crm_link_identity","optional":false,"sideEffect":"write"},
+    {"name":"self_log_checkin","optional":false,"sideEffect":"write"},
+    {"name":"self_generate_weekly_mirror","optional":false,"sideEffect":"write"},
+    {"name":"event_create","optional":false,"sideEffect":"write"},
+    {"name":"event_update","optional":false,"sideEffect":"write"},
+    {"name":"draft_create","optional":false,"sideEffect":"write"},
+    {"name":"draft_list","optional":false,"sideEffect":"read"},
+    {"name":"publish_queue_task","optional":false,"sideEffect":"write"},
+    {"name":"publish_execute","optional":true,"sideEffect":"external"},
+    {"name":"audit_log_append","optional":false,"sideEffect":"write"},
+    {"name":"dev_digest_append","optional":false,"sideEffect":"write"}
+  ]
+}
