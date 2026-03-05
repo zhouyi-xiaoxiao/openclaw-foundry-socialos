@@ -1,0 +1,31 @@
+{
+  "taskId": "P0-4",
+  "summary": "Deliver Dashboard v0 skeleton pages with loopback-only serving and smoke coverage so Quick Capture / People / Events / Drafts / Queue / Self Mirror / Dev Digest are all openable.",
+  "filesToChange": [
+    "socialos/apps/web/server.mjs",
+    "socialos/apps/web/README.md",
+    "scripts/tests/web_routes_smoke.mjs",
+    "scripts/test.sh"
+  ],
+  "commandsToRun": [
+    "node --check socialos/apps/web/server.mjs",
+    "node scripts/tests/web_routes_smoke.mjs",
+    "bash scripts/test.sh"
+  ],
+  "testsToRun": [
+    "node scripts/tests/web_routes_smoke.mjs",
+    "bash scripts/test.sh"
+  ],
+  "rollbackPlan": [
+    "git restore scripts/test.sh socialos/apps/web/README.md",
+    "rm -f scripts/tests/web_routes_smoke.mjs socialos/apps/web/server.mjs",
+    "git checkout main",
+    "git reset --hard lkg/20260305_063420"
+  ],
+  "digestBullets": [
+    "Added loopback-only dashboard skeleton server with seven required page routes.",
+    "Kept v0 pages lightweight with shared nav/layout and placeholder sections.",
+    "Added route smoke test to verify root redirect, route availability, and 404 behavior.",
+    "Wired web route smoke check into scripts/test.sh for repeatable validation."
+  ]
+}

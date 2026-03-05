@@ -1,6 +1,6 @@
-Run: 20260305_045115_P0-3
-What: Completed P0-3 SQLite DB+API minimal closed loop
-Why: Added loopback API + real e2e smoke for capture→event→queue to unblock end-to-end MVP path
+Run: 20260305_063420_P0-4
+What: Completed P0-4 dashboard v0 skeleton with seven openable routes and shared nav/layout
+Why: Delivered a loopback-only UI shell so core SocialOS workflows have a concrete dashboard surface for next iterations
 Risk: low
-Verify: node scripts/tests/runtime_policy_check.mjs && node scripts/tests/plugin_contract_check.mjs && bash scripts/test.sh
-Next: Move to next pending queue item (P0-4)
+Verify: openclaw config validate && node scripts/tests/web_routes_smoke.mjs && bash scripts/test.sh
+Next: Move to next pending queue item (P0-5)

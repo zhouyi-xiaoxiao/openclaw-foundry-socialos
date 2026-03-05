@@ -22,7 +22,7 @@ Legend:
   - Done When:
     - Person/Identity/Interaction/Event/PostDraft/PublishTask/Audit/DevDigest/SelfCheckin/Mirror 表可用
     - e2e_smoke（capture→event→queue）通过
-- [ ] P0-4 Dashboard v0 页面骨架可用
+- [x] P0-4 Dashboard v0 页面骨架可用
   - Done When:
     - Quick Capture / People / Events / Drafts / Queue / Self Mirror / Dev Digest 页面可打开
 - [ ] P0-5 7 平台草稿生成（中英+风格模板）

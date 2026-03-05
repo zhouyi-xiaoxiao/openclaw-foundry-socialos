@@ -12,5 +12,6 @@ node "${REPO_ROOT}/scripts/tests/plugin_contract_check.mjs"
 
 node -e 'console.log("privilege_smoke: PASS (publish_execute optional + publisher-only visibility assertions)")'
 node "${REPO_ROOT}/scripts/tests/e2e_smoke.mjs"
+node "${REPO_ROOT}/scripts/tests/web_routes_smoke.mjs"
 
 echo "tests complete"
