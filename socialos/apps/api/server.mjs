@@ -5,6 +5,14 @@ import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
+import {
+  createStructuredTask,
+  DEFAULT_AUTONOMY_MODE,
+  listStructuredTasks,
+  readLlmTaskHealthSnapshot,
+  resolveFoundryRuntimePaths,
+  SUPPORTED_TASK_SCOPES,
+} from '../../lib/foundry-tasks.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,6 +27,7 @@ const PAUSE_FLAG_PATH = path.join(REPO_ROOT, '.foundry/PAUSED');
 const MODE_OVERRIDE_PATH = path.join(REPO_ROOT, '.foundry/PUBLISH_MODE');
 const FOUNDRY_CONFIG_PATH = path.join(REPO_ROOT, 'foundry/openclaw.foundry.json5');
 const FOUNDRY_DISPATCH_PATH = path.join(REPO_ROOT, 'scripts/foundry_dispatch.sh');
+const FOUNDRY_RUNTIME_PATHS = resolveFoundryRuntimePaths({ repoRoot: REPO_ROOT });
 
 export const LOOPBACK_HOST = '127.0.0.1';
 export const DEFAULT_PORT = Number(process.env.SOCIALOS_API_PORT || 8787);
@@ -715,14 +724,46 @@ function readFoundryConfig() {
   }
 }
 
+function readLastGenericTaskRun() {
+  const genericRun = listRecentRunReports(50).find((run) => /^TASK-/u.test(readOptionalString(run?.taskId, '')));
+  if (!genericRun) return null;
+  return {
+    runId: genericRun.runId,
+    taskId: genericRun.taskId,
+    status: genericRun.status,
+    summary: genericRun.summary,
+    verify: genericRun.verify,
+    finishedAt: genericRun.finishedAt,
+  };
+}
+
+function buildFoundryTaskCapabilities() {
+  return {
+    genericTaskExecutionEnabled:
+      fs.existsSync(path.join(REPO_ROOT, 'scripts/foundry_generic_task.mjs')) &&
+      fs.existsSync(FOUNDRY_RUNTIME_PATHS.tasksDir),
+    llmTaskHealth: readLlmTaskHealthSnapshot({ repoRoot: REPO_ROOT }),
+    supportedScopes: [...SUPPORTED_TASK_SCOPES],
+    lastGenericTaskRun: readLastGenericTaskRun(),
+    defaultAutonomyMode: DEFAULT_AUTONOMY_MODE,
+  };
+}
+
 function buildFoundryClusterSummary() {
   const config = readFoundryConfig();
   const agents = Array.isArray(config?.agents?.list) ? config.agents.list : [];
+  const capabilities = buildFoundryTaskCapabilities();
 
   return {
     enabled: agents.length > 0,
     configPath: FOUNDRY_CONFIG_PATH,
     dispatchScript: FOUNDRY_DISPATCH_PATH,
+    taskDirectory: FOUNDRY_RUNTIME_PATHS.tasksDir,
+    genericTaskExecutionEnabled: capabilities.genericTaskExecutionEnabled,
+    llmTaskHealth: capabilities.llmTaskHealth,
+    supportedScopes: capabilities.supportedScopes,
+    lastGenericTaskRun: capabilities.lastGenericTaskRun,
+    defaultAutonomyMode: capabilities.defaultAutonomyMode,
     agents: agents.map((agent) => {
       const role = FOUNDRY_AGENT_RESPONSIBILITIES[agent.id] || {
         title: agent.name || agent.id,
@@ -781,6 +822,39 @@ function resolveDispatchCommand(body) {
   }
 
   return command;
+}
+
+function createOpsTaskFromBody(body) {
+  const hasStructuredFields =
+    typeof body.goal === 'string' ||
+    typeof body.scope === 'string' ||
+    typeof body.acceptanceCriteria === 'string' ||
+    Array.isArray(body.acceptanceCriteria) ||
+    typeof body.constraints === 'string' ||
+    Array.isArray(body.constraints) ||
+    typeof body.repoTargets === 'string' ||
+    Array.isArray(body.repoTargets) ||
+    typeof body.preferredTests === 'string' ||
+    Array.isArray(body.preferredTests);
+
+  try {
+    return createStructuredTask(
+      {
+        intakeMode: hasStructuredFields ? 'structured' : readOptionalString(body.intakeMode, 'quick'),
+        title: body.title,
+        goal: body.goal,
+        taskText: body.taskText ?? body.text,
+        acceptanceCriteria: body.acceptanceCriteria,
+        constraints: body.constraints,
+        scope: body.scope,
+        repoTargets: body.repoTargets,
+        preferredTests: body.preferredTests,
+      },
+      { repoRoot: REPO_ROOT }
+    );
+  } catch (error) {
+    throw new HttpError(400, error instanceof Error ? error.message : 'task creation failed');
+  }
 }
 
 function runFoundryDispatch(command) {
