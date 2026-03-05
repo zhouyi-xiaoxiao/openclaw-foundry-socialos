@@ -318,6 +318,373 @@ function safeParseJsonObject(value, fallback = {}) {
   return { ...fallback };
 }
 
+function safeParseJsonArray(value, fallback = []) {
+  if (typeof value !== 'string' || !value.trim()) return [...fallback];
+
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) return [...parsed];
+  } catch {
+    return [...fallback];
+  }
+
+  return [...fallback];
+}
+
+function normalizeStringList(value, fallback = []) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (typeof item === 'string' ? item.trim() : ''))
+      .filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [...fallback];
+}
+
+function formatPlatformLabel(platformId) {
+  return PLATFORM_COMPLIANCE_RULES[platformId]?.label || platformId;
+}
+
+function getPlatformCapability(platformId) {
+  return PLATFORM_PRODUCT_CAPABILITIES[platformId] || {
+    supportLevel: 'L0 Draft',
+    lane: 'publish-package',
+    entryTarget: 'manual publish flow',
+    liveEligible: false,
+    blockedBy: 'manual completion required',
+  };
+}
+
+function truncateText(value, maxLength) {
+  const text = readOptionalString(value, '');
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+}
+
+function summarizeEventPayload(payload) {
+  const source = payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : {};
+  const details = source.details && typeof source.details === 'object' && !Array.isArray(source.details)
+    ? source.details
+    : source;
+  const parts = [];
+
+  for (const [key, rawValue] of Object.entries(details)) {
+    if (parts.length >= 4) break;
+    if (typeof rawValue === 'string' && rawValue.trim()) {
+      parts.push(`${key}: ${rawValue.trim()}`);
+      continue;
+    }
+    if (typeof rawValue === 'number' || typeof rawValue === 'boolean') {
+      parts.push(`${key}: ${String(rawValue)}`);
+    }
+  }
+
+  return parts.join(' | ');
+}
+
+function normalizeDraftLanguages(value) {
+  const requested = normalizeStringList(value);
+  const out = [];
+
+  for (const item of requested) {
+    const normalized = item.toLowerCase();
+    if (normalized === 'bilingual' || normalized === 'both') {
+      out.push('en', 'zh');
+      continue;
+    }
+    if (normalized === 'zh' || normalized === 'zh-cn' || normalized === 'cn') {
+      out.push('zh');
+      continue;
+    }
+    if (normalized === 'en' || normalized === 'en-us') {
+      out.push('en');
+    }
+  }
+
+  return [...new Set(out.length ? out : ['en'])];
+}
+
+function normalizePlatformList(value) {
+  const requested = normalizeStringList(value);
+  if (!requested.length) return [...SUPPORTED_QUEUE_PLATFORMS];
+
+  const normalized = [];
+  for (const entry of requested) {
+    const platformId = PLATFORM_ALIAS_TO_ID.get(entry.toLowerCase()) || entry.toLowerCase();
+    if (!PLATFORM_COMPLIANCE_RULES[platformId]) continue;
+    normalized.push(platformId);
+  }
+
+  return [...new Set(normalized)];
+}
+
+function buildHashtags(platformRule, language, tone) {
+  const base =
+    language === 'zh'
+      ? ['#社交系统', '#行动复盘', '#内容实验', '#增长']
+      : ['#socialos', '#builder', '#campaign', '#ship'];
+
+  if (platformRule.id === 'linkedin') {
+    base.push(language === 'zh' ? '#职业成长' : '#leadership');
+  }
+  if (platformRule.id === 'xiaohongshu') {
+    base.push(language === 'zh' ? '#生活记录' : '#routine');
+  }
+  if (platformRule.id === 'wechat_official') {
+    base.push(language === 'zh' ? '#长文' : '#deepdive');
+  }
+  if (tone) {
+    base.push(`#${tone.replace(/[^a-z0-9_]/gi, '').toLowerCase() || 'update'}`);
+  }
+
+  return base.slice(0, platformRule.maxHashtags);
+}
+
+function buildPublishSteps(platformId, capability, language) {
+  const common = language === 'zh' ? '检查语气、标签、封面建议后再发布。' : 'Review tone, tags, and media notes before publishing.';
+
+  switch (platformId) {
+    case 'x':
+      return [
+        'Queue for review in SocialOS.',
+        'If live mode + credentials are ready, promote through publisher.',
+        common,
+      ];
+    case 'linkedin':
+      return [
+        'Review long-form tone and CTA.',
+        'If live mode + credentials are ready, promote through publisher.',
+        common,
+      ];
+    case 'instagram':
+    case 'xiaohongshu':
+    case 'wechat_moments':
+      return [
+        'Copy caption + hashtag block.',
+        `Open ${capability.entryTarget}.`,
+        common,
+      ];
+    case 'wechat_official':
+      return [
+        'Assemble title, lead, body sections, and cover image.',
+        `Open ${capability.entryTarget}.`,
+        common,
+      ];
+    default:
+      return [
+        'Copy the prepared draft and notes.',
+        `Open ${capability.entryTarget}.`,
+        common,
+      ];
+  }
+}
+
+function buildPackageSections(platformRule, event, language, options) {
+  const eventPayload = safeParseJsonObject(event.payload, {});
+  const detailText = summarizeEventPayload(eventPayload);
+  const tone = readOptionalString(options.tone, language === 'zh' ? '清晰' : 'clear');
+  const angle = readOptionalString(options.angle, language === 'zh' ? '进展更新' : 'progress update');
+  const audience = readOptionalString(options.audience, language === 'zh' ? '熟悉你的人脉圈' : 'people following your work');
+  const cta = readOptionalString(
+    options.cta,
+    language === 'zh' ? '如果你也在做类似方向，欢迎交流。' : 'If you are working on something similar, reply and compare notes.'
+  );
+
+  const headline =
+    language === 'zh'
+      ? `${formatPlatformLabel(platformRule.id)}更新：${event.title}`
+      : `${formatPlatformLabel(platformRule.id)} update: ${event.title}`;
+  const bodyLead =
+    language === 'zh'
+      ? `这次我想用“${angle}”的角度，面向${audience}分享这次进展。`
+      : `Sharing this from a ${angle} angle for ${audience}.`;
+  const detailLine =
+    detailText && language === 'zh'
+      ? `关键信息：${detailText}`
+      : detailText
+        ? `Key context: ${detailText}`
+        : language === 'zh'
+          ? '这条内容会围绕这次事件的核心进展、观察和下一步展开。'
+          : 'This draft centers on the event, what changed, and what comes next.';
+  const closing =
+    language === 'zh'
+      ? `整体语气保持${tone}，最后用一句明确 CTA 收口。`
+      : `Keep the tone ${tone} and end with a direct CTA.`;
+
+  return {
+    headline,
+    bodyLead,
+    detailLine,
+    closing,
+    cta,
+  };
+}
+
+function buildDraftContent(platformRule, event, language, options = {}) {
+  const sections = buildPackageSections(platformRule, event, language, options);
+  const hashtags = buildHashtags(platformRule, language, readOptionalString(options.tone, ''));
+  const lines = [
+    sections.headline,
+    '',
+    sections.bodyLead,
+    sections.detailLine,
+    sections.closing,
+    '',
+    sections.cta,
+    '',
+    hashtags.join(' '),
+  ];
+
+  return truncateText(lines.join('\n'), platformRule.maxLength);
+}
+
+function buildPublishPackage(platformRule, event, language, content, options = {}) {
+  const capability = getPlatformCapability(platformRule.id);
+  const sections = buildPackageSections(platformRule, event, language, options);
+  const hashtags = buildHashtags(platformRule, language, readOptionalString(options.tone, ''));
+  const imageIdeas =
+    language === 'zh'
+      ? [
+          `一张能体现“${event.title}”现场感或结果感的主图`,
+          '一张细节图或过程图，帮助解释背景',
+        ]
+      : [
+          `A lead image that makes ${event.title} feel tangible`,
+          'A supporting detail shot or screenshot for context',
+        ];
+
+  const packagePayload = {
+    supportLevel: capability.supportLevel,
+    lane: capability.lane,
+    entryTarget: capability.entryTarget,
+    liveEligible: capability.liveEligible,
+    blockedBy: capability.blockedBy,
+    title: sections.headline,
+    hook: sections.bodyLead,
+    body: sections.detailLine,
+    cta: sections.cta,
+    hashtags,
+    imageIdeas,
+    steps: buildPublishSteps(platformRule.id, capability, language),
+    codexAssist:
+      language === 'zh'
+        ? ['可以继续帮你改语气、改结构、补 CTA、补图文大纲']
+        : ['Codex can further refine tone, structure, CTA, and media notes.'],
+    preview: content,
+  };
+
+  if (platformRule.id === 'wechat_official') {
+    packagePayload.articleOutline =
+      language === 'zh'
+        ? ['开头：为什么现在写这篇', '中段：3 个关键观察', '结尾：下一步行动与邀请']
+        : ['Opening: why this matters now', 'Middle: three concrete observations', 'Closing: next move and invitation'];
+  }
+
+  return packagePayload;
+}
+
+function readFoundryConfig() {
+  const raw = readTextFileOrDefault(FOUNDRY_CONFIG_PATH, '');
+  if (!raw.trim()) return null;
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function buildFoundryClusterSummary() {
+  const config = readFoundryConfig();
+  const agents = Array.isArray(config?.agents?.list) ? config.agents.list : [];
+
+  return {
+    enabled: agents.length > 0,
+    configPath: FOUNDRY_CONFIG_PATH,
+    dispatchScript: FOUNDRY_DISPATCH_PATH,
+    agents: agents.map((agent) => {
+      const role = FOUNDRY_AGENT_RESPONSIBILITIES[agent.id] || {
+        title: agent.name || agent.id,
+        responsibility: 'custom lane',
+      };
+      return {
+        id: agent.id,
+        name: agent.name,
+        model: agent.model,
+        workspace: agent.workspace,
+        toolProfile: agent.tools?.profile || 'unknown',
+        roleTitle: role.title,
+        responsibility: role.responsibility,
+      };
+    }),
+  };
+}
+
+function buildCodexLayerSummary() {
+  return {
+    layer: 'Codex',
+    canOwn: [...CODEX_PARTICIPATION.canOwn],
+    goodAt: [...CODEX_PARTICIPATION.goodAt],
+    stillNeedsHuman: [...CODEX_PARTICIPATION.stillNeedsHuman],
+  };
+}
+
+function resolveDispatchCommand(body) {
+  const command = readOptionalString(body.command, '').toUpperCase();
+  if (!command) throw new HttpError(400, 'command is required');
+
+  if (command === 'SET_PUBLISH_MODE') {
+    const mode = readOptionalString(body.mode, DEFAULT_PUBLISH_MODE).toLowerCase();
+    if (mode !== DEFAULT_PUBLISH_MODE && mode !== LIVE_PUBLISH_MODE) {
+      throw new HttpError(400, 'mode must be dry-run or live');
+    }
+    return `SET_PUBLISH_MODE:${mode}`;
+  }
+
+  if (
+    !new Set([
+      'STATUS',
+      'RUN_DEVLOOP_ONCE',
+      'PAUSE_DEVLOOP',
+      'RESUME_DEVLOOP',
+      'SEND_DIGEST_NOTIFICATION',
+    ]).has(command)
+  ) {
+    throw new HttpError(400, 'unsupported dispatch command');
+  }
+
+  return command;
+}
+
+function runFoundryDispatch(command) {
+  try {
+    const output = execFileSync('bash', [FOUNDRY_DISPATCH_PATH, command], {
+      cwd: REPO_ROOT,
+      encoding: 'utf8',
+      timeout: 180000,
+    });
+    return {
+      ok: true,
+      output: output.trim(),
+    };
+  } catch (error) {
+    const output = error instanceof Error && 'stdout' in error ? String(error.stdout || '') : '';
+    const stderr = error instanceof Error && 'stderr' in error ? String(error.stderr || '') : '';
+    throw new HttpError(500, 'dispatch command failed', {
+      command,
+      output: output.trim(),
+      stderr: stderr.trim(),
+    });
+  }
+}
+
 function readEnvFlag(name) {
   const raw = process.env[name];
   if (typeof raw !== 'string') return false;
