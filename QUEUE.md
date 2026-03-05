@@ -58,7 +58,7 @@ Legend:
 - [x] AUTO-OPT-TEST-DEBT 自动执行测试债清理循环
   - Done When:
     - `bash scripts/test.sh` 通过并记录 run 报告
-- [ ] AUTO-OPT-PERF-DEBT 自动执行 embedding/perf 复盘
+- [x] AUTO-OPT-PERF-DEBT 自动执行 embedding/perf 复盘
   - Done When:
     - `bash scripts/bench_embeddings.sh` 完成并输出建议
 - [ ] AUTO-OPT-DOC-DEBT 自动执行文档一致性体检
