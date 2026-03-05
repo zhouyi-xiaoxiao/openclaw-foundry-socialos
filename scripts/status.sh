@@ -48,8 +48,8 @@ try {
 }
 for (const file of files) {
   try {
-    JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
-    process.stdout.write(path.join(dir, file));
+    JSON.parse(fs.readFileSync(path.join(dir, file.name), 'utf8'));
+    process.stdout.write(path.join(dir, file.name));
     process.exit(0);
   } catch {
     continue;

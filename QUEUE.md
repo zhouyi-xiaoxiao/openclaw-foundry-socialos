@@ -61,7 +61,7 @@ Legend:
 - [x] AUTO-OPT-PERF-DEBT 自动执行 embedding/perf 复盘
   - Done When:
     - `bash scripts/bench_embeddings.sh` 完成并输出建议
-- [ ] AUTO-OPT-DOC-DEBT 自动执行文档一致性体检
+- [x] AUTO-OPT-DOC-DEBT 自动执行文档一致性体检
   - Done When:
     - `node scripts/tests/docs_demo_smoke.mjs` 通过
 - [ ] AUTO-OPT-OBS-DEBT 自动执行可观测性体检
