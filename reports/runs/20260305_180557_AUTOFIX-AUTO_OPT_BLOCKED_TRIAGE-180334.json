@@ -1,0 +1,29 @@
+{
+  "runId": "20260305_180557_AUTOFIX-AUTO_OPT_BLOCKED_TRIAGE-180334",
+  "taskId": "AUTOFIX-AUTO_OPT_BLOCKED_TRIAGE-180334",
+  "taskText": "- [ ] AUTOFIX-AUTO_OPT_BLOCKED_TRIAGE-180334 Auto-triage from blocked item: - [!] P2-1 X/LinkedIn live 发布（凭据可用时）",
+  "status": "success",
+  "summary": "AUTOFIX-AUTO_OPT_BLOCKED_TRIAGE-180334 validation sweep completed",
+  "why": "Autofix item run under tester/reviewer gates",
+  "risk": "low",
+  "verify": "/tmp/socialos_test_20260305_180557_AUTOFIX-AUTO_OPT_BLOCKED_TRIAGE-180334.log",
+  "next": "configure git remote 'origin' to enable auto push",
+  "startedAt": "2026-03-05T18:05:57Z",
+  "finishedAt": "2026-03-05T18:06:03Z",
+  "durationMs": 6000,
+  "stages": {
+    "plan": "pass",
+    "coder": "pass",
+    "tester": "pass",
+    "reviewer": "pass",
+    "gitSync": "fetch-failed",
+    "push": "skipped:no-origin"
+  },
+  "lock": {
+    "status": "acquired",
+    "staleRecovered": "false",
+    "ownerPid": "",
+    "ownerAlive": "unknown",
+    "ownerHeartbeatAgeSec": ""
+  }
+}
