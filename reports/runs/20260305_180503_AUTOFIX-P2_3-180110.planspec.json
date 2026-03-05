@@ -1,0 +1,18 @@
+{
+  "summary": "- [ ] AUTOFIX-P2_3-180110 P2-3 deferred by policy (external credentials/integration dependency)",
+  "filesToChange": [],
+  "commands": [
+    "bash scripts/test.sh"
+  ],
+  "tests": [
+    "bash scripts/test.sh"
+  ],
+  "rollback": [
+    "Mark blocked and create autofix task"
+  ],
+  "digestBullets": [
+    "single queue item",
+    "policy gate",
+    "digest+run report"
+  ]
+}
