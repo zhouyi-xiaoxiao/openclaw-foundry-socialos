@@ -370,6 +370,20 @@ sync_git() {
 write_plan_spec() {
   STAGE_PLAN="running"
   PLAN_SPEC_FILE="${REPORT_DIR}/${RUN_ID}.planspec.json"
+  if [[ "${TASK_ID}" == TASK-* ]]; then
+    if node "${REPO_ROOT}/scripts/foundry_generic_task.mjs" plan --task-id "${TASK_ID}" --repo-root "${REPO_ROOT}" --output "${PLAN_SPEC_FILE}" >/tmp/socialos_plan_${RUN_ID}.log 2>&1; then
+      STAGE_PLAN="pass"
+      return 0
+    fi
+    STAGE_PLAN="fail"
+    RUN_STATUS="blocked"
+    RUN_SUMMARY="Plan generation failed for ${TASK_ID}"
+    RUN_WHY="generic Foundry planner could not materialize a PlanSpec"
+    RUN_RISK="medium"
+    RUN_VERIFY="/tmp/socialos_plan_${RUN_ID}.log"
+    RUN_NEXT="fix planner inputs or llm-task health before retrying"
+    return 1
+  fi
   PLAN_TASK_ID="${TASK_ID}" PLAN_TASK_TEXT="${TASK_TEXT}" PLAN_OUTPUT_PATH="${PLAN_SPEC_FILE}" node - <<'NODE'
 const fs = require('fs');
 
@@ -422,6 +436,41 @@ if (taskId.startsWith('AUTO-OPT-')) {
 fs.writeFileSync(outputPath, JSON.stringify(spec, null, 2));
 NODE
   STAGE_PLAN="pass"
+  return 0
+}
+
+read_json_field() {
+  local file_path="$1"
+  local field_path="$2"
+  RESULT_FILE="${file_path}" RESULT_PATH="${field_path}" node - <<'NODE'
+const fs = require('fs');
+
+try {
+  const payload = JSON.parse(fs.readFileSync(process.env.RESULT_FILE, 'utf8'));
+  const path = (process.env.RESULT_PATH || '').split('.').filter(Boolean);
+  let current = payload;
+  for (const segment of path) {
+    current = current?.[segment];
+  }
+  if (current == null) {
+    process.stdout.write('');
+  } else if (typeof current === 'object') {
+    process.stdout.write(JSON.stringify(current));
+  } else {
+    process.stdout.write(String(current));
+  }
+} catch {
+  process.stdout.write('');
+}
+NODE
+}
+
+mark_structured_task_status() {
+  local status="$1"
+  if [[ "${TASK_ID}" != TASK-* ]]; then
+    return 0
+  fi
+  node "${REPO_ROOT}/scripts/foundry_tasks.mjs" mark --task-id "${TASK_ID}" --status "${status}" >/tmp/socialos_task_mark_${RUN_ID}.log 2>&1 || true
 }
 
 run_handler() {
@@ -429,6 +478,7 @@ run_handler() {
   local log_file="/tmp/socialos_${RUN_ID}.log"
   local test_log="/tmp/socialos_test_${RUN_ID}.log"
   local bench_log="/tmp/socialos_bench_${RUN_ID}.log"
+  local generic_result_file="/tmp/socialos_generic_${RUN_ID}.json"
 
   case "${TASK_ID}" in
     P0-5)
@@ -582,6 +632,36 @@ run_handler() {
         STAGE_CODER="fail"
         return 1
       fi
+      ;;
+    TASK-*)
+      if node "${REPO_ROOT}/scripts/foundry_generic_task.mjs" execute --task-id "${TASK_ID}" --repo-root "${REPO_ROOT}" --plan-output "${PLAN_SPEC_FILE}" --result-output "${generic_result_file}" --managed-by-devloop >"${log_file}" 2>&1; then
+        RUN_SUMMARY="$(read_json_field "${generic_result_file}" summary)"
+        RUN_WHY="Generic task executed through Foundry orchestrator/coder/tester/reviewer lanes"
+        RUN_RISK="low"
+        RUN_VERIFY="$(read_json_field "${generic_result_file}" verify)"
+        RUN_NEXT="$(read_json_field "${generic_result_file}" next)"
+        [[ -n "${RUN_SUMMARY}" ]] || RUN_SUMMARY="${TASK_ID} completed via generic Foundry execution"
+        [[ -n "${RUN_VERIFY}" ]] || RUN_VERIFY="${log_file}"
+        [[ -n "${RUN_NEXT}" ]] || RUN_NEXT="continue with next pending queue item"
+        STAGE_CODER="pass"
+        return 0
+      fi
+
+      if [[ -f "${generic_result_file}" ]]; then
+        RUN_SUMMARY="$(read_json_field "${generic_result_file}" summary)"
+        RUN_WHY="$(read_json_field "${generic_result_file}" reason)"
+        RUN_VERIFY="$(read_json_field "${generic_result_file}" verify)"
+        RUN_RISK="medium"
+        RUN_NEXT="autofix task created; retry next cron cycle"
+        [[ -n "${RUN_SUMMARY}" ]] || RUN_SUMMARY="Generic task execution blocked for ${TASK_ID}"
+        [[ -n "${RUN_WHY}" ]] || RUN_WHY="generic Foundry execution returned blocked"
+        [[ -n "${RUN_VERIFY}" ]] || RUN_VERIFY="${generic_result_file}"
+        STAGE_CODER="fail"
+        return 2
+      fi
+
+      STAGE_CODER="fail"
+      return 1
       ;;
     *)
       RUN_SUMMARY="No handler implemented for ${TASK_ID}"
@@ -740,7 +820,12 @@ REPORT_JSON_FILE="${REPORT_DIR}/${RUN_ID}.json"
 
 set_queue_marker "${TASK_LINE_NO}" "-"
 write_lock_meta
-write_plan_spec
+if ! write_plan_spec; then
+  set_queue_marker "${TASK_LINE_NO}" "!"
+  mark_structured_task_status "blocked"
+  create_autofix_task "${RUN_SUMMARY}"
+  finish_run
+fi
 
 if run_handler; then
   :
@@ -757,23 +842,27 @@ else
     RUN_NEXT="autofix task created; retry next cron cycle"
   fi
   set_queue_marker "${TASK_LINE_NO}" "!"
+  mark_structured_task_status "blocked"
   create_autofix_task "${RUN_SUMMARY}"
   finish_run
 fi
 
 if ! run_tester_gate; then
   set_queue_marker "${TASK_LINE_NO}" "!"
+  mark_structured_task_status "blocked"
   create_autofix_task "${RUN_SUMMARY}"
   finish_run
 fi
 
 if ! run_reviewer_gate; then
   set_queue_marker "${TASK_LINE_NO}" "!"
+  mark_structured_task_status "blocked"
   create_autofix_task "${RUN_SUMMARY}"
   finish_run
 fi
 
 RUN_STATUS="success"
 set_queue_marker "${TASK_LINE_NO}" "x"
+mark_structured_task_status "done"
 attempt_push
 finish_run
