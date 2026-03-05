@@ -13,7 +13,7 @@ Legend:
     - 发布策略默认 dry-run，publish_execute 标记 optional 且仅 publisher 可见
     - `scripts/deploy_runtime.sh` 可将配置部署到 socialos profile
     - `scripts/test.sh` 中的 runtime policy 校验通过
-- [ ] P0-2 socialos-tools 插件骨架：所有工具注册；publish_execute optional；仅 publisher 可见
+- [x] P0-2 socialos-tools 插件骨架：所有工具注册；publish_execute optional；仅 publisher 可见
   - Done When:
     - 工具 schema 齐全并可被 runtime 引用
     - 权限测试通过（非 publisher 调用发布失败）

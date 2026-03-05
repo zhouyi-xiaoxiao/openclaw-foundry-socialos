@@ -79,6 +79,16 @@ case "${TASK_ID}" in
       summary="P0-1 failed test gate"
     fi
     ;;
+  P0-2)
+    if "${REPO_ROOT}/scripts/test.sh" >/tmp/socialos_test.log 2>&1; then
+      sed -i '' "${LINE_NO}s/^- \[-\]/- [x]/" "${QUEUE_FILE}"
+      summary="P0-2 plugin skeleton + permission policy validated"
+    else
+      status="blocked"
+      sed -i '' "${LINE_NO}s/^- \[-\]/- [!]/" "${QUEUE_FILE}"
+      summary="P0-2 failed plugin/policy test gate"
+    fi
+    ;;
   *)
     status="noop"
     summary="Executor not implemented for ${TASK_ID}"
