@@ -18,7 +18,7 @@ Legend:
     - 工具 schema 齐全并可被 runtime 引用
     - 权限测试通过（非 publisher 调用发布失败）
     - publisher dry-run 返回模拟结果
-- [ ] P0-3 DB+API 最小闭环（SQLite）
+- [x] P0-3 DB+API 最小闭环（SQLite）
   - Done When:
     - Person/Identity/Interaction/Event/PostDraft/PublishTask/Audit/DevDigest/SelfCheckin/Mirror 表可用
     - e2e_smoke（capture→event→queue）通过
