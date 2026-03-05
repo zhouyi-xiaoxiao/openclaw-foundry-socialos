@@ -1,6 +1,6 @@
-Run: 20260305_084410_P0-6
-What: Completed P0-6 Queue→Publish default dry-run flow with Approve execution path persisting PublishTask/Audit/DevDigest
-Why: Enable closed-loop approve-to-execution workflow while preserving safe-by-default delivery behavior
-Risk: low (future live dispatch integration must retain current gating/no-deliver safeguards)
-Verify: openclaw config validate; bash scripts/test.sh; node scripts/tests/e2e_smoke.mjs
-Next: continue to next unchecked queue item (P0-7)
+Run: 20260305_125428_P0-7
+What: Completed P0-7 embeddings productization (settings endpoints, docs, benchmark, no-key fallback + keyed auto-enhancement)
+Why: Ensure search remains usable without API keys while transparently improving relevance when embeddings keys are available
+Risk: low (semantic scoring is heuristic pending future provider-backed retrieval hardening)
+Verify: bash scripts/bench_embeddings.sh; node scripts/tests/e2e_smoke.mjs
+Next: continue to next unchecked queue item

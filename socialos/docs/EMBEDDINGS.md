@@ -1,25 +1,58 @@
-# Embeddings Choice Guide
+# Embeddings Product Settings
 
-Config knobs:
-- EMBEDDINGS_PROVIDER=auto|openai|local
-- OPENAI_API_KEY=
-- OPENAI_EMBEDDING_MODEL=text-embedding-3-small|text-embedding-3-large
-- LOCAL_EMBEDDING_MODEL=lite|strong
-- DUAL_INDEX=0|1
+This project supports a **safe-by-default retrieval path**:
+- no API key → keyword/hybrid search still works
+- API key present → semantic enhancement is enabled automatically
 
-Auto behavior:
-- key exists => openai
-- key missing => local
-- keyword search always available as fallback
+## Runtime settings
 
-Reference quality:
-- text-embedding-3-small: MTEB avg 62.3
-- text-embedding-3-large: MTEB avg 64.6
+Set via environment variables (see `.env.example`):
 
-Local tiers:
-- local-lite: faster + smaller footprint
-- local-strong: better recall, higher resource usage
+- `EMBEDDINGS_PROVIDER=auto|openai|local`
+- `OPENAI_API_KEY=`
+- `OPENAI_EMBEDDING_MODEL=text-embedding-3-small|text-embedding-3-large`
+- `LOCAL_EMBEDDING_MODEL=lite|strong`
+- `DUAL_INDEX=0|1`
 
-Run benchmark:
-- `./scripts/bench_embeddings.sh`
-- Outputs: recall@k, avg latency, and estimated API cost (if openai)
+## Effective provider resolution
+
+When `EMBEDDINGS_PROVIDER=auto`:
+
+1. If `OPENAI_API_KEY` is present and non-empty:
+   - `effectiveProvider=openai`
+   - retrieval mode becomes `hybrid-semantic`
+2. If no key is present:
+   - `effectiveProvider=local`
+   - retrieval mode remains `hybrid-keyword`
+
+You can inspect the resolved mode at:
+
+- `GET /settings/embeddings`
+
+## Search behavior
+
+`POST /people/search` always keeps keyword matching available.
+
+- Without key: returns `retrieval.mode=hybrid-keyword`
+- With key: returns `retrieval.mode=hybrid-semantic` and applies semantic boost scoring
+
+This ensures search is usable in no-key local setups while still upgrading automatically when credentials exist.
+
+## Dashboard setting surface
+
+Dashboard includes a `Settings` page placeholder (`/settings`) for:
+- provider selection UX (`auto/openai/local`)
+- fallback explanation (`no key => still searchable`)
+- benchmark entrypoint documentation
+
+## Benchmark script
+
+Run:
+
+```bash
+./scripts/bench_embeddings.sh
+```
+
+Output: `reports/bench_embeddings_latest.md`
+
+The benchmark report records effective provider, retrieval mode, sample recall/latency, and estimated cost to support product decision-making.

@@ -32,7 +32,7 @@ Legend:
 - [x] P0-6 Queue→Publish（默认 dry-run）
   - Done When:
     - Approve→PublishTask→publisher 执行→audit + digest 落库
-- [ ] P0-7 Embeddings 选择产品化
+- [x] P0-7 Embeddings 选择产品化
   - Done When:
     - Settings + docs/EMBEDDINGS.md + bench 脚本可用
     - 无 key 可搜索（keyword/hybrid），有 key 自动增强

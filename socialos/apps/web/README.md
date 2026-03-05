@@ -17,5 +17,6 @@ Open in browser:
 - `http://127.0.0.1:4173/queue`
 - `http://127.0.0.1:4173/self-mirror`
 - `http://127.0.0.1:4173/dev-digest`
+- `http://127.0.0.1:4173/settings`
 
 All pages share a common layout + left navigation and render placeholder panels for follow-up iterations.

@@ -48,6 +48,12 @@ const PAGE_DEFINITIONS = [
     path: '/dev-digest',
     summary: 'Read recent devloop run summaries, risks, and next steps.',
   },
+  {
+    id: 'settings',
+    title: 'Settings',
+    path: '/settings',
+    summary: 'Configure runtime switches including embeddings mode and fallback behavior.',
+  },
 ];
 
 export const DASHBOARD_PAGES = PAGE_DEFINITIONS.map((page) => ({ ...page }));
@@ -87,6 +93,11 @@ const PAGE_HINTS = {
     'Digest feed placeholder',
     'What/Why/Risk/Verify/Next card layout placeholder',
     'Latest run metadata panel placeholder',
+  ],
+  settings: [
+    'Embeddings provider selector placeholder (auto/openai/local)',
+    'Fallback behavior hint: no key => keyword/hybrid remains available',
+    'Bench script entrypoint placeholder (`./scripts/bench_embeddings.sh`)',
   ],
 };
 
@@ -390,6 +401,7 @@ Routes:
   /queue
   /self-mirror
   /dev-digest
+  /settings
 
 Defaults:
   host: ${LOOPBACK_HOST}

@@ -46,6 +46,21 @@ async function postJson(baseUrl, route, payload) {
   return json;
 }
 
+async function getJson(baseUrl, route) {
+  const response = await fetch(`${baseUrl}${route}`);
+  const raw = await response.text();
+
+  if (!response.ok) {
+    throw new Error(`${route} failed (${response.status}): ${raw || 'no body'}`);
+  }
+
+  try {
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    throw new Error(`non-JSON response from ${route}: ${raw}`);
+  }
+}
+
 async function main() {
   const tag = `e2e_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'socialos-e2e-'));
@@ -53,8 +68,17 @@ async function main() {
 
   const previousPublishMode = process.env.PUBLISH_MODE;
   const previousLiveOverride = process.env.SOCIALOS_ENABLE_LIVE_PUBLISH;
+  const previousEmbeddingsProvider = process.env.EMBEDDINGS_PROVIDER;
+  const previousOpenAiKey = process.env.OPENAI_API_KEY;
+  const previousOpenAiEmbeddingModel = process.env.OPENAI_EMBEDDING_MODEL;
+  const previousLocalEmbeddingModel = process.env.LOCAL_EMBEDDING_MODEL;
+
   delete process.env.PUBLISH_MODE;
   delete process.env.SOCIALOS_ENABLE_LIVE_PUBLISH;
+  delete process.env.EMBEDDINGS_PROVIDER;
+  delete process.env.OPENAI_API_KEY;
+  delete process.env.OPENAI_EMBEDDING_MODEL;
+  delete process.env.LOCAL_EMBEDDING_MODEL;
 
   const api = await startApiServer({ port: 0, quiet: true, dbPath });
   let db;
@@ -148,6 +172,64 @@ async function main() {
     assert(digestRow?.what?.includes(queue.taskId), 'digest.what should reference publish task');
     assert(digestRow?.verify?.includes('noDeliver=true'), 'digest.verify should capture noDeliver');
 
+    const personId = `person_${tag}`;
+    const personTimestamp = new Date().toISOString();
+    db.prepare(
+      `INSERT INTO Person(id, name, tags, notes, next_follow_up_at, created_at, updated_at)
+       VALUES(?, ?, ?, ?, ?, ?, ?)`
+    ).run(
+      personId,
+      `Alice ${tag}`,
+      JSON.stringify(['ml', 'embeddings']),
+      `Vector retrieval check ${tag}`,
+      null,
+      personTimestamp,
+      personTimestamp
+    );
+
+    process.env.EMBEDDINGS_PROVIDER = 'auto';
+    process.env.OPENAI_EMBEDDING_MODEL = 'text-embedding-3-small';
+    process.env.LOCAL_EMBEDDING_MODEL = 'strong';
+    delete process.env.OPENAI_API_KEY;
+
+    const settingsWithoutKey = await getJson(api.baseUrl, '/settings/embeddings');
+    assert(settingsWithoutKey.effectiveProvider === 'local', 'no-key settings should resolve to local provider');
+    assert(
+      settingsWithoutKey.retrievalMode === 'hybrid-keyword',
+      'no-key settings should expose hybrid-keyword retrieval mode'
+    );
+    assert(settingsWithoutKey.semanticBoostEnabled === false, 'no-key settings should disable semantic boost');
+
+    const searchWithoutKey = await postJson(api.baseUrl, '/people/search', {
+      query: 'vector',
+      limit: 5,
+    });
+    assert(searchWithoutKey.count >= 1, 'no-key search should still return keyword matches');
+    assert(
+      searchWithoutKey.retrieval?.mode === 'hybrid-keyword',
+      'no-key search should report hybrid-keyword mode'
+    );
+
+    process.env.OPENAI_API_KEY = 'test-openai-key';
+
+    const settingsWithKey = await getJson(api.baseUrl, '/settings/embeddings');
+    assert(settingsWithKey.effectiveProvider === 'openai', 'keyed settings should resolve to openai provider');
+    assert(
+      settingsWithKey.retrievalMode === 'hybrid-semantic',
+      'keyed settings should expose hybrid-semantic retrieval mode'
+    );
+    assert(settingsWithKey.semanticBoostEnabled === true, 'keyed settings should enable semantic boost');
+
+    const searchWithKey = await postJson(api.baseUrl, '/people/search', {
+      query: 'vector',
+      limit: 5,
+    });
+    assert(searchWithKey.count >= 1, 'keyed search should return results');
+    assert(
+      searchWithKey.retrieval?.mode === 'hybrid-semantic',
+      'keyed search should report hybrid-semantic mode'
+    );
+
     process.env.PUBLISH_MODE = 'live';
     process.env.SOCIALOS_ENABLE_LIVE_PUBLISH = '1';
 
@@ -229,6 +311,30 @@ async function main() {
       process.env.SOCIALOS_ENABLE_LIVE_PUBLISH = previousLiveOverride;
     } else {
       delete process.env.SOCIALOS_ENABLE_LIVE_PUBLISH;
+    }
+
+    if (typeof previousEmbeddingsProvider === 'string') {
+      process.env.EMBEDDINGS_PROVIDER = previousEmbeddingsProvider;
+    } else {
+      delete process.env.EMBEDDINGS_PROVIDER;
+    }
+
+    if (typeof previousOpenAiKey === 'string') {
+      process.env.OPENAI_API_KEY = previousOpenAiKey;
+    } else {
+      delete process.env.OPENAI_API_KEY;
+    }
+
+    if (typeof previousOpenAiEmbeddingModel === 'string') {
+      process.env.OPENAI_EMBEDDING_MODEL = previousOpenAiEmbeddingModel;
+    } else {
+      delete process.env.OPENAI_EMBEDDING_MODEL;
+    }
+
+    if (typeof previousLocalEmbeddingModel === 'string') {
+      process.env.LOCAL_EMBEDDING_MODEL = previousLocalEmbeddingModel;
+    } else {
+      delete process.env.LOCAL_EMBEDDING_MODEL;
     }
   }
 }

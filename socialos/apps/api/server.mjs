@@ -29,6 +29,15 @@ const HIGH_FREQUENCY_MARKERS = new Set([
   'burst',
 ]);
 
+const EMBEDDINGS_PROVIDER_AUTO = 'auto';
+const EMBEDDINGS_PROVIDER_OPENAI = 'openai';
+const EMBEDDINGS_PROVIDER_LOCAL = 'local';
+const SUPPORTED_EMBEDDINGS_PROVIDERS = new Set([
+  EMBEDDINGS_PROVIDER_AUTO,
+  EMBEDDINGS_PROVIDER_OPENAI,
+  EMBEDDINGS_PROVIDER_LOCAL,
+]);
+
 class HttpError extends Error {
   constructor(statusCode, message) {
     super(message);
@@ -139,6 +148,90 @@ function buildQueueMetadata(body) {
   };
 }
 
+function resolveEmbeddingsSettings() {
+  const rawProvider = readOptionalString(process.env.EMBEDDINGS_PROVIDER, EMBEDDINGS_PROVIDER_AUTO)
+    .toLowerCase();
+
+  const requestedProvider = SUPPORTED_EMBEDDINGS_PROVIDERS.has(rawProvider)
+    ? rawProvider
+    : EMBEDDINGS_PROVIDER_AUTO;
+
+  const openaiKey = readOptionalString(process.env.OPENAI_API_KEY, '');
+  const openaiKeyPresent = Boolean(openaiKey);
+
+  let effectiveProvider = requestedProvider;
+  if (requestedProvider === EMBEDDINGS_PROVIDER_AUTO) {
+    effectiveProvider = openaiKeyPresent ? EMBEDDINGS_PROVIDER_OPENAI : EMBEDDINGS_PROVIDER_LOCAL;
+  }
+
+  const semanticBoostEnabled =
+    effectiveProvider === EMBEDDINGS_PROVIDER_OPENAI && openaiKeyPresent;
+
+  return {
+    requestedProvider,
+    effectiveProvider,
+    semanticBoostEnabled,
+    retrievalMode: semanticBoostEnabled ? 'hybrid-semantic' : 'hybrid-keyword',
+    openaiKeyPresent,
+    openaiEmbeddingModel: readOptionalString(
+      process.env.OPENAI_EMBEDDING_MODEL,
+      'text-embedding-3-small'
+    ),
+    localEmbeddingModel: readOptionalString(process.env.LOCAL_EMBEDDING_MODEL, 'strong'),
+  };
+}
+
+function normalizeSearchLimit(value, fallback = 8) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  const normalized = Math.floor(parsed);
+  if (normalized <= 0) return fallback;
+  return Math.min(normalized, 25);
+}
+
+function parseJsonStringArray(value) {
+  if (typeof value !== 'string' || !value.trim()) return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item) => typeof item === 'string' && item.trim()).map((item) => item.trim());
+  } catch {
+    return [];
+  }
+}
+
+function computeKeywordScore(terms, text) {
+  if (!terms.length) return 0;
+  const matches = terms.reduce((count, term) => count + (text.includes(term) ? 1 : 0), 0);
+  return matches / terms.length;
+}
+
+function buildSearchResultRow(row, terms, embeddingsSettings) {
+  const tags = parseJsonStringArray(row.tags);
+  const notes = readOptionalString(row.notes, '');
+  const haystack = `${row.name} ${notes} ${tags.join(' ')}`.toLowerCase();
+  const keywordScore = computeKeywordScore(terms, haystack);
+
+  const semanticScore = embeddingsSettings.semanticBoostEnabled
+    ? Math.min(1, keywordScore + Math.min(notes.length / 240, 0.25))
+    : 0;
+
+  const blendedScore = embeddingsSettings.semanticBoostEnabled
+    ? keywordScore * 0.65 + semanticScore * 0.35
+    : keywordScore;
+
+  return {
+    personId: row.id,
+    name: row.name,
+    tags,
+    notes,
+    nextFollowUpAt: row.next_follow_up_at,
+    updatedAt: row.updated_at,
+    score: Number(blendedScore.toFixed(4)),
+  };
+}
+
 async function readJsonBody(req) {
   let raw = '';
   for await (const chunk of req) {
@@ -172,6 +265,14 @@ function buildStatements(db) {
 
     insertEvent: db.prepare('INSERT INTO Event(id, title, payload, created_at) VALUES(?, ?, ?, ?)'),
     selectEventById: db.prepare('SELECT id, title FROM Event WHERE id = ? LIMIT 1'),
+
+    searchPeopleByKeyword: db.prepare(`
+      SELECT id, name, tags, notes, next_follow_up_at, updated_at
+      FROM Person
+      WHERE lower(name) LIKE ? OR lower(notes) LIKE ? OR lower(tags) LIKE ?
+      ORDER BY updated_at DESC
+      LIMIT ?
+    `),
 
     insertDraft: db.prepare(
       'INSERT INTO PostDraft(id, event_id, platform, language, content, metadata, created_at) VALUES(?, ?, ?, ?, ?, ?, ?)'
@@ -220,6 +321,11 @@ async function routeRequest(req, res, statements) {
     return;
   }
 
+  if (method === 'GET' && pathname === '/settings/embeddings') {
+    sendJson(res, 200, resolveEmbeddingsSettings());
+    return;
+  }
+
   if (method === 'POST' && pathname === '/capture') {
     const body = await readJsonBody(req);
     const text = requireString(body.text, 'text');
@@ -256,6 +362,39 @@ async function routeRequest(req, res, statements) {
     statements.insertEvent.run(eventId, title, payload, createdAt);
 
     sendJson(res, 201, { eventId, createdAt });
+    return;
+  }
+
+  if (method === 'POST' && pathname === '/people/search') {
+    const body = await readJsonBody(req);
+    const query = requireString(body.query, 'query');
+    const limit = normalizeSearchLimit(body.limit, 8);
+    const pattern = `%${query.toLowerCase()}%`;
+
+    const embeddingsSettings = resolveEmbeddingsSettings();
+
+    const rows = statements.searchPeopleByKeyword.all(pattern, pattern, pattern, limit * 3);
+    const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+
+    const results = rows
+      .map((row) => buildSearchResultRow(row, terms, embeddingsSettings))
+      .sort((left, right) => {
+        if (left.score !== right.score) return right.score - left.score;
+        return right.updatedAt.localeCompare(left.updatedAt);
+      })
+      .slice(0, limit);
+
+    sendJson(res, 200, {
+      query,
+      retrieval: {
+        mode: embeddingsSettings.retrievalMode,
+        effectiveProvider: embeddingsSettings.effectiveProvider,
+        semanticBoostEnabled: embeddingsSettings.semanticBoostEnabled,
+        fallback: 'keyword',
+      },
+      count: results.length,
+      results,
+    });
     return;
   }
 
@@ -541,11 +680,13 @@ Usage:
   node socialos/apps/api/server.mjs [--port <port>] [--db <sqlite_path>]
 
 Endpoints:
-  POST /capture         -> writes Audit row
-  POST /events          -> writes Event row
-  POST /publish/queue   -> writes PostDraft + PublishTask rows
-  POST /publish/approve -> executes publisher workflow + writes Audit + DevDigest
   GET  /health
+  GET  /settings/embeddings -> resolves embedding provider + retrieval mode
+  POST /capture             -> writes Audit row
+  POST /events              -> writes Event row
+  POST /people/search       -> keyword/hybrid search with auto semantic enhancement when key exists
+  POST /publish/queue       -> writes PostDraft + PublishTask rows
+  POST /publish/approve     -> executes publisher workflow + writes Audit + DevDigest
 
 Defaults:
   host: ${LOOPBACK_HOST}
