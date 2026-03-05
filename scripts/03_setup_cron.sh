@@ -58,8 +58,8 @@ upsert_job() {
   fi
 }
 
-upsert_job "FOUNDY_DEVLOOP_REALTIME" "*/30 * * * * *" "RUN_DEVLOOP_ONCE" "900" "agent:forge_orchestrator:foundry-devloop-v1"
-upsert_job "FOUNDY_DIGEST_NOTIFY" "0 */15 * * * *" "SEND_DIGEST_NOTIFICATION" "120" "agent:forge_orchestrator:foundry-digest-v1"
+upsert_job "DEVLOOP_REALTIME" "*/30 * * * * *" "RUN_DEVLOOP_ONCE" "900" "agent:forge_orchestrator:main"
+upsert_job "DIGEST_PERIODIC" "0 */15 * * * *" "SEND_DIGEST_NOTIFICATION" "120" "agent:forge_orchestrator:main"
 
 echo "Cron jobs configured."
 openclaw cron list --all --json
