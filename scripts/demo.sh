@@ -4,6 +4,46 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEPLOY_LOG="/tmp/socialos_deploy.log"
 POLICY_LOG="/tmp/socialos_demo_policy.log"
+API_LOG="/tmp/socialos_demo_api.log"
+WEB_LOG="/tmp/socialos_demo_web.log"
+API_PID_FILE="/tmp/socialos_demo_api.pid"
+WEB_PID_FILE="/tmp/socialos_demo_web.pid"
+API_PORT="${SOCIALOS_API_PORT:-8787}"
+WEB_PORT="${SOCIALOS_WEB_PORT:-4173}"
+API_URL="http://127.0.0.1:${API_PORT}"
+WEB_URL="http://127.0.0.1:${WEB_PORT}"
+
+wait_for_http() {
+  local url="$1"
+  local retries="${2:-25}"
+  local sleep_sec="${3:-0.3}"
+  local i
+  for i in $(seq 1 "${retries}"); do
+    if curl -fsS "${url}" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep "${sleep_sec}"
+  done
+  return 1
+}
+
+start_server_if_needed() {
+  local name="$1"
+  local port="$2"
+  local cmd="$3"
+  local log_file="$4"
+  local pid_file="$5"
+
+  if lsof -nP -iTCP:"${port}" -sTCP:LISTEN >/dev/null 2>&1; then
+    echo "${name} already listening on :${port}"
+    return 0
+  fi
+
+  nohup bash -lc "${cmd}" >"${log_file}" 2>&1 &
+  local pid="$!"
+  echo "${pid}" > "${pid_file}"
+  echo "started ${name} (pid=${pid}, log=${log_file})"
+}
 
 echo "== SocialOS Demo Bootstrap (one command) =="
 
@@ -21,6 +61,22 @@ echo "[3/3] Validate runtime safety policy"
 node "${REPO_ROOT}/scripts/tests/runtime_policy_check.mjs" >"${POLICY_LOG}" 2>&1
 cat "${POLICY_LOG}"
 
+echo "[4/4] Start local API + Web"
+start_server_if_needed "socialos-api" "${API_PORT}" "node ${REPO_ROOT}/socialos/apps/api/server.mjs --port ${API_PORT}" "${API_LOG}" "${API_PID_FILE}"
+start_server_if_needed "socialos-web" "${WEB_PORT}" "node ${REPO_ROOT}/socialos/apps/web/server.mjs --port ${WEB_PORT}" "${WEB_LOG}" "${WEB_PID_FILE}"
+
+if wait_for_http "${API_URL}/health"; then
+  API_HEALTH="PASS"
+else
+  API_HEALTH="WARN"
+fi
+
+if wait_for_http "${WEB_URL}/quick-capture"; then
+  WEB_HEALTH="PASS"
+else
+  WEB_HEALTH="WARN"
+fi
+
 echo ""
 echo "== Demo Ready =="
 echo "bootstrap: PASS"
@@ -29,6 +85,8 @@ if [[ "${DEPLOY_STATUS}" == "PASS" ]]; then
 else
   echo "runtime deploy: WARN (validation failed; inspect ${DEPLOY_LOG})"
 fi
+echo "api health: ${API_HEALTH} (${API_URL}/health)"
+echo "web health: ${WEB_HEALTH} (${WEB_URL}/quick-capture)"
 
 echo ""
 echo "Safety defaults (unchanged):"
@@ -41,5 +99,7 @@ echo ""
 echo "Next steps:"
 echo "- Run full checks: bash ${REPO_ROOT}/scripts/test.sh"
 echo "- Follow runbook: ${REPO_ROOT}/socialos/docs/DEMO_SCRIPT.md"
-echo "- Run one automation pass: bash ${REPO_ROOT}/scripts/devloop_once.sh"
+echo "- Dashboard: ${WEB_URL}/dev-digest"
+echo "- API ops: ${API_URL}/ops/status"
+echo "- Run one automation pass: bash ${REPO_ROOT}/scripts/foundry_dispatch.sh RUN_DEVLOOP_ONCE"
 echo "- Inspect latest digest: ${REPO_ROOT}/reports/LATEST.md"

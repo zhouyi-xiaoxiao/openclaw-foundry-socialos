@@ -16,6 +16,8 @@ Expected key output:
 - `Install complete. DB initialized ...`
 - `runtime_policy_check: PASS`
 - `== Demo Ready ==`
+- `api health: PASS (http://127.0.0.1:8787/health)`
+- `web health: PASS (http://127.0.0.1:4173/quick-capture)`
 
 If runtime deploy validation fails, check `/tmp/socialos_deploy.log` (bootstrap still keeps local safety defaults).
 
@@ -45,6 +47,9 @@ Talk track:
 ### Step B — Show docs + product loop map
 - Open `socialos/docs/PRODUCT.md` for scope (7-platform campaign + people memory + self mirror).
 - Open `socialos/docs/ARCHITECTURE.md` for safety boundary and publish pipeline.
+- Open dashboard:
+  - `http://127.0.0.1:4173/dev-digest`
+  - `http://127.0.0.1:4173/quick-capture`
 
 ### Step C — Execute one automation iteration
 ```bash
