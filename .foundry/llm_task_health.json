@@ -1,8 +1,10 @@
 {
-  "status": "blocked",
-  "checkedAt": "2026-03-05T21:08:03.373Z",
-  "summary": "llm-task reported a runtime failure during the probe.",
-  "reason": "[tools] llm-task failed: Model not allowed by llm-task plugin config: openai-codex/gpt-5.3-codex. Allowed models: openai-codex/gpt-5.4",
+  "status": "ok",
+  "checkedAt": "2026-03-05T21:09:22.167Z",
+  "summary": "llm-task passed the forge_orchestrator probe.",
+  "reason": "forge_orchestrator successfully completed a JSON-only llm-task call",
   "mode": "live",
-  "genericTaskExecutionEnabled": false
+  "genericTaskExecutionEnabled": true,
+  "agentModel": "gpt-5.4",
+  "provider": "openai-codex"
 }

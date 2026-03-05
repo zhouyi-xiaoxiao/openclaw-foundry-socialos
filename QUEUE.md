@@ -60,7 +60,7 @@ Legend:
 - [x] OPS-3 PAUSE/RESUME 机制（.foundry/PAUSED）
 
 ## Auto Optimization Pool
-- [!] AUTO-OPT-TEST-DEBT 自动执行测试债清理循环
+- [x] AUTO-OPT-TEST-DEBT 自动执行测试债清理循环
   - Done When:
     - `bash scripts/test.sh` 通过并记录 run 报告
 - [x] AUTO-OPT-PERF-DEBT 自动执行 embedding/perf 复盘
