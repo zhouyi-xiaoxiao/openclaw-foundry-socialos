@@ -16,7 +16,7 @@ import {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const REPO_ROOT = path.resolve(__dirname, '../../..');
+const REPO_ROOT = path.resolve(process.env.SOCIALOS_REPO_ROOT || path.resolve(__dirname, '../../..'));
 const SCHEMA_PATH = path.join(REPO_ROOT, 'infra/db/schema.sql');
 const QUEUE_PATH = path.join(REPO_ROOT, 'QUEUE.md');
 const RUN_REPORT_DIR = path.join(REPO_ROOT, 'reports/runs');
