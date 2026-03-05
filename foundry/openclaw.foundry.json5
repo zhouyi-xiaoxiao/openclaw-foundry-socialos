@@ -1,0 +1,111 @@
+{
+  "agents": {
+    "list": [
+      {
+        "id": "forge_orchestrator",
+        "name": "forge_orchestrator",
+        "workspace": "/Users/zhouyixiaoxiao/openclaw-foundry-socialos/foundry/WORKSPACE_FOUNDY/forge_orchestrator",
+        "model": "openai-codex/gpt-5.3-codex",
+        "tools": {
+          "profile": "full",
+          "alsoAllow": [
+            "group:openclaw",
+            "llm-task"
+          ],
+          "deny": [
+            "acp"
+          ],
+          "exec": {
+            "host": "gateway",
+            "security": "full",
+            "ask": "off"
+          }
+        }
+      },
+      {
+        "id": "forge_coder",
+        "name": "forge_coder",
+        "workspace": "/Users/zhouyixiaoxiao/openclaw-foundry-socialos/foundry/WORKSPACE_FOUNDY/forge_coder",
+        "model": "openai-codex/gpt-5.3-codex",
+        "tools": {
+          "profile": "full",
+          "alsoAllow": [
+            "group:openclaw",
+            "llm-task"
+          ],
+          "deny": [
+            "acp"
+          ],
+          "exec": {
+            "host": "gateway",
+            "security": "full",
+            "ask": "off"
+          }
+        }
+      },
+      {
+        "id": "forge_tester",
+        "name": "forge_tester",
+        "workspace": "/Users/zhouyixiaoxiao/openclaw-foundry-socialos/foundry/WORKSPACE_FOUNDY/forge_tester",
+        "model": "openai-codex/gpt-5.3-codex",
+        "tools": {
+          "profile": "full",
+          "alsoAllow": [
+            "group:openclaw",
+            "llm-task"
+          ],
+          "deny": [
+            "acp"
+          ],
+          "exec": {
+            "host": "gateway",
+            "security": "full",
+            "ask": "off"
+          }
+        }
+      },
+      {
+        "id": "forge_reviewer",
+        "name": "forge_reviewer",
+        "workspace": "/Users/zhouyixiaoxiao/openclaw-foundry-socialos/foundry/WORKSPACE_FOUNDY/forge_reviewer",
+        "model": "openai-codex/gpt-5.3-codex",
+        "tools": {
+          "profile": "full",
+          "alsoAllow": [
+            "group:openclaw",
+            "llm-task"
+          ],
+          "deny": [
+            "acp"
+          ],
+          "exec": {
+            "host": "gateway",
+            "security": "full",
+            "ask": "off"
+          }
+        }
+      }
+    ]
+  },
+  "plugins": {
+    "entries": {
+      "llm-task": {
+        "enabled": true,
+        "config": {
+          "defaultProvider": "openai-codex",
+          "allowedModels": [
+            "openai-codex/gpt-5.3-codex"
+          ]
+        }
+      }
+    }
+  },
+  "cron": {
+    "maxConcurrentRuns": 2,
+    "sessionRetention": "6h",
+    "runLog": {
+      "maxBytes": "2mb",
+      "keepLines": 4000
+    }
+  }
+}

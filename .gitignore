@@ -1,0 +1,12 @@
+.DS_Store
+.locks/
+foundry/backups/
+reports/runs/*.tmp
+reports/runs/*.lock
+foundry/WORKSPACE_FOUNDY/*/.openclaw/
+foundry/WORKSPACE_FOUNDY/*/BOOTSTRAP.md
+foundry/WORKSPACE_FOUNDY/*/HEARTBEAT.md
+foundry/WORKSPACE_FOUNDY/*/IDENTITY.md
+foundry/WORKSPACE_FOUNDY/*/SOUL.md
+foundry/WORKSPACE_FOUNDY/*/TOOLS.md
+foundry/WORKSPACE_FOUNDY/*/USER.md

@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://socialos.local/schemas/agent_spec.schema.json",
+  "title": "SocialOS Foundry Specs",
+  "description": "Shared schemas used by llm-task for agent and plan generation.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/AgentSpec"
+    },
+    {
+      "$ref": "#/$defs/PlanSpec"
+    }
+  ],
+  "$defs": {
+    "AgentSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "role",
+        "objective",
+        "inputs",
+        "outputs"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "objective": {
+          "type": "string",
+          "minLength": 1
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "PlanSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "taskId",
+        "summary",
+        "filesToChange",
+        "commandsToRun",
+        "testsToRun",
+        "rollbackPlan",
+        "digestBullets"
+      ],
+      "properties": {
+        "taskId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9._-]+$"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "filesToChange": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "commandsToRun": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "testsToRun": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "rollbackPlan": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "digestBullets": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "maxItems": 8
+        }
+      }
+    }
+  }
+}
