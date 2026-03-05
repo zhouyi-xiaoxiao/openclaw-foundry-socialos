@@ -545,6 +545,126 @@ function buildDraftContent(platformRule, event, language, options = {}) {
   return truncateText(lines.join('\n'), platformRule.maxLength);
 }
 
+function buildPlatformPackageAdditions(platformRule, event, language, sections) {
+  switch (platformRule.id) {
+    case 'instagram':
+      return language === 'zh'
+        ? {
+            coverHooks: [
+              `${sections.headline}：先给结果感`,
+              `把“${event.title}”做成第一屏结论`,
+              '用一句反差感标题把人停住',
+            ],
+            visualStoryboard: [
+              '第 1 张：结果/主视觉',
+              '第 2 张：背景或问题定义',
+              '第 3 张：关键动作或过程截图',
+              '第 4 张：下一步 CTA 或评论引导',
+            ],
+            assetChecklist: ['封面图 1 张', '过程图/截图 2-3 张', '首评文案 1 条'],
+            firstComment: `如果你也在推进类似动作，回复“${event.title}”我把版本思路整理给你。`,
+          }
+        : {
+            coverHooks: [
+              `${sections.headline} with the result up front`,
+              `Open with the clearest proof from ${event.title}`,
+              'Use one contrast-led line to stop the scroll',
+            ],
+            visualStoryboard: [
+              'Slide 1: result or hero visual',
+              'Slide 2: context or problem setup',
+              'Slide 3: process screenshot or proof',
+              'Slide 4: CTA / comment prompt',
+            ],
+            assetChecklist: ['1 cover visual', '2-3 support images/screenshots', '1 first-comment prompt'],
+            firstComment: `Reply with "${event.title}" if you want the operator notes behind this post.`,
+          };
+    case 'xiaohongshu':
+      return language === 'zh'
+        ? {
+            coverHooks: [
+              `关于“${event.title}”，我只想先说这 1 件事`,
+              `${event.title} 之后，我最想提醒大家的 3 个点`,
+              `如果你也在做 ${event.title}，这篇可以少走弯路`,
+            ],
+            visualStoryboard: [
+              '封面：一句结论 + 强信息差',
+              '第 2 屏：场景背景与前提',
+              '第 3 屏：拆 3 个关键动作',
+              '第 4 屏：补充避坑和评论引导',
+            ],
+            assetChecklist: ['封面标题 3 版', '配图/截图 4-6 张', '评论区追问句 1 条', '收藏导向 CTA 1 条'],
+            commentPrompt: '你现在最卡的是哪一步？我可以继续把这个流程拆细。',
+          }
+        : {
+            coverHooks: [
+              `One thing I would say first about ${event.title}`,
+              `Three takeaways after shipping ${event.title}`,
+              `If you are building something similar, this can save a detour`,
+            ],
+            visualStoryboard: [
+              'Cover: one conclusion with a curiosity gap',
+              'Card 2: scene and why it matters',
+              'Card 3: three concrete moves',
+              'Card 4: pitfalls and comment prompt',
+            ],
+            assetChecklist: ['3 cover-title options', '4-6 visuals/screens', '1 comment prompt', '1 save/share CTA'],
+            commentPrompt: 'What part feels hardest right now? I can break the workflow down further.',
+          };
+    case 'wechat_moments':
+      return language === 'zh'
+        ? {
+            captionVariants: [
+              `${sections.headline}。今天最深的感受是：${sections.detailLine}`,
+              `刚处理完“${event.title}”，比结果更重要的是过程里的判断。`,
+              `关于 ${event.title}，这次我最想记住的一句是：${sections.bodyLead}`,
+            ],
+            visualStoryboard: ['首图：结果或现场', '第二张：细节/过程', '第三张：补充说明或截图'],
+            assetChecklist: ['手机可读短文案 2-3 版', '图片 3 张以内', '评论区跟进句 1 条'],
+          }
+        : {
+            captionVariants: [
+              `${sections.headline}. What stayed with me most: ${sections.detailLine}`,
+              `Just wrapped ${event.title}; the judgment calls mattered as much as the result.`,
+              `The one line I want to remember from ${event.title}: ${sections.bodyLead}`,
+            ],
+            visualStoryboard: ['Photo 1: result or scene', 'Photo 2: supporting detail', 'Photo 3: screenshot / proof'],
+            assetChecklist: ['2-3 short caption options', 'up to 3 mobile-friendly images', '1 follow-up comment line'],
+          };
+    case 'wechat_official':
+      return language === 'zh'
+        ? {
+            articleOutline: ['开头：为什么现在写这篇', '中段：3 个关键观察', '结尾：下一步行动与邀请'],
+            sectionBullets: [
+              `先讲清楚 ${event.title} 的背景与目标`,
+              '拆出 3 个可以直接复用的动作',
+              '收束到一个明确的行动邀请',
+            ],
+            coverHooks: [`${event.title}：一次值得展开写的推进`, `如果把 ${event.title} 讲透，最重要的是这 3 点`],
+            leadParagraph: `${sections.bodyLead} 这不是一条快讯，而是一段值得拆开的过程。`,
+          }
+        : {
+            articleOutline: [
+              'Opening: why this matters now',
+              'Middle: three concrete observations',
+              'Closing: next move and invitation',
+            ],
+            sectionBullets: [
+              `Frame the context and goal behind ${event.title}`,
+              'Break out three reusable moves or observations',
+              'Close with a single concrete invitation',
+            ],
+            coverHooks: [
+              `${event.title}: the operator story worth unpacking`,
+              `If we unpack ${event.title}, these are the three points that matter`,
+            ],
+            leadParagraph: `${sections.bodyLead} This deserves more than a short post, so the package opens as a narrative.`,
+          };
+    default:
+      return {};
+  }
+}
+
 function buildPublishPackage(platformRule, event, language, content, options = {}) {
   const capability = getPlatformCapability(platformRule.id);
   const sections = buildPackageSections(platformRule, event, language, options);
@@ -578,14 +698,8 @@ function buildPublishPackage(platformRule, event, language, content, options = {
         ? ['可以继续帮你改语气、改结构、补 CTA、补图文大纲']
         : ['Codex can further refine tone, structure, CTA, and media notes.'],
     preview: content,
+    ...buildPlatformPackageAdditions(platformRule, event, language, sections),
   };
-
-  if (platformRule.id === 'wechat_official') {
-    packagePayload.articleOutline =
-      language === 'zh'
-        ? ['开头：为什么现在写这篇', '中段：3 个关键观察', '结尾：下一步行动与邀请']
-        : ['Opening: why this matters now', 'Middle: three concrete observations', 'Closing: next move and invitation'];
-  }
 
   return packagePayload;
 }
@@ -639,6 +753,12 @@ function buildCodexLayerSummary() {
 function resolveDispatchCommand(body) {
   const command = readOptionalString(body.command, '').toUpperCase();
   if (!command) throw new HttpError(400, 'command is required');
+
+  if (command === 'ADD_TASK') {
+    const taskText = readOptionalString(body.taskText ?? body.text, '').replace(/\s+/g, ' ').trim();
+    if (!taskText) throw new HttpError(400, 'taskText is required for ADD_TASK');
+    return `ADD_TASK:${taskText}`;
+  }
 
   if (command === 'SET_PUBLISH_MODE') {
     const mode = readOptionalString(body.mode, DEFAULT_PUBLISH_MODE).toLowerCase();
