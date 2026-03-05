@@ -351,7 +351,9 @@ export function writeStructuredTask(task, options = {}) {
   const filePath = task.filePath || buildTaskFilePath(task.taskId, paths);
   const payload = { ...task, filePath };
   fs.writeFileSync(filePath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-  writeQueueLine(payload, queueMarkerFromStatus(payload.status || 'pending'), options);
+  if (options.syncQueue !== false) {
+    writeQueueLine(payload, queueMarkerFromStatus(payload.status || 'pending'), options);
+  }
   return parseTaskSummary(payload, paths);
 }
 
@@ -393,7 +395,7 @@ export function updateStructuredTask(taskId, patch = {}, options = {}) {
 
   fs.writeFileSync(nextTask.filePath, `${JSON.stringify(nextTask, null, 2)}\n`, 'utf8');
 
-  if (patch.status || patch.queue?.marker) {
+  if (options.syncQueue !== false && (patch.status || patch.queue?.marker)) {
     const marker = patch.queue?.marker || queueMarkerFromStatus(nextTask.status || 'pending');
     writeQueueLine(nextTask, marker, options);
   }

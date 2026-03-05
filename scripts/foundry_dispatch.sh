@@ -35,22 +35,14 @@ add_task() {
     exit 1
   fi
 
+  local output
+  output="$(node "${REPO_ROOT}/scripts/foundry_tasks.mjs" create --text "${raw}")"
   local task_id
-  task_id="TASK-$(date +%Y%m%d%H%M%S)"
-
-  if ! grep -q '^## Adhoc Tasks' "${QUEUE_FILE}" >/dev/null 2>&1; then
-    {
-      echo
-      echo "## Adhoc Tasks"
-    } >> "${QUEUE_FILE}"
+  task_id="$(printf '%s' "${output}" | node -e 'let data="";process.stdin.on("data",(chunk)=>data+=chunk);process.stdin.on("end",()=>{const parsed=JSON.parse(data);process.stdout.write(parsed.task?.taskId || "");});')"
+  if [[ -z "${task_id}" ]]; then
+    echo "Task added, but task id could not be resolved"
+    exit 1
   fi
-
-  {
-    echo "- [ ] ${task_id} ${raw}"
-    echo "  - Done When:"
-    echo "    - acceptance criteria are verifiable via scripts/test.sh or explicit run report evidence"
-  } >> "${QUEUE_FILE}"
-
   echo "Task added: ${task_id}"
 }
 
