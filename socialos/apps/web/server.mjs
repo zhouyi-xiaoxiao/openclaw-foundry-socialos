@@ -1039,13 +1039,18 @@ async function renderDevDigestPage(page) {
 }
 
 async function renderSettingsPage(page) {
-  const runtimeRes = await fetchJsonSafe('/settings/runtime');
-  const clusterRes = await fetchJsonSafe('/ops/cluster');
+  const [runtimeRes, clusterRes, tasksRes] = await Promise.all([
+    fetchJsonSafe('/settings/runtime'),
+    fetchJsonSafe('/ops/cluster'),
+    fetchJsonSafe('/ops/tasks?limit=8'),
+  ]);
   const runtime = runtimeRes.ok ? runtimeRes.payload : {};
   const cluster = clusterRes.ok ? clusterRes.payload.foundry : runtime.foundry;
   const codex = clusterRes.ok ? clusterRes.payload.codex : runtime.codex;
   const blocked = clusterRes.ok ? clusterRes.payload.blocked || [] : [];
   const embeddings = runtime.embeddings || {};
+  const tasks = tasksRes.ok ? tasksRes.payload.tasks || [] : [];
+  const healthStatus = cluster?.llmTaskHealth?.status || 'unknown';
 
   return `
     ${renderHero(
@@ -1054,6 +1059,7 @@ async function renderSettingsPage(page) {
         renderMetric(runtime.publishMode || 'dry-run', 'publish mode'),
         renderMetric(embeddings.effectiveProvider || 'local', 'embeddings'),
         renderMetric(String((cluster?.agents || []).length), 'foundry lanes'),
+        renderMetric(String(tasks.length), 'structured tasks'),
       ].join(''),
       `<div class="info-card"><strong>First-layer Foundry</strong><p>The cluster can now be treated as an execution surface, not just a background loop.</p></div>`
     )}
@@ -1099,22 +1105,81 @@ async function renderSettingsPage(page) {
               </div>
               <div class="form-result" data-form-result></div>
             </form>
-            <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
-              <input type="hidden" name="command" value="ADD_TASK" />
-              ${renderFormField(
-                'Create Foundry Task',
-                '<input name="taskText" type="text" placeholder="Implement live publish preflight for X" />',
-                'Add a new queue item so the first-layer Foundry cluster can pick it up next.'
-              )}
-              <div class="inline-actions">
-                <button type="submit">Add Task</button>
-              </div>
-              <div class="form-result" data-form-result></div>
-            </form>
           </div>
         `,
         'Operate the loop without leaving the product workspace.'
       )}
+      ${renderPanel(
+        'Foundry Task Intake',
+        `
+          <div class="control-stack">
+            <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/tasks">
+              <input type="hidden" name="intakeMode" value="quick" />
+              ${renderFormField(
+                'Quick Task',
+                '<input name="taskText" type="text" placeholder="Implement live publish preflight for X" />',
+                '一句话下任务，默认只允许 Foundry 在 SocialOS 仓库里执行。'
+              )}
+              <div class="inline-actions">
+                <button type="submit">Create Quick Task</button>
+              </div>
+              <div class="form-result" data-form-result></div>
+            </form>
+            <details class="details-shell">
+              <summary>Structured Task Intake</summary>
+              <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/tasks">
+                <input type="hidden" name="intakeMode" value="structured" />
+                ${renderFormField(
+                  'Title',
+                  '<input name="title" type="text" placeholder="Upgrade generic queue visibility" />',
+                  'Structured mode is for real execution, not just reminders.'
+                )}
+                ${renderFormField(
+                  'Goal',
+                  '<textarea name="goal" rows="3" placeholder="Describe the product outcome the Foundry cluster should deliver."></textarea>',
+                  'Write the user-facing or operator-facing outcome.'
+                )}
+                ${renderFormField(
+                  'Acceptance Criteria',
+                  '<textarea name="acceptanceCriteria" rows="4" placeholder="One line per criterion"></textarea>',
+                  'One line per criterion keeps the task verifiable.'
+                )}
+                ${renderFormField(
+                  'Constraints',
+                  '<textarea name="constraints" rows="3" placeholder="One line per constraint"></textarea>',
+                  'Use this for safety, scope, brand, or rollout constraints.'
+                )}
+                ${renderFormField(
+                  'Scope',
+                  `<select name="scope">
+                    <option value="socialos">socialos</option>
+                    <option value="openclaw">openclaw</option>
+                    <option value="multi-repo">multi-repo</option>
+                  </select>`,
+                  'Only explicit scope allows cross-repo execution.'
+                )}
+                ${renderFormField(
+                  'Repo Targets',
+                  '<textarea name="repoTargets" rows="3" placeholder="socialos&#10;openclaw"></textarea>',
+                  'One line per repo target. Use `socialos`, `openclaw`, or an absolute path.'
+                )}
+                ${renderFormField(
+                  'Preferred Tests',
+                  '<textarea name="preferredTests" rows="3" placeholder="bash scripts/test.sh&#10;node scripts/tests/product_workspace_smoke.mjs"></textarea>',
+                  'One line per verification command.'
+                )}
+                <div class="inline-actions">
+                  <button type="submit">Create Structured Task</button>
+                </div>
+                <div class="form-result" data-form-result></div>
+              </form>
+            </details>
+          </div>
+        `,
+        'Quick mode is the fast lane. Structured mode gives Foundry enough detail to execute directly.'
+      )}
+    </div>
+    <div class="grid two-up">
       ${renderPanel(
         'Embeddings + Safety',
         `
@@ -1128,11 +1193,22 @@ async function renderSettingsPage(page) {
           <div class="chip-row">
             ${renderPill(`blocked items ${blocked.length}`, blocked.length ? 'warn' : 'good')}
             ${renderPill('loopback only', 'soft')}
+            ${renderPill(`llm-task ${healthStatus}`, healthStatus === 'ok' || healthStatus === 'mock' ? 'good' : healthStatus === 'unknown' ? 'soft' : 'warn')}
           </div>
         `,
         'Operational truth for the current runtime.'
       )}
+      ${renderPanel(
+        'Recent Structured Tasks',
+        renderFoundryTaskCards(tasks),
+        'These are the tasks the generic Foundry executor can now pick up.'
+      )}
     </div>
+    ${renderPanel(
+      'Foundry Execution Surface',
+      renderFoundryExecutionSurface(cluster),
+      'This is the control plane for generic execution, not just status wallpaper.'
+    )}
     ${renderPanel('Foundry Cluster', renderClusterCards(cluster), 'Each lane has a role now visible in the product.')}
     ${renderCodexSummary(codex)}
     ${renderPanel('Blocked Surface', renderBlockedList(blocked), 'This is the remaining queue you still need to push through credentials or platform-specific decisions.')}
@@ -1709,6 +1785,24 @@ function renderLayout({ currentPath, title, body }) {
       }
       .compact-form {
         gap: 12px;
+      }
+      .details-shell {
+        border: 1px solid rgba(22, 33, 50, 0.1);
+        border-radius: 18px;
+        padding: 14px;
+        background: rgba(255, 255, 255, 0.6);
+      }
+      .details-shell summary {
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .details-shell[open] summary {
+        margin-bottom: 12px;
+      }
+      .inset-panel {
+        margin: 0;
+        padding: 18px;
       }
       .compact-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
