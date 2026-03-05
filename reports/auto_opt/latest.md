@@ -1,10 +1,10 @@
 # Auto Optimization Latest
 
-- run_id: 20260305_180234_AUTO-OPT-DOC-DEBT
-- task: AUTO-OPT-DOC-DEBT
+- run_id: 20260305_180303_AUTO-OPT-OBS-DEBT
+- task: AUTO-OPT-OBS-DEBT
 - status: noop
-- verify: /tmp/socialos_20260305_180234_AUTO-OPT-DOC-DEBT.log
-- updated_at_utc: 2026-03-05T18:02:35Z
+- verify: /tmp/socialos_20260305_180303_AUTO-OPT-OBS-DEBT.log
+- updated_at_utc: 2026-03-05T18:03:04Z
 
 ## What
 Auto optimization processed one lane.
@@ -16,7 +16,7 @@ Prevent idle no-op loops while keeping safety gates active.
 low
 
 ## Verify
-/tmp/socialos_20260305_180234_AUTO-OPT-DOC-DEBT.log
+/tmp/socialos_20260305_180303_AUTO-OPT-OBS-DEBT.log
 
 ## Next
 continue auto optimization pool

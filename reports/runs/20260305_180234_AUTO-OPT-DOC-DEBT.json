@@ -1,0 +1,29 @@
+{
+  "runId": "20260305_180234_AUTO-OPT-DOC-DEBT",
+  "taskId": "AUTO-OPT-DOC-DEBT",
+  "taskText": "- [ ] AUTO-OPT-DOC-DEBT 自动执行文档一致性体检",
+  "status": "success",
+  "summary": "AUTO-OPT doc debt sweep completed",
+  "why": "Prevents drift between runnable scripts and demo documentation",
+  "risk": "medium",
+  "verify": "/tmp/socialos_20260305_180234_AUTO-OPT-DOC-DEBT.log",
+  "next": "switch to main for auto push or keep this branch as staging",
+  "startedAt": "2026-03-05T18:02:35Z",
+  "finishedAt": "2026-03-05T18:02:39Z",
+  "durationMs": 4000,
+  "stages": {
+    "plan": "pass",
+    "coder": "pass",
+    "tester": "pass",
+    "reviewer": "pass",
+    "gitSync": "fetch-failed",
+    "push": "blocked:not-on-main(autodev/P1-4)"
+  },
+  "lock": {
+    "status": "acquired",
+    "staleRecovered": "false",
+    "ownerPid": "",
+    "ownerAlive": "unknown",
+    "ownerHeartbeatAgeSec": ""
+  }
+}

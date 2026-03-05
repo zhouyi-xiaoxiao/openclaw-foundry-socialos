@@ -64,7 +64,7 @@ Legend:
 - [x] AUTO-OPT-DOC-DEBT 自动执行文档一致性体检
   - Done When:
     - `node scripts/tests/docs_demo_smoke.mjs` 通过
-- [ ] AUTO-OPT-OBS-DEBT 自动执行可观测性体检
+- [x] AUTO-OPT-OBS-DEBT 自动执行可观测性体检
   - Done When:
     - `/ops/status`、`/ops/runs`、`/ops/blocked` 冒烟通过
 - [ ] AUTO-OPT-BLOCKED-TRIAGE 自动处理 blocked 并生成 autofix 任务
