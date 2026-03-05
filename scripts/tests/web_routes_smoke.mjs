@@ -17,6 +17,11 @@ async function expectPage(baseUrl, page) {
       `${page.path} missing nav link ${navPage.path}`
     );
   }
+
+  if (page.path === '/settings') {
+    assert(html.includes('Structured Task Intake'), 'settings page should render structured task intake');
+    assert(html.includes('Foundry Execution Surface'), 'settings page should render generic execution panel');
+  }
 }
 
 async function main() {

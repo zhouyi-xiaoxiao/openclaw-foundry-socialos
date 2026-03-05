@@ -116,11 +116,11 @@ function runProcess(command, args, options = {}) {
 }
 
 function commandExists(command) {
-  const probe = runProcess('bash', ['-lc', `command -v ${command}`], {
+  const probe = runProcess(command, ['--version'], {
     cwd: process.cwd(),
     timeoutMs: 5000,
   });
-  return probe.status === 0 && Boolean(probe.stdout.trim());
+  return probe.status === 0 && !probe.error;
 }
 
 function buildFallbackPlanSpec(task, source = 'fallback') {

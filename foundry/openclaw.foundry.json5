@@ -93,6 +93,7 @@
         "enabled": true,
         "config": {
           "defaultProvider": "openai-codex",
+          "defaultModel": "gpt-5.4",
           "allowedModels": [
             "openai-codex/gpt-5.4"
           ]

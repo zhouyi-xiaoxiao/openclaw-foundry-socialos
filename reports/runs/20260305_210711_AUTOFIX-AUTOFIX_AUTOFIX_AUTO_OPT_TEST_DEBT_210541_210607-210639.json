@@ -1,0 +1,29 @@
+{
+  "runId": "20260305_210711_AUTOFIX-AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_210541_210607-210639",
+  "taskId": "AUTOFIX-AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_210541_210607-210639",
+  "taskText": "- [ ] AUTOFIX-AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_210541_210607-210639 Coder stage failed for AUTOFIX-AUTOFIX_AUTO_OPT_TEST_DEBT_210541-210607",
+  "status": "blocked",
+  "summary": "Coder stage failed for AUTOFIX-AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_210541_210607-210639",
+  "why": "task handler command failed",
+  "risk": "medium",
+  "verify": "/tmp/socialos_20260305_210711_AUTOFIX-AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_210541_210607-210639.log",
+  "next": "autofix task created; retry next cron cycle",
+  "startedAt": "2026-03-05T21:07:11Z",
+  "finishedAt": "2026-03-05T21:07:17Z",
+  "durationMs": 6000,
+  "stages": {
+    "plan": "pass",
+    "coder": "fail",
+    "tester": "pending",
+    "reviewer": "pending",
+    "gitSync": "fetch-failed",
+    "push": "pending"
+  },
+  "lock": {
+    "status": "acquired",
+    "staleRecovered": "false",
+    "ownerPid": "",
+    "ownerAlive": "unknown",
+    "ownerHeartbeatAgeSec": ""
+  }
+}

@@ -1,10 +1,10 @@
 # Auto Optimization Latest
 
-- run_id: 20260305_210503_AUTO-OPT-TEST-DEBT
-- task: AUTO-OPT-TEST-DEBT
+- run_id: 20260305_210813_AUTOFIX-TASK_20260305210700851017-210742
+- task: AUTOFIX-TASK_20260305210700851017-210742
 - status: noop
-- verify: /tmp/socialos_test_20260305_210503_AUTO-OPT-TEST-DEBT.log
-- updated_at_utc: 2026-03-05T21:05:07Z
+- verify: /tmp/socialos_test_20260305_210813_AUTOFIX-TASK_20260305210700851017-210742.log
+- updated_at_utc: 2026-03-05T21:08:18Z
 
 ## What
 Auto optimization processed one lane.
@@ -16,7 +16,7 @@ Prevent idle no-op loops while keeping safety gates active.
 low
 
 ## Verify
-/tmp/socialos_test_20260305_210503_AUTO-OPT-TEST-DEBT.log
+/tmp/socialos_test_20260305_210813_AUTOFIX-TASK_20260305210700851017-210742.log
 
 ## Next
-continue auto optimization pool
+continue with next pending task

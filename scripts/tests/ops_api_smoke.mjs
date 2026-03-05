@@ -26,6 +26,13 @@ async function main() {
     const blocked = await getJson(api.baseUrl, '/ops/blocked');
     assert(Array.isArray(blocked.blockedTasks), 'ops/blocked should include blockedTasks');
 
+    const tasks = await getJson(api.baseUrl, '/ops/tasks?limit=5');
+    assert(Array.isArray(tasks.tasks), 'ops/tasks should include structured task list');
+
+    const cluster = await getJson(api.baseUrl, '/ops/cluster');
+    assert(typeof cluster.foundry?.genericTaskExecutionEnabled === 'boolean', 'ops/cluster should expose generic task execution flag');
+    assert(cluster.foundry?.llmTaskHealth, 'ops/cluster should expose llm-task health');
+
     console.log('ops_api_smoke: PASS');
   } finally {
     await api.close();

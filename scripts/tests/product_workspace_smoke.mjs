@@ -112,10 +112,16 @@ async function main() {
     const cluster = await getJson(api.baseUrl, '/ops/cluster');
     assert(Array.isArray(cluster.foundry?.agents), 'ops/cluster should expose foundry agents');
     assert(Array.isArray(cluster.codex?.canOwn), 'ops/cluster should expose codex responsibilities');
+    assert(Array.isArray(cluster.foundry?.supportedScopes), 'ops/cluster should expose supported scopes');
+    assert(typeof cluster.foundry?.defaultAutonomyMode === 'string', 'ops/cluster should expose autonomy mode');
 
     const runtime = await getJson(api.baseUrl, '/settings/runtime');
     assert(runtime.publishMode === 'dry-run' || runtime.publishMode === 'live', 'settings/runtime should include publish mode');
     assert(runtime.foundry?.agents?.length >= 1, 'settings/runtime should include foundry cluster summary');
+    assert(runtime.foundry?.llmTaskHealth, 'settings/runtime should expose llm-task health');
+
+    const tasks = await getJson(api.baseUrl, '/ops/tasks?limit=10');
+    assert(Array.isArray(tasks.tasks), 'ops/tasks should return a task list');
 
     const dispatch = await postJson(api.baseUrl, '/ops/dispatch', {
       command: 'STATUS',

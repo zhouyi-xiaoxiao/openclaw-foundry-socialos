@@ -1,0 +1,29 @@
+{
+  "runId": "20260305_210533_AUTO-OPT-TEST-DEBT",
+  "taskId": "AUTO-OPT-TEST-DEBT",
+  "taskText": "- [ ] AUTO-OPT-TEST-DEBT 自动执行测试债清理循环",
+  "status": "blocked",
+  "summary": "Tester gate failed for AUTO-OPT-TEST-DEBT",
+  "why": "scripts/test.sh failed after coder stage",
+  "risk": "medium",
+  "verify": "/tmp/socialos_test_gate_20260305_210533_AUTO-OPT-TEST-DEBT.log",
+  "next": "autofix task created; retry next cron cycle",
+  "startedAt": "2026-03-05T21:05:33Z",
+  "finishedAt": "2026-03-05T21:05:41Z",
+  "durationMs": 8000,
+  "stages": {
+    "plan": "pass",
+    "coder": "pass",
+    "tester": "fail",
+    "reviewer": "pending",
+    "gitSync": "fetch-failed",
+    "push": "pending"
+  },
+  "lock": {
+    "status": "acquired",
+    "staleRecovered": "false",
+    "ownerPid": "",
+    "ownerAlive": "unknown",
+    "ownerHeartbeatAgeSec": ""
+  }
+}

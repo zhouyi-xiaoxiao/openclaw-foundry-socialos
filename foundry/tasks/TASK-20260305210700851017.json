@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "taskId": "TASK-20260305210700851017",
+  "title": "fast fail probe",
+  "goal": "fast fail probe",
+  "acceptanceCriteria": [
+    "acceptance criteria are verifiable via scripts/test.sh or explicit run report evidence"
+  ],
+  "constraints": [
+    "publish mode must stay dry-run unless runtime controls, credentials, and live publish gates are explicitly satisfied"
+  ],
+  "scope": "socialos",
+  "repoTargets": [
+    "/Users/zhouyixiaoxiao/openclaw-foundry-socialos"
+  ],
+  "preferredTests": [
+    "bash scripts/test.sh"
+  ],
+  "intakeMode": "quick",
+  "autonomyMode": "direct-execute",
+  "status": "blocked",
+  "createdAt": "2026-03-05T21:07:00.853Z",
+  "updatedAt": "2026-03-05T21:07:42.685Z",
+  "filePath": "/Users/zhouyixiaoxiao/openclaw-foundry-socialos/foundry/tasks/TASK-20260305210700851017.json",
+  "queue": {
+    "marker": "!"
+  },
+  "execution": null
+}

@@ -60,7 +60,7 @@ Legend:
 - [x] OPS-3 PAUSE/RESUME 机制（.foundry/PAUSED）
 
 ## Auto Optimization Pool
-- [x] AUTO-OPT-TEST-DEBT 自动执行测试债清理循环
+- [!] AUTO-OPT-TEST-DEBT 自动执行测试债清理循环
   - Done When:
     - `bash scripts/test.sh` 通过并记录 run 报告
 - [x] AUTO-OPT-PERF-DEBT 自动执行 embedding/perf 复盘
@@ -123,6 +123,28 @@ Legend:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
 - [x] AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507_195536_195608_195637-195708 Coder stage failed for AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507_195536_195608-195637
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+- [!] AUTOFIX-AUTO_OPT_TEST_DEBT-210541 Tester gate failed for AUTO-OPT-TEST-DEBT
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+- [!] AUTOFIX-AUTOFIX_AUTO_OPT_TEST_DEBT_210541-210607 Coder stage failed for AUTOFIX-AUTO_OPT_TEST_DEBT-210541
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+- [!] AUTOFIX-AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_210541_210607-210639 Coder stage failed for AUTOFIX-AUTOFIX_AUTO_OPT_TEST_DEBT_210541-210607
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+
+## Adhoc Tasks
+- [!] TASK-20260305210700851017 fast fail probe (details: foundry/tasks/TASK-20260305210700851017.json)
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+- [x] AUTOFIX-TASK_20260305210700851017-210742 Plan generation failed for TASK-20260305210700851017
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass

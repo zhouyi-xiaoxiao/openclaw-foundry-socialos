@@ -1,0 +1,29 @@
+{
+  "runId": "20260305_210604_AUTOFIX-AUTO_OPT_TEST_DEBT-210541",
+  "taskId": "AUTOFIX-AUTO_OPT_TEST_DEBT-210541",
+  "taskText": "- [ ] AUTOFIX-AUTO_OPT_TEST_DEBT-210541 Tester gate failed for AUTO-OPT-TEST-DEBT",
+  "status": "blocked",
+  "summary": "Coder stage failed for AUTOFIX-AUTO_OPT_TEST_DEBT-210541",
+  "why": "task handler command failed",
+  "risk": "medium",
+  "verify": "/tmp/socialos_20260305_210604_AUTOFIX-AUTO_OPT_TEST_DEBT-210541.log",
+  "next": "autofix task created; retry next cron cycle",
+  "startedAt": "2026-03-05T21:06:04Z",
+  "finishedAt": "2026-03-05T21:06:07Z",
+  "durationMs": 3000,
+  "stages": {
+    "plan": "pass",
+    "coder": "fail",
+    "tester": "pending",
+    "reviewer": "pending",
+    "gitSync": "fetch-failed",
+    "push": "pending"
+  },
+  "lock": {
+    "status": "acquired",
+    "staleRecovered": "false",
+    "ownerPid": "",
+    "ownerAlive": "unknown",
+    "ownerHeartbeatAgeSec": ""
+  }
+}

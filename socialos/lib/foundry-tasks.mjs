@@ -317,7 +317,11 @@ export function buildStructuredTaskRecord(input = {}, options = {}) {
     throw new Error('acceptanceCriteria is required for structured tasks');
   }
 
-  const taskId = input.taskId || `TASK-${new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14)}`;
+  const taskId =
+    input.taskId ||
+    `TASK-${new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 17)}${Math.floor(Math.random() * 1000)
+      .toString()
+      .padStart(3, '0')}`;
   const createdAt = input.createdAt || isoNow();
   const updatedAt = input.updatedAt || createdAt;
   const filePath = buildTaskFilePath(taskId, paths);

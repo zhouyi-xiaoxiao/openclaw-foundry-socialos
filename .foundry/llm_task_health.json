@@ -1,0 +1,8 @@
+{
+  "status": "blocked",
+  "checkedAt": "2026-03-05T21:08:03.373Z",
+  "summary": "llm-task reported a runtime failure during the probe.",
+  "reason": "[tools] llm-task failed: Model not allowed by llm-task plugin config: openai-codex/gpt-5.3-codex. Allowed models: openai-codex/gpt-5.4",
+  "mode": "live",
+  "genericTaskExecutionEnabled": false
+}
