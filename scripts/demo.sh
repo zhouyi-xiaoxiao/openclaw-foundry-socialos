@@ -12,6 +12,7 @@ API_PORT="${SOCIALOS_API_PORT:-8787}"
 WEB_PORT="${SOCIALOS_WEB_PORT:-4173}"
 API_URL="http://127.0.0.1:${API_PORT}"
 WEB_URL="http://127.0.0.1:${WEB_PORT}"
+NODE_BIN="$(command -v node)"
 
 wait_for_http() {
   local url="$1"
@@ -30,16 +31,16 @@ wait_for_http() {
 start_server_if_needed() {
   local name="$1"
   local port="$2"
-  local cmd="$3"
-  local log_file="$4"
-  local pid_file="$5"
+  local log_file="$3"
+  local pid_file="$4"
+  shift 4
 
   if lsof -nP -iTCP:"${port}" -sTCP:LISTEN >/dev/null 2>&1; then
     echo "${name} already listening on :${port}"
     return 0
   fi
 
-  nohup bash -lc "${cmd}" >"${log_file}" 2>&1 &
+  nohup "$@" >"${log_file}" 2>&1 &
   local pid="$!"
   echo "${pid}" > "${pid_file}"
   echo "started ${name} (pid=${pid}, log=${log_file})"
@@ -62,8 +63,14 @@ node "${REPO_ROOT}/scripts/tests/runtime_policy_check.mjs" >"${POLICY_LOG}" 2>&1
 cat "${POLICY_LOG}"
 
 echo "[4/4] Start local API + Web"
-start_server_if_needed "socialos-api" "${API_PORT}" "node ${REPO_ROOT}/socialos/apps/api/server.mjs --port ${API_PORT}" "${API_LOG}" "${API_PID_FILE}"
-start_server_if_needed "socialos-web" "${WEB_PORT}" "node ${REPO_ROOT}/socialos/apps/web/server.mjs --port ${WEB_PORT}" "${WEB_LOG}" "${WEB_PID_FILE}"
+if ! "${NODE_BIN}" --input-type=module -e "await import('node:sqlite')" >/dev/null 2>&1; then
+  echo "ERROR: node binary does not support node:sqlite: ${NODE_BIN}" >&2
+  echo "Use a newer Node runtime (>=22) before running demo."
+  exit 1
+fi
+
+start_server_if_needed "socialos-api" "${API_PORT}" "${API_LOG}" "${API_PID_FILE}" "${NODE_BIN}" "${REPO_ROOT}/socialos/apps/api/server.mjs" --port "${API_PORT}"
+start_server_if_needed "socialos-web" "${WEB_PORT}" "${WEB_LOG}" "${WEB_PID_FILE}" "${NODE_BIN}" "${REPO_ROOT}/socialos/apps/web/server.mjs" --port "${WEB_PORT}"
 
 if wait_for_http "${API_URL}/health"; then
   API_HEALTH="PASS"
