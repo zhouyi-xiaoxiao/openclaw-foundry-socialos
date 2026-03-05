@@ -67,7 +67,7 @@ Legend:
 - [x] AUTO-OPT-OBS-DEBT 自动执行可观测性体检
   - Done When:
     - `/ops/status`、`/ops/runs`、`/ops/blocked` 冒烟通过
-- [ ] AUTO-OPT-BLOCKED-TRIAGE 自动处理 blocked 并生成 autofix 任务
+- [x] AUTO-OPT-BLOCKED-TRIAGE 自动处理 blocked 并生成 autofix 任务
   - Done When:
     - 若存在 blocked，生成至少 1 条 `AUTOFIX-*` 任务
     - 若不存在 blocked，写入 run 记录确认空阻塞
@@ -86,6 +86,10 @@ Legend:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
 - [ ] AUTOFIX-P2_4-180133 P2-4 deferred by policy (external credentials/integration dependency)
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+- [ ] AUTOFIX-AUTO_OPT_BLOCKED_TRIAGE-180334 Auto-triage from blocked item: - [!] P2-1 X/LinkedIn live 发布（凭据可用时）
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass

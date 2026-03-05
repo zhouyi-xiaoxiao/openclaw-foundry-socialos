@@ -1,10 +1,10 @@
 # Auto Optimization Latest
 
-- run_id: 20260305_180303_AUTO-OPT-OBS-DEBT
-- task: AUTO-OPT-OBS-DEBT
+- run_id: 20260305_180334_AUTO-OPT-BLOCKED-TRIAGE
+- task: AUTO-OPT-BLOCKED-TRIAGE
 - status: noop
-- verify: /tmp/socialos_20260305_180303_AUTO-OPT-OBS-DEBT.log
-- updated_at_utc: 2026-03-05T18:03:04Z
+- verify: /Users/zhouyixiaoxiao/openclaw-foundry-socialos/QUEUE.md
+- updated_at_utc: 2026-03-05T18:03:34Z
 
 ## What
 Auto optimization processed one lane.
@@ -16,7 +16,7 @@ Prevent idle no-op loops while keeping safety gates active.
 low
 
 ## Verify
-/tmp/socialos_20260305_180303_AUTO-OPT-OBS-DEBT.log
+/Users/zhouyixiaoxiao/openclaw-foundry-socialos/QUEUE.md
 
 ## Next
 continue auto optimization pool
