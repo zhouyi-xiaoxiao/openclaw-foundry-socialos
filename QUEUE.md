@@ -42,11 +42,16 @@ Legend:
 - [x] P1-2 People hybrid 搜索增强：keyword+vector evidence 展示
 - [x] P1-3 weekly mirror 自动生成与证据跳转
 - [x] P1-4 demo/README 完善：一键复现脚本与演示文档
+- [x] P1-5 产品工作台升级：从 skeleton 变成可操作的 product workspace
+  - Done When:
+    - Quick Capture / People / Events / Drafts / Queue / Settings 都有真实表单或真实数据面板
+    - Drafts 页面可直接生成并排队 7 平台发布包
+    - Settings 页面可直接操作 Foundry 与查看 Codex / Foundry 分工
 
 ## P2（可扩展）
 - [!] P2-1 X/LinkedIn live 发布（凭据可用时）
-- [!] P2-2 Ins/小红书/朋友圈发布包优化
-- [!] P2-3 公众号图文包增强
+- [ ] P2-2 Ins/小红书/朋友圈发布包优化
+- [ ] P2-3 公众号图文包增强
 - [!] P2-4 DB 升级 Postgres + pgvector（可选）
 
 ## Orchestrator Ops
@@ -93,27 +98,27 @@ Legend:
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
-- [!] AUTOFIX-AUTO_OPT_TEST_DEBT-195409 Coder stage failed for AUTO-OPT-TEST-DEBT
+- [x] AUTOFIX-AUTO_OPT_TEST_DEBT-195409 Coder stage failed for AUTO-OPT-TEST-DEBT
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
-- [!] AUTOFIX-AUTOFIX_AUTO_OPT_TEST_DEBT_195409-195439 Coder stage failed for AUTOFIX-AUTO_OPT_TEST_DEBT-195409
+- [x] AUTOFIX-AUTOFIX_AUTO_OPT_TEST_DEBT_195409-195439 Coder stage failed for AUTOFIX-AUTO_OPT_TEST_DEBT-195409
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
-- [!] AUTOFIX-AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439-195507 Coder stage failed for AUTOFIX-AUTOFIX_AUTO_OPT_TEST_DEBT_195409-195439
+- [x] AUTOFIX-AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439-195507 Coder stage failed for AUTOFIX-AUTOFIX_AUTO_OPT_TEST_DEBT_195409-195439
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
-- [!] AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507-195536 Coder stage failed for AUTOFIX-AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439-195507
+- [x] AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507-195536 Coder stage failed for AUTOFIX-AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439-195507
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
-- [!] AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507_195536-195608 Coder stage failed for AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507-195536
+- [x] AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507_195536-195608 Coder stage failed for AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507-195536
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
-- [!] AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507_195536_195608-195637 Coder stage failed for AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507_195536-195608
+- [x] AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507_195536_195608-195637 Coder stage failed for AUTOFIX-AUTOFIX_AUTOFIX_AUTOFIX_AUTOFIX_AUTO_OPT_TEST_DEBT_195409_195439_195507_195536-195608
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass

@@ -66,12 +66,27 @@ async function main() {
 
     const generated = await postJson(api.baseUrl, '/drafts/generate', {
       eventId: event.eventId,
-      platforms: ['x', 'xiaohongshu', 'wechat_official'],
+      platforms: ['x', 'instagram', 'xiaohongshu', 'wechat_moments', 'wechat_official'],
       languages: ['en'],
       tone: 'clear',
       angle: 'operator update',
     });
-    assert(generated.count === 3, `expected 3 drafts, got ${generated.count}`);
+    assert(generated.count === 5, `expected 5 drafts, got ${generated.count}`);
+    const instagramDraft = generated.drafts.find((draft) => draft.platform === 'instagram');
+    assert(
+      instagramDraft?.publishPackage?.visualStoryboard?.length === 4,
+      'instagram package should include a 4-step visual storyboard'
+    );
+    const xiaohongshuDraft = generated.drafts.find((draft) => draft.platform === 'xiaohongshu');
+    assert(
+      xiaohongshuDraft?.publishPackage?.coverHooks?.length === 3,
+      'xiaohongshu package should include cover hooks'
+    );
+    const momentsDraft = generated.drafts.find((draft) => draft.platform === 'wechat_moments');
+    assert(
+      momentsDraft?.publishPackage?.captionVariants?.length === 3,
+      'wechat moments package should include caption variants'
+    );
     const wechatDraft = generated.drafts.find((draft) => draft.platform === 'wechat_official');
     assert(wechatDraft?.publishPackage?.articleOutline?.length === 3, 'wechat package should include article outline');
     const xDraft = generated.drafts.find((draft) => draft.platform === 'x');
@@ -101,6 +116,12 @@ async function main() {
     const runtime = await getJson(api.baseUrl, '/settings/runtime');
     assert(runtime.publishMode === 'dry-run' || runtime.publishMode === 'live', 'settings/runtime should include publish mode');
     assert(runtime.foundry?.agents?.length >= 1, 'settings/runtime should include foundry cluster summary');
+
+    const dispatch = await postJson(api.baseUrl, '/ops/dispatch', {
+      command: 'STATUS',
+    });
+    assert(dispatch.command === 'STATUS', 'ops/dispatch should execute the requested status command');
+    assert(dispatch.cluster?.agents?.length >= 1, 'ops/dispatch should return cluster summary after execution');
 
     console.log('product_workspace_smoke: PASS');
   } finally {

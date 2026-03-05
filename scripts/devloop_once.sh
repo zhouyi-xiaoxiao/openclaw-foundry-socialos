@@ -404,6 +404,16 @@ if (taskId === 'P1-4') {
   spec.filesToChange = ['README.md', 'socialos/docs/DEMO_SCRIPT.md', 'scripts/demo.sh'];
 }
 
+if (taskId === 'P2-2' || taskId === 'P2-3') {
+  spec.filesToChange = [
+    'socialos/apps/api/server.mjs',
+    'socialos/apps/web/server.mjs',
+    'scripts/tests/product_workspace_smoke.mjs',
+  ];
+  spec.commands = ['node scripts/tests/product_workspace_smoke.mjs', 'node scripts/tests/web_routes_smoke.mjs'];
+  spec.tests = ['node scripts/tests/product_workspace_smoke.mjs', 'node scripts/tests/web_routes_smoke.mjs', 'bash scripts/test.sh'];
+}
+
 if (taskId.startsWith('AUTO-OPT-')) {
   spec.filesToChange = ['reports/auto_opt/latest.md', 'QUEUE.md'];
   spec.commands = ['bash scripts/test.sh', 'bash scripts/bench_embeddings.sh'];
@@ -465,7 +475,29 @@ run_handler() {
         return 0
       fi
       ;;
-    P2-1|P2-2|P2-3|P2-4)
+    P2-2)
+      if node "${REPO_ROOT}/scripts/tests/product_workspace_smoke.mjs" >"${log_file}" 2>&1 && node "${REPO_ROOT}/scripts/tests/web_routes_smoke.mjs" >>"${log_file}" 2>&1; then
+        RUN_SUMMARY="P2-2 assisted publish packages verified for Instagram / Xiaohongshu / Moments"
+        RUN_WHY="Local-first package generation now covers the richer operator bundles without waiting on live credentials"
+        RUN_RISK="low"
+        RUN_VERIFY="${log_file}"
+        RUN_NEXT="continue with P2-3 rich article package"
+        STAGE_CODER="pass"
+        return 0
+      fi
+      ;;
+    P2-3)
+      if node "${REPO_ROOT}/scripts/tests/product_workspace_smoke.mjs" >"${log_file}" 2>&1; then
+        RUN_SUMMARY="P2-3 WeChat official rich article package verified"
+        RUN_WHY="公众号图文增强已可在本地产品工作台生成并回归验证"
+        RUN_RISK="low"
+        RUN_VERIFY="${log_file}"
+        RUN_NEXT="continue with next pending queue item"
+        STAGE_CODER="pass"
+        return 0
+      fi
+      ;;
+    P2-1|P2-4)
       RUN_SUMMARY="${TASK_ID} deferred by policy (external credentials/integration dependency)"
       RUN_WHY="Live/external publish work requires explicit credentials and higher-risk integration pass"
       RUN_RISK="medium"
