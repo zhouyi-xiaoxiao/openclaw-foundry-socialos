@@ -5,7 +5,7 @@
         "id": "forge_orchestrator",
         "name": "forge_orchestrator",
         "workspace": "/Users/zhouyixiaoxiao/openclaw-foundry-socialos/foundry/WORKSPACE_FOUNDY/forge_orchestrator",
-        "model": "openai-codex/gpt-5.3-codex",
+        "model": "openai-codex/gpt-5.4",
         "tools": {
           "profile": "full",
           "alsoAllow": [
@@ -26,7 +26,7 @@
         "id": "forge_coder",
         "name": "forge_coder",
         "workspace": "/Users/zhouyixiaoxiao/openclaw-foundry-socialos/foundry/WORKSPACE_FOUNDY/forge_coder",
-        "model": "openai-codex/gpt-5.3-codex",
+        "model": "openai-codex/gpt-5.4",
         "tools": {
           "profile": "full",
           "alsoAllow": [
@@ -47,7 +47,7 @@
         "id": "forge_tester",
         "name": "forge_tester",
         "workspace": "/Users/zhouyixiaoxiao/openclaw-foundry-socialos/foundry/WORKSPACE_FOUNDY/forge_tester",
-        "model": "openai-codex/gpt-5.3-codex",
+        "model": "openai-codex/gpt-5.4",
         "tools": {
           "profile": "full",
           "alsoAllow": [
@@ -68,7 +68,7 @@
         "id": "forge_reviewer",
         "name": "forge_reviewer",
         "workspace": "/Users/zhouyixiaoxiao/openclaw-foundry-socialos/foundry/WORKSPACE_FOUNDY/forge_reviewer",
-        "model": "openai-codex/gpt-5.3-codex",
+        "model": "openai-codex/gpt-5.4",
         "tools": {
           "profile": "full",
           "alsoAllow": [
@@ -94,7 +94,7 @@
         "config": {
           "defaultProvider": "openai-codex",
           "allowedModels": [
-            "openai-codex/gpt-5.3-codex"
+            "openai-codex/gpt-5.4"
           ]
         }
       }

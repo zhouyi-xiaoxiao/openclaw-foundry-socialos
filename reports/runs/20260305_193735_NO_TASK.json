@@ -1,0 +1,29 @@
+{
+  "runId": "20260305_193735_NO_TASK",
+  "taskId": "NO_TASK",
+  "taskText": "",
+  "status": "noop",
+  "summary": "Devloop paused",
+  "why": "Paused via .foundry/PAUSED",
+  "risk": "low",
+  "verify": "/Users/zhouyixiaoxiao/openclaw-foundry-socialos/.foundry/PAUSED",
+  "next": "remove pause flag to resume",
+  "startedAt": "2026-03-05T19:37:35Z",
+  "finishedAt": "2026-03-05T19:37:35Z",
+  "durationMs": 0,
+  "stages": {
+    "plan": "pending",
+    "coder": "pending",
+    "tester": "pending",
+    "reviewer": "pending",
+    "gitSync": "pending",
+    "push": "pending"
+  },
+  "lock": {
+    "status": "not-acquired",
+    "staleRecovered": "false",
+    "ownerPid": "",
+    "ownerAlive": "unknown",
+    "ownerHeartbeatAgeSec": ""
+  }
+}

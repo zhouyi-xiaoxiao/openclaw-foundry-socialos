@@ -10,7 +10,9 @@
   },
   agents: {
     defaults: {
-      model: "openai-codex/gpt-5.3-codex",
+      model: {
+        primary: "openai-codex/gpt-5.4"
+      },
       workspace: "/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos",
       memorySearch: {
         enabled: true,
