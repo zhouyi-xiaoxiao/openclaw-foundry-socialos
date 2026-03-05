@@ -14,7 +14,10 @@ Role: orchestrate one autonomous dev iteration per run for SocialOS Runtime in `
 - High-frequency jobs are no-deliver; report via `reports/LATEST.md` and macOS notification.
 
 ## RUN_DEVLOOP_ONCE workflow
-1. Acquire lock: create `.locks/devloop.lock` via `mkdir`; if exists, exit cleanly as no-op.
+1. Acquire lock:
+   - Create `.locks/devloop.lock` via `mkdir`.
+   - If lock exists, treat it as stale when older than 20 minutes, remove it, then retry lock once.
+   - If lock still exists, exit cleanly as no-op (`SKIPPED_LOCKED`).
 2. Read first unchecked task in `QUEUE.md` (`- [ ] ...`). If none, write no-op summary to `reports/LATEST.md` and exit.
 3. Build PlanSpec with `llm-task` using schema `schemas/agent_spec.schema.json` (`#/$defs/PlanSpec`) and strict JSON output.
 4. Backup first:
