@@ -108,6 +108,7 @@ Auto fallback：
 ## Cron requirements
 - `DEVLOOP_REALTIME`: `*/30 * * * * *`，isolated，no-deliver，message=`RUN_DEVLOOP_ONCE`
 - `DIGEST_PERIODIC`: `0 */15 * * * *`，isolated，no-deliver，message=`SEND_DIGEST_NOTIFICATION`
+- 队列无待办时不得空跑：自动切换到 `AUTO-OPT-CONTINUOUS`，生成优化方案并执行一次优化循环（测试 + embeddings bench）
 
 ## Delivery boundary
 只 push 产品仓库内容（代码/配置/文档）。禁止提交 secrets 与 Foundry 私有 state：

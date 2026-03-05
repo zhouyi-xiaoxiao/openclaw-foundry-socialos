@@ -18,7 +18,8 @@ Role: orchestrate one autonomous dev iteration per run for SocialOS Runtime in `
    - Create `.locks/devloop.lock` via `mkdir`.
    - If lock exists, treat it as stale when older than 20 minutes, remove it, then retry lock once.
    - If lock still exists, exit cleanly as no-op (`SKIPPED_LOCKED`).
-2. Read first unchecked task in `QUEUE.md` (`- [ ] ...`). If none, write no-op summary to `reports/LATEST.md` and exit.
+2. Read first unchecked task in `QUEUE.md` (`- [ ] ...`).
+   - If none, do not idle. Seed/reopen `AUTO-OPT-CONTINUOUS` and execute that optimization task in the same run.
 3. Build PlanSpec with `llm-task` using schema `schemas/agent_spec.schema.json` (`#/$defs/PlanSpec`) and strict JSON output.
 4. Backup first:
    - Ensure branch `main` exists and create last-known-good tag: `lkg/<timestamp>`.

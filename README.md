@@ -22,6 +22,8 @@ Local-first social operating system scaffold:
 ./scripts/bench_embeddings.sh   # baseline embedding benchmark output
 ```
 
+When the queue has no pending product tasks, devloop auto-switches to `AUTO-OPT-CONTINUOUS` (optimization cycle) instead of idle noop.
+
 ## Runtime profile
 - Source config: `socialos/openclaw/runtime.openclaw.json5`
 - Deploy to local profile: `./scripts/deploy_runtime.sh`
