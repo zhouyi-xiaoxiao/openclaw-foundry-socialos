@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { startApiServer } from '../../socialos/apps/api/server.mjs';
 
 function assert(condition, message) {
@@ -14,7 +17,9 @@ async function getJson(baseUrl, pathname) {
 }
 
 async function main() {
-  const api = await startApiServer({ port: 0, quiet: true });
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'socialos-ops-api-'));
+  const dbPath = path.join(tempDir, 'ops.api.db');
+  const api = await startApiServer({ port: 0, quiet: true, dbPath });
   try {
     const status = await getJson(api.baseUrl, '/ops/status');
     assert(typeof status.mode === 'string', 'ops/status should include mode');
@@ -36,6 +41,7 @@ async function main() {
     console.log('ops_api_smoke: PASS');
   } finally {
     await api.close();
+    fs.rmSync(tempDir, { recursive: true, force: true });
   }
 }
 

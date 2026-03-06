@@ -1,13 +1,8 @@
 # Embeddings Product Settings
 
-This project supports a **safe-by-default retrieval path**:
-- no API key → keyword/hybrid search still works
-- API key present → semantic enhancement is enabled automatically
+SocialOS keeps search usable with or without cloud credentials.
 
-## Runtime settings
-
-Set via environment variables (see `.env.example`):
-
+## Supported config
 - `EMBEDDINGS_PROVIDER=auto|openai|local`
 - `OPENAI_API_KEY=`
 - `OPENAI_EMBEDDING_MODEL=text-embedding-3-small|text-embedding-3-large`
@@ -15,44 +10,37 @@ Set via environment variables (see `.env.example`):
 - `DUAL_INDEX=0|1`
 
 ## Effective provider resolution
-
 When `EMBEDDINGS_PROVIDER=auto`:
 
-1. If `OPENAI_API_KEY` is present and non-empty:
-   - `effectiveProvider=openai`
-   - retrieval mode becomes `hybrid-semantic`
-2. If no key is present:
-   - `effectiveProvider=local`
-   - retrieval mode remains `hybrid-keyword`
+1. `OPENAI_API_KEY` present -> `effectiveProvider=openai`
+2. no key -> `effectiveProvider=local`
 
-You can inspect the resolved mode at:
-
+This resolution is surfaced by:
 - `GET /settings/embeddings`
+- `GET /settings/runtime`
+- Dashboard `Settings` page
 
-## Search behavior
+## Retrieval modes
+- no key -> `hybrid-keyword`
+- key present -> `hybrid-semantic`
 
-`POST /people/search` always keeps keyword matching available.
+Keyword fallback is always preserved, so People search never becomes unusable in local-only setups.
 
-- Without key: returns `retrieval.mode=hybrid-keyword`
-- With key: returns `retrieval.mode=hybrid-semantic` and applies semantic boost scoring
+## Product behavior
+- Search results are ranked with blended keyword/semantic scoring.
+- People detail exposes evidence rows so retrieval stays explainable.
+- This is enough for P1; `pgvector` still stays in `P2-4`.
 
-This ensures search is usable in no-key local setups while still upgrading automatically when credentials exist.
+## Reference quality targets
+- `text-embedding-3-small`: MTEB avg 62.3
+- `text-embedding-3-large`: MTEB avg 64.6
+- local profile defaults are documented as `lite` / `strong` so the repo stays portable.
 
-## Dashboard setting surface
-
-Dashboard includes a `Settings` page placeholder (`/settings`) for:
-- provider selection UX (`auto/openai/local`)
-- fallback explanation (`no key => still searchable`)
-- benchmark entrypoint documentation
-
-## Benchmark script
-
+## Benchmarking
 Run:
-
 ```bash
 ./scripts/bench_embeddings.sh
 ```
 
-Output: `reports/bench_embeddings_latest.md`
-
-The benchmark report records effective provider, retrieval mode, sample recall/latency, and estimated cost to support product decision-making.
+The latest benchmark is written to:
+- `reports/bench_embeddings_latest.md`

@@ -284,7 +284,7 @@ async function main() {
 
     assert(approve.taskId === queue.taskId, 'approve taskId mismatch');
     assert(approve.draftId === queue.draftId, 'approve draftId mismatch');
-    assert(approve.status === 'executed', 'approve status mismatch');
+    assert(approve.status === 'manual_step_needed', 'approve status mismatch');
     assert(approve.mode === 'dry-run', 'approve mode should remain dry-run by default');
     assert(Array.isArray(approve.auditIds) && approve.auditIds.length === 2, 'approve audit IDs missing');
     assert(typeof approve.digestId === 'string', 'approve digestId missing');
@@ -308,7 +308,7 @@ async function main() {
       .get(queue.taskId);
     assert(queueRow?.id === queue.taskId, 'queue row not written to PublishTask');
     assert(queueRow?.draft_id === queue.draftId, 'queue draft_id mismatch');
-    assert(queueRow?.status === 'executed', 'queue status should advance to executed after approve');
+    assert(queueRow?.status === 'manual_step_needed', 'queue status should advance to manual_step_needed after approve');
     assert(queueRow?.mode === 'dry-run', 'queue mode should remain dry-run by default');
 
     const queueResult = parseJson(queueRow.result, 'PublishTask.result');
@@ -437,7 +437,7 @@ async function main() {
     const highFrequencyRow = db
       .prepare('SELECT id, status, mode, result FROM PublishTask WHERE id = ? LIMIT 1')
       .get(highFrequencyQueue.taskId);
-    assert(highFrequencyRow?.status === 'executed', 'high-frequency task should reach executed status');
+    assert(highFrequencyRow?.status === 'manual_step_needed', 'high-frequency task should reach manual_step_needed status');
     assert(highFrequencyRow?.mode === 'live', 'high-frequency task mode should stay live when explicitly enabled');
 
     const highFrequencyResult = parseJson(highFrequencyRow.result, 'high-frequency PublishTask.result');

@@ -11,12 +11,6 @@ mkdir -p "${REPO_ROOT}/infra/db" "${REPO_ROOT}/reports/runs" "${REPO_ROOT}/.foun
 
 sqlite3 "${DB_PATH}" < "${REPO_ROOT}/infra/db/schema.sql"
 
-NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-sqlite3 "${DB_PATH}" <<SQL
-INSERT OR IGNORE INTO Person(id,name,tags,notes,next_follow_up_at,created_at,updated_at)
-VALUES('person_demo_alex','Alex Growth Hacker','["growth","hackathon"]','met at weekend hackathon','${NOW}','${NOW}','${NOW}');
-INSERT OR IGNORE INTO SelfCheckin(id,energy,emotions,trigger_text,reflection,created_at)
-VALUES('checkin_demo_1',1,'["focused"]','shipping progress','Small daily wins compound.','${NOW}');
-SQL
+node "${REPO_ROOT}/scripts/seed_demo_data.mjs"
 
 echo "Install complete. DB initialized at ${DB_PATH}"

@@ -61,6 +61,16 @@ CREATE TABLE IF NOT EXISTS Audit (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS CaptureAsset (
+  id TEXT PRIMARY KEY,
+  kind TEXT NOT NULL,
+  mime_type TEXT,
+  file_name TEXT,
+  extracted_text TEXT DEFAULT '',
+  metadata TEXT DEFAULT '{}',
+  created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS DevDigest (
   id TEXT PRIMARY KEY,
   run_id TEXT NOT NULL,
@@ -85,5 +95,15 @@ CREATE TABLE IF NOT EXISTS Mirror (
   id TEXT PRIMARY KEY,
   range_label TEXT NOT NULL,
   content TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS MirrorEvidence (
+  id TEXT PRIMARY KEY,
+  mirror_id TEXT NOT NULL,
+  claim_key TEXT NOT NULL,
+  source_type TEXT NOT NULL,
+  source_id TEXT NOT NULL,
+  snippet TEXT NOT NULL,
   created_at TEXT NOT NULL
 );

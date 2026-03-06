@@ -1,10 +1,20 @@
 import fs from 'node:fs';
 import http from 'node:http';
+import os from 'node:os';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
+import {
+  buildCaptureDraft,
+  buildDraftValidation,
+  buildStructuredMirror,
+  cleanList,
+  cleanText,
+  inferEmotionTags as inferEmotionTagsCore,
+  inferEnergyFromText as inferEnergyFromTextCore,
+} from '../../lib/product-core.mjs';
 import {
   createStructuredTask,
   DEFAULT_AUTONOMY_MODE,
@@ -36,7 +46,7 @@ export const DEFAULT_DB_PATH = path.resolve(
 );
 export const DEFAULT_WEB_PORT = Number(process.env.SOCIALOS_WEB_PORT || 4173);
 
-const MAX_BODY_BYTES = 256 * 1024;
+const MAX_BODY_BYTES = 6 * 1024 * 1024;
 const DEFAULT_PUBLISH_MODE = 'dry-run';
 const LIVE_PUBLISH_MODE = 'live';
 const HIGH_FREQUENCY_MARKERS = new Set([
@@ -1079,6 +1089,9 @@ function buildSearchResultRow(row, terms, embeddingsSettings) {
   const notes = readOptionalString(row.notes, '');
   const haystack = `${row.name} ${notes} ${tags.join(' ')}`.toLowerCase();
   const keywordScore = computeKeywordScore(terms, haystack);
+  const evidenceSnippet = terms.find((term) => haystack.includes(term))
+    ? truncateText(notes || row.name, 180)
+    : truncateText(notes || row.name, 120);
 
   const semanticScore = embeddingsSettings.semanticBoostEnabled
     ? Math.min(1, keywordScore + Math.min(notes.length / 240, 0.25))
@@ -1096,6 +1109,7 @@ function buildSearchResultRow(row, terms, embeddingsSettings) {
     nextFollowUpAt: row.next_follow_up_at,
     updatedAt: row.updated_at,
     score: Number(blendedScore.toFixed(4)),
+    evidenceSnippet,
   };
 }
 
@@ -1340,7 +1354,7 @@ function applyCorsPolicy(req, res, corsAllowlist) {
 
   if (!origin) {
     if (method === 'OPTIONS') {
-      sendNoContent(res, 204, { allow: 'GET, POST, OPTIONS' });
+      sendNoContent(res, 204, { allow: 'GET, POST, PATCH, OPTIONS' });
       return { handled: true };
     }
     return { handled: false };
@@ -1360,7 +1374,7 @@ function applyCorsPolicy(req, res, corsAllowlist) {
   );
   res.setHeader('vary', 'Origin');
   res.setHeader('access-control-allow-origin', origin);
-  res.setHeader('access-control-allow-methods', 'GET, POST, OPTIONS');
+  res.setHeader('access-control-allow-methods', 'GET, POST, PATCH, OPTIONS');
   res.setHeader('access-control-allow-headers', requestedHeaders);
   res.setHeader('access-control-max-age', '600');
 
@@ -1373,22 +1387,11 @@ function applyCorsPolicy(req, res, corsAllowlist) {
 }
 
 function inferEnergyFromText(text) {
-  const value = readOptionalString(text, '').toLowerCase();
-  let energy = 0;
-
-  if (/great|good|energ|excited|开心|不错|顺利|有收获/iu.test(value)) energy += 1;
-  if (/stres|tired|drain|anx|压力|焦虑|疲惫|累/iu.test(value)) energy -= 1;
-
-  return Math.max(-2, Math.min(2, energy));
+  return inferEnergyFromTextCore(text);
 }
 
 function inferEmotionTags(text) {
-  const value = readOptionalString(text, '').toLowerCase();
-  const tags = [];
-  if (/开心|great|good|excited|calm|顺利|有收获/iu.test(value)) tags.push('positive');
-  if (/压力|焦虑|stres|anx|tired|疲惫|累/iu.test(value)) tags.push('stressed');
-  if (!tags.length) tags.push('neutral');
-  return tags;
+  return inferEmotionTagsCore(text);
 }
 
 function summarizeMirror(checkins) {
@@ -1430,6 +1433,403 @@ function summarizeMirror(checkins) {
   ].join('\n');
 }
 
+function parseDynamicId(match) {
+  if (!match?.[1]) return '';
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+}
+
+function buildFollowUpMessage(person, interactions = []) {
+  const topicHint = cleanText(interactions[0]?.summary || person.notes || '').slice(0, 120);
+  return topicHint
+    ? `Follow up with ${person.name} and anchor the note on: ${topicHint}`
+    : `Follow up with ${person.name} while the context is still fresh.`;
+}
+
+function buildPeopleDetailPayload(statements, personId) {
+  const personRow = statements.selectPersonById.get(personId);
+  if (!personRow) return null;
+
+  const person = formatPersonRow(personRow);
+  const identities = statements.listIdentitiesByPersonId.all(personId).map(formatIdentityRow);
+  const interactions = statements.listInteractionsByPersonId.all(personId).map(formatInteractionRow);
+  const evidence = [
+    ...interactions.slice(0, 3).map((interaction) => ({
+      type: 'interaction',
+      sourceId: interaction.interactionId,
+      snippet: interaction.evidence || interaction.summary,
+    })),
+    ...(person.notes
+      ? [
+          {
+            type: 'person_note',
+            sourceId: person.personId,
+            snippet: person.notes,
+          },
+        ]
+      : []),
+  ];
+
+  return {
+    person,
+    identities,
+    interactions,
+    evidence,
+    suggestion: {
+      followUpMessage: buildFollowUpMessage(person, interactions),
+      nextFollowUpAt: person.nextFollowUpAt,
+    },
+  };
+}
+
+function parseMirrorContent(rawContent) {
+  if (typeof rawContent !== 'string' || !rawContent.trim()) {
+    return {
+      summaryText: '',
+      themes: [],
+      energizers: [],
+      drainers: [],
+      conclusions: [],
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(rawContent);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return {
+        summaryText: readOptionalString(parsed.summaryText, rawContent),
+        themes: Array.isArray(parsed.themes) ? parsed.themes : [],
+        energizers: Array.isArray(parsed.energizers) ? parsed.energizers : [],
+        drainers: Array.isArray(parsed.drainers) ? parsed.drainers : [],
+        conclusions: Array.isArray(parsed.conclusions) ? parsed.conclusions : [],
+      };
+    }
+  } catch {
+    // plain text legacy mirror
+  }
+
+  return {
+    summaryText: rawContent,
+    themes: [],
+    energizers: [],
+    drainers: [],
+    conclusions: [],
+  };
+}
+
+function formatMirrorPayload(row, evidenceRows = []) {
+  const structured = parseMirrorContent(row.content);
+  return {
+    mirrorId: row.id,
+    rangeLabel: row.range_label,
+    content: row.content,
+    createdAt: row.created_at,
+    ...structured,
+    evidence: evidenceRows.map(formatMirrorEvidenceRow),
+  };
+}
+
+function selectCaptureAssetsByIds(statements, assetIds = []) {
+  return cleanList(assetIds)
+    .map((assetId) => statements.selectCaptureAssetById.get(assetId))
+    .filter(Boolean)
+    .map(formatCaptureAssetRow);
+}
+
+function decodeDataUrl(dataUrl) {
+  const normalized = readOptionalString(dataUrl, '');
+  if (!normalized.includes(',')) return Buffer.from('', 'utf8');
+  return Buffer.from(normalized.split(',').pop() || '', 'base64');
+}
+
+function runLocalImageOcr({ mimeType, contentBase64 }) {
+  const tesseractAvailable = (() => {
+    try {
+      execFileSync('bash', ['-lc', 'command -v tesseract'], { stdio: 'ignore' });
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+
+  if (!tesseractAvailable || !contentBase64) return '';
+
+  const extension = mimeType.includes('png') ? 'png' : 'jpg';
+  const tempPath = path.join(os.tmpdir(), `socialos-capture-${randomUUID()}.${extension}`);
+  try {
+    fs.writeFileSync(tempPath, decodeDataUrl(contentBase64));
+    const output = execFileSync('tesseract', [tempPath, 'stdout'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    return cleanText(output);
+  } catch {
+    return '';
+  } finally {
+    fs.rmSync(tempPath, { force: true });
+  }
+}
+
+function normalizeTimestampInput(value, fallback = null) {
+  if (typeof value !== 'string' || !value.trim()) return fallback;
+  const trimmed = value.trim();
+  const normalized =
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/u.test(trimmed)
+      ? `${trimmed}:00`
+      : /^\d{4}-\d{2}-\d{2}$/u.test(trimmed)
+        ? `${trimmed}T00:00:00`
+        : trimmed;
+  const date = new Date(normalized);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return date.toISOString();
+}
+
+function findExistingPersonByName(statements, name) {
+  const normalizedName = cleanText(name).toLowerCase();
+  if (!normalizedName) return null;
+  return statements
+    .listAllPeople
+    .all()
+    .find((person) => cleanText(person.name).toLowerCase() === normalizedName) || null;
+}
+
+function touchExistingPerson(statements, personRow, overrides = {}) {
+  const now = nowIso();
+  const mergedTags = cleanList([
+    ...parseJsonStringArray(personRow.tags),
+    ...(Array.isArray(overrides.tags) ? overrides.tags : []),
+  ]);
+  const mergedNotes = cleanText(
+    [readOptionalString(personRow.notes, ''), readOptionalString(overrides.notes, '')]
+      .filter(Boolean)
+      .join('\n\n')
+  );
+  const nextFollowUpAt =
+    normalizeTimestampInput(overrides.nextFollowUpAt, null) || personRow.next_follow_up_at || null;
+
+  statements.updatePerson.run(
+    readOptionalString(overrides.name, personRow.name),
+    JSON.stringify(mergedTags),
+    mergedNotes,
+    nextFollowUpAt,
+    now,
+    personRow.id
+  );
+
+  return statements.selectPersonById.get(personRow.id);
+}
+
+function ensurePersonRecord(statements, personDraft = {}, preferredPersonId = '') {
+  const requestedPersonId = cleanText(preferredPersonId || personDraft.personId || '');
+  const existingById = requestedPersonId ? statements.selectPersonById.get(requestedPersonId) : null;
+
+  if (existingById) {
+    return touchExistingPerson(statements, existingById, personDraft);
+  }
+
+  const existingByName = findExistingPersonByName(statements, personDraft.name);
+  if (existingByName) {
+    return touchExistingPerson(statements, existingByName, personDraft);
+  }
+
+  const now = nowIso();
+  const personId = requestedPersonId || makeId('person');
+  statements.insertPerson.run(
+    personId,
+    readOptionalString(personDraft.name, 'New contact'),
+    JSON.stringify(cleanList(personDraft.tags)),
+    cleanText(personDraft.notes || ''),
+    normalizeTimestampInput(personDraft.nextFollowUpAt, null),
+    now,
+    now
+  );
+  return statements.selectPersonById.get(personId);
+}
+
+function syncPersonIdentities(statements, personId, identities = []) {
+  const existingRows = statements.listIdentitiesByPersonId.all(personId);
+  const seen = new Set(
+    existingRows.map((row) =>
+      `${row.platform}::${cleanText(row.handle).toLowerCase()}::${cleanText(row.url).toLowerCase()}`
+    )
+  );
+
+  const inserted = [];
+  const normalizedIdentities = Array.isArray(identities)
+    ? identities.filter((identity) => identity && typeof identity === 'object')
+    : [];
+
+  for (const identity of normalizedIdentities) {
+    const platform = readOptionalString(identity.platform, '').toLowerCase();
+    const handle = cleanText(identity.handle || '');
+    const url = cleanText(identity.url || '');
+    if (!platform || (!handle && !url)) continue;
+    const dedupeKey = `${platform}::${handle.toLowerCase()}::${url.toLowerCase()}`;
+    if (seen.has(dedupeKey)) continue;
+    const identityId = makeId('identity');
+    statements.insertIdentity.run(
+      identityId,
+      personId,
+      platform,
+      handle || null,
+      url || null,
+      cleanText(identity.note || ''),
+      nowIso()
+    );
+    seen.add(dedupeKey);
+    inserted.push(statements.listIdentitiesByPersonId.all(personId).find((row) => row.id === identityId));
+  }
+
+  return inserted.filter(Boolean);
+}
+
+function insertPersonInteraction(statements, personId, interactionDraft = {}) {
+  const summary = cleanText(interactionDraft.summary || '');
+  const evidence = cleanText(interactionDraft.evidence || summary);
+  if (!summary && !evidence) return null;
+  const interactionId = makeId('interaction');
+  const happenedAt = normalizeTimestampInput(interactionDraft.happenedAt, nowIso());
+  statements.insertInteraction.run(
+    interactionId,
+    personId,
+    summary || evidence.slice(0, 220),
+    happenedAt,
+    evidence
+  );
+  const personRow = statements.selectPersonById.get(personId);
+  if (personRow) {
+    touchExistingPerson(statements, personRow, {});
+  }
+  return statements.listInteractionsByPersonId.all(personId).find((row) => row.id === interactionId) || null;
+}
+
+function insertSelfCheckinRow(statements, selfCheckinDraft = {}, fallbackTriggerText = 'manual') {
+  const checkinId = makeId('checkin');
+  const createdAt = nowIso();
+  statements.insertSelfCheckin.run(
+    checkinId,
+    Number.isFinite(Number(selfCheckinDraft.energy)) ? Math.max(-2, Math.min(2, Number(selfCheckinDraft.energy))) : 0,
+    JSON.stringify(cleanList(selfCheckinDraft.emotions)),
+    cleanText(selfCheckinDraft.triggerText || fallbackTriggerText),
+    cleanText(selfCheckinDraft.reflection || ''),
+    createdAt
+  );
+
+  return {
+    checkinId,
+    energy: Number.isFinite(Number(selfCheckinDraft.energy)) ? Math.max(-2, Math.min(2, Number(selfCheckinDraft.energy))) : 0,
+    emotions: cleanList(selfCheckinDraft.emotions),
+    triggerText: cleanText(selfCheckinDraft.triggerText || fallbackTriggerText),
+    reflection: cleanText(selfCheckinDraft.reflection || ''),
+    createdAt,
+  };
+}
+
+function commitCaptureDraft(statements, body = {}) {
+  const source = readOptionalString(body.source, 'manual');
+  const rawText = cleanText(body.text || body.rawText || '');
+  const assetIds = cleanList(body.assetIds);
+  const assets = selectCaptureAssetsByIds(statements, assetIds);
+  const draft =
+    body.personDraft || body.selfCheckinDraft || body.interactionDraft
+      ? {
+          rawText,
+          combinedText: cleanText(body.combinedText || rawText || assets.map((asset) => asset.extractedText).join(' ')),
+          source,
+          personDraft:
+            body.personDraft && typeof body.personDraft === 'object' && !Array.isArray(body.personDraft)
+              ? body.personDraft
+              : {},
+          selfCheckinDraft:
+            body.selfCheckinDraft && typeof body.selfCheckinDraft === 'object' && !Array.isArray(body.selfCheckinDraft)
+              ? body.selfCheckinDraft
+              : {},
+          interactionDraft:
+            body.interactionDraft && typeof body.interactionDraft === 'object' && !Array.isArray(body.interactionDraft)
+              ? body.interactionDraft
+              : {},
+          assets,
+        }
+      : buildCaptureDraft({ text: rawText, source, assets });
+
+  const captureId = makeId('capture');
+  const createdAt = nowIso();
+  let personRow;
+  let interactionRow;
+  let checkinRow;
+
+  statements.db.exec('BEGIN');
+  try {
+    personRow = ensurePersonRecord(statements, draft.personDraft, body.personId);
+    syncPersonIdentities(statements, personRow.id, draft.personDraft.identities);
+    interactionRow = insertPersonInteraction(statements, personRow.id, draft.interactionDraft);
+    checkinRow = insertSelfCheckinRow(statements, draft.selfCheckinDraft, source);
+
+    const auditPayload = {
+      text: draft.rawText,
+      combinedText: draft.combinedText,
+      source,
+      personId: personRow.id,
+      interactionId: interactionRow?.id || null,
+      checkinId: checkinRow.checkinId,
+      assetIds: assets.map((asset) => asset.assetId),
+      personDraft: draft.personDraft,
+      selfCheckinDraft: draft.selfCheckinDraft,
+      interactionDraft: draft.interactionDraft,
+    };
+
+    statements.insertAudit.run(captureId, 'capture', JSON.stringify(auditPayload), createdAt);
+    statements.db.exec('COMMIT');
+  } catch (error) {
+    statements.db.exec('ROLLBACK');
+    throw error;
+  }
+
+  return {
+    capture: formatCaptureRow({
+      id: captureId,
+      payload: JSON.stringify({
+        text: draft.rawText,
+        combinedText: draft.combinedText,
+        source,
+        personId: personRow.id,
+        assetIds: assets.map((asset) => asset.assetId),
+      }),
+      created_at: createdAt,
+    }),
+    person: formatPersonRow(statements.selectPersonById.get(personRow.id)),
+    detail: buildPeopleDetailPayload(statements, personRow.id),
+    interaction: interactionRow ? formatInteractionRow(interactionRow) : null,
+    checkin: checkinRow,
+    assets,
+    createdAt,
+  };
+}
+
+function upsertMirrorEvidenceRows(statements, mirrorId, structuredMirror) {
+  statements.deleteMirrorEvidenceByMirrorId.run(mirrorId);
+  const conclusions = Array.isArray(structuredMirror.conclusions) ? structuredMirror.conclusions : [];
+
+  for (const conclusion of conclusions) {
+    const claimKey = cleanText(conclusion.title || '');
+    const evidence = Array.isArray(conclusion.evidence?.evidence) ? conclusion.evidence.evidence : [];
+    for (const evidenceItem of evidence) {
+      statements.insertMirrorEvidence.run(
+        makeId('mirror_evidence'),
+        mirrorId,
+        claimKey || 'evidence',
+        readOptionalString(evidenceItem.sourceType, 'unknown'),
+        readOptionalString(evidenceItem.sourceId, ''),
+        cleanText(evidenceItem.snippet || ''),
+        nowIso()
+      );
+    }
+  }
+}
+
 async function readJsonBody(req) {
   let raw = '';
   for await (const chunk of req) {
@@ -1460,10 +1860,33 @@ function buildStatements(db) {
 
     insertAudit: db.prepare('INSERT INTO Audit(id, action, payload, created_at) VALUES(?, ?, ?, ?)'),
     selectAuditById: db.prepare('SELECT id FROM Audit WHERE id = ? LIMIT 1'),
+    selectAuditDetailById: db.prepare(`
+      SELECT id, action, payload, created_at
+      FROM Audit
+      WHERE id = ?
+      LIMIT 1
+    `),
     listRecentCaptures: db.prepare(`
       SELECT id, payload, created_at
       FROM Audit
       WHERE action = 'capture'
+      ORDER BY created_at DESC
+      LIMIT ?
+    `),
+
+    insertCaptureAsset: db.prepare(`
+      INSERT INTO CaptureAsset(id, kind, mime_type, file_name, extracted_text, metadata, created_at)
+      VALUES(?, ?, ?, ?, ?, ?, ?)
+    `),
+    selectCaptureAssetById: db.prepare(`
+      SELECT id, kind, mime_type, file_name, extracted_text, metadata, created_at
+      FROM CaptureAsset
+      WHERE id = ?
+      LIMIT 1
+    `),
+    listRecentCaptureAssets: db.prepare(`
+      SELECT id, kind, mime_type, file_name, extracted_text, metadata, created_at
+      FROM CaptureAsset
       ORDER BY created_at DESC
       LIMIT ?
     `),
@@ -1499,12 +1922,43 @@ function buildStatements(db) {
       ORDER BY updated_at DESC
       LIMIT ?
     `),
+    listAllPeople: db.prepare(`
+      SELECT id, name, tags, notes, next_follow_up_at, created_at, updated_at
+      FROM Person
+      ORDER BY updated_at DESC
+    `),
 
     searchPeopleByKeyword: db.prepare(`
       SELECT id, name, tags, notes, next_follow_up_at, updated_at
       FROM Person
       WHERE lower(name) LIKE ? OR lower(notes) LIKE ? OR lower(tags) LIKE ?
       ORDER BY updated_at DESC
+      LIMIT ?
+    `),
+    insertIdentity: db.prepare(`
+      INSERT INTO Identity(id, person_id, platform, handle, url, note, created_at)
+      VALUES(?, ?, ?, ?, ?, ?, ?)
+    `),
+    listIdentitiesByPersonId: db.prepare(`
+      SELECT id, person_id, platform, handle, url, note, created_at
+      FROM Identity
+      WHERE person_id = ?
+      ORDER BY created_at DESC
+    `),
+    insertInteraction: db.prepare(`
+      INSERT INTO Interaction(id, person_id, summary, happened_at, evidence)
+      VALUES(?, ?, ?, ?, ?)
+    `),
+    listInteractionsByPersonId: db.prepare(`
+      SELECT id, person_id, summary, happened_at, evidence
+      FROM Interaction
+      WHERE person_id = ?
+      ORDER BY happened_at DESC
+    `),
+    listRecentInteractions: db.prepare(`
+      SELECT id, person_id, summary, happened_at, evidence
+      FROM Interaction
+      ORDER BY happened_at DESC
       LIMIT ?
     `),
 
@@ -1516,6 +1970,11 @@ function buildStatements(db) {
       FROM PostDraft
       WHERE id = ?
       LIMIT 1
+    `),
+    updateDraftContentMetadata: db.prepare(`
+      UPDATE PostDraft
+      SET content = ?, metadata = ?
+      WHERE id = ?
     `),
     listRecentDrafts: db.prepare(`
       SELECT
@@ -1605,11 +2064,31 @@ function buildStatements(db) {
     insertMirror: db.prepare(
       'INSERT INTO Mirror(id, range_label, content, created_at) VALUES(?, ?, ?, ?)'
     ),
+    selectMirrorById: db.prepare(`
+      SELECT id, range_label, content, created_at
+      FROM Mirror
+      WHERE id = ?
+      LIMIT 1
+    `),
     selectLatestMirror: db.prepare(`
       SELECT id, range_label, content, created_at
       FROM Mirror
       ORDER BY created_at DESC
       LIMIT 1
+    `),
+    insertMirrorEvidence: db.prepare(`
+      INSERT INTO MirrorEvidence(id, mirror_id, claim_key, source_type, source_id, snippet, created_at)
+      VALUES(?, ?, ?, ?, ?, ?, ?)
+    `),
+    deleteMirrorEvidenceByMirrorId: db.prepare(`
+      DELETE FROM MirrorEvidence
+      WHERE mirror_id = ?
+    `),
+    listMirrorEvidenceByMirrorId: db.prepare(`
+      SELECT id, mirror_id, claim_key, source_type, source_id, snippet, created_at
+      FROM MirrorEvidence
+      WHERE mirror_id = ?
+      ORDER BY created_at ASC
     `),
   };
 }
@@ -1620,6 +2099,24 @@ function formatCaptureRow(row) {
     captureId: row.id,
     text: readOptionalString(payload.text, ''),
     source: readOptionalString(payload.source, 'manual'),
+    personId: readOptionalString(payload.personId, ''),
+    assetIds: Array.isArray(payload.assetIds) ? payload.assetIds : [],
+    combinedText: readOptionalString(payload.combinedText, ''),
+    createdAt: row.created_at,
+  };
+}
+
+function formatCaptureAssetRow(row) {
+  const metadata = safeParseJsonObject(row.metadata, {});
+  return {
+    assetId: row.id,
+    kind: row.kind,
+    mimeType: readOptionalString(row.mime_type, ''),
+    fileName: readOptionalString(row.file_name, ''),
+    extractedText: readOptionalString(row.extracted_text, ''),
+    metadata,
+    previewText: readOptionalString(metadata.previewText, ''),
+    status: readOptionalString(metadata.status, 'parsed'),
     createdAt: row.created_at,
   };
 }
@@ -1645,6 +2142,29 @@ function formatPersonRow(row) {
   };
 }
 
+function formatIdentityRow(row) {
+  return {
+    identityId: row.id,
+    personId: row.person_id,
+    platform: row.platform,
+    platformLabel: formatPlatformLabel(row.platform),
+    handle: readOptionalString(row.handle, ''),
+    url: readOptionalString(row.url, ''),
+    note: readOptionalString(row.note, ''),
+    createdAt: row.created_at,
+  };
+}
+
+function formatInteractionRow(row) {
+  return {
+    interactionId: row.id,
+    personId: row.person_id,
+    summary: readOptionalString(row.summary, ''),
+    happenedAt: row.happened_at,
+    evidence: readOptionalString(row.evidence, ''),
+  };
+}
+
 function formatDraftRow(row) {
   const metadata = safeParseJsonObject(row.metadata, {});
   return {
@@ -1658,6 +2178,8 @@ function formatDraftRow(row) {
     metadata,
     capability: metadata.capability || getPlatformCapability(row.platform),
     publishPackage: metadata.publishPackage || null,
+    validation: metadata.validation || null,
+    variants: metadata.variants || [],
     createdAt: row.created_at,
   };
 }
@@ -1684,10 +2206,27 @@ function formatQueueTaskRow(row) {
   };
 }
 
+function formatMirrorEvidenceRow(row) {
+  return {
+    evidenceId: row.id,
+    mirrorId: row.mirror_id,
+    claimKey: row.claim_key,
+    sourceType: row.source_type,
+    sourceId: row.source_id,
+    snippet: readOptionalString(row.snippet, ''),
+    createdAt: row.created_at,
+  };
+}
+
 async function routeRequest(req, res, statements) {
   const method = req.method || 'GET';
   const requestUrl = new URL(req.url || '/', 'http://localhost');
   const pathname = requestUrl.pathname;
+  const peopleDetailMatch = pathname.match(/^\/people\/([^/]+)$/u);
+  const peopleIdentityMatch = pathname.match(/^\/people\/([^/]+)\/identity$/u);
+  const peopleInteractionMatch = pathname.match(/^\/people\/([^/]+)\/interaction$/u);
+  const draftDetailMatch = pathname.match(/^\/drafts\/([^/]+)$/u);
+  const draftValidateMatch = pathname.match(/^\/drafts\/([^/]+)\/validate$/u);
 
   if (method === 'GET' && pathname === '/health') {
     sendJson(res, 200, { ok: true });
@@ -1698,6 +2237,13 @@ async function routeRequest(req, res, statements) {
     const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 12, 50);
     const captures = statements.listRecentCaptures.all(limit).map(formatCaptureRow);
     sendJson(res, 200, { limit, count: captures.length, captures });
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/capture/assets') {
+    const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 12, 50);
+    const assets = statements.listRecentCaptureAssets.all(limit).map(formatCaptureAssetRow);
+    sendJson(res, 200, { limit, count: assets.length, assets });
     return;
   }
 
@@ -1721,9 +2267,10 @@ async function routeRequest(req, res, statements) {
     const pattern = `%${query.toLowerCase()}%`;
     const embeddingsSettings = resolveEmbeddingsSettings();
     const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
-    const rows = statements.searchPeopleByKeyword.all(pattern, pattern, pattern, limit * 3);
+    const rows = statements.listAllPeople.all();
     const results = rows
       .map((row) => buildSearchResultRow(row, terms, embeddingsSettings))
+      .filter((row) => row.score > 0)
       .sort((left, right) => {
         if (left.score !== right.score) return right.score - left.score;
         return right.updatedAt.localeCompare(left.updatedAt);
@@ -1741,6 +2288,14 @@ async function routeRequest(req, res, statements) {
       count: results.length,
       results,
     });
+    return;
+  }
+
+  if (method === 'GET' && peopleDetailMatch) {
+    const personId = parseDynamicId(peopleDetailMatch);
+    const detail = buildPeopleDetailPayload(statements, personId);
+    if (!detail) throw new HttpError(404, 'personId not found');
+    sendJson(res, 200, detail);
     return;
   }
 
@@ -1837,15 +2392,9 @@ async function routeRequest(req, res, statements) {
   if (method === 'GET' && pathname === '/self-mirror') {
     const latestMirror = statements.selectLatestMirror.get();
     const checkins = statements.listRecentSelfCheckins.all(20);
+    const evidenceRows = latestMirror ? statements.listMirrorEvidenceByMirrorId.all(latestMirror.id) : [];
     sendJson(res, 200, {
-      latestMirror: latestMirror
-        ? {
-            mirrorId: latestMirror.id,
-            rangeLabel: latestMirror.range_label,
-            content: latestMirror.content,
-            createdAt: latestMirror.created_at,
-          }
-        : null,
+      latestMirror: latestMirror ? formatMirrorPayload(latestMirror, evidenceRows) : null,
       checkins: checkins.map((checkin) => ({
         checkinId: checkin.id,
         energy: checkin.energy,
@@ -1854,6 +2403,25 @@ async function routeRequest(req, res, statements) {
         reflection: checkin.reflection,
         createdAt: checkin.created_at,
       })),
+    });
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/self-mirror/evidence') {
+    const mirrorId = readOptionalString(requestUrl.searchParams.get('mirrorId'), '');
+    const claimKey = readOptionalString(requestUrl.searchParams.get('claimKey'), '');
+    if (!mirrorId) throw new HttpError(400, 'mirrorId is required');
+    const mirror = statements.selectMirrorById.get(mirrorId);
+    if (!mirror) throw new HttpError(404, 'mirrorId not found');
+    const evidence = statements.listMirrorEvidenceByMirrorId
+      .all(mirrorId)
+      .map(formatMirrorEvidenceRow)
+      .filter((item) => !claimKey || item.claimKey === claimKey);
+    sendJson(res, 200, {
+      mirror: formatMirrorPayload(mirror, statements.listMirrorEvidenceByMirrorId.all(mirrorId)),
+      claimKey,
+      count: evidence.length,
+      evidence,
     });
     return;
   }
@@ -1898,18 +2466,44 @@ async function routeRequest(req, res, statements) {
       }
     }
 
-    const content = summarizeMirror(checkins);
+    const captures = statements.listRecentCaptures.all(12).map(formatCaptureRow);
+    const interactions = statements.listRecentInteractions.all(12).map(formatInteractionRow);
+    const structuredMirror = buildStructuredMirror({
+      checkins: checkins.map((checkin) => ({
+        checkinId: checkin.id,
+        energy: checkin.energy,
+        emotions: parseJsonStringArray(checkin.emotions),
+        reflection: checkin.reflection,
+        createdAt: checkin.created_at,
+      })),
+      captures,
+      interactions,
+    });
     const mirrorId = makeId('mirror');
     const createdAt = nowIso();
-    statements.insertMirror.run(mirrorId, rangeLabel, content, createdAt);
+    statements.db.exec('BEGIN');
+    try {
+      statements.insertMirror.run(mirrorId, rangeLabel, JSON.stringify(structuredMirror), createdAt);
+      upsertMirrorEvidenceRows(statements, mirrorId, structuredMirror);
+      statements.db.exec('COMMIT');
+    } catch (error) {
+      statements.db.exec('ROLLBACK');
+      throw error;
+    }
 
-    sendJson(res, 201, {
-      mirrorId,
-      rangeLabel,
-      content,
-      evidenceCount: checkins.length,
-      createdAt,
-    });
+    sendJson(
+      res,
+      201,
+      formatMirrorPayload(
+        {
+          id: mirrorId,
+          range_label: rangeLabel,
+          content: JSON.stringify(structuredMirror),
+          created_at: createdAt,
+        },
+        statements.listMirrorEvidenceByMirrorId.all(mirrorId)
+      )
+    );
     return;
   }
 
@@ -1953,6 +2547,126 @@ async function routeRequest(req, res, statements) {
     return;
   }
 
+  if (method === 'POST' && peopleIdentityMatch) {
+    const personId = parseDynamicId(peopleIdentityMatch);
+    const person = statements.selectPersonById.get(personId);
+    if (!person) throw new HttpError(404, 'personId not found');
+    const body = await readJsonBody(req);
+    const platform = requireString(body.platform, 'platform').toLowerCase();
+    const handle = cleanText(body.handle || '');
+    const url = cleanText(body.url || '');
+    if (!handle && !url) throw new HttpError(400, 'handle or url is required');
+    const identityId = makeId('identity');
+    statements.insertIdentity.run(
+      identityId,
+      personId,
+      platform,
+      handle || null,
+      url || null,
+      cleanText(body.note || ''),
+      nowIso()
+    );
+    touchExistingPerson(statements, person, {});
+    sendJson(res, 201, {
+      identity: formatIdentityRow(statements.listIdentitiesByPersonId.all(personId).find((row) => row.id === identityId)),
+      detail: buildPeopleDetailPayload(statements, personId),
+    });
+    return;
+  }
+
+  if (method === 'POST' && peopleInteractionMatch) {
+    const personId = parseDynamicId(peopleInteractionMatch);
+    const person = statements.selectPersonById.get(personId);
+    if (!person) throw new HttpError(404, 'personId not found');
+    const body = await readJsonBody(req);
+    const interactionRow = insertPersonInteraction(statements, personId, {
+      summary: body.summary,
+      evidence: body.evidence,
+      happenedAt: body.happenedAt,
+    });
+    if (!interactionRow) throw new HttpError(400, 'summary or evidence is required');
+    sendJson(res, 201, {
+      interaction: formatInteractionRow(interactionRow),
+      detail: buildPeopleDetailPayload(statements, personId),
+    });
+    return;
+  }
+
+  if (method === 'POST' && pathname === '/capture/assets') {
+    const body = await readJsonBody(req);
+    const kind = readOptionalString(body.kind, '').toLowerCase() || (readOptionalString(body.mimeType, '').startsWith('audio/') ? 'audio' : 'image');
+    const mimeType = readOptionalString(body.mimeType, kind === 'audio' ? 'audio/webm' : 'image/png');
+    const fileName = readOptionalString(body.fileName, `${kind}-${Date.now()}`);
+    const inlineText = cleanText(body.extractedText || body.transcript || body.previewText || '');
+    const contentBase64 = readOptionalString(body.contentBase64, '') || readOptionalString(body.dataUrl, '');
+    const extractedText =
+      inlineText ||
+      (kind === 'image' ? runLocalImageOcr({ mimeType, contentBase64 }) : '');
+    const status = extractedText ? 'parsed' : 'manual_review';
+    const assetId = makeId('asset');
+    const createdAt = nowIso();
+    const metadata = {
+      source: readOptionalString(body.source, 'dashboard'),
+      transcriptMethod:
+        kind === 'audio'
+          ? extractedText
+            ? 'browser_or_manual'
+            : 'manual_required'
+          : readOptionalString(body.ocrMethod, extractedText ? 'local-ocr' : 'manual_required'),
+      previewText: truncateText(extractedText, 280),
+      status,
+      contentBytes: contentBase64 ? Buffer.byteLength(contentBase64, 'utf8') : 0,
+    };
+
+    statements.insertCaptureAsset.run(
+      assetId,
+      kind,
+      mimeType,
+      fileName,
+      extractedText,
+      JSON.stringify(metadata),
+      createdAt
+    );
+
+    sendJson(res, 201, {
+      asset: formatCaptureAssetRow({
+        id: assetId,
+        kind,
+        mime_type: mimeType,
+        file_name: fileName,
+        extracted_text: extractedText,
+        metadata: JSON.stringify(metadata),
+        created_at: createdAt,
+      }),
+      refineAvailable: Boolean(readOptionalString(process.env.OPENAI_API_KEY, '')),
+    });
+    return;
+  }
+
+  if (method === 'POST' && pathname === '/capture/parse') {
+    const body = await readJsonBody(req);
+    const source = readOptionalString(body.source, 'manual');
+    const text = cleanText(body.text || '');
+    const assetIds = cleanList(body.assetIds);
+    const assets = selectCaptureAssetsByIds(statements, assetIds);
+    if (!text && !assets.length) throw new HttpError(400, 'text or assetIds is required');
+    const captureDraft = buildCaptureDraft({ text, source, assets });
+    sendJson(res, 200, {
+      captureDraft,
+      foundPersonMatch: findExistingPersonByName(statements, captureDraft.personDraft.name)
+        ? formatPersonRow(findExistingPersonByName(statements, captureDraft.personDraft.name))
+        : null,
+    });
+    return;
+  }
+
+  if (method === 'POST' && pathname === '/capture/commit') {
+    const body = await readJsonBody(req);
+    const committed = commitCaptureDraft(statements, body);
+    sendJson(res, 201, committed);
+    return;
+  }
+
   if (method === 'POST' && pathname === '/drafts/generate') {
     const body = await readJsonBody(req);
     const eventId = requireString(body.eventId, 'eventId');
@@ -1975,10 +2689,15 @@ async function routeRequest(req, res, statements) {
           source: 'api.drafts_generate',
           capability,
           publishPackage,
+          variants: cleanList(body.variants),
+          validation: null,
           generation: {
             tone: readOptionalString(body.tone, ''),
             angle: readOptionalString(body.angle, ''),
             audience: readOptionalString(body.audience, ''),
+            languageStrategy: readOptionalString(body.languageStrategy, ''),
+            links: normalizeStringList(body.links),
+            assets: normalizeStringList(body.assets),
           },
         };
 
@@ -2011,6 +2730,58 @@ async function routeRequest(req, res, statements) {
       eventId,
       count: generatedDrafts.length,
       drafts: generatedDrafts,
+    });
+    return;
+  }
+
+  if (method === 'PATCH' && draftDetailMatch) {
+    const draftId = parseDynamicId(draftDetailMatch);
+    const draft = statements.selectDraftById.get(draftId);
+    if (!draft) throw new HttpError(404, 'draftId not found');
+    const body = await readJsonBody(req);
+    const content = cleanText(body.content || draft.content);
+    const metadata = {
+      ...safeParseJsonObject(draft.metadata, {}),
+      variants:
+        body.variants !== undefined
+          ? cleanList(body.variants)
+          : safeParseJsonObject(draft.metadata, {}).variants || [],
+      validation: null,
+      lastEditedAt: nowIso(),
+    };
+
+    if (metadata.publishPackage && typeof metadata.publishPackage === 'object') {
+      metadata.publishPackage = {
+        ...metadata.publishPackage,
+        preview: content,
+      };
+    }
+
+    statements.updateDraftContentMetadata.run(content, JSON.stringify(metadata), draftId);
+    const updated = statements.selectDraftById.get(draftId);
+    sendJson(res, 200, { draft: formatDraftRow(updated) });
+    return;
+  }
+
+  if (method === 'POST' && draftValidateMatch) {
+    const draftId = parseDynamicId(draftValidateMatch);
+    const draft = statements.selectDraftById.get(draftId);
+    if (!draft) throw new HttpError(404, 'draftId not found');
+    const platformRule = resolvePlatformRule(draft.platform);
+    const compliance = validateQueueContentCompliance(platformRule, draft.content);
+    const validation = buildDraftValidation(platformRule, draft.content, compliance.issues);
+    const metadata = {
+      ...safeParseJsonObject(draft.metadata, {}),
+      validation,
+      lastValidatedAt: nowIso(),
+    };
+    statements.updateDraftContentMetadata.run(draft.content, JSON.stringify(metadata), draftId);
+    sendJson(res, 200, {
+      draft: formatDraftRow({
+        ...draft,
+        metadata: JSON.stringify(metadata),
+      }),
+      validation,
     });
     return;
   }
@@ -2056,25 +2827,18 @@ async function routeRequest(req, res, statements) {
 
   if (method === 'POST' && pathname === '/capture') {
     const body = await readJsonBody(req);
-    const text = requireString(body.text, 'text');
-    const source = readOptionalString(body.source, 'manual');
-
-    const captureId = makeId('capture');
-    const createdAt = nowIso();
-    const payload = JSON.stringify({ text, source });
-    statements.insertAudit.run(captureId, 'capture', payload, createdAt);
-
-    const checkinId = makeId('checkin');
-    statements.insertSelfCheckin.run(
-      checkinId,
-      inferEnergyFromText(text),
-      JSON.stringify(inferEmotionTags(text)),
-      source,
-      text,
-      createdAt
-    );
-
-    sendJson(res, 201, { captureId, checkinId, createdAt });
+    const committed = commitCaptureDraft(statements, {
+      text: body.text,
+      source: body.source,
+      assetIds: body.assetIds,
+    });
+    sendJson(res, 201, {
+      captureId: committed.capture.captureId,
+      checkinId: committed.checkin.checkinId,
+      personId: committed.person.personId,
+      createdAt: committed.createdAt,
+      committed,
+    });
     return;
   }
 
@@ -2092,14 +2856,34 @@ async function routeRequest(req, res, statements) {
 
     const eventId = makeId('event');
     const createdAt = nowIso();
-    const payload = JSON.stringify({
+    const normalizedPayload = {
       captureId,
-      details: body.payload ?? {},
+      audience: readOptionalString(body.audience, ''),
+      languageStrategy: readOptionalString(body.languageStrategy, ''),
+      tone: readOptionalString(body.tone, ''),
+      links: normalizeStringList(body.links),
+      assets: normalizeStringList(body.assets),
+      details:
+        body.payload && typeof body.payload === 'object' && !Array.isArray(body.payload)
+          ? body.payload
+          : {},
+    };
+    const payload = JSON.stringify({
+      ...normalizedPayload,
     });
 
     statements.insertEvent.run(eventId, title, payload, createdAt);
 
-    sendJson(res, 201, { eventId, createdAt });
+    sendJson(res, 201, {
+      eventId,
+      createdAt,
+      event: formatEventRow({
+        id: eventId,
+        title,
+        payload,
+        created_at: createdAt,
+      }),
+    });
     return;
   }
 
@@ -2107,15 +2891,15 @@ async function routeRequest(req, res, statements) {
     const body = await readJsonBody(req);
     const query = requireString(body.query, 'query');
     const limit = normalizeSearchLimit(body.limit, 8);
-    const pattern = `%${query.toLowerCase()}%`;
 
     const embeddingsSettings = resolveEmbeddingsSettings();
 
-    const rows = statements.searchPeopleByKeyword.all(pattern, pattern, pattern, limit * 3);
     const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+    const rows = statements.listAllPeople.all();
 
     const results = rows
       .map((row) => buildSearchResultRow(row, terms, embeddingsSettings))
+      .filter((row) => row.score > 0)
       .sort((left, right) => {
         if (left.score !== right.score) return right.score - left.score;
         return right.updatedAt.localeCompare(left.updatedAt);
@@ -2156,6 +2940,20 @@ async function routeRequest(req, res, statements) {
       platform = platformRule.id;
       language = existingDraft.language;
       content = existingDraft.content;
+
+      const existingMetadata = safeParseJsonObject(existingDraft.metadata, {});
+      if (!existingMetadata.validation) {
+        const validation = buildDraftValidation(
+          platformRule,
+          content,
+          validateQueueContentCompliance(platformRule, content).issues
+        );
+        statements.updateDraftContentMetadata.run(
+          content,
+          JSON.stringify({ ...existingMetadata, validation }),
+          draftIdInput
+        );
+      }
     } else {
       eventId = requireString(body.eventId, 'eventId');
       const event = statements.selectEventById.get(eventId);
@@ -2178,18 +2976,31 @@ async function routeRequest(req, res, statements) {
       return;
     }
 
-    const metadata = buildQueueMetadata(body);
+    const queueMetadata = buildQueueMetadata(body);
     const createdAt = nowIso();
 
     if (!draftIdInput) {
       draftId = makeId('draft');
+      const eventDetail = statements.selectEventDetailById.get(eventId);
+      const capability = getPlatformCapability(platform);
+      const publishPackage = eventDetail
+        ? buildPublishPackage(platformRule, eventDetail, language, content, body)
+        : null;
+      const validation = buildDraftValidation(platformRule, content, compliance.issues);
+      const draftMetadataToStore = {
+        ...queueMetadata,
+        capability,
+        publishPackage,
+        validation,
+        variants: cleanList(body.variants),
+      };
       statements.insertDraft.run(
         draftId,
         eventId,
         platform,
         language,
         content,
-        JSON.stringify(metadata),
+        JSON.stringify(draftMetadataToStore),
         createdAt
       );
     }
@@ -2212,8 +3023,8 @@ async function routeRequest(req, res, statements) {
       status: 'queued',
       mode,
       delivery: {
-        noDeliver: metadata.noDeliver,
-        highFrequency: metadata.highFrequency,
+        noDeliver: queueMetadata.noDeliver,
+        highFrequency: queueMetadata.highFrequency,
       },
     });
     return;
@@ -2263,10 +3074,11 @@ async function routeRequest(req, res, statements) {
       readOptionalBoolean(draftMetadata.noDeliver, false) || readOptionalBoolean(body.noDeliver, false);
     const noDeliver = highFrequency || stickyNoDeliver || effectiveMode !== LIVE_PUBLISH_MODE;
 
+    const capability = draftMetadata.capability || getPlatformCapability(task.platform);
     const dispatchEligible = effectiveMode === LIVE_PUBLISH_MODE && !noDeliver;
     const dispatched = false;
 
-    let dispatchReason = 'publisher_execution_simulated';
+    let dispatchReason = 'p1_manual_confirmation_required';
     if (noDeliver) {
       if (highFrequency) {
         dispatchReason = 'high_frequency_no_deliver';
@@ -2275,7 +3087,22 @@ async function routeRequest(req, res, statements) {
       } else {
         dispatchReason = 'no_deliver_flagged';
       }
+    } else if (dispatchEligible && capability.liveEligible) {
+      dispatchReason = 'connector_preflight_ready';
     }
+
+    const nextStatus = 'manual_step_needed';
+    const preflight = {
+      platform: task.platform,
+      supportLevel: capability.supportLevel || 'L1 Assisted',
+      connectorReady: Boolean(dispatchEligible && capability.liveEligible),
+      entryTarget: capability.entryTarget || 'manual composer',
+      liveGate,
+      note:
+        task.platform === 'x' || task.platform === 'linkedin'
+          ? 'P1 only performs connector preflight and operator handoff, not live auto-post.'
+          : 'Manual publish package is ready for operator completion.',
+    };
 
     const timestamp = nowIso();
     const runId = makeId('publishrun');
@@ -2289,13 +3116,14 @@ async function routeRequest(req, res, statements) {
       draftId: task.draft_id,
       platform: task.platform,
       runId,
-      status: 'executed',
+      status: nextStatus,
       requestedMode,
       mode: effectiveMode,
       approvedBy,
       approvedAt: timestamp,
       publisher: 'publisher.workflow',
       liveGate,
+      preflight,
       delivery: {
         noDeliver,
         highFrequency,
@@ -2305,7 +3133,6 @@ async function routeRequest(req, res, statements) {
       },
     };
 
-    const nextStatus = 'executed';
     const mergedResult = {
       ...safeParseJsonObject(task.result),
       approval: {
@@ -2350,8 +3177,8 @@ async function routeRequest(req, res, statements) {
       statements.insertDigest.run(
         digestId,
         runId,
-        `Approve→publish executed for ${taskId}`,
-        'Approved task promoted through publisher workflow',
+        `Approve→manual handoff prepared for ${taskId}`,
+        'Approved task promoted into manual/assisted publish workflow with preflight details',
         noDeliver ? 'low' : 'medium',
         `PublishTask status=${nextStatus} mode=${effectiveMode} noDeliver=${noDeliver}`,
         `Inspect Audit ${executeAuditId} for delivery trace`,
@@ -2379,6 +3206,79 @@ async function routeRequest(req, res, statements) {
         dispatchEligible,
         dispatched,
       },
+      preflight,
+    });
+    return;
+  }
+
+  if (method === 'POST' && pathname === '/publish/complete') {
+    const body = await readJsonBody(req);
+    const taskId = requireString(body.taskId, 'taskId');
+    const outcome = readOptionalString(body.outcome || body.status, '').toLowerCase();
+    if (!new Set(['posted', 'manual_step_needed', 'failed']).has(outcome)) {
+      throw new HttpError(400, 'outcome must be posted, manual_step_needed, or failed');
+    }
+    const task = statements.selectQueueTaskById.get(taskId);
+    if (!task) throw new HttpError(404, 'taskId not found');
+    if (new Set(['posted', 'failed']).has(task.status) && task.status === outcome) {
+      sendJson(res, 200, { taskId, status: task.status, result: safeParseJsonObject(task.result) });
+      return;
+    }
+
+    const timestamp = nowIso();
+    const auditId = makeId('audit');
+    const digestId = makeId('digest');
+    const operator = readOptionalString(body.operator, 'dashboard');
+    const result = {
+      ...safeParseJsonObject(task.result),
+      manualCompletion: {
+        outcome,
+        operator,
+        completedAt: timestamp,
+        link: readOptionalString(body.link, ''),
+        note: cleanText(body.note || ''),
+        screenshotUrl: readOptionalString(body.screenshotUrl, ''),
+        auditId,
+      },
+    };
+
+    statements.db.exec('BEGIN');
+    try {
+      statements.updateQueueTaskExecution.run(task.mode, outcome, JSON.stringify(result), timestamp, taskId);
+      statements.insertAudit.run(
+        auditId,
+        'publish_manual_complete',
+        JSON.stringify({
+          taskId,
+          outcome,
+          operator,
+          link: readOptionalString(body.link, ''),
+          note: cleanText(body.note || ''),
+        }),
+        timestamp
+      );
+      statements.insertDigest.run(
+        digestId,
+        makeId('publishrun'),
+        `Manual publish outcome recorded for ${taskId}`,
+        'Operator updated the assisted publish flow outcome',
+        outcome === 'failed' ? 'medium' : 'low',
+        `PublishTask status=${outcome}`,
+        outcome === 'posted' ? 'Review the post link and audit trail.' : 'Inspect notes and retry path.',
+        timestamp
+      );
+      statements.db.exec('COMMIT');
+    } catch (error) {
+      statements.db.exec('ROLLBACK');
+      throw error;
+    }
+
+    sendJson(res, 200, {
+      taskId,
+      status: outcome,
+      auditId,
+      digestId,
+      result,
     });
     return;
   }
@@ -2473,18 +3373,30 @@ Usage:
 
 Endpoints:
   GET  /health
+  GET  /capture/assets
+  POST /capture/assets
+  POST /capture/parse
+  POST /capture/commit
   GET  /ops/status          -> runtime mode/lock/queue/health snapshot
   GET  /ops/runs?limit=N    -> recent devloop run JSON summaries
   GET  /ops/blocked         -> blocked queue entries
+  GET  /ops/tasks?limit=N   -> structured Foundry task intake surface
   GET  /settings/embeddings -> resolves embedding provider + retrieval mode
   GET  /dev-digest?limit=N  -> latest DevDigest rows
-  GET  /self-mirror         -> latest mirror + recent checkins
+  GET  /self-mirror         -> latest mirror + recent checkins + structured evidence
+  GET  /self-mirror/evidence?mirrorId=... -> claim/evidence drill-down
   POST /self-mirror/generate -> generate and persist weekly mirror summary
-  POST /capture             -> writes Audit row
-  POST /events              -> writes Event row
+  POST /capture             -> compatibility capture commit path
+  POST /events              -> writes structured Event row
   POST /people/search       -> keyword/hybrid search with auto semantic enhancement when key exists
+  GET  /people/:id          -> unified people detail payload
+  POST /people/:id/identity -> append platform identity
+  POST /people/:id/interaction -> append timeline event
+  PATCH /drafts/:id         -> edit draft content + variants
+  POST /drafts/:id/validate -> persist validation result
   POST /publish/queue       -> validates platform compliance + writes PostDraft + PublishTask rows
-  POST /publish/approve     -> executes publisher workflow + writes Audit + DevDigest
+  POST /publish/approve     -> assisted/manual publish handoff + preflight
+  POST /publish/complete    -> records posted/failed/manual outcome
 
 Defaults:
   host: ${LOOPBACK_HOST}

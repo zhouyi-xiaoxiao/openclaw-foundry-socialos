@@ -257,6 +257,78 @@ function renderCheckinCards(checkins) {
     .join('')}</div>`;
 }
 
+function renderCaptureAssetCards(assets) {
+  if (!assets.length) return renderEmptyState('No capture assets yet.');
+  return `<div class="stack">${assets
+    .map(
+      (asset) => `
+        <article class="stack-card">
+          <div class="stack-meta">
+            ${renderPill(asset.kind || 'asset', asset.status === 'parsed' ? 'good' : 'warn')}
+            <span>${escapeHtml(formatDateTime(asset.createdAt))}</span>
+          </div>
+          <strong>${escapeHtml(asset.fileName || asset.assetId)}</strong>
+          <p>${escapeHtml(truncate(asset.extractedText || asset.previewText || 'No extracted text yet.', 220))}</p>
+          <small>${escapeHtml(asset.mimeType || 'n/a')} · ${escapeHtml(asset.assetId)}</small>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
+function renderEvidenceList(evidence) {
+  if (!Array.isArray(evidence) || !evidence.length) return renderEmptyState('No evidence linked yet.');
+  return `<div class="stack">${evidence
+    .map(
+      (item) => `
+        <article class="stack-card">
+          <div class="stack-meta">
+            ${renderPill(item.type || item.sourceType || 'evidence', 'soft')}
+            <span>${escapeHtml(item.sourceId || item.evidenceId || 'n/a')}</span>
+          </div>
+          <p>${escapeHtml(truncate(item.snippet || '', 180))}</p>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
+function renderIdentityCards(identities) {
+  if (!Array.isArray(identities) || !identities.length) return renderEmptyState('No linked identities yet.');
+  return `<div class="stack">${identities
+    .map(
+      (identity) => `
+        <article class="stack-card">
+          <div class="stack-meta">
+            ${renderPill(identity.platformLabel || identity.platform || 'identity', 'accent')}
+            <span>${escapeHtml(formatDateTime(identity.createdAt))}</span>
+          </div>
+          <p>${escapeHtml(identity.handle || identity.url || 'identity')}</p>
+          <small>${escapeHtml(identity.note || identity.url || '')}</small>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
+function renderInteractionCards(interactions) {
+  if (!Array.isArray(interactions) || !interactions.length) return renderEmptyState('No interaction timeline yet.');
+  return `<div class="stack">${interactions
+    .map(
+      (interaction) => `
+        <article class="stack-card">
+          <div class="stack-meta">
+            <strong>${escapeHtml(formatDateTime(interaction.happenedAt))}</strong>
+            <span>${escapeHtml(interaction.interactionId || 'interaction')}</span>
+          </div>
+          <p>${escapeHtml(interaction.summary || '')}</p>
+          <small>${escapeHtml(truncate(interaction.evidence || '', 160))}</small>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
 function renderPeopleCards(people, showScore = false) {
   if (!people.length) return renderEmptyState('No people cards match this query.');
   return `<div class="stack">${people
@@ -270,9 +342,13 @@ function renderPeopleCards(people, showScore = false) {
             <span>${escapeHtml(formatDateTime(person.updatedAt || person.createdAt))}</span>
           </div>
           ${score ? `<p class="score">score ${escapeHtml(score)}</p>` : ''}
-          <p>${escapeHtml(truncate(person.notes || '', 180) || 'No notes yet.')}</p>
+          <p>${escapeHtml(truncate(person.evidenceSnippet || person.notes || '', 180) || 'No notes yet.')}</p>
           <div class="chip-row">
             ${(tags.length ? tags : ['no-tags']).map((tag) => renderPill(tag, 'soft')).join('')}
+          </div>
+          <div class="inline-actions">
+            <a class="mini-link" href="/people?personId=${encodeURIComponent(person.personId)}">Open Detail</a>
+            <code>${escapeHtml(person.personId)}</code>
           </div>
         </article>
       `;
@@ -361,6 +437,7 @@ function renderDraftCards(drafts) {
     .map((draft) => {
       const capability = safeJson(draft.capability, {});
       const publishPackage = safeJson(draft.publishPackage, {});
+      const validation = safeJson(draft.validation, {});
       const steps = Array.isArray(publishPackage.steps) ? publishPackage.steps : [];
       return `
         <article class="draft-card">
@@ -380,11 +457,48 @@ function renderDraftCards(drafts) {
             <p><strong>Blocked By:</strong> ${escapeHtml(publishPackage.blockedBy || capability.blockedBy || 'n/a')}</p>
           </div>
           ${
+            validation && Object.keys(validation).length
+              ? `<div class="result-block">
+                  <p><strong>Validation:</strong> ${escapeHtml(validation.ok ? 'pass' : 'needs review')}</p>
+                  <small>${escapeHtml(
+                    (validation.issues || []).map((issue) => issue.message).join(' | ') || 'No issues'
+                  )}</small>
+                </div>`
+              : ''
+          }
+          ${
             steps.length
               ? `<ol class="step-list">${steps.map((step) => `<li>${escapeHtml(step)}</li>`).join('')}</ol>`
               : ''
           }
           ${renderPackageHighlights(publishPackage)}
+          <form class="api-form compact-form" data-api-form="true" data-method="PATCH" data-endpoint="/drafts/${encodeURIComponent(
+            draft.draftId
+          )}">
+            ${renderFormField(
+              'Edit Draft',
+              `<textarea name="content" rows="8">${escapeHtml(draft.content)}</textarea>`,
+              'P1 uses plain text editing with live preview via the card itself.'
+            )}
+            ${renderFormField(
+              'Variants',
+              `<textarea name="variants" rows="3">${escapeHtml((draft.variants || []).join('\n'))}</textarea>`,
+              'One line per variant note.'
+            )}
+            <div class="inline-actions">
+              <button type="submit">Save Edit</button>
+              <code>${escapeHtml(draft.draftId)}</code>
+            </div>
+            <div class="form-result" data-form-result></div>
+          </form>
+          <form class="api-form compact-form" data-api-form="true" data-endpoint="/drafts/${encodeURIComponent(
+            draft.draftId
+          )}/validate">
+            <div class="inline-actions">
+              <button type="submit">Run Validation</button>
+            </div>
+            <div class="form-result" data-form-result></div>
+          </form>
           <form class="api-form compact-form" data-api-form="true" data-endpoint="/publish/queue">
             <input type="hidden" name="draftId" value="${escapeHtml(draft.draftId)}" />
             <input type="hidden" name="mode" value="dry-run" />
@@ -406,8 +520,10 @@ function renderQueueCards(queueTasks, publishMode) {
     .map((task) => {
       const result = safeJson(task.result, {});
       const execution = safeJson(result.execution, {});
+      const manualCompletion = safeJson(result.manualCompletion, {});
       const liveFallbackReason = safeJson(execution.liveFallbackReason, {});
       const queued = task.status === 'queued';
+      const needsManual = task.status === 'manual_step_needed';
       return `
         <article class="stack-card queue-card">
           <div class="stack-meta">
@@ -451,12 +567,39 @@ function renderQueueCards(queueTasks, publishMode) {
                   <div class="form-result" data-form-result></div>
                 </form>
               `
+              : needsManual
+                ? `
+                  <div class="result-block">
+                    <p><strong>Entry Target:</strong> ${escapeHtml(execution.preflight?.entryTarget || task.capability?.entryTarget || 'manual')}</p>
+                    <p><strong>Preflight:</strong> ${escapeHtml(execution.preflight?.note || execution.delivery?.reason || 'manual handoff ready')}</p>
+                  </div>
+                  <form class="api-form compact-form" data-api-form="true" data-endpoint="/publish/complete">
+                    <input type="hidden" name="taskId" value="${escapeHtml(task.taskId)}" />
+                    ${renderFormField(
+                      'Outcome',
+                      `<select name="outcome">
+                        <option value="posted">posted</option>
+                        <option value="manual_step_needed">manual_step_needed</option>
+                        <option value="failed">failed</option>
+                      </select>`
+                    )}
+                    ${renderFormField('Link', '<input name="link" type="url" placeholder="https://post-link" />')}
+                    ${renderFormField('Note', '<textarea name="note" rows="3" placeholder="What happened in the manual step?"></textarea>')}
+                    <div class="inline-actions">
+                      <button type="submit">Record Outcome</button>
+                      <code>${escapeHtml(task.taskId)}</code>
+                    </div>
+                    <div class="form-result" data-form-result></div>
+                  </form>
+                `
               : `
                 <div class="result-block">
                   <p><strong>Run:</strong> ${escapeHtml(execution.runId || 'n/a')}</p>
                   <p><strong>Delivery:</strong> ${escapeHtml(
-                    execution.delivery?.reason || result.execution?.delivery?.reason || 'n/a'
+                    manualCompletion.outcome || execution.delivery?.reason || result.execution?.delivery?.reason || 'n/a'
                   )}</p>
+                  ${manualCompletion.link ? `<p><strong>Link:</strong> ${escapeHtml(manualCompletion.link)}</p>` : ''}
+                  ${manualCompletion.note ? `<p><strong>Note:</strong> ${escapeHtml(manualCompletion.note)}</p>` : ''}
                   ${
                     Object.keys(liveFallbackReason).length
                       ? `<p><strong>Live Fallback:</strong> env=${escapeHtml(
@@ -484,9 +627,49 @@ function renderMirrorBlock(mirrorPayload) {
       ${renderPanel(
         'Weekly Mirror',
         latestMirror
-          ? `<pre>${escapeHtml(latestMirror.content)}</pre><small>${escapeHtml(
-              formatDateTime(latestMirror.createdAt)
-            )}</small>`
+          ? `
+              <div class="stack-card">
+                <div class="stack-meta">
+                  ${renderPill(latestMirror.rangeLabel || 'mirror', 'accent')}
+                  <span>${escapeHtml(formatDateTime(latestMirror.createdAt))}</span>
+                </div>
+                <p>${escapeHtml(latestMirror.summaryText || latestMirror.content || '')}</p>
+                ${
+                  Array.isArray(latestMirror.themes) && latestMirror.themes.length
+                    ? `<div class="chip-row">${latestMirror.themes
+                        .map((item) => renderPill(`${item.theme} (${item.count})`, 'soft'))
+                        .join('')}</div>`
+                    : ''
+                }
+                <div class="grid two-up">
+                  <div class="detail-card">
+                    <h4>Energizers</h4>
+                    <ul class="compact-list">${(latestMirror.energizers || [])
+                      .map((row) => `<li>${escapeHtml(row.snippet || '')}</li>`)
+                      .join('') || '<li>none yet</li>'}</ul>
+                  </div>
+                  <div class="detail-card">
+                    <h4>Drainers</h4>
+                    <ul class="compact-list">${(latestMirror.drainers || [])
+                      .map((row) => `<li>${escapeHtml(row.snippet || '')}</li>`)
+                      .join('') || '<li>none yet</li>'}</ul>
+                  </div>
+                </div>
+                <div class="stack">
+                  ${(latestMirror.conclusions || [])
+                    .map(
+                      (conclusion) => `
+                        <details class="detail-card">
+                          <summary>${escapeHtml(conclusion.title || 'Conclusion')}</summary>
+                          <p>${escapeHtml(conclusion.summary || '')}</p>
+                          ${renderEvidenceList(conclusion.evidence?.evidence || [])}
+                        </details>
+                      `
+                    )
+                    .join('')}
+                </div>
+              </div>
+            `
           : renderEmptyState('No mirror generated yet.')
       )}
       ${renderPanel('Recent Check-ins', renderCheckinCards(checkins.slice(0, 8)))}
@@ -646,12 +829,14 @@ function renderCodexSummary(codex) {
 }
 
 async function renderQuickCapturePage(page) {
-  const [capturesRes, mirrorRes] = await Promise.all([
+  const [capturesRes, mirrorRes, assetsRes] = await Promise.all([
     fetchJsonSafe('/captures?limit=8'),
     fetchJsonSafe('/self-mirror'),
+    fetchJsonSafe('/capture/assets?limit=8'),
   ]);
   const captures = capturesRes.ok ? capturesRes.payload.captures || [] : [];
   const checkins = mirrorRes.ok ? mirrorRes.payload.checkins || [] : [];
+  const assets = assetsRes.ok ? assetsRes.payload.assets || [] : [];
 
   return `
     ${renderHero(
@@ -659,30 +844,118 @@ async function renderQuickCapturePage(page) {
       [
         renderMetric(String(captures.length), 'recent captures'),
         renderMetric(String(checkins.length), 'recent check-ins'),
+        renderMetric(String(assets.length), 'capture assets'),
       ].join('')
     )}
     <div class="grid two-up">
       ${renderPanel(
-        'Capture Input',
+        'Capture Parse Workspace',
         `
-          <form class="api-form" data-api-form="true" data-endpoint="/capture">
+          <form class="capture-form" data-capture-parse="true">
             ${renderFormField(
               'What happened?',
               '<textarea name="text" rows="8" placeholder="Met someone interesting, shipped something, felt stretched, noticed a pattern..."></textarea>',
-              'This creates both an Audit capture and a SelfCheckin row.'
+              'Step 1 parses a Person Card + Self Check-in draft before anything is committed.'
             )}
             ${renderFormField(
               'Source',
               '<input name="source" type="text" value="dashboard" />'
             )}
+            ${renderFormField(
+              'Asset IDs',
+              '<input name="assetIds" type="text" placeholder="asset_xxx, asset_yyy" data-capture-asset-ids />',
+              'Upload audio/business-card assets below and we will fill this automatically.'
+            )}
             <div class="inline-actions">
-              <button type="submit">Save Capture</button>
+              <button type="submit">Parse Capture</button>
             </div>
             <div class="form-result" data-form-result></div>
           </form>
         `,
-        'Seed the system with raw signal.'
+        'This is the new two-stage quick capture flow.'
       )}
+      ${renderPanel(
+        'Multimodal Intake',
+        `
+          <div class="control-stack">
+            <form class="asset-upload-form" data-asset-upload="image">
+              ${renderFormField(
+                'Business Card / Image',
+                '<input name="file" type="file" accept="image/*" />',
+                'Images run through local OCR first; if OCR misses, you can still edit before commit.'
+              )}
+              <div class="inline-actions">
+                <button type="submit">Upload + OCR</button>
+              </div>
+              <div class="form-result" data-form-result></div>
+            </form>
+            <form class="asset-upload-form" data-asset-upload="audio">
+              ${renderFormField(
+                'Audio Note',
+                '<input name="file" type="file" accept="audio/*" />',
+                'Attach an audio memo. Add transcript manually if browser speech support is unavailable.'
+              )}
+              ${renderFormField(
+                'Transcript',
+                '<textarea name="transcript" rows="3" placeholder="Paste or dictate transcript here if needed."></textarea>',
+                'P1 defaults to local/browser-first transcription with manual fallback.'
+              )}
+              <div class="inline-actions">
+                <button type="submit">Upload Audio</button>
+                <button type="button" data-audio-record-start>Start Record</button>
+                <button type="button" data-audio-record-stop disabled>Stop</button>
+              </div>
+              <div class="form-result" data-form-result></div>
+            </form>
+            <div class="info-card" data-audio-status>
+              <strong>Browser audio tools</strong>
+              <p>MediaRecorder and browser speech recognition are optional. If unsupported, upload a file and edit the transcript manually.</p>
+            </div>
+          </div>
+        `,
+        'Voice notes and business cards both route back into capture parse → commit.'
+      )}
+    </div>
+    <section class="panel" data-capture-commit-panel hidden>
+      <div class="panel-head">
+        <div>
+          <h2>Commit Structured Capture</h2>
+          <p class="panel-subtitle">Step 2 is fully editable before it writes to Person / Identity / Interaction / SelfCheckin / Audit.</p>
+        </div>
+      </div>
+      <form class="capture-commit-form" data-capture-commit="true">
+        <input type="hidden" name="text" value="" />
+        <input type="hidden" name="source" value="dashboard" />
+        <input type="hidden" name="assetIds" value="" />
+        <input type="hidden" name="combinedText" value="" />
+        <div class="grid two-up">
+          <div>
+            ${renderFormField('Person Name', '<input name="personName" type="text" />')}
+            ${renderFormField('Tags', '<input name="personTags" type="text" />', 'Comma-separated')}
+            ${renderFormField('Next Follow-up', '<input name="nextFollowUpAt" type="datetime-local" />')}
+            ${renderFormField('Notes', '<textarea name="personNotes" rows="6"></textarea>')}
+            ${renderFormField(
+              'Identities',
+              '<textarea name="identities" rows="5" placeholder="platform|handle|url|note"></textarea>',
+              'One line per identity: platform|handle|url|note'
+            )}
+          </div>
+          <div>
+            ${renderFormField('Energy', '<input name="energy" type="number" min="-2" max="2" step="1" />')}
+            ${renderFormField('Emotions', '<input name="emotions" type="text" />', 'Comma-separated')}
+            ${renderFormField('Reflection', '<textarea name="reflection" rows="5"></textarea>')}
+            ${renderFormField('Interaction Summary', '<textarea name="interactionSummary" rows="4"></textarea>')}
+            ${renderFormField('Interaction Evidence', '<textarea name="interactionEvidence" rows="4"></textarea>')}
+          </div>
+        </div>
+        <div class="inline-actions">
+          <button type="submit">Commit Capture</button>
+        </div>
+        <div class="form-result" data-form-result></div>
+      </form>
+    </section>
+    <div class="grid two-up">
+      ${renderPanel('Recent Capture Assets', renderCaptureAssetCards(assets))}
       ${renderPanel('Fresh Energy Signal', renderCheckinCards(checkins.slice(0, 4)), 'Latest mirror inputs')}
     </div>
     ${renderPanel('Recent Captures', renderCaptureCards(captures))}
@@ -691,14 +964,19 @@ async function renderQuickCapturePage(page) {
 
 async function renderPeoplePage(page, requestUrl) {
   const query = readOptionalString(requestUrl.searchParams.get('q'), '');
-  const [recentRes, searchRes] = await Promise.all([
+  const selectedPersonId = readOptionalString(requestUrl.searchParams.get('personId'), '');
+  const [recentRes, searchRes, detailRes] = await Promise.all([
     fetchJsonSafe('/people?limit=8'),
     query ? fetchJsonSafe(`/people?query=${encodeURIComponent(query)}&limit=8`) : Promise.resolve(null),
+    selectedPersonId
+      ? fetchJsonSafe(`/people/${encodeURIComponent(selectedPersonId)}`)
+      : Promise.resolve(null),
   ]);
 
   const recentPeople = recentRes?.ok ? recentRes.payload.people || [] : [];
   const searchPayload = searchRes?.ok ? searchRes.payload : null;
   const searchResults = searchPayload?.results || [];
+  const detail = detailRes?.ok ? detailRes.payload : null;
 
   return `
     ${renderHero(
@@ -706,6 +984,7 @@ async function renderPeoplePage(page, requestUrl) {
       [
         renderMetric(String(recentPeople.length), 'people cards'),
         renderMetric(query ? String(searchResults.length) : '0', 'search hits'),
+        renderMetric(detail?.person?.name ? '1' : '0', 'detail open'),
       ].join('')
     )}
     <div class="grid two-up">
@@ -735,20 +1014,69 @@ async function renderPeoplePage(page, requestUrl) {
         'Ask for people by topic, context, or memory fragment.'
       )}
       ${renderPanel(
-        'Add / Update Person Card',
-        `
-          <form class="api-form" data-api-form="true" data-endpoint="/people/upsert">
-            ${renderFormField('Name', '<input name="name" type="text" placeholder="Annie Case" />')}
-            ${renderFormField('Tags', '<input name="tags" type="text" placeholder="growth, founder, london" />', 'Comma-separated')}
-            ${renderFormField('Notes', '<textarea name="notes" rows="5" placeholder="Met at..., talked about..., follow up on..."></textarea>')}
-            ${renderFormField('Next Follow-up', '<input name="nextFollowUpAt" type="datetime-local" />')}
-            <div class="inline-actions">
-              <button type="submit">Save Person</button>
-            </div>
-            <div class="form-result" data-form-result></div>
-          </form>
-        `,
-        'Manual cards make the People page useful immediately.'
+        detail?.person?.personId ? 'Person Detail' : 'Add / Update Person Card',
+        detail?.person?.personId
+          ? `
+              <div class="stack-card">
+                <div class="stack-meta">
+                  <strong>${escapeHtml(detail.person.name)}</strong>
+                  <span>${escapeHtml(formatDateTime(detail.person.updatedAt || detail.person.createdAt))}</span>
+                </div>
+                <p>${escapeHtml(detail.person.notes || 'No notes yet.')}</p>
+                <div class="chip-row">${(detail.person.tags || []).map((tag) => renderPill(tag, 'soft')).join('')}</div>
+                <small>Next follow-up: ${escapeHtml(detail.suggestion?.nextFollowUpAt || 'not set')}</small>
+                <p><strong>Suggested follow-up:</strong> ${escapeHtml(detail.suggestion?.followUpMessage || 'n/a')}</p>
+              </div>
+              ${renderPanel('Identities', renderIdentityCards(detail.identities || []))}
+              ${renderPanel('Timeline', renderInteractionCards(detail.interactions || []))}
+              ${renderPanel('Evidence', renderEvidenceList(detail.evidence || []))}
+              <div class="grid two-up">
+                ${renderPanel(
+                  'Add Identity',
+                  `
+                    <form class="api-form compact-form" data-api-form="true" data-endpoint="/people/${encodeURIComponent(
+                      detail.person.personId
+                    )}/identity">
+                      ${renderFormField('Platform', '<input name="platform" type="text" placeholder="linkedin" />')}
+                      ${renderFormField('Handle', '<input name="handle" type="text" placeholder="@handle" />')}
+                      ${renderFormField('URL', '<input name="url" type="url" placeholder="https://..." />')}
+                      ${renderFormField('Note', '<textarea name="note" rows="3"></textarea>')}
+                      <div class="inline-actions"><button type="submit">Add Identity</button></div>
+                      <div class="form-result" data-form-result></div>
+                    </form>
+                  `
+                )}
+                ${renderPanel(
+                  'Log Interaction',
+                  `
+                    <form class="api-form compact-form" data-api-form="true" data-endpoint="/people/${encodeURIComponent(
+                      detail.person.personId
+                    )}/interaction">
+                      ${renderFormField('Summary', '<textarea name="summary" rows="3" placeholder="What happened?"></textarea>')}
+                      ${renderFormField('Evidence', '<textarea name="evidence" rows="4" placeholder="Optional detail or quote"></textarea>')}
+                      ${renderFormField('Happened At', '<input name="happenedAt" type="datetime-local" />')}
+                      <div class="inline-actions"><button type="submit">Log Interaction</button></div>
+                      <div class="form-result" data-form-result></div>
+                    </form>
+                  `
+                )}
+              </div>
+            `
+          : `
+              <form class="api-form" data-api-form="true" data-endpoint="/people/upsert">
+                ${renderFormField('Name', '<input name="name" type="text" placeholder="Annie Case" />')}
+                ${renderFormField('Tags', '<input name="tags" type="text" placeholder="growth, founder, london" />', 'Comma-separated')}
+                ${renderFormField('Notes', '<textarea name="notes" rows="5" placeholder="Met at..., talked about..., follow up on..."></textarea>')}
+                ${renderFormField('Next Follow-up', '<input name="nextFollowUpAt" type="datetime-local" />')}
+                <div class="inline-actions">
+                  <button type="submit">Save Person</button>
+                </div>
+                <div class="form-result" data-form-result></div>
+              </form>
+            `,
+        detail?.person?.personId
+          ? 'Unified person detail with identities, timeline, evidence, and next-step suggestion.'
+          : 'Manual cards make the People page useful immediately.'
       )}
     </div>
     ${renderPanel('Recent People', renderPeopleCards(recentPeople))}
@@ -786,6 +1114,18 @@ async function renderEventsPage(page) {
           <form class="api-form" data-api-form="true" data-endpoint="/events" data-json-fields="payload">
             ${renderFormField('Title', '<input name="title" type="text" placeholder="OpenClaw SocialOS product push" />')}
             ${renderFormField('Capture Seed', `<select name="captureId">${captureOptions}</select>`)}
+            ${renderFormField('Audience', '<input name="audience" type="text" value="builders and collaborators" />')}
+            ${renderFormField(
+              'Language Strategy',
+              `<select name="languageStrategy">
+                <option value="en">English</option>
+                <option value="zh">Chinese</option>
+                <option value="bilingual">Bilingual</option>
+              </select>`
+            )}
+            ${renderFormField('Tone', '<input name="tone" type="text" value="clear, operational, warm" />')}
+            ${renderFormField('Links', '<textarea name="links" rows="3" placeholder="https://example.com\\nhttps://another-link"></textarea>', 'One link per line')}
+            ${renderFormField('Assets', '<textarea name="assets" rows="3" placeholder="hero-image.png\\nlaunch-screenshot.png"></textarea>', 'One asset note per line')}
             ${renderFormField(
               'Payload JSON',
               '<textarea name="payload" rows="8">{\n  "audience": "builders and collaborators",\n  "goal": "ship a more operational dashboard",\n  "details": {\n    "focus": "ui + blocked unlocks + foundry workboard"\n  }\n}</textarea>',
@@ -914,7 +1254,8 @@ async function renderQueuePage(page) {
       page,
       [
         renderMetric(String(queueTasks.filter((task) => task.status === 'queued').length), 'queued'),
-        renderMetric(String(queueTasks.filter((task) => task.status !== 'queued').length), 'executed'),
+        renderMetric(String(queueTasks.filter((task) => task.status === 'manual_step_needed').length), 'manual step'),
+        renderMetric(String(queueTasks.filter((task) => task.status === 'posted').length), 'posted'),
         renderMetric(String(runtime.ops?.queue?.blocked ?? 0), 'blocked product items'),
       ].join(''),
       `<div class="info-card"><strong>Current publish mode</strong><p>${escapeHtml(
@@ -959,7 +1300,7 @@ async function renderSelfMirrorPage(page) {
           <div class="form-result" data-form-result></div>
         </form>
       `,
-      'Rebuild the weekly synthesis from current check-ins and capture backfill.'
+      'Rebuild the weekly synthesis from current check-ins, captures, and relationship evidence.'
     )}
     ${renderMirrorBlock(payload)}
   `;
@@ -1246,6 +1587,12 @@ function renderClientScript() {
     <script>
       const apiBase = ${JSON.stringify(DEFAULT_API_BASE_URL)};
       const flashKey = 'socialos.dashboard.flash';
+      const captureState = {
+        assets: [],
+        recorder: null,
+        recordChunks: [],
+        recognition: null,
+      };
 
       function parseMaybeJson(text) {
         try {
@@ -1253,6 +1600,15 @@ function renderClientScript() {
         } catch {
           return { raw: text };
         }
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
       }
 
       function formDataToJson(form) {
@@ -1285,6 +1641,11 @@ function renderClientScript() {
         return data;
       }
 
+      function renderResult(resultNode, payload) {
+        if (!resultNode) return;
+        resultNode.innerHTML = '<pre>' + escapeHtml(JSON.stringify(payload, null, 2)) + '</pre>';
+      }
+
       function flashMessage(flash) {
         const banner = document.querySelector('[data-flash]');
         if (!banner || !flash) return;
@@ -1302,28 +1663,219 @@ function renderClientScript() {
         } catch {}
       }
 
+      function updateCaptureAssetInputs() {
+        const value = captureState.assets.map((asset) => asset.assetId).join(',');
+        for (const input of document.querySelectorAll('[data-capture-asset-ids]')) {
+          input.value = value;
+        }
+      }
+
+      function appendCaptureAsset(asset) {
+        if (!asset || !asset.assetId) return;
+        if (!captureState.assets.some((entry) => entry.assetId === asset.assetId)) {
+          captureState.assets.push(asset);
+        }
+        updateCaptureAssetInputs();
+      }
+
+      function parseIdentityLines(value) {
+        return String(value || '')
+          .split(/\\n+/)
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .map((line) => {
+            const [platform = '', handle = '', url = '', note = ''] = line.split('|');
+            return {
+              platform: platform.trim(),
+              handle: handle.trim(),
+              url: url.trim(),
+              note: note.trim(),
+            };
+          })
+          .filter((item) => item.platform && (item.handle || item.url));
+      }
+
+      function setButtonBusy(submitter, busy) {
+        if (!submitter) return;
+        if (busy) {
+          submitter.disabled = true;
+          submitter.dataset.originalLabel = submitter.textContent;
+          submitter.textContent = 'Working...';
+        } else {
+          submitter.disabled = false;
+          submitter.textContent = submitter.dataset.originalLabel || 'Submit';
+        }
+      }
+
+      async function apiRequest(endpoint, payload, method = 'POST') {
+        const response = await fetch(apiBase + endpoint, {
+          method,
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const text = await response.text();
+        return {
+          ok: response.ok,
+          status: response.status,
+          payload: parseMaybeJson(text),
+        };
+      }
+
+      async function encodeFileAsDataUrl(file) {
+        return await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ''));
+          reader.onerror = () => reject(reader.error || new Error('Failed to read file'));
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function populateCaptureCommitForm(captureDraft) {
+        const panel = document.querySelector('[data-capture-commit-panel]');
+        const form = document.querySelector('[data-capture-commit]');
+        if (!panel || !form || !captureDraft) return;
+        panel.hidden = false;
+        form.elements.text.value = captureDraft.rawText || '';
+        form.elements.source.value = captureDraft.source || 'dashboard';
+        form.elements.assetIds.value = (captureDraft.assets || []).map((asset) => asset.assetId).join(',');
+        form.elements.combinedText.value = captureDraft.combinedText || '';
+        form.elements.personName.value = captureDraft.personDraft?.name || '';
+        form.elements.personTags.value = (captureDraft.personDraft?.tags || []).join(', ');
+        form.elements.personNotes.value = captureDraft.personDraft?.notes || '';
+        form.elements.nextFollowUpAt.value = '';
+        form.elements.identities.value = (captureDraft.personDraft?.identities || [])
+          .map((item) => [item.platform || '', item.handle || '', item.url || '', item.note || ''].join('|'))
+          .join('\\n');
+        form.elements.energy.value = String(captureDraft.selfCheckinDraft?.energy ?? 0);
+        form.elements.emotions.value = (captureDraft.selfCheckinDraft?.emotions || []).join(', ');
+        form.elements.reflection.value = captureDraft.selfCheckinDraft?.reflection || '';
+        form.elements.interactionSummary.value = captureDraft.interactionDraft?.summary || '';
+        form.elements.interactionEvidence.value = captureDraft.interactionDraft?.evidence || '';
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      async function handleCaptureParse(form, submitter) {
+        const resultNode = form.querySelector('[data-form-result]');
+        setButtonBusy(submitter, true);
+        try {
+          const payload = formDataToJson(form);
+          payload.assetIds = String(payload.assetIds || '')
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean);
+          const response = await apiRequest('/capture/parse', payload, 'POST');
+          renderResult(resultNode, response.payload);
+
+          if (response.ok) {
+            populateCaptureCommitForm(response.payload.captureDraft);
+            sessionStorage.setItem(
+              flashKey,
+              JSON.stringify({
+                ok: true,
+                message: 'Capture parsed. Review the structured draft before committing.',
+              })
+            );
+          }
+        } catch (error) {
+          renderResult(resultNode, { error: error.message || String(error) });
+        } finally {
+          setButtonBusy(submitter, false);
+        }
+      }
+
+      async function handleCaptureCommit(form, submitter) {
+        const resultNode = form.querySelector('[data-form-result]');
+        setButtonBusy(submitter, true);
+        try {
+          const payload = {
+            text: form.elements.text.value,
+            source: form.elements.source.value,
+            combinedText: form.elements.combinedText.value,
+            assetIds: String(form.elements.assetIds.value || '')
+              .split(',')
+              .map((item) => item.trim())
+              .filter(Boolean),
+            personDraft: {
+              name: form.elements.personName.value,
+              tags: form.elements.personTags.value,
+              notes: form.elements.personNotes.value,
+              nextFollowUpAt: form.elements.nextFollowUpAt.value,
+              identities: parseIdentityLines(form.elements.identities.value),
+            },
+            selfCheckinDraft: {
+              energy: form.elements.energy.value,
+              emotions: form.elements.emotions.value,
+              triggerText: form.elements.source.value,
+              reflection: form.elements.reflection.value,
+            },
+            interactionDraft: {
+              summary: form.elements.interactionSummary.value,
+              evidence: form.elements.interactionEvidence.value,
+            },
+          };
+          const response = await apiRequest('/capture/commit', payload, 'POST');
+          renderResult(resultNode, response.payload);
+          sessionStorage.setItem(
+            flashKey,
+            JSON.stringify({
+              ok: response.ok,
+              message: response.ok
+                ? 'Capture committed into people memory and self mirror inputs.'
+                : response.payload?.error || 'Capture commit failed',
+            })
+          );
+          if (response.ok) {
+            window.location.reload();
+          }
+        } catch (error) {
+          renderResult(resultNode, { error: error.message || String(error) });
+        } finally {
+          setButtonBusy(submitter, false);
+        }
+      }
+
+      async function handleAssetUpload(form, submitter, fileOverride = null) {
+        const resultNode = form.querySelector('[data-form-result]');
+        const fileInput = form.querySelector('input[type="file"]');
+        const file = fileOverride || (fileInput ? fileInput.files[0] : null);
+        if (!file) {
+          renderResult(resultNode, { error: 'Choose a file first.' });
+          return;
+        }
+        setButtonBusy(submitter, true);
+        try {
+          const payload = {
+            kind: form.dataset.assetUpload || 'image',
+            mimeType: file.type || 'application/octet-stream',
+            fileName: file.name || 'upload.bin',
+            contentBase64: await encodeFileAsDataUrl(file),
+            transcript: form.querySelector('textarea[name="transcript"]')?.value || '',
+            source: 'dashboard',
+          };
+          const response = await apiRequest('/capture/assets', payload, 'POST');
+          renderResult(resultNode, response.payload);
+          if (response.ok && response.payload.asset) {
+            appendCaptureAsset(response.payload.asset);
+          }
+        } catch (error) {
+          renderResult(resultNode, { error: error.message || String(error) });
+        } finally {
+          setButtonBusy(submitter, false);
+        }
+      }
+
       async function submitApiForm(form, submitter) {
         const endpoint = form.dataset.endpoint;
         const resultNode = form.querySelector('[data-form-result]');
         const payload = formDataToJson(form);
+        const method = (form.dataset.method || 'POST').toUpperCase();
 
         if (!endpoint) return;
-
-        if (submitter) {
-          submitter.disabled = true;
-          submitter.dataset.originalLabel = submitter.textContent;
-          submitter.textContent = 'Working...';
-        }
+        setButtonBusy(submitter, true);
 
         try {
-          const response = await fetch(apiBase + endpoint, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-
-          const text = await response.text();
-          const parsed = parseMaybeJson(text);
+          const response = await apiRequest(endpoint, payload, method);
+          const parsed = response.payload || {};
           const message =
             parsed.summary ||
             parsed.output ||
@@ -1333,14 +1885,10 @@ function renderClientScript() {
             parsed.person?.name ||
             parsed.personId ||
             parsed.count ||
+            parsed.status ||
             'Request completed';
 
-          if (resultNode) {
-            resultNode.innerHTML = '<pre>' + String(JSON.stringify(parsed, null, 2))
-              .replaceAll('&', '&amp;')
-              .replaceAll('<', '&lt;')
-              .replaceAll('>', '&gt;') + '</pre>';
-          }
+          renderResult(resultNode, parsed);
 
           sessionStorage.setItem(
             flashKey,
@@ -1355,12 +1903,7 @@ function renderClientScript() {
             return;
           }
         } catch (error) {
-          if (resultNode) {
-            resultNode.innerHTML = '<pre>' + String(error.message || error)
-              .replaceAll('&', '&amp;')
-              .replaceAll('<', '&lt;')
-              .replaceAll('>', '&gt;') + '</pre>';
-          }
+          renderResult(resultNode, { error: error.message || String(error) });
           sessionStorage.setItem(
             flashKey,
             JSON.stringify({
@@ -1369,19 +1912,99 @@ function renderClientScript() {
             })
           );
         } finally {
-          if (submitter) {
-            submitter.disabled = false;
-            submitter.textContent = submitter.dataset.originalLabel || 'Submit';
-          }
+          setButtonBusy(submitter, false);
         }
       }
 
       document.addEventListener('submit', (event) => {
         const form = event.target;
         if (!(form instanceof HTMLFormElement)) return;
+        if (form.dataset.captureParse) {
+          event.preventDefault();
+          handleCaptureParse(form, event.submitter || form.querySelector('button[type="submit"]'));
+          return;
+        }
+        if (form.dataset.captureCommit) {
+          event.preventDefault();
+          handleCaptureCommit(form, event.submitter || form.querySelector('button[type="submit"]'));
+          return;
+        }
+        if (form.dataset.assetUpload) {
+          event.preventDefault();
+          handleAssetUpload(form, event.submitter || form.querySelector('button[type="submit"]'));
+          return;
+        }
         if (!form.dataset.apiForm) return;
         event.preventDefault();
         submitApiForm(form, event.submitter || form.querySelector('button[type="submit"]'));
+      });
+
+      document.addEventListener('click', async (event) => {
+        const startButton = event.target.closest('[data-audio-record-start]');
+        const stopButton = event.target.closest('[data-audio-record-stop]');
+
+        if (startButton) {
+          const form = startButton.closest('form');
+          const statusNode = document.querySelector('[data-audio-status]');
+          if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+            statusNode.innerHTML = '<strong>Browser audio tools</strong><p>MediaRecorder is unavailable in this browser. Upload an audio file instead.</p>';
+            return;
+          }
+
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          captureState.recordChunks = [];
+          captureState.recorder = new MediaRecorder(stream);
+          captureState.recorder.ondataavailable = (recordEvent) => {
+            if (recordEvent.data.size > 0) captureState.recordChunks.push(recordEvent.data);
+          };
+          captureState.recorder.start();
+          startButton.disabled = true;
+          if (stopButton) stopButton.disabled = false;
+
+          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          const transcriptField = form?.querySelector('textarea[name="transcript"]');
+          if (SpeechRecognition && transcriptField) {
+            captureState.recognition = new SpeechRecognition();
+            captureState.recognition.continuous = true;
+            captureState.recognition.interimResults = true;
+            captureState.recognition.onresult = (speechEvent) => {
+              const transcript = Array.from(speechEvent.results)
+                .map((result) => result[0]?.transcript || '')
+                .join(' ')
+                .trim();
+              transcriptField.value = transcript;
+            };
+            captureState.recognition.start();
+          }
+
+          statusNode.innerHTML = '<strong>Recording</strong><p>Audio capture is running. Stop when the note is complete.</p>';
+          return;
+        }
+
+        if (stopButton) {
+          const form = stopButton.closest('form');
+          const statusNode = document.querySelector('[data-audio-status]');
+          const startButton = form?.querySelector('[data-audio-record-start]');
+          if (!captureState.recorder) return;
+
+          stopButton.disabled = true;
+          captureState.recorder.onstop = async () => {
+            const blob = new Blob(captureState.recordChunks, { type: 'audio/webm' });
+            const file = new File([blob], 'recorded-note.webm', { type: 'audio/webm' });
+            statusNode.innerHTML = '<strong>Recorded</strong><p>Uploading the recorded note into capture assets.</p>';
+            await handleAssetUpload(form, form.querySelector('button[type="submit"]'), file);
+            if (startButton) startButton.disabled = false;
+            statusNode.innerHTML = '<strong>Audio ready</strong><p>The recorded note has been added to capture assets. You can now parse the capture.</p>';
+          };
+
+          captureState.recorder.stop();
+          captureState.recorder.stream.getTracks().forEach((track) => track.stop());
+          if (captureState.recognition) {
+            captureState.recognition.stop();
+            captureState.recognition = null;
+          }
+          captureState.recorder = null;
+        }
       });
 
       consumeFlash();

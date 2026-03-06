@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { startApiServer } from '../../socialos/apps/api/server.mjs';
 
 function assert(condition, message) {
@@ -5,7 +8,9 @@ function assert(condition, message) {
 }
 
 async function main() {
-  const api = await startApiServer({ port: 0, quiet: true });
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'socialos-cors-'));
+  const dbPath = path.join(tempDir, 'cors.db');
+  const api = await startApiServer({ port: 0, quiet: true, dbPath });
 
   try {
     const allowedOrigin = 'http://localhost:4173';
@@ -40,6 +45,7 @@ async function main() {
     console.log('cors_policy_check: PASS');
   } finally {
     await api.close();
+    fs.rmSync(tempDir, { recursive: true, force: true });
   }
 }
 

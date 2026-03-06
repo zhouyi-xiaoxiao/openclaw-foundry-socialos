@@ -12,6 +12,13 @@ node "${REPO_ROOT}/scripts/tests/plugin_contract_check.mjs"
 
 node -e 'console.log("privilege_smoke: PASS (publish_execute optional + publisher-only visibility assertions)")'
 node "${REPO_ROOT}/scripts/tests/e2e_smoke.mjs"
+node "${REPO_ROOT}/scripts/tests/capture_parse_commit_smoke.mjs"
+node "${REPO_ROOT}/scripts/tests/people_detail_smoke.mjs"
+node "${REPO_ROOT}/scripts/tests/draft_validation_smoke.mjs"
+node "${REPO_ROOT}/scripts/tests/manual_publish_flow_smoke.mjs"
+node "${REPO_ROOT}/scripts/tests/mirror_evidence_smoke.mjs"
+node "${REPO_ROOT}/scripts/tests/audio_capture_smoke.mjs"
+node "${REPO_ROOT}/scripts/tests/business_card_ocr_smoke.mjs"
 node "${REPO_ROOT}/scripts/tests/product_workspace_smoke.mjs"
 node "${REPO_ROOT}/scripts/tests/foundry_generic_task_smoke.mjs"
 node "${REPO_ROOT}/scripts/tests/cors_policy_check.mjs"
