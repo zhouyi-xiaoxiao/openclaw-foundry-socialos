@@ -12,6 +12,7 @@ const script = path.join(root, 'scripts', 'status.sh');
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'socialos-status-script-'));
 const runDir = path.join(tempDir, 'runs');
 const emptyRunDir = path.join(tempDir, 'runs-empty');
+const missingRunDir = path.join(tempDir, 'runs-missing');
 const latestDigest = path.join(tempDir, 'LATEST.md');
 const missingQueue = path.join(tempDir, 'MISSING_QUEUE.md');
 const queueFile = path.join(tempDir, 'QUEUE.md');
@@ -83,6 +84,17 @@ const noBlockedResult = spawnSync('bash', [script], {
   },
 });
 
+const missingRunDirResult = spawnSync('bash', [script], {
+  cwd: root,
+  encoding: 'utf8',
+  env: {
+    ...process.env,
+    SOCIALOS_QUEUE_FILE: queueFile,
+    SOCIALOS_RUN_DIR: missingRunDir,
+    SOCIALOS_LATEST_DIGEST_FILE: latestDigest,
+  },
+});
+
 try {
   assert(result.status === 0, `status script should exit 0, got ${result.status}`);
   assert(result.stdout.includes('== Foundry Status =='), 'status output header missing');
@@ -95,11 +107,14 @@ try {
   assert(!queueResult.stdout.includes('1:- [ ]'), 'current task should not include grep line-number output');
   assert(!queueResult.stdout.includes('2:- [!]'), 'blocked queue head should not include grep line-number output');
   assert(digestFallbackResult.status === 0, `status script digest fallback should exit 0, got ${digestFallbackResult.status}`);
+  assert(digestFallbackResult.stdout.includes('run_reports_dir: empty'), 'digest fallback should report empty run reports directory');
   assert(digestFallbackResult.stdout.includes('run_id: unknown'), 'digest fallback should render unknown run id when missing');
   assert(digestFallbackResult.stdout.includes('status: unknown (digest-only)'), 'digest fallback should label status as digest-only');
   assert(digestFallbackResult.stdout.includes('summary: unknown'), 'digest fallback should keep summary stable when digest has no What field');
   assert(noBlockedResult.status === 0, `status script with no blocked tasks should exit 0, got ${noBlockedResult.status}`);
   assert(noBlockedResult.stdout.includes('Blocked queue head:\nnone'), 'blocked queue head should print none when queue has no blocked items');
+  assert(missingRunDirResult.status === 0, `status script with missing run dir should exit 0, got ${missingRunDirResult.status}`);
+  assert(missingRunDirResult.stdout.includes('run_reports_dir: missing'), 'status should report missing run reports directory');
   console.log('status_script_smoke: PASS');
 } finally {
   fs.rmSync(tempDir, { recursive: true, force: true });

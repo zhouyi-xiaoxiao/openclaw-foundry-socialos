@@ -8,6 +8,15 @@ LOCK_DIR="${REPO_ROOT}/.locks/devloop.lock"
 LOCK_META="${LOCK_DIR}/meta.env"
 RUN_DIR="${SOCIALOS_RUN_DIR:-${REPO_ROOT}/reports/runs}"
 LATEST="${SOCIALOS_LATEST_DIGEST_FILE:-${REPO_ROOT}/reports/LATEST.md}"
+run_dir_notice=""
+if [[ ! -d "${RUN_DIR}" ]]; then
+  run_dir_notice="missing (${RUN_DIR})"
+else
+  run_report_count="$(find "${RUN_DIR}" -maxdepth 1 -type f -name '*.json' ! -name '*.planspec.json' | wc -l | tr -d ' ')"
+  if [[ "${run_report_count}" == "0" ]]; then
+    run_dir_notice="empty (${RUN_DIR})"
+  fi
+fi
 
 mode="RUNNING"
 [[ -f "${PAUSE_FILE}" ]] && mode="PAUSED"
@@ -116,6 +125,7 @@ echo "current_task: ${current_task}"
 [[ -n "${queue_notice}" ]] && echo "queue_file: ${queue_notice}"
 echo
 echo "Consecutive failures: ${consecutive_failures}"
+[[ -n "${run_dir_notice}" ]] && echo "run_reports_dir: ${run_dir_notice}"
 echo
 echo "Latest run:"
 if [[ -n "${latest_json}" ]]; then
