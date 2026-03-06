@@ -117,6 +117,16 @@ async function main() {
       'casual workspace input should keep related sections quiet by default'
     );
 
+    const selfWorkspace = await postJson(api.baseUrl, '/workspace/chat', {
+      text: '我今天状态怎么样？',
+      source: 'product_workspace_smoke',
+    });
+    assert(typeof selfWorkspace.presentation?.answer === 'string', 'self-state workspace input should return a mirror-aware answer');
+    assert(
+      selfWorkspace.presentation?.primaryCard?.type === 'mirror' || (selfWorkspace.presentation?.related?.mirror || []).length >= 1,
+      'self-state workspace input should foreground mirror context'
+    );
+
     const reviewWorkspace = await postJson(api.baseUrl, '/workspace/chat', {
       text: '帮我新建一个联系人吧，我在聚会里遇到了他，聊了很多金融和伦敦的事情。',
       source: 'product_workspace_smoke',

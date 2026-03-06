@@ -1901,6 +1901,336 @@ function buildSearchResultRow(row, terms, embeddingsSettings) {
   };
 }
 
+function tokenizeNaturalQuery(value) {
+  return cleanText(value)
+    .toLowerCase()
+    .split(/\s+/u)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function uniqueSearchTerms(parts = []) {
+  return [...new Set(parts.flatMap((part) => tokenizeNaturalQuery(part)).filter(Boolean))];
+}
+
+function hasSearchIntent(value) {
+  const source = cleanText(value).toLowerCase();
+  return /(?:^|\b)(?:who|find|search|open|show|which|where|look up|recall|找|搜索|查一下|查找|打开|看看|哪个|哪位|回忆)(?:\b|$)/u.test(
+    source
+  );
+}
+
+function hasUpdateIntent(value) {
+  const source = cleanText(value).toLowerCase();
+  return /(?:^|\b)(?:update|edit|change|rename|modify|revise|补充|更新|修改|改一下|改成|补一下|完善)(?:\b|$)/u.test(
+    source
+  );
+}
+
+function hasCreateIntent(value) {
+  const source = cleanText(value).toLowerCase();
+  return /(?:^|\b)(?:create|add|save|new|log|record|turn .* into|建一个|新建|保存|记录|整理成|变成)(?:\b|$)/u.test(
+    source
+  );
+}
+
+function hasContactCaptureIntent(value) {
+  const source = cleanText(value).toLowerCase();
+  return /(?:认识了|遇到了|我遇到|met |met at|talked to|聊到|他叫|她叫|有个叫|叫.*的联系人|微信是|linkedin|instagram|x是|x handle|follow up with)/u.test(
+    source
+  );
+}
+
+function hasEventIntent(value) {
+  const source = cleanText(value).toLowerCase();
+  return /(?:event|meetup|demo day|hackathon|活动|事件|聚会|分享会|meet|recap|follow-up|follow up)/u.test(
+    source
+  );
+}
+
+function extractPlatformHint(value) {
+  const source = cleanText(value).toLowerCase();
+  const candidates = ['linkedin', 'instagram', 'x', 'wechat', 'zhihu', 'xiaohongshu'];
+  return candidates.find((item) => source.includes(item)) || '';
+}
+
+function buildPersonSearchContext(query, captureDraft = null) {
+  const personDraft = captureDraft?.personDraft || {};
+  const interactionDraft = captureDraft?.interactionDraft || {};
+  const directName = cleanText(personDraft.name || personDraft.displayName || '');
+  const tags = cleanList(personDraft.tags || []);
+  const notes = cleanText(personDraft.notes || interactionDraft.summary || interactionDraft.evidence || '');
+  const platformHint = extractPlatformHint(query);
+  return {
+    query: cleanText(query),
+    directName,
+    tags,
+    notes,
+    platformHint,
+    followUpHint: /(?:follow.?up|next step|follow up|联系|跟进)/iu.test(query),
+    terms: uniqueSearchTerms([query, directName, ...tags, notes, platformHint]),
+  };
+}
+
+function computeRecencyBoost(updatedAt) {
+  const timestamp = Date.parse(updatedAt || '');
+  if (!Number.isFinite(timestamp)) return 0;
+  const ageDays = (Date.now() - timestamp) / (1000 * 60 * 60 * 24);
+  if (ageDays <= 7) return 0.2;
+  if (ageDays <= 30) return 0.12;
+  if (ageDays <= 90) return 0.06;
+  return 0;
+}
+
+function buildEnhancedPersonSearchResult(statements, row, queryContext, embeddingsSettings) {
+  const tags = parseJsonStringArray(row.tags);
+  const identities = statements.listIdentitiesByPersonId.all(row.id).map(formatIdentityRow);
+  const interactions = statements.listInteractionsByPersonId.all(row.id).slice(0, 6).map(formatInteractionRow);
+  const relatedEvents = listRelatedEventsForPerson(statements, row.id).slice(0, 4);
+  const notes = compactNotes(row.notes, 220);
+  const identityText = identities
+    .map((item) => [item.platform, item.handle, item.url, item.note].filter(Boolean).join(' '))
+    .join(' ');
+  const interactionText = interactions
+    .map((item) => [item.summary, item.evidence].filter(Boolean).join(' '))
+    .join(' ');
+  const relatedEventText = relatedEvents
+    .map((event) => [event.title, summarizeEventPayload(event.payload || {})].filter(Boolean).join(' '))
+    .join(' ');
+  const haystack = cleanText(
+    [row.name, notes, tags.join(' '), identityText, interactionText, relatedEventText].filter(Boolean).join(' ')
+  ).toLowerCase();
+  const keywordScore = computeKeywordScore(queryContext.terms, haystack);
+  const directName = cleanText(queryContext.directName).toLowerCase();
+  const normalizedName = cleanText(row.name).toLowerCase();
+  const exactNameBoost = directName
+    ? normalizedName === directName
+      ? 2.8
+      : normalizedName.startsWith(directName)
+        ? 1.6
+        : normalizedName.includes(directName)
+          ? 1.05
+          : 0
+    : 0;
+  const platformBoost =
+    queryContext.platformHint && identityText.toLowerCase().includes(queryContext.platformHint.toLowerCase()) ? 0.5 : 0;
+  const handleBoost = queryContext.directName
+    ? identities.some((identity) => cleanText(identity.handle).toLowerCase() === directName.toLowerCase())
+      ? 1.2
+      : 0
+    : 0;
+  const followUpBoost = queryContext.followUpHint && row.next_follow_up_at ? 0.24 : 0;
+  const semanticScore = embeddingsSettings.semanticBoostEnabled
+    ? keywordScore > 0
+      ? Math.min(1, keywordScore + Math.min(notes.length / 260, 0.2))
+      : 0
+    : 0;
+  const score =
+    keywordScore * 1.35 +
+    exactNameBoost +
+    platformBoost +
+    handleBoost +
+    followUpBoost +
+    computeRecencyBoost(row.updated_at) +
+    semanticScore * 0.25;
+  const evidenceSource =
+    interactions.find((item) =>
+      queryContext.terms.some((term) => cleanText(`${item.summary} ${item.evidence}`).toLowerCase().includes(term))
+    )?.summary ||
+    relatedEvents.find((item) =>
+      queryContext.terms.some((term) =>
+        cleanText(`${item.title} ${summarizeEventPayload(item.payload || {})}`).toLowerCase().includes(term)
+      )
+    )?.title ||
+    notes ||
+    row.name;
+
+  return {
+    personId: row.id,
+    name: row.name,
+    tags,
+    notes,
+    nextFollowUpAt: row.next_follow_up_at,
+    updatedAt: row.updated_at,
+    score: Number(score.toFixed(4)),
+    evidenceSnippet: truncateText(evidenceSource, 180),
+  };
+}
+
+function inferEventDraftFallback(query, statements) {
+  const source = cleanText(query);
+  const existingPeople = statements
+    .listAllPeople
+    .all()
+    .filter(isDisplayablePersonRow)
+    .map(formatPersonRow);
+  const hintedPerson =
+    existingPeople.find((person) => source.toLowerCase().includes(cleanText(person.name).toLowerCase())) || null;
+  const likelyCreate = hasCreateIntent(source) || (!hasSearchIntent(source) && hasEventIntent(source));
+  const summary = sanitizeEventNarrative(source, hasHanCharacters(source) ? 'zh' : 'en', 220);
+  const title = hintedPerson
+    ? hasHanCharacters(source)
+      ? `和${hintedPerson.name}的后续`
+      : `Follow-up with ${hintedPerson.name}`
+    : truncateText(summary || source || 'New event', 72);
+  return {
+    intent: likelyCreate ? 'create' : 'search',
+    title,
+    summary,
+    audience: '',
+    languageStrategy: hasHanCharacters(source) ? 'zh' : '',
+    tone: hasHanCharacters(source) ? '清晰、自然' : 'clear, warm',
+    people: hintedPerson ? [hintedPerson.name] : [],
+    links: [],
+    assets: [],
+  };
+}
+
+async function buildEventCommandAssist({ query, source = 'events-command', statements }) {
+  const fallback = inferEventDraftFallback(query, statements);
+  if (!shouldUseModelCaptureAssist(source)) {
+    return { ...fallback, extraction: { method: 'heuristic', model: '' } };
+  }
+
+  const apiKey = readOptionalString(process.env.OPENAI_API_KEY, '');
+  const model = readOptionalString(process.env.OPENAI_EVENT_COMMAND_MODEL, 'gpt-5.4');
+  if (!apiKey || !cleanText(query)) {
+    return { ...fallback, extraction: { method: 'heuristic', model: '' } };
+  }
+
+  const responseSchema = [
+    'You are shaping a natural-language event command for a local-first relationship workspace.',
+    'Return JSON only.',
+    'Choose intent from: search, create, open.',
+    'If the user is describing a new event or wants to turn a conversation into an event, choose create.',
+    'If the user is trying to find/open an existing event, choose search or open.',
+    'Keep fields concise and grounded in the user note.',
+    'Schema:',
+    '{"intent":"search","title":"","summary":"","audience":"","languageStrategy":"","tone":"","people":[],"links":[],"assets":[]}',
+  ].join('\n');
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: responseSchema },
+          { role: 'user', content: JSON.stringify({ query: cleanText(query) }) },
+        ],
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { ...fallback, extraction: { method: 'heuristic', model: '' } };
+    }
+    const rawContent = payload?.choices?.[0]?.message?.content;
+    const parsed = parseLooseJsonObject(
+      typeof rawContent === 'string'
+        ? rawContent
+        : Array.isArray(rawContent)
+          ? rawContent
+              .map((item) =>
+                typeof item === 'string'
+                  ? item
+                  : typeof item?.text === 'string'
+                    ? item.text
+                    : typeof item?.content === 'string'
+                      ? item.content
+                      : ''
+              )
+              .join('\n')
+          : ''
+    );
+    if (!parsed) {
+      return { ...fallback, extraction: { method: 'heuristic', model: '' } };
+    }
+    return {
+      ...fallback,
+      ...parsed,
+      people: cleanList(parsed.people || fallback.people),
+      links: normalizeStringList(parsed.links, fallback.links),
+      assets: normalizeStringList(parsed.assets, fallback.assets),
+      extraction: { method: 'model', model },
+    };
+  } catch {
+    return { ...fallback, extraction: { method: 'heuristic', model: '' } };
+  }
+}
+
+function buildEventSearchContext(query, eventAssist = {}) {
+  return {
+    query: cleanText(query),
+    directTitle: cleanText(eventAssist.title || ''),
+    people: cleanList(eventAssist.people || []),
+    audience: cleanText(eventAssist.audience || ''),
+    tone: cleanText(eventAssist.tone || ''),
+    languageStrategy: cleanText(eventAssist.languageStrategy || ''),
+    summary: cleanText(eventAssist.summary || ''),
+    terms: uniqueSearchTerms([
+      query,
+      eventAssist.title || '',
+      ...(Array.isArray(eventAssist.people) ? eventAssist.people : []),
+      eventAssist.summary || '',
+      eventAssist.audience || '',
+      eventAssist.tone || '',
+      eventAssist.languageStrategy || '',
+    ]),
+  };
+}
+
+function buildEnhancedEventSearchResult(statements, event, queryContext) {
+  const relatedPeople = listRelatedPeopleForEvent(statements, event.eventId).slice(0, 5);
+  const relatedDrafts = dedupeLatestDrafts(statements.listDraftsByEventId.all(event.eventId).map(formatDraftRow), 5);
+  const snippet = truncateText(summarizeEventPayload(event.payload || {}) || event.title, 180);
+  const relatedPeopleText = relatedPeople
+    .map((person) => [person.name, ...(person.tags || [])].filter(Boolean).join(' '))
+    .join(' ');
+  const relatedDraftText = relatedDrafts
+    .map((draft) => [draft.platformLabel || draft.platform, draft.eventTitle, draft.content].filter(Boolean).join(' '))
+    .join(' ');
+  const haystack = cleanText(
+    [
+      event.title,
+      event.payload?.audience,
+      event.payload?.tone,
+      event.payload?.languageStrategy,
+      snippet,
+      relatedPeopleText,
+      relatedDraftText,
+    ]
+      .filter(Boolean)
+      .join(' ')
+  ).toLowerCase();
+  const keywordScore = computeKeywordScore(queryContext.terms, haystack);
+  const directTitle = cleanText(queryContext.directTitle).toLowerCase();
+  const eventTitle = cleanText(event.title).toLowerCase();
+  const titleBoost = directTitle
+    ? eventTitle === directTitle
+      ? 2.6
+      : eventTitle.startsWith(directTitle)
+        ? 1.5
+        : eventTitle.includes(directTitle)
+          ? 0.95
+          : 0
+    : 0;
+  const peopleBoost = queryContext.people.reduce((boost, personName) => {
+    const normalized = cleanText(personName).toLowerCase();
+    return boost + (normalized && relatedPeople.some((person) => cleanText(person.name).toLowerCase() === normalized) ? 0.8 : 0);
+  }, 0);
+  const score = keywordScore * 1.35 + titleBoost + peopleBoost + computeRecencyBoost(event.createdAt);
+  return {
+    ...event,
+    score: Number(score.toFixed(4)),
+    snippet,
+  };
+}
+
 function readTextFileOrDefault(filePath, fallback = '') {
   try {
     return fs.readFileSync(filePath, 'utf8');
@@ -2241,15 +2571,15 @@ function buildFollowUpMessage(person, interactions = []) {
     : `Follow up with ${person.name} while the context is still fresh.`;
 }
 
-function searchPeopleMatches(statements, query, limit = 4) {
+function searchPeopleMatches(statements, query, limit = 4, captureDraft = null) {
   const normalizedQuery = cleanText(query).toLowerCase();
   if (!normalizedQuery) return [];
   const embeddingsSettings = resolveEmbeddingsSettings();
-  const terms = normalizedQuery.split(/\s+/u).filter(Boolean);
+  const queryContext = buildPersonSearchContext(query, captureDraft);
   return statements.listAllPeople
     .all()
     .filter(isDisplayablePersonRow)
-    .map((row) => buildSearchResultRow(row, terms, embeddingsSettings))
+    .map((row) => buildEnhancedPersonSearchResult(statements, row, queryContext, embeddingsSettings))
     .filter((row) => row.score > 0)
     .sort((left, right) => {
       if (left.score !== right.score) return right.score - left.score;
@@ -2258,33 +2588,14 @@ function searchPeopleMatches(statements, query, limit = 4) {
     .slice(0, limit);
 }
 
-function searchEventMatches(statements, query, limit = 4) {
+function searchEventMatches(statements, query, limit = 4, eventAssist = null) {
   const normalizedQuery = cleanText(query).toLowerCase();
   if (!normalizedQuery) return [];
-  const terms = normalizedQuery.split(/\s+/u).filter(Boolean);
-
+  const queryContext = buildEventSearchContext(query, eventAssist || {});
   return statements.listRecentEvents
-    .all(60)
+    .all(120)
     .map(formatEventRow)
-    .map((event) => {
-      const haystack = cleanText(
-        [
-          event.title,
-          event.payload?.audience,
-          event.payload?.tone,
-          event.payload?.languageStrategy,
-          summarizeEventPayload(event.payload || {}),
-        ]
-          .filter(Boolean)
-          .join(' ')
-      ).toLowerCase();
-      const score = computeKeywordScore(terms, haystack);
-      return {
-        ...event,
-        score,
-        snippet: truncateText(summarizeEventPayload(event.payload || {}) || event.title, 180),
-      };
-    })
+    .map((event) => buildEnhancedEventSearchResult(statements, event, queryContext))
     .filter((event) => event.score > 0)
     .sort((left, right) => {
       if (left.score !== right.score) return right.score - left.score;
@@ -2353,8 +2664,10 @@ function isWorkspaceCasualTurn({
         (Array.isArray(personDraft.identities) && personDraft.identities.length))
   );
   if (!source || intent !== 'mixed') return false;
+  if (hasSearchIntent(source) || hasCreateIntent(source) || hasContactCaptureIntent(source) || hasEventIntent(source)) {
+    return false;
+  }
   if (showEventSuggestion || hasUntypedVoiceOnly) return false;
-  if (relatedPeople.length || relatedEvents.length || relatedDrafts.length) return false;
   if (hasStructuredPersonFocus) return false;
   return source.length <= 120;
 }
@@ -2603,8 +2916,18 @@ function buildWorkspaceDraftCard(draft, kicker = 'Related draft') {
   });
 }
 
-function buildWorkspaceMirrorCard(latestMirror) {
-  if (!latestMirror?.mirrorId) return null;
+function buildWorkspaceMirrorCard(latestMirror, fallback = false) {
+  if (!latestMirror?.mirrorId && !fallback) return null;
+  if (!latestMirror?.mirrorId && fallback) {
+    return buildPresentationCard('mirror', {
+      kicker: 'Mirror',
+      title: 'Today’s reflection',
+      body: 'Open Mirror to review today’s signals and the weekly pattern in one calm place.',
+      href: '/self-mirror',
+      badges: [],
+      detailLines: [],
+    });
+  }
   return buildPresentationCard('mirror', {
     kicker: 'Mirror',
     title: latestMirror.cadence === 'daily' ? 'Today’s reflection' : 'Weekly reflection',
@@ -2851,7 +3174,7 @@ function buildWorkspacePresentation({
   const eventCard = buildWorkspaceEventCard(relatedEvents[0], 'Event');
   const suggestedEventCard = showEventSuggestion ? buildWorkspaceSuggestedEventCard(suggestedEvent) : null;
   const draftResultCard = buildWorkspaceDraftCard(relatedDrafts[0]);
-  const mirrorCard = buildWorkspaceMirrorCard(latestMirror);
+  const mirrorCard = buildWorkspaceMirrorCard(latestMirror, intent === 'self');
   const availableCards = {
     contactDraft: draftCard,
     contact: personCard,
@@ -3011,7 +3334,7 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
   const hasTranscribedAudio = audioAssets.some((asset) => cleanText(asset.extractedText || asset.previewText));
   const hasUntypedVoiceOnly = !cleanText(text) && audioAssets.length > 0 && !hasTranscribedAudio;
   const intent = inferWorkspaceIntent(combinedText, assets);
-  const relatedPeople = searchPeopleMatches(statements, combinedText, 4);
+  const relatedPeople = searchPeopleMatches(statements, combinedText, 4, captureDraft);
   const relatedEvents = searchEventMatches(statements, combinedText, 4);
   const relatedDrafts = searchDraftMatches(statements, combinedText, 3);
   const suggestedEvent = buildSuggestedEventPayload(text, captureDraft, relatedPeople);
@@ -3169,6 +3492,168 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
           topThemes: Array.isArray(latestMirror.themes) ? latestMirror.themes.slice(0, 3) : [],
         }
       : null,
+  };
+}
+
+function shouldOpenPeopleSearchMatch(result, queryContext) {
+  if (!result?.personId) return false;
+  const directName = cleanText(queryContext?.directName || '').toLowerCase();
+  if (directName && cleanText(result.name).toLowerCase() === directName) return true;
+  return Number(result.score || 0) >= 2.6;
+}
+
+function shouldOpenEventSearchMatch(result, queryContext) {
+  if (!result?.eventId) return false;
+  const directTitle = cleanText(queryContext?.directTitle || '').toLowerCase();
+  if (directTitle && cleanText(result.title).toLowerCase() === directTitle) return true;
+  return Number(result.score || 0) >= 2.4;
+}
+
+function buildEventCommandDraftCard(reviewDraft) {
+  if (!reviewDraft?.title && !reviewDraft?.summary) return null;
+  return buildPresentationCard('event', {
+    kicker: 'Ready to review',
+    title: reviewDraft.title || 'Event draft',
+    subtitle: 'Review before saving',
+    body: truncateText(reviewDraft.summary || 'Keep refining the event before you save it into the logbook.', 200),
+    badges: [reviewDraft.audience, reviewDraft.languageStrategy].filter(Boolean),
+    detailLines: [reviewDraft.tone ? `Tone: ${reviewDraft.tone}` : ''],
+  });
+}
+
+async function buildPeopleCommandPayload(statements, query, source = 'people-command') {
+  const cleanedQuery = cleanText(query);
+  const captureDraft = await buildCaptureDraftWithModelAssist({ text: cleanedQuery, source });
+  const queryContext = buildPersonSearchContext(cleanedQuery, captureDraft);
+  const results = searchPeopleMatches(statements, cleanedQuery, 8, captureDraft);
+  const mutationIntent =
+    !hasSearchIntent(cleanedQuery) &&
+    (hasCreateIntent(cleanedQuery) || hasUpdateIntent(cleanedQuery) || hasContactCaptureIntent(cleanedQuery));
+  const matchedExistingPerson =
+    cleanText(captureDraft?.personDraft?.name || '')
+      ? findExistingPersonByName(statements, captureDraft.personDraft.name)
+      : null;
+  const matchedExistingDetail = matchedExistingPerson
+    ? buildPeopleDetailPayload(statements, matchedExistingPerson.id)
+    : null;
+  const primaryCard = mutationIntent
+    ? buildWorkspaceContactDraftCard(captureDraft) || buildWorkspacePersonMatchCard(results[0], 'Contact')
+    : buildWorkspacePersonMatchCard(results[0], 'Contact');
+  const relatedEvents = matchedExistingDetail?.relatedEvents || [];
+  const answer = mutationIntent
+    ? matchedExistingPerson
+      ? `I pulled ${matchedExistingPerson.name} into review so you can update the contact before saving.`
+      : cleanText(captureDraft?.personDraft?.displayName || captureDraft?.personDraft?.name)
+        ? `I turned that into a contact draft first so you can review it before saving.`
+        : 'I drafted the contact as far as I safely could. Confirm the key details before saving.'
+    : results.length
+      ? `I put the clearest contact match first so you can confirm it quickly.`
+      : 'I do not have a confident contact yet. Add one sharper clue like a name, handle, place, or topic.';
+
+  return {
+    query: cleanedQuery,
+    intent: mutationIntent ? (matchedExistingPerson ? 'update' : 'review') : 'search',
+    answer,
+    extraction: captureDraft.extraction || { method: 'heuristic', model: '' },
+    presentation: {
+      answer,
+      primaryCard,
+      related: {
+        people: mutationIntent
+          ? results
+              .filter((item) => item.personId !== matchedExistingPerson?.id)
+              .slice(0, 3)
+              .map((item) => buildWorkspacePersonMatchCard(item, 'Related contact'))
+          : results.slice(1, 4).map((item) => buildWorkspacePersonMatchCard(item, 'Related contact')),
+        events: relatedEvents.slice(0, 3).map((event) => buildWorkspaceEventCard(event, 'Related event')),
+        drafts: [],
+        mirror: [],
+      },
+      actions: mutationIntent
+        ? [{ id: 'review-contact', kind: 'mutation', action: 'review-contact', label: matchedExistingPerson ? 'Review update' : 'Review contact' }]
+        : results[0]?.personId
+          ? [{ id: 'open-contact', kind: 'link', href: `/people/${encodeURIComponent(results[0].personId)}`, label: 'Open Contact' }]
+          : [],
+    },
+    results,
+    reviewDraft: mutationIntent
+      ? {
+          captureDraft,
+          matchedPersonId: matchedExistingPerson?.id || '',
+          matchedPerson: matchedExistingDetail?.person || null,
+        }
+      : null,
+    openMatchId: !mutationIntent && shouldOpenPeopleSearchMatch(results[0], queryContext) ? results[0].personId : '',
+  };
+}
+
+async function buildEventsCommandPayload(statements, query, source = 'events-command') {
+  const cleanedQuery = cleanText(query);
+  const eventAssist = await buildEventCommandAssist({ query: cleanedQuery, source, statements });
+  const queryContext = buildEventSearchContext(cleanedQuery, eventAssist);
+  const results = searchEventMatches(statements, cleanedQuery, 8, eventAssist);
+  const mutationIntent =
+    eventAssist.intent === 'create' ||
+    (!hasSearchIntent(cleanedQuery) && (hasCreateIntent(cleanedQuery) || hasEventIntent(cleanedQuery)));
+  const openMatchId = !mutationIntent && shouldOpenEventSearchMatch(results[0], queryContext) ? results[0].eventId : '';
+  const primaryCard = mutationIntent
+    ? buildEventCommandDraftCard(eventAssist)
+    : buildWorkspaceEventCard(results[0], 'Event');
+  const primaryEventDetail = openMatchId ? buildEventDetailPayload(statements, openMatchId) : null;
+  const linkedPeople = cleanList(eventAssist.people || [])
+    .map((name) => findExistingPersonByName(statements, name))
+    .filter(Boolean)
+    .map((row) => formatPersonRow(row));
+  const answer = mutationIntent
+    ? `I drafted the event first so you can review it before it lands in the logbook.`
+    : results.length
+      ? `I brought the clearest event match forward so you can open it quickly.`
+      : 'I do not have a confident event yet. Add a person, place, time clue, or topic and I can narrow it down.';
+
+  return {
+    query: cleanedQuery,
+    intent: mutationIntent ? 'review' : openMatchId ? 'open' : 'search',
+    answer,
+    extraction: eventAssist.extraction || { method: 'heuristic', model: '' },
+    presentation: {
+      answer,
+      primaryCard,
+      related: {
+        people: mutationIntent
+          ? linkedPeople.slice(0, 3).map((person) => buildWorkspacePersonMatchCard(person, 'Related person'))
+          : (primaryEventDetail?.relatedPeople || []).slice(0, 3).map((person) => buildWorkspacePersonMatchCard(person, 'Related person')),
+        events: mutationIntent
+          ? results.slice(0, 3).map((event) => buildWorkspaceEventCard(event, 'Related event'))
+          : results.slice(1, 4).map((event) => buildWorkspaceEventCard(event, 'Related event')),
+        drafts: (primaryEventDetail?.relatedDrafts || []).slice(0, 3).map((draft) => buildWorkspaceDraftCard(draft, 'Related draft')),
+        mirror: [],
+      },
+      actions: mutationIntent
+        ? []
+        : openMatchId
+          ? [{ id: 'open-event', kind: 'link', href: `/events/${encodeURIComponent(openMatchId)}`, label: 'Open Event' }]
+          : [],
+    },
+    results,
+    reviewDraft: mutationIntent
+      ? {
+          title: eventAssist.title || '',
+          audience: eventAssist.audience || '',
+          languageStrategy: eventAssist.languageStrategy || '',
+          tone: eventAssist.tone || '',
+          links: normalizeStringList(eventAssist.links),
+          assets: normalizeStringList(eventAssist.assets),
+          relatedPeople: linkedPeople.map((person) => person.personId),
+          personName: cleanList(eventAssist.people || [])[0] || '',
+          payload: {
+            details: {
+              summary: eventAssist.summary || '',
+              personName: cleanList(eventAssist.people || [])[0] || '',
+            },
+          },
+        }
+      : null,
+    openMatchId,
   };
 }
 
@@ -5313,10 +5798,43 @@ async function routeRequest(req, res, statements) {
     return;
   }
 
+  if ((method === 'GET' || method === 'POST') && pathname === '/events/command') {
+    const body = method === 'POST' ? await readJsonBody(req) : null;
+    const query = readOptionalString(method === 'POST' ? body?.query : requestUrl.searchParams.get('query'), '');
+    const limit = normalizeSearchLimit(method === 'POST' ? body?.limit : requestUrl.searchParams.get('limit'), 8);
+    const payload = await buildEventsCommandPayload(statements, query, 'events-command');
+    sendJson(res, 200, {
+      ...payload,
+      count: payload.results.slice(0, limit).length,
+      results: payload.results.slice(0, limit),
+    });
+    return;
+  }
+
   if (method === 'GET' && pathname === '/events') {
     const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 12, 50);
-    const events = statements.listRecentEvents.all(limit).map(formatEventRow);
-    sendJson(res, 200, { limit, count: events.length, events });
+    const query = readOptionalString(requestUrl.searchParams.get('query'), '');
+    if (!query) {
+      const events = statements.listRecentEvents.all(limit).map(formatEventRow);
+      sendJson(res, 200, { limit, query: '', count: events.length, events, results: events, retrieval: null });
+      return;
+    }
+    const eventAssist = await buildEventCommandAssist({ query, source: 'events-search', statements });
+    const results = searchEventMatches(statements, query, limit, eventAssist);
+    sendJson(res, 200, {
+      limit,
+      query,
+      count: results.length,
+      events: results,
+      results,
+      retrieval: {
+        mode: 'model-first-hybrid',
+        effectiveProvider: eventAssist.extraction?.model ? 'openai' : 'local',
+        semanticBoostEnabled: false,
+        fallback: 'keyword + graph + recency',
+      },
+      extraction: eventAssist.extraction || { method: 'heuristic', model: '' },
+    });
     return;
   }
 
@@ -5329,9 +5847,23 @@ async function routeRequest(req, res, statements) {
     return;
   }
 
+  if ((method === 'GET' || method === 'POST') && pathname === '/people/command') {
+    const body = method === 'POST' ? await readJsonBody(req) : null;
+    const query = readOptionalString(method === 'POST' ? body?.query : requestUrl.searchParams.get('query'), '');
+    const limit = normalizeSearchLimit(method === 'POST' ? body?.limit : requestUrl.searchParams.get('limit'), 8);
+    const payload = await buildPeopleCommandPayload(statements, query, 'people-command');
+    sendJson(res, 200, {
+      ...payload,
+      count: payload.results.slice(0, limit).length,
+      results: payload.results.slice(0, limit),
+    });
+    return;
+  }
+
   if (method === 'GET' && pathname === '/people') {
     const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 8, 50);
     const query = readOptionalString(requestUrl.searchParams.get('query'), '');
+    const embeddingsSettings = resolveEmbeddingsSettings();
 
     if (!query) {
       const people = statements.listRecentPeople.all(limit * 3).filter(isDisplayablePersonRow).map(formatPersonRow).slice(0, limit);
@@ -5339,18 +5871,8 @@ async function routeRequest(req, res, statements) {
       return;
     }
 
-    const pattern = `%${query.toLowerCase()}%`;
-    const embeddingsSettings = resolveEmbeddingsSettings();
-    const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
-    const rows = statements.listAllPeople.all().filter(isDisplayablePersonRow);
-    const results = rows
-      .map((row) => buildSearchResultRow(row, terms, embeddingsSettings))
-      .filter((row) => row.score > 0)
-      .sort((left, right) => {
-        if (left.score !== right.score) return right.score - left.score;
-        return right.updatedAt.localeCompare(left.updatedAt);
-      })
-      .slice(0, limit);
+    const captureDraft = await buildCaptureDraftWithModelAssist({ text: query, source: 'people-search' });
+    const results = searchPeopleMatches(statements, query, limit, captureDraft);
 
     sendJson(res, 200, {
       query,
@@ -5358,8 +5880,9 @@ async function routeRequest(req, res, statements) {
         mode: embeddingsSettings.retrievalMode,
         effectiveProvider: embeddingsSettings.effectiveProvider,
         semanticBoostEnabled: embeddingsSettings.semanticBoostEnabled,
-        fallback: 'keyword',
+        fallback: 'keyword + graph + recency',
       },
+      extraction: captureDraft.extraction || { method: 'heuristic', model: '' },
       count: results.length,
       results,
     });
@@ -6050,20 +6573,9 @@ async function routeRequest(req, res, statements) {
     const body = await readJsonBody(req);
     const query = requireString(body.query, 'query');
     const limit = normalizeSearchLimit(body.limit, 8);
-
+    const captureDraft = await buildCaptureDraftWithModelAssist({ text: query, source: 'people-search' });
+    const results = searchPeopleMatches(statements, query, limit, captureDraft);
     const embeddingsSettings = resolveEmbeddingsSettings();
-
-    const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
-    const rows = statements.listAllPeople.all().filter(isDisplayablePersonRow);
-
-    const results = rows
-      .map((row) => buildSearchResultRow(row, terms, embeddingsSettings))
-      .filter((row) => row.score > 0)
-      .sort((left, right) => {
-        if (left.score !== right.score) return right.score - left.score;
-        return right.updatedAt.localeCompare(left.updatedAt);
-      })
-      .slice(0, limit);
 
     sendJson(res, 200, {
       query,
@@ -6071,8 +6583,9 @@ async function routeRequest(req, res, statements) {
         mode: embeddingsSettings.retrievalMode,
         effectiveProvider: embeddingsSettings.effectiveProvider,
         semanticBoostEnabled: embeddingsSettings.semanticBoostEnabled,
-        fallback: 'keyword',
+        fallback: 'keyword + graph + recency',
       },
+      extraction: captureDraft.extraction || { method: 'heuristic', model: '' },
       count: results.length,
       results,
     });

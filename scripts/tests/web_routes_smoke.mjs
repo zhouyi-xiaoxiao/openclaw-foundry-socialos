@@ -58,10 +58,20 @@ async function main() {
     }
 
     const peopleIndex = await fetch(`${web.baseUrl}/people`, { redirect: 'manual' });
+    const peopleIndexHtml = await peopleIndex.text();
     assert(peopleIndex.status === 200, `/people should render Contacts index (got ${peopleIndex.status})`);
+    assert(peopleIndexHtml.includes('Find Sam from Bristol, update Alex follow-up, or describe a new contact naturally.'), '/people should expose the natural-language command bar');
 
     const eventsIndex = await fetch(`${web.baseUrl}/events`, { redirect: 'manual' });
+    const eventsIndexHtml = await eventsIndex.text();
     assert(eventsIndex.status === 200, `/events should render Logbook index (got ${eventsIndex.status})`);
+    assert(eventsIndexHtml.includes('Find the London meetup with Sam, or draft a new event naturally.'), '/events should expose the natural-language command bar');
+
+    const draftsIndex = await fetch(`${web.baseUrl}/drafts`, { redirect: 'manual' });
+    const draftsIndexHtml = await draftsIndex.text();
+    assert(draftsIndex.status === 200, `/drafts should render drafts page (got ${draftsIndex.status})`);
+    assert(draftsIndexHtml.includes('draft-event-suggestions'), '/drafts should expose a datalist-backed event picker');
+    assert(draftsIndexHtml.includes('The Sam follow-up from Bristol, or last week’s meetup recap.'), '/drafts should expose a natural-language event search input');
 
     const peopleDetail = await fetch(`${web.baseUrl}/people/demo-person`, { redirect: 'manual' });
     const peopleDetailHtml = await peopleDetail.text();

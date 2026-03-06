@@ -1034,6 +1034,90 @@ function renderEventCards(events, hrefBuilder = (event) => buildWorkspaceHref({ 
     .join('')}</div>`;
 }
 
+function renderCommandBar({ action, value = '', placeholder, hint, submitLabel = 'Run' }) {
+  return `
+    <form class="query-form command-bar-form" method="GET" action="${escapeHtml(action)}">
+      ${renderFormField(
+        'Command bar',
+        `<input name="q" type="text" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}" />`,
+        hint
+      )}
+      <div class="inline-actions">
+        <button type="submit">${escapeHtml(submitLabel)}</button>
+        <a class="mini-link" href="${escapeHtml(action)}">Reset</a>
+        <a class="mini-link" href="/quick-capture">Open Workspace</a>
+      </div>
+    </form>
+  `;
+}
+
+function renderPeopleCommandReview(reviewDraft = {}) {
+  const draft = reviewDraft.captureDraft || {};
+  const personDraft = draft.personDraft || {};
+  const interactionDraft = draft.interactionDraft || {};
+  const matchedPerson = reviewDraft.matchedPerson || null;
+  const invalidName = !String(personDraft.name || '').trim();
+  return `
+    <div class="stack">
+      <div class="info-callout">
+        <strong>${escapeHtml(matchedPerson ? 'Review update' : 'Review contact')}</strong><br />
+        ${escapeHtml(matchedPerson ? `We found ${matchedPerson.name} and drafted the update for review before saving.` : 'This draft stays review-first until you confirm the details and save it.')}
+      </div>
+      <form class="api-form" data-api-form="true" data-endpoint="/people/upsert">
+        ${matchedPerson ? `<input type="hidden" name="personId" value="${escapeHtml(matchedPerson.personId)}" />` : ''}
+        ${renderFormField('Name', `<input name="name" type="text" value="${escapeHtml(personDraft.name || '')}" placeholder="Sam" />`)}
+        ${renderFormField('Tags', `<input name="tags" type="text" value="${escapeHtml((personDraft.tags || []).join(', '))}" />`, 'Comma-separated')}
+        ${renderFormField('Notes', `<textarea name="notes" rows="5">${escapeHtml(personDraft.notes || '')}</textarea>`)}
+        ${renderFormField(
+          'Next follow-up',
+          `<input name="nextFollowUpAt" type="datetime-local" value="${escapeHtml((personDraft.nextFollowUpAt || '').replace(/:\d{2}\.\d{3}Z$/u, '').replace('Z', ''))}" />`
+        )}
+        <details class="draft-details">
+          <summary>Interaction context</summary>
+          <div class="draft-details-body">
+            ${renderFormField('Summary', `<textarea rows="3" readonly>${escapeHtml(interactionDraft.summary || '')}</textarea>`)}
+            ${renderFormField('Evidence', `<textarea rows="4" readonly>${escapeHtml(interactionDraft.evidence || '')}</textarea>`)}
+          </div>
+        </details>
+        <div class="inline-actions">
+          <button type="submit"${invalidName ? ' disabled' : ''}>${escapeHtml(matchedPerson ? 'Save Update' : 'Save Contact')}</button>
+        </div>
+        <div class="form-result" data-form-result></div>
+      </form>
+    </div>
+  `;
+}
+
+function renderEventCommandReview(reviewDraft = {}) {
+  const payloadJson = {
+    ...safeJson(reviewDraft.payload, {}),
+  };
+  const followUpTitle = readOptionalString(reviewDraft.title, '');
+  const relatedPeople = Array.isArray(reviewDraft.relatedPeople) ? reviewDraft.relatedPeople : [];
+  return `
+    <div class="stack">
+      <div class="info-callout">
+        <strong>Review event</strong><br />
+        SocialOS drafted the event first so you can review the logbook entry before it is saved.
+      </div>
+      <form class="api-form" data-api-form="true" data-endpoint="/events" data-json-fields="payload">
+        ${renderFormField('Title', `<input name="title" type="text" value="${escapeHtml(followUpTitle)}" />`)}
+        ${renderFormField('Audience', `<input name="audience" type="text" value="${escapeHtml(reviewDraft.audience || '')}" />`)}
+        ${renderFormField('Language strategy', `<input name="languageStrategy" type="text" value="${escapeHtml(reviewDraft.languageStrategy || '')}" placeholder="en, zh, bilingual" />`)}
+        ${renderFormField('Tone', `<input name="tone" type="text" value="${escapeHtml(reviewDraft.tone || '')}" />`)}
+        ${relatedPeople.map((personId) => `<input type="hidden" name="relatedPeople" value="${escapeHtml(personId)}" />`).join('')}
+        ${renderFormField('Links', `<textarea name="links" rows="3">${escapeHtml((reviewDraft.links || []).join('\n'))}</textarea>`, 'One per line')}
+        ${renderFormField('Assets', `<textarea name="assets" rows="3">${escapeHtml((reviewDraft.assets || []).join('\n'))}</textarea>`, 'One per line')}
+        ${renderFormField('Payload JSON', `<textarea name="payload" rows="8">${escapeHtml(JSON.stringify(payloadJson, null, 2))}</textarea>`)}
+        <div class="inline-actions">
+          <button type="submit"${followUpTitle ? '' : ' disabled'}>Save Event</button>
+        </div>
+        <div class="form-result" data-form-result></div>
+      </form>
+    </div>
+  `;
+}
+
 function renderPackageHighlights(draft, publishPackage) {
   const zh = isChineseDraftLanguage(draft?.language);
   const t = (englishLabel, chineseLabel) => (zh ? chineseLabel : englishLabel);
@@ -2142,174 +2226,177 @@ async function renderPeoplePage(page, requestUrl) {
   const selectedPersonId =
     readOptionalString(requestUrl.searchParams.get('personId'), '') ||
     (/^\/people\/([^/]+)$/u.exec(requestUrl.pathname)?.[1] || '');
-  const [recentRes, searchRes, detailRes] = await Promise.all([
+  const commandRes = query
+    ? await fetchJsonSafe(`/people/command?query=${encodeURIComponent(query)}&limit=8`)
+    : null;
+  const commandPayload = commandRes?.ok ? commandRes.payload : null;
+  const effectivePersonId =
+    selectedPersonId || readOptionalString(commandPayload?.openMatchId, '') || readOptionalString(commandPayload?.reviewDraft?.matchedPersonId, '');
+  const [recentRes, detailRes] = await Promise.all([
     fetchJsonSafe('/people?limit=12'),
-    query ? fetchJsonSafe(`/people?query=${encodeURIComponent(query)}&limit=8`) : Promise.resolve(null),
-    selectedPersonId
-      ? fetchJsonSafe(`/people/${encodeURIComponent(selectedPersonId)}`)
+    effectivePersonId
+      ? fetchJsonSafe(`/people/${encodeURIComponent(effectivePersonId)}`)
       : Promise.resolve(null),
   ]);
 
   const recentPeople = recentRes?.ok ? recentRes.payload.people || [] : [];
-  const searchPayload = searchRes?.ok ? searchRes.payload : null;
-  const searchResults = searchPayload?.results || [];
   const detail = detailRes?.ok ? detailRes.payload : null;
+  const visiblePeople = query ? commandPayload?.results || [] : recentPeople;
+  const renderDetailBody = detail?.person?.personId
+    ? `
+        <div class="stack-card">
+          <div class="stack-meta">
+            <strong>${escapeHtml(detail.person.name)}</strong>
+            <span>${escapeHtml(formatDateTime(detail.person.updatedAt || detail.person.createdAt))}</span>
+          </div>
+          <p>${escapeHtml(detail.person.notes || 'No notes yet.')}</p>
+          <div class="chip-row">${(detail.person.tags || []).map((tag) => renderPill(tag, 'soft')).join('')}</div>
+          <small>Next follow-up: ${escapeHtml(detail.suggestion?.nextFollowUpAt || 'not set')}</small>
+          <p><strong>Suggested follow-up:</strong> ${escapeHtml(detail.suggestion?.followUpMessage || 'n/a')}</p>
+          <div class="inline-actions">
+            <a class="mini-link" href="${escapeHtml(buildWorkspaceHref({ panel: 'people', contactId: detail.person.personId }))}">Open in Workspace</a>
+          </div>
+        </div>
+        ${renderPanel(
+          'Related Events',
+          renderEventCards(detail.relatedEvents || [], (event) => `/events/${encodeURIComponent(event.eventId)}`),
+          'See the event threads connected to this relationship.'
+        )}
+        ${renderPanel('Graph Overview', renderGraphOverview(detail.graphOverview), 'A focused one-hop view of this contact and linked events.')}
+        ${renderPanel('Timeline', renderInteractionCards(detail.interactions || []))}
+        ${renderPanel(
+          'Edit Contact',
+          `
+            <form class="api-form compact-form" data-api-form="true" data-endpoint="/people/upsert">
+              <input type="hidden" name="personId" value="${escapeHtml(detail.person.personId)}" />
+              ${renderFormField('Name', `<input name="name" type="text" value="${escapeHtml(detail.person.name)}" />`)}
+              ${renderFormField(
+                'Tags',
+                `<input name="tags" type="text" value="${escapeHtml((detail.person.tags || []).join(', '))}" />`,
+                'Comma-separated'
+              )}
+              ${renderFormField(
+                'Notes',
+                `<textarea name="notes" rows="4">${escapeHtml(detail.person.notes || '')}</textarea>`
+              )}
+              ${renderFormField(
+                'Next Follow-up',
+                `<input name="nextFollowUpAt" type="datetime-local" value="${escapeHtml(
+                  (detail.person.nextFollowUpAt || '').replace(/:\d{2}\.\d{3}Z$/u, '').replace('Z', '')
+                )}" />`
+              )}
+              <div class="inline-actions"><button type="submit">Save Contact</button></div>
+              <div class="form-result" data-form-result></div>
+            </form>
+          `
+        )}
+        ${renderPanel('Identities', renderIdentityCards(detail.identities || []))}
+        ${renderPanel('Evidence', renderEvidenceList(detail.evidence || []))}
+        <div class="grid two-up">
+          ${renderPanel(
+            'Add Identity',
+            `
+              <form class="api-form compact-form" data-api-form="true" data-endpoint="/people/${encodeURIComponent(
+                detail.person.personId
+              )}/identity">
+                ${renderFormField('Platform', '<input name="platform" type="text" placeholder="linkedin" />')}
+                ${renderFormField('Handle', '<input name="handle" type="text" placeholder="@handle" />')}
+                ${renderFormField('URL', '<input name="url" type="url" placeholder="https://..." />')}
+                ${renderFormField('Note', '<textarea name="note" rows="3"></textarea>')}
+                <div class="inline-actions"><button type="submit">Add Identity</button></div>
+                <div class="form-result" data-form-result></div>
+              </form>
+            `
+          )}
+          ${renderPanel(
+            'Log Interaction',
+            `
+              <form class="api-form compact-form" data-api-form="true" data-endpoint="/people/${encodeURIComponent(
+                detail.person.personId
+              )}/interaction">
+                ${renderFormField('Summary', '<textarea name="summary" rows="3" placeholder="What happened?"></textarea>')}
+                ${renderFormField('Evidence', '<textarea name="evidence" rows="4" placeholder="Optional detail or quote"></textarea>')}
+                ${renderFormField('Happened At', '<input name="happenedAt" type="datetime-local" />')}
+                <div class="inline-actions"><button type="submit">Log Interaction</button></div>
+                <div class="form-result" data-form-result></div>
+              </form>
+            `
+          )}
+        </div>
+      `
+    : commandPayload?.reviewDraft
+      ? renderPeopleCommandReview(commandPayload.reviewDraft)
+      : `
+          <form class="api-form" data-api-form="true" data-endpoint="/people/upsert">
+            ${renderFormField('Name', '<input name="name" type="text" placeholder="Annie Case" />')}
+            ${renderFormField('Tags', '<input name="tags" type="text" placeholder="growth, founder, london" />', 'Comma-separated')}
+            ${renderFormField('Notes', '<textarea name="notes" rows="5" placeholder="Met at..., talked about..., follow up on..."></textarea>')}
+            ${renderFormField('Next Follow-up', '<input name="nextFollowUpAt" type="datetime-local" />')}
+            <div class="inline-actions">
+              <button type="submit">Save Contact</button>
+            </div>
+            <div class="form-result" data-form-result></div>
+          </form>
+        `;
 
   return `
     ${renderHero(
       page,
       [
         renderMetric(String(recentPeople.length), 'contacts'),
-        renderMetric(query ? String(searchResults.length) : '0', 'search hits'),
+        renderMetric(query ? String(visiblePeople.length) : '0', 'matches'),
         renderMetric(detail?.person?.name ? '1' : '0', 'detail open'),
       ].join(''),
       `<div class="info-card"><strong>Contacts</strong><p>Keep the people you know searchable, scannable, and connected to the events they belong to.</p></div>`
     )}
     <div class="grid two-up">
       ${renderPanel(
-        'Directory',
+        'Command Bar',
         `
-          <form class="query-form" method="GET" action="/people">
-            ${renderFormField(
-              'Search contacts',
-              `<input name="q" type="text" value="${escapeHtml(query)}" placeholder="Sam, growth person, hackathon, investor..." />`,
-              'Search by name, topic, memory fragment, or follow-up context.'
-            )}
-            <div class="inline-actions">
-              <button type="submit">Search Contacts</button>
-              <a class="mini-link" href="/people">Reset</a>
-              <a class="mini-link" href="/quick-capture">Open Workspace</a>
-            </div>
-          </form>
-          ${
-            query
-              ? `<div class="info-callout">retrieval: ${escapeHtml(
-                  searchPayload?.retrieval?.mode || 'keyword'
-                )} · provider ${escapeHtml(searchPayload?.retrieval?.effectiveProvider || 'local')}</div>`
-              : ''
-          }
-          ${query
-            ? renderPeopleCards(searchResults, true, (person) => `/people/${encodeURIComponent(person.personId)}`)
-            : renderPeopleCards(recentPeople, false, (person) => `/people/${encodeURIComponent(person.personId)}`)}
+          ${renderCommandBar({
+            action: '/people',
+            value: query,
+            placeholder: 'Find Sam from Bristol, update Alex follow-up, or describe a new contact naturally.',
+            hint: 'Search, create, or update a contact with one natural sentence.',
+            submitLabel: 'Run'
+          })}
+          ${commandPayload?.answer ? `<div class="info-callout"><strong>Contacts</strong><br />${escapeHtml(commandPayload.answer)}</div>` : ''}
+          ${renderPeopleCards(visiblePeople, false, (person) => `/people/${encodeURIComponent(person.personId)}`)}
         `,
-        'Browse the full relationship directory, then open one contact when you want detail.'
+        'Use one natural-language command to search, draft a new contact, or review an update.'
       )}
       ${renderPanel(
-        detail?.person?.personId ? 'Contact Detail' : 'Create Contact',
-        detail?.person?.personId
-          ? `
-              <div class="stack-card">
-                <div class="stack-meta">
-                  <strong>${escapeHtml(detail.person.name)}</strong>
-                  <span>${escapeHtml(formatDateTime(detail.person.updatedAt || detail.person.createdAt))}</span>
-                </div>
-                <p>${escapeHtml(detail.person.notes || 'No notes yet.')}</p>
-                <div class="chip-row">${(detail.person.tags || []).map((tag) => renderPill(tag, 'soft')).join('')}</div>
-                <small>Next follow-up: ${escapeHtml(detail.suggestion?.nextFollowUpAt || 'not set')}</small>
-                <p><strong>Suggested follow-up:</strong> ${escapeHtml(detail.suggestion?.followUpMessage || 'n/a')}</p>
-                <div class="inline-actions">
-                  <a class="mini-link" href="${escapeHtml(buildWorkspaceHref({ panel: 'people', contactId: detail.person.personId }))}">Open in Workspace</a>
-                </div>
-              </div>
-              ${renderPanel(
-                'Related Events',
-                renderEventCards(detail.relatedEvents || [], (event) => `/events/${encodeURIComponent(event.eventId)}`),
-                'See the event threads connected to this relationship.'
-              )}
-              ${renderPanel('Graph Overview', renderGraphOverview(detail.graphOverview), 'A focused one-hop view of this contact and linked events.')}
-              ${renderPanel('Timeline', renderInteractionCards(detail.interactions || []))}
-              ${renderPanel(
-                'Edit Contact',
-                `
-                  <form class="api-form compact-form" data-api-form="true" data-endpoint="/people/upsert">
-                    <input type="hidden" name="personId" value="${escapeHtml(detail.person.personId)}" />
-                    ${renderFormField('Name', `<input name="name" type="text" value="${escapeHtml(detail.person.name)}" />`)}
-                    ${renderFormField(
-                      'Tags',
-                      `<input name="tags" type="text" value="${escapeHtml((detail.person.tags || []).join(', '))}" />`,
-                      'Comma-separated'
-                    )}
-                    ${renderFormField(
-                      'Notes',
-                      `<textarea name="notes" rows="4">${escapeHtml(detail.person.notes || '')}</textarea>`
-                    )}
-                    ${renderFormField(
-                      'Next Follow-up',
-                      `<input name="nextFollowUpAt" type="datetime-local" value="${escapeHtml(
-                        (detail.person.nextFollowUpAt || '').replace(/:\d{2}\.\d{3}Z$/u, '').replace('Z', '')
-                      )}" />`
-                    )}
-                    <div class="inline-actions"><button type="submit">Save Contact</button></div>
-                    <div class="form-result" data-form-result></div>
-                  </form>
-                `
-              )}
-              ${renderPanel('Identities', renderIdentityCards(detail.identities || []))}
-              ${renderPanel('Evidence', renderEvidenceList(detail.evidence || []))}
-              <div class="grid two-up">
-                ${renderPanel(
-                  'Add Identity',
-                  `
-                    <form class="api-form compact-form" data-api-form="true" data-endpoint="/people/${encodeURIComponent(
-                      detail.person.personId
-                    )}/identity">
-                      ${renderFormField('Platform', '<input name="platform" type="text" placeholder="linkedin" />')}
-                      ${renderFormField('Handle', '<input name="handle" type="text" placeholder="@handle" />')}
-                      ${renderFormField('URL', '<input name="url" type="url" placeholder="https://..." />')}
-                      ${renderFormField('Note', '<textarea name="note" rows="3"></textarea>')}
-                      <div class="inline-actions"><button type="submit">Add Identity</button></div>
-                      <div class="form-result" data-form-result></div>
-                    </form>
-                  `
-                )}
-                ${renderPanel(
-                  'Log Interaction',
-                  `
-                    <form class="api-form compact-form" data-api-form="true" data-endpoint="/people/${encodeURIComponent(
-                      detail.person.personId
-                    )}/interaction">
-                      ${renderFormField('Summary', '<textarea name="summary" rows="3" placeholder="What happened?"></textarea>')}
-                      ${renderFormField('Evidence', '<textarea name="evidence" rows="4" placeholder="Optional detail or quote"></textarea>')}
-                      ${renderFormField('Happened At', '<input name="happenedAt" type="datetime-local" />')}
-                      <div class="inline-actions"><button type="submit">Log Interaction</button></div>
-                      <div class="form-result" data-form-result></div>
-                    </form>
-                  `
-                )}
-              </div>
-            `
-          : `
-              <form class="api-form" data-api-form="true" data-endpoint="/people/upsert">
-                ${renderFormField('Name', '<input name="name" type="text" placeholder="Annie Case" />')}
-                ${renderFormField('Tags', '<input name="tags" type="text" placeholder="growth, founder, london" />', 'Comma-separated')}
-                ${renderFormField('Notes', '<textarea name="notes" rows="5" placeholder="Met at..., talked about..., follow up on..."></textarea>')}
-                ${renderFormField('Next Follow-up', '<input name="nextFollowUpAt" type="datetime-local" />')}
-                <div class="inline-actions">
-                  <button type="submit">Save Person</button>
-                </div>
-                <div class="form-result" data-form-result></div>
-              </form>
-            `,
+        detail?.person?.personId ? 'Contact Detail' : commandPayload?.reviewDraft ? 'Review Contact' : 'Create Contact',
+        renderDetailBody,
         detail?.person?.personId
           ? 'A strong contact page shows the relationship summary first, then the connected event context, graph, and edit actions.'
-          : 'Manual cards make the People page useful immediately.'
+          : commandPayload?.reviewDraft
+            ? 'Natural-language entry stays review-first until you confirm the contact details.'
+            : 'Manual cards make the People page useful immediately.'
       )}
     </div>
   `;
 }
 
 async function renderEventsPage(page, requestUrl) {
+  const query = readOptionalString(requestUrl.searchParams.get('q'), '');
   const selectedEventId =
     readOptionalString(requestUrl.searchParams.get('eventId'), '') ||
     (/^\/events\/([^/]+)$/u.exec(requestUrl.pathname)?.[1] || '');
+  const commandRes = query
+    ? await fetchJsonSafe(`/events/command?query=${encodeURIComponent(query)}&limit=8`)
+    : null;
+  const commandPayload = commandRes?.ok ? commandRes.payload : null;
+  const effectiveEventId = selectedEventId || readOptionalString(commandPayload?.openMatchId, '');
   const [capturesRes, eventsRes, detailRes] = await Promise.all([
     fetchJsonSafe('/captures?limit=8'),
     fetchJsonSafe('/events?limit=12'),
-    selectedEventId ? fetchJsonSafe(`/events/${encodeURIComponent(selectedEventId)}`) : Promise.resolve(null),
+    effectiveEventId ? fetchJsonSafe(`/events/${encodeURIComponent(effectiveEventId)}`) : Promise.resolve(null),
   ]);
   const captures = capturesRes.ok ? capturesRes.payload.captures || [] : [];
   const events = eventsRes.ok ? eventsRes.payload.events || [] : [];
   const detail = detailRes?.ok ? detailRes.payload : null;
+  const visibleEvents = query ? commandPayload?.results || [] : events;
 
   const captureOptions = ['<option value="">No linked capture</option>']
     .concat(
@@ -2325,11 +2412,26 @@ async function renderEventsPage(page, requestUrl) {
   return `
     ${renderHero(
       page,
-      [renderMetric(String(events.length), 'recent events'), renderMetric(String(captures.length), 'capture candidates')].join('')
+      [renderMetric(String(events.length), 'recent events'), renderMetric(query ? String(visibleEvents.length) : String(captures.length), query ? 'matches' : 'capture candidates')].join('')
     )}
     <div class="grid two-up">
       ${renderPanel(
-        detail?.event?.eventId ? 'Event Detail' : 'Create Event',
+        'Command Bar',
+        `
+          ${renderCommandBar({
+            action: '/events',
+            value: query,
+            placeholder: 'Find the London meetup with Sam, or draft a new event naturally.',
+            hint: 'Search, open, or draft an event with one natural sentence.',
+            submitLabel: 'Run'
+          })}
+          ${commandPayload?.answer ? `<div class="info-callout"><strong>Logbook</strong><br />${escapeHtml(commandPayload.answer)}</div>` : ''}
+          ${renderEventCards(visibleEvents, (event) => `/events/${encodeURIComponent(event.eventId)}`)}
+        `,
+        'Use one natural-language command to find an event, open the best match, or review a new event draft.'
+      )}
+      ${renderPanel(
+        detail?.event?.eventId ? 'Event Detail' : commandPayload?.reviewDraft ? 'Review Event' : 'Create Event',
         detail?.event?.eventId
           ? `
               <div class="stack-card">
@@ -2356,6 +2458,8 @@ async function renderEventsPage(page, requestUrl) {
               ${renderPanel('Graph Overview', renderGraphOverview(detail.graphOverview), 'The graph keeps the event at the center and shows the first ring of linked people.')}
               ${renderPanel('Related Drafts', renderAskDraftCards(detail.relatedDrafts || []))}
             `
+          : commandPayload?.reviewDraft
+            ? renderEventCommandReview(commandPayload.reviewDraft)
           : `
           <form class="api-form" data-api-form="true" data-endpoint="/events" data-json-fields="payload">
             ${renderFormField('Title', '<input name="title" type="text" placeholder="OpenClaw SocialOS product push" />')}
@@ -2385,31 +2489,9 @@ async function renderEventsPage(page, requestUrl) {
         `,
         detail?.event?.eventId
           ? 'Event detail ties together people, campaign strategy, and linked draft packages.'
-          : 'Events are the handoff point from captures into campaigns.'
-      )}
-      ${renderPanel(
-        'Logbook Index',
-        events.length
-          ? `<div class="stack">${events
-              .map(
-                (event) => `
-                  <article class="stack-card">
-                    <div class="stack-meta">
-                      <strong>${escapeHtml(event.title)}</strong>
-                      <span>${escapeHtml(formatDateTime(event.createdAt))}</span>
-                    </div>
-                    <p>${escapeHtml(summarizeCardCopy(event.payload?.details?.summary || event.payload?.summary || '', 150, 'Open the event to review people, tone, and drafts.'))}</p>
-                    <div class="inline-actions">
-                      <a class="mini-link" href="/events/${encodeURIComponent(event.eventId)}">${escapeHtml(
-                        event.eventId === selectedEventId ? 'Viewing' : 'Open'
-                      )}</a>
-                    </div>
-                  </article>
-                `
-              )
-              .join('')}</div>`
-          : renderEmptyState('No events yet.'),
-        'Browse the event timeline directly instead of relying only on chat recall.'
+          : commandPayload?.reviewDraft
+            ? 'Natural-language event entry stays review-first until you confirm and save it.'
+            : 'Events are the handoff point from captures into campaigns.'
       )}
     </div>
     ${renderPanel('Recent Captures', renderCaptureCards(captures.slice(0, 4)), 'Choose one as context if it helps')}
@@ -2418,35 +2500,52 @@ async function renderEventsPage(page, requestUrl) {
 
 async function renderDraftsPage(page, requestUrl) {
   const selectedEventId = readOptionalString(requestUrl.searchParams.get('eventId'), '');
-  const eventsRes = await fetchJsonSafe('/events?limit=12');
-  const events = eventsRes.ok ? eventsRes.payload.events || [] : [];
-  const effectiveEventId = selectedEventId || events[0]?.eventId || '';
+  const query = readOptionalString(requestUrl.searchParams.get('q'), '');
+  const recentEventsRes = await fetchJsonSafe('/events?limit=12');
+  const recentEvents = recentEventsRes.ok ? recentEventsRes.payload.events || [] : [];
+  const queryEventsRes = query ? await fetchJsonSafe(`/events?query=${encodeURIComponent(query)}&limit=8`) : null;
+  const queryEvents = queryEventsRes?.ok ? queryEventsRes.payload.results || queryEventsRes.payload.events || [] : [];
+  const effectiveEventId = selectedEventId || queryEvents[0]?.eventId || recentEvents[0]?.eventId || '';
   const draftsRes = await fetchJsonSafe(`/drafts?limit=24${effectiveEventId ? `&eventId=${encodeURIComponent(effectiveEventId)}` : ''}`);
   const drafts = draftsRes.ok ? draftsRes.payload.drafts || [] : [];
-
-  const eventOptions = events.length
-    ? events
-        .map(
-          (event) =>
-            `<option value="${escapeHtml(event.eventId)}"${
-              event.eventId === effectiveEventId ? ' selected' : ''
-            }>${escapeHtml(event.title)}</option>`
-        )
-        .join('')
-    : '<option value="">No events yet</option>';
+  const selectedEvent =
+    [...queryEvents, ...recentEvents].find((event) => event.eventId === effectiveEventId) || null;
+  const datalistOptions = recentEvents
+    .map((event) => `<option value="${escapeHtml(event.title)}"></option>`)
+    .join('');
 
   return `
     ${renderHero(
       page,
-      [renderMetric(String(events.length), 'events ready'), renderMetric(String(drafts.length), 'drafts visible')].join(''),
+      [renderMetric(String(recentEvents.length), 'recent events'), renderMetric(String(drafts.length), 'drafts visible')].join(''),
       `<div class="info-card"><strong>Simple draft mode</strong><p>One event, seven standard drafts. LinkedIn, X, Instagram stay in English. 中文平台 stays Chinese.</p></div>`
     )}
     <div class="grid two-up">
       ${renderPanel(
+        'Event Picker',
+        `
+          <form class="query-form command-bar-form" method="GET" action="/drafts">
+            ${renderFormField(
+              'Event search',
+              `<input name="q" list="draft-event-suggestions" type="text" value="${escapeHtml(query)}" placeholder="The Sam follow-up from Bristol, or last week’s meetup recap." />`,
+              'Search naturally or type an exact event name.'
+            )}
+            <datalist id="draft-event-suggestions">${datalistOptions}</datalist>
+            <div class="inline-actions">
+              <button type="submit">Find Event</button>
+              <a class="mini-link" href="/drafts">Reset</a>
+            </div>
+          </form>
+          ${selectedEvent ? `<div class="info-callout"><strong>Selected event</strong><br />${escapeHtml(selectedEvent.title)}</div>` : ''}
+          ${queryEvents.length ? renderEventCards(queryEvents.slice(0, 5), (event) => `/drafts?eventId=${encodeURIComponent(event.eventId)}`) : renderEventCards(recentEvents.slice(0, 5), (event) => `/drafts?eventId=${encodeURIComponent(event.eventId)}`)}
+        `,
+        'Type ahead naturally, or pick one of the recent events to open the standard draft set.'
+      )}
+      ${renderPanel(
         'Generate 7 Standard Drafts',
         `
           <form class="api-form" data-api-form="true" data-endpoint="/drafts/generate">
-            ${renderFormField('Event', `<select name="eventId">${eventOptions}</select>`)}
+            <input type="hidden" name="eventId" value="${escapeHtml(effectiveEventId)}" />
             <input type="hidden" name="languages" value="platform-native" />
             <input type="hidden" name="platforms" value="linkedin" />
             <input type="hidden" name="platforms" value="x" />
@@ -2460,6 +2559,7 @@ async function renderDraftsPage(page, requestUrl) {
               LinkedIn / X / Instagram use English only.<br />
               知乎 / 小红书 / 朋友圈 / 公众号 use Chinese only.
             </div>
+            ${selectedEvent ? `<div class="chip-row">${renderPill(selectedEvent.title, 'accent')}</div>` : renderEmptyState('Find or pick an event first.')}
             ${renderFormField('CTA', '<input name="cta" type="text" placeholder="Optional closing line if you want one." />')}
             <details class="draft-details">
               <summary>Advanced options</summary>
@@ -2470,40 +2570,17 @@ async function renderDraftsPage(page, requestUrl) {
               </div>
             </details>
             <div class="inline-actions">
-              <button type="submit">Generate 7 Drafts</button>
+              <button type="submit"${effectiveEventId ? '' : ' disabled'}>Generate 7 Drafts</button>
             </div>
             <div class="form-result" data-form-result></div>
           </form>
         `,
-        'The default path is now simple and standardized.'
-      )}
-      ${renderPanel(
-        'Event Picker',
-        events.length
-          ? `<div class="stack">${events
-              .map(
-                (event) => `
-                  <article class="stack-card">
-                    <div class="stack-meta">
-                      <strong>${escapeHtml(event.title)}</strong>
-                      <span>${escapeHtml(formatDateTime(event.createdAt))}</span>
-                    </div>
-                    <div class="inline-actions">
-                      <a class="mini-link" href="/drafts?eventId=${encodeURIComponent(event.eventId)}">${escapeHtml(
-                        event.eventId === effectiveEventId ? 'Viewing' : 'Show Drafts'
-                      )}</a>
-                    </div>
-                  </article>
-                `
-              )
-              .join('')}</div>`
-          : renderEmptyState('Create an event first.'),
-        'This page now shows one event at a time instead of mixing draft sets together.'
+        'The event picker scales with natural search, while the output stays one event at a time.'
       )}
     </div>
     ${renderPanel(
       effectiveEventId
-        ? `Draft Library · ${escapeHtml(events.find((event) => event.eventId === effectiveEventId)?.title || effectiveEventId)}`
+        ? `Draft Library · ${escapeHtml(selectedEvent?.title || effectiveEventId)}`
         : 'Draft Library',
       renderDraftCards(drafts),
       'Each platform gets one main draft card. Extra publishing metadata is tucked into More options.'
