@@ -16,18 +16,20 @@ const PAGE_DEFINITIONS = [
     title: 'Cockpit',
     path: '/cockpit',
     summary: 'Your relationship, content, and self operating system in one daily action surface.',
+    nav: false,
   },
   {
     id: 'quick-capture',
     title: 'Workspace',
     path: '/quick-capture',
-    summary: 'One chat surface for capture, memory lookup, event suggestions, and multi-agent coordination.',
+    summary: 'One unified home for capture, memory recall, event suggestions, and platform-ready next actions.',
   },
   {
     id: 'ask',
     title: 'Ask',
     path: '/ask',
     summary: 'Natural-language recall across contacts, events, drafts, and your recent self mirror.',
+    nav: false,
   },
   {
     id: 'people',
@@ -73,9 +75,11 @@ const PAGE_DEFINITIONS = [
   },
 ];
 
-export const DASHBOARD_PAGES = PAGE_DEFINITIONS.map((page) => ({ ...page }));
+const ROUTE_PAGES = PAGE_DEFINITIONS.map((page) => ({ ...page }));
 
-const PAGE_BY_PATH = new Map(DASHBOARD_PAGES.map((page) => [page.path, page]));
+export const DASHBOARD_PAGES = ROUTE_PAGES.filter((page) => page.nav !== false).map((page) => ({ ...page }));
+
+const PAGE_BY_PATH = new Map(ROUTE_PAGES.map((page) => [page.path, page]));
 
 function readOptionalString(value, fallback) {
   if (typeof value !== 'string') return fallback;

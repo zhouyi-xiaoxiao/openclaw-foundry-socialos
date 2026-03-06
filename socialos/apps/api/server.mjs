@@ -2116,6 +2116,7 @@ function searchEventMatches(statements, query, limit = 4) {
 function inferWorkspaceIntent(text, assets = []) {
   const source = cleanText(text).toLowerCase();
   if (!source && assets.length) return 'capture';
+  if (/(能量|情绪|状态|self|mirror|最近.*状态|我最近|最近的我|who am i|energy|theme)/u.test(source)) return 'self';
   if (/(找|搜索|search|who|哪个人|哪位|回忆|记得)/u.test(source)) return 'search';
   if (/(event|campaign|draft|内容|发布|平台|活动|战役)/u.test(source)) return 'campaign';
   if (/(认识|聊了|met|talked to|voice note|名片|business card)/u.test(source)) return 'capture';
@@ -2253,6 +2254,214 @@ function buildWorkspaceAgentLanes({ intent, draft, relatedPeople, relatedEvents 
   ];
 }
 
+function buildPresentationCard(type, options = {}) {
+  const badges = Array.isArray(options.badges) ? options.badges.filter(Boolean).slice(0, 4) : [];
+  const detailLines = Array.isArray(options.detailLines)
+    ? options.detailLines.filter((item) => typeof item === 'string' && item.trim()).slice(0, 3)
+    : [];
+  return {
+    type,
+    kicker: readOptionalString(options.kicker, ''),
+    title: readOptionalString(options.title, ''),
+    body: readOptionalString(options.body, ''),
+    subtitle: readOptionalString(options.subtitle, ''),
+    href: readOptionalString(options.href, ''),
+    badges,
+    detailLines,
+  };
+}
+
+function buildWorkspaceContactDraftCard(captureDraft) {
+  const personDraft = captureDraft?.personDraft || {};
+  const interactionDraft = captureDraft?.interactionDraft || {};
+  const name = cleanText(personDraft.name || '');
+  const summary = cleanText(
+    personDraft.followUpSuggestion ||
+      interactionDraft.summary ||
+      interactionDraft.evidence ||
+      captureDraft?.combinedText ||
+      ''
+  );
+  if (!name && !summary) return null;
+  return buildPresentationCard('contact', {
+    kicker: 'Contact draft',
+    title: name || 'New contact draft',
+    subtitle: name ? 'Ready to review before saving' : 'A contact can be drafted from this turn',
+    body: truncateText(summary || 'Keep chatting if you want to refine the person and follow-up context.', 200),
+    badges: cleanList(personDraft.tags).slice(0, 3),
+    detailLines: [
+      personDraft.nextFollowUpAt ? `Next follow-up: ${personDraft.nextFollowUpAt}` : '',
+      cleanText(interactionDraft.summary || '') ? `Context: ${truncateText(interactionDraft.summary, 90)}` : '',
+    ],
+  });
+}
+
+function buildWorkspacePersonMatchCard(person, kicker = 'Memory match') {
+  if (!person?.personId) return null;
+  return buildPresentationCard('contact', {
+    kicker,
+    title: person.name || 'Contact',
+    body: truncateText(person.evidenceSnippet || person.notes || 'This looks like the closest contact match.', 200),
+    href: `/people/${encodeURIComponent(person.personId)}`,
+    badges: Array.isArray(person.tags) ? person.tags.slice(0, 3) : [],
+    detailLines: [
+      person.nextFollowUpAt ? `Next follow-up: ${person.nextFollowUpAt}` : '',
+      person.updatedAt ? `Updated: ${person.updatedAt}` : '',
+    ],
+  });
+}
+
+function buildWorkspaceEventCard(event, kicker = 'Related event') {
+  if (!event?.eventId) return null;
+  return buildPresentationCard('event', {
+    kicker,
+    title: event.title || 'Event',
+    body: truncateText(event.snippet || summarizeEventPayload(event.payload || {}) || 'Open this logbook item for campaign context.', 200),
+    href: `/drafts?eventId=${encodeURIComponent(event.eventId)}`,
+    badges: [
+      readOptionalString(event.payload?.languageStrategy, ''),
+      readOptionalString(event.payload?.audience, ''),
+    ],
+    detailLines: [
+      event.createdAt ? `Created: ${event.createdAt}` : '',
+    ],
+  });
+}
+
+function buildWorkspaceSuggestedEventCard(eventSuggestion) {
+  if (!eventSuggestion?.title) return null;
+  return buildPresentationCard('event', {
+    kicker: 'Suggested event',
+    title: eventSuggestion.title,
+    body: truncateText(readOptionalString(eventSuggestion.payload?.summary, ''), 200),
+    badges: [
+      readOptionalString(eventSuggestion.languageStrategy, ''),
+      readOptionalString(eventSuggestion.tone, ''),
+    ],
+    detailLines: [
+      eventSuggestion.audience ? `Audience: ${eventSuggestion.audience}` : '',
+    ],
+  });
+}
+
+function buildWorkspaceDraftCard(draft, kicker = 'Related draft') {
+  if (!draft?.draftId) return null;
+  return buildPresentationCard('draft', {
+    kicker,
+    title: `${draft.platformLabel || draft.platform || 'Draft'} · ${draft.eventTitle || draft.eventId || ''}`.trim(),
+    body: truncateText(draft.snippet || draft.content || 'A platform package already exists for this topic.', 200),
+    href: `/drafts?eventId=${encodeURIComponent(draft.eventId || '')}`,
+    badges: [draft.language, draft.publishPackage?.supportLevel || draft.capability?.supportLevel],
+    detailLines: [
+      draft.publishPackage?.entryTarget ? `Entry: ${draft.publishPackage.entryTarget}` : '',
+    ],
+  });
+}
+
+function buildWorkspaceMirrorCard(latestMirror) {
+  if (!latestMirror?.mirrorId) return null;
+  return buildPresentationCard('mirror', {
+    kicker: 'Self mirror',
+    title: 'Latest self signal',
+    body: truncateText(latestMirror.summaryText || latestMirror.content || 'Open the mirror for evidence-backed self patterns.', 200),
+    href: '/self-mirror',
+    badges: Array.isArray(latestMirror.topThemes)
+      ? latestMirror.topThemes.map((item) => item?.theme || '').filter(Boolean).slice(0, 3)
+      : [],
+    detailLines: [
+      latestMirror.createdAt ? `Updated: ${latestMirror.createdAt}` : '',
+    ],
+  });
+}
+
+function dedupePresentationCards(cards, limit = 3) {
+  const seen = new Set();
+  const output = [];
+  for (const card of cards) {
+    if (!card?.title) continue;
+    const signature = [card.type, card.title, card.href].filter(Boolean).join('::').toLowerCase();
+    if (!signature || seen.has(signature)) continue;
+    seen.add(signature);
+    output.push(card);
+    if (output.length >= limit) break;
+  }
+  return output;
+}
+
+function buildWorkspacePresentation({
+  intent,
+  summary,
+  captureDraft,
+  relatedPeople,
+  relatedEvents,
+  relatedDrafts,
+  suggestedEvent,
+  latestMirror,
+  showMemoryAction,
+  showEventSuggestion,
+}) {
+  const mode = ['capture', 'search', 'campaign', 'self'].includes(intent) ? intent : 'mixed';
+  const draftCard = buildWorkspaceContactDraftCard(captureDraft);
+  const personCard = buildWorkspacePersonMatchCard(relatedPeople[0], mode === 'search' ? 'Best contact match' : 'Memory match');
+  const eventCard = buildWorkspaceEventCard(
+    relatedEvents[0],
+    mode === 'campaign' ? 'Relevant logbook item' : mode === 'search' ? 'Related event' : 'Event context'
+  );
+  const suggestedEventCard = buildWorkspaceSuggestedEventCard(suggestedEvent);
+  const draftResultCard = buildWorkspaceDraftCard(relatedDrafts[0]);
+  const mirrorCard = buildWorkspaceMirrorCard(latestMirror);
+
+  let primaryCard = null;
+  if (mode === 'capture') {
+    primaryCard = draftCard || personCard || suggestedEventCard || mirrorCard;
+  } else if (mode === 'search') {
+    primaryCard = personCard || eventCard || draftResultCard || mirrorCard;
+  } else if (mode === 'campaign') {
+    primaryCard = suggestedEventCard || draftResultCard || eventCard || draftCard;
+  } else if (mode === 'self') {
+    primaryCard = mirrorCard || draftCard || personCard;
+  } else {
+    primaryCard = draftCard || personCard || suggestedEventCard || draftResultCard || mirrorCard;
+  }
+
+  const secondaryCards = dedupePresentationCards(
+    [
+      primaryCard === draftCard ? personCard : draftCard,
+      primaryCard === personCard ? eventCard : personCard,
+      primaryCard === eventCard ? draftResultCard : eventCard,
+      primaryCard === suggestedEventCard ? mirrorCard : suggestedEventCard,
+      primaryCard === draftResultCard ? mirrorCard : draftResultCard,
+      primaryCard === mirrorCard ? personCard : mirrorCard,
+    ].filter(Boolean),
+    3
+  );
+
+  const actions = [];
+  if (showMemoryAction) {
+    actions.push({ kind: 'mutation', action: 'save-memory', label: 'Save Contact' });
+  }
+  if (personCard?.href) {
+    actions.push({ kind: 'link', href: personCard.href, label: 'Open Contact' });
+  }
+  if (showEventSuggestion && suggestedEvent?.title) {
+    actions.push({ kind: 'mutation', action: 'create-event', label: 'Create Event' });
+  }
+  if (draftResultCard?.href) {
+    actions.push({ kind: 'link', href: draftResultCard.href, label: 'Review Drafts' });
+  }
+  if (mode === 'self' && mirrorCard?.href) {
+    actions.push({ kind: 'link', href: mirrorCard.href, label: 'Open Self Mirror' });
+  }
+
+  return {
+    mode,
+    answer: readOptionalString(summary, ''),
+    primaryCard,
+    secondaryCards: dedupePresentationCards(secondaryCards, 3),
+    actions: actions.slice(0, 3),
+  };
+}
+
 function buildWorkspaceChatPayload(statements, body = {}) {
   const source = readOptionalString(body.source, 'workspace-chat');
   const text = cleanText(body.text || '');
@@ -2267,6 +2476,7 @@ function buildWorkspaceChatPayload(statements, body = {}) {
   const intent = inferWorkspaceIntent(combinedText, assets);
   const relatedPeople = searchPeopleMatches(statements, combinedText, 4);
   const relatedEvents = searchEventMatches(statements, combinedText, 4);
+  const relatedDrafts = searchDraftMatches(statements, combinedText, 3);
   const suggestedEvent = buildSuggestedEventPayload(text, captureDraft, relatedPeople);
   const latestMirrorRow = statements.selectLatestMirror.get();
   const latestMirror = latestMirrorRow
@@ -2320,15 +2530,38 @@ function buildWorkspaceChatPayload(statements, body = {}) {
     captureDraft,
   });
 
+  const presentation = buildWorkspacePresentation({
+    intent,
+    summary,
+    captureDraft,
+    relatedPeople,
+    relatedEvents,
+    relatedDrafts,
+    suggestedEvent,
+    latestMirror: latestMirror
+      ? {
+          mirrorId: latestMirror.mirrorId,
+          summaryText: latestMirror.summaryText,
+          topThemes: Array.isArray(latestMirror.themes) ? latestMirror.themes.slice(0, 3) : [],
+          createdAt: latestMirror.createdAt,
+          content: latestMirror.content,
+        }
+      : null,
+    showMemoryAction,
+    showEventSuggestion,
+  });
+
   return {
     responseId: makeId('workspace'),
     intent,
     summary,
+    presentation,
     text,
     assets,
     captureDraft,
     relatedPeople,
     relatedEvents,
+    relatedDrafts,
     suggestedEvent,
     ui: {
       showMemoryAction,
