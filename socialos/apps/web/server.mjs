@@ -1374,8 +1374,9 @@ async function renderQuickCapturePage(page, requestUrl) {
               <button type="submit" class="workspace-send-button">↗</button>
             </div>
           </form>
+          <div class="workspace-transcript-preview" data-transcript-preview hidden></div>
           <div class="workspace-composer-note" data-audio-status>
-            Tap the mic to record. We transcribe first, then send automatically. Press Enter to send text.
+            Tap the mic to record. When you stop, we draft the transcript into the composer so you can edit it before sending. Press Enter to send text.
           </div>
         </div>
         <div class="form-result" data-form-result hidden></div>
@@ -2047,6 +2048,7 @@ function renderClientScript() {
         audioSource: null,
         audioAnalyser: null,
         meterFrame: 0,
+        composerTextBeforeRecording: '',
       };
 
       function parseMaybeJson(text) {
@@ -2113,6 +2115,42 @@ function renderClientScript() {
           '<div class="result-block' + (ok ? '' : ' result-block-warn') + '">' +
             '<p>' + escapeHtml(message) + '</p>' +
           '</div>';
+      }
+
+      function getTranscriptPreviewNode() {
+        return document.querySelector('[data-transcript-preview]');
+      }
+
+      function setTranscriptPreview(text = '', tone = 'neutral') {
+        const previewNode = getTranscriptPreviewNode();
+        if (!previewNode) return;
+        const value = String(text || '').trim();
+        if (!value) {
+          previewNode.hidden = true;
+          previewNode.dataset.tone = '';
+          previewNode.innerHTML = '';
+          return;
+        }
+
+        const label = tone === 'live' ? 'Live transcript' : tone === 'ready' ? 'Transcript draft' : 'Transcript note';
+        previewNode.hidden = false;
+        previewNode.dataset.tone = tone;
+        previewNode.innerHTML =
+          '<strong>' + escapeHtml(label) + '</strong>' +
+          '<p>' + escapeHtml(value) + '</p>';
+      }
+
+      function mergeTranscriptIntoComposer(form, transcript) {
+        const textField = form?.elements?.text;
+        const incoming = String(transcript || '').trim();
+        if (!textField || !incoming) return '';
+
+        const currentValue = String(textField.value || '').trim();
+        const nextValue = currentValue ? currentValue.replace(/\s+$/u, '') + '\\n\\n' + incoming : incoming;
+        textField.value = nextValue;
+        textField.focus();
+        textField.setSelectionRange(nextValue.length, nextValue.length);
+        return nextValue;
       }
 
       function flashMessage(flash) {
@@ -2416,7 +2454,7 @@ function renderClientScript() {
         '</article>';
       }
 
-      async function uploadWorkspaceAsset(file, { autoSend = false } = {}) {
+      async function uploadWorkspaceAsset(file) {
         const composer = document.querySelector('[data-workspace-chat-form]');
         const statusNode = document.querySelector('[data-audio-status]');
         const resultNode = composer?.querySelector('[data-form-result]');
@@ -2449,26 +2487,6 @@ function renderClientScript() {
               ' is ready in the composer.</p>';
           }
           renderWorkspaceComposerResult(resultNode, '');
-
-          if (autoSend) {
-            const textField = composer.elements.text;
-            if (textField && !String(textField.value || '').trim()) {
-              textField.value = response.payload.asset.extractedText || response.payload.asset.previewText || '';
-            }
-            const transcribedText = String(textField?.value || '').trim();
-            if (transcribedText) {
-              await handleWorkspaceChat(composer, composer.querySelector('button[type="submit"]'));
-            } else {
-              if (statusNode) {
-                statusNode.innerHTML = '<strong>Transcription needed</strong><p>I saved the recording, but I do not have text for it yet. Enable browser speech recognition or add OPENAI_API_KEY to finish one-tap voice send.</p>';
-              }
-              renderWorkspaceComposerResult(
-                resultNode,
-                'Voice is now set to transcribe first. This recording was kept, but it was not auto-sent because no transcript was available.',
-                false
-              );
-            }
-          }
         }
 
         return response.payload.asset || null;
@@ -2504,7 +2522,10 @@ function renderClientScript() {
             appendWorkspaceHtml(renderWorkspaceAssistantTurn(response.payload));
             form.reset();
             captureState.assets = [];
+            captureState.liveTranscript = '';
+            captureState.composerTextBeforeRecording = '';
             updateCaptureAssetInputs();
+            setTranscriptPreview('');
             renderWorkspaceComposerResult(resultNode, '');
             if (document.querySelector('[data-audio-status]')) {
               document.querySelector('[data-audio-status]').innerHTML =
@@ -2885,10 +2906,12 @@ function renderClientScript() {
                 if (recordEvent.data.size > 0) captureState.recordChunks.push(recordEvent.data);
               };
               captureState.recorder.start();
+              captureState.composerTextBeforeRecording = String(form?.elements?.text?.value || '');
               recordToggle.dataset.originalLabel = recordToggle.textContent;
               recordToggle.textContent = 'Recording';
               recordToggle.setAttribute('aria-pressed', 'true');
               recordToggle.classList.add('is-recording');
+              setTranscriptPreview('', 'live');
 
               const textField = form?.elements?.text;
               if (SpeechRecognition && textField) {
@@ -2903,7 +2926,7 @@ function renderClientScript() {
                     .join(' ')
                     .trim();
                   captureState.liveTranscript = transcript;
-                  textField.value = transcript;
+                  setTranscriptPreview(transcript, 'live');
                 };
                 captureState.recognition.onerror = () => {
                   if (captureState.resolveRecognitionWaiter) captureState.resolveRecognitionWaiter();
@@ -2915,7 +2938,7 @@ function renderClientScript() {
               }
 
               renderWorkspaceComposerResult(form?.querySelector('[data-form-result]'), '');
-              statusNode.innerHTML = '<strong>Recording</strong><p>Speak naturally. Tap Mic again to send the voice turn.</p>';
+              statusNode.innerHTML = '<strong>Recording</strong><p>Speak naturally. Tap Mic again to stop. We will draft the transcript into the composer for review before you send.</p>';
               return;
             }
 
@@ -2926,8 +2949,33 @@ function renderClientScript() {
                 await captureState.recognitionWaiter;
                 captureState.recognitionWaiter = null;
               }
-              statusNode.innerHTML = '<strong>Uploading voice note</strong><p>Adding this recording to the current chat turn.</p>';
-              await uploadWorkspaceAsset(file, { autoSend: true });
+              statusNode.innerHTML = '<strong>Uploading voice note</strong><p>Saving the recording and drafting the transcript into the composer.</p>';
+              const asset = await uploadWorkspaceAsset(file);
+              const finalTranscript = String(
+                asset?.extractedText ||
+                asset?.previewText ||
+                captureState.liveTranscript ||
+                ''
+              ).trim();
+
+              if (finalTranscript) {
+                mergeTranscriptIntoComposer(form, finalTranscript);
+                setTranscriptPreview(finalTranscript, 'ready');
+                statusNode.innerHTML = '<strong>Transcript ready</strong><p>Review or edit the text in the composer, then press send when you are happy with it.</p>';
+                renderWorkspaceComposerResult(
+                  form?.querySelector('[data-form-result]'),
+                  'Voice note saved. The transcript is now in the composer for editing before send.'
+                );
+              } else if (asset) {
+                setTranscriptPreview('', 'neutral');
+                statusNode.innerHTML = '<strong>Voice note saved</strong><p>I kept the recording as an attachment, but there is no transcript yet. You can type or edit before sending.</p>';
+                renderWorkspaceComposerResult(
+                  form?.querySelector('[data-form-result]'),
+                  'Voice note saved, but transcription is not ready yet. Edit the composer manually when you want to send.',
+                  false
+                );
+              }
+
               recordToggle.textContent = recordToggle.dataset.originalLabel || 'Mic';
               recordToggle.setAttribute('aria-pressed', 'false');
               recordToggle.classList.remove('is-recording');
@@ -2960,6 +3008,7 @@ function renderClientScript() {
             recordToggle.textContent = recordToggle.dataset.originalLabel || 'Mic';
             recordToggle.setAttribute('aria-pressed', 'false');
             recordToggle.classList.remove('is-recording');
+            setTranscriptPreview('', 'neutral');
             statusNode.innerHTML = '<strong>Mic unavailable</strong><p>' + escapeHtml(error.message || String(error)) + '</p>';
             return;
           }
