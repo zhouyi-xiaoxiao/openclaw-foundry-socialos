@@ -995,13 +995,14 @@ function renderCodexSummary(codex) {
 }
 
 async function renderQuickCapturePage(page) {
-  const [capturesRes, mirrorRes, assetsRes, peopleRes, eventsRes, clusterRes] = await Promise.all([
+  const [capturesRes, mirrorRes, assetsRes, peopleRes, eventsRes, clusterRes, embeddingsRes] = await Promise.all([
     fetchJsonSafe('/captures?limit=8'),
     fetchJsonSafe('/self-mirror'),
     fetchJsonSafe('/capture/assets?limit=8'),
     fetchJsonSafe('/people?limit=4'),
     fetchJsonSafe('/events?limit=6'),
     fetchJsonSafe('/ops/cluster'),
+    fetchJsonSafe('/settings/embeddings'),
   ]);
   const captures = capturesRes.ok ? capturesRes.payload.captures || [] : [];
   const mirrorPayload = mirrorRes.ok ? mirrorRes.payload : {};
@@ -1010,6 +1011,8 @@ async function renderQuickCapturePage(page) {
   const people = peopleRes.ok ? peopleRes.payload.people || [] : [];
   const events = eventsRes.ok ? eventsRes.payload.events || [] : [];
   const cluster = clusterRes.ok ? clusterRes.payload.foundry || {} : {};
+  const embeddings = embeddingsRes.ok ? embeddingsRes.payload || {} : {};
+  const openAiReady = Boolean(embeddings.openaiKeyPresent);
 
   return `
     ${renderHero(
@@ -1034,18 +1037,25 @@ async function renderQuickCapturePage(page) {
         <div class="workspace-asset-tray" data-workspace-assets>
           ${assets.length ? assets.slice(0, 3).map((asset) => `<span class="asset-chip tone-soft">${escapeHtml(asset.fileName || asset.assetId)}</span>`).join('') : ''}
         </div>
-        <form class="workspace-composer" data-workspace-chat-form>
+        <form class="workspace-composer" data-workspace-chat-form data-openai-transcription-ready="${openAiReady ? 'true' : 'false'}">
           <input type="hidden" name="source" value="workspace-chat" />
           <input type="hidden" name="assetIds" value="" data-capture-asset-ids />
           <input type="file" data-workspace-file accept="image/*,audio/*" multiple hidden />
           <button type="button" class="secondary-button workspace-icon-button" data-workspace-attach>Attach</button>
           <textarea name="text" rows="2" placeholder="像聊天一样发一句：认识了谁、要跟进什么、想找哪个人、想把什么变成内容。"></textarea>
+          <select name="voiceLang" class="workspace-lang-select">
+            <option value="auto">Auto</option>
+            <option value="zh-CN">中文</option>
+            <option value="en-US">English</option>
+            <option value="ja-JP">日本語</option>
+            <option value="es-ES">Español</option>
+          </select>
           <button type="button" class="secondary-button workspace-icon-button" data-audio-record-toggle>Mic</button>
           <button type="submit">Send</button>
         </form>
         <div class="info-card compact-info" data-audio-status>
           <strong>Voice + multimodal</strong>
-          <p>点一次 Mic 开始说，点同一个按钮结束。图片、名片、录音都会作为同一条聊天上下文进入分析。</p>
+          <p>点一次 Mic 开始说，点同一个按钮结束。优先用浏览器原生语音识别；如果配置了 OpenAI key，也会自动做服务端转写。</p>
         </div>
         <div class="form-result" data-form-result></div>
       </section>
@@ -1915,6 +1925,7 @@ function renderClientScript() {
         const selfDraft = draft.selfCheckinDraft || {};
         const eventSuggestion = payload.suggestedEvent || {};
         const topThemes = Array.isArray(payload.latestMirror?.topThemes) ? payload.latestMirror.topThemes : [];
+        const transcription = payload.transcription || {};
 
         const peopleBlock = people.length
           ? '<section class="workspace-block"><h4>Memory matches</h4><div class="stack">' +
@@ -1966,6 +1977,10 @@ function renderClientScript() {
             '</div></section>'
           : '';
 
+        const transcriptionBlock = transcription.message
+          ? '<section class="workspace-block"><h4>Voice status</h4><p>' + escapeHtml(transcription.message) + '</p></section>'
+          : '';
+
         const eventSuggestionBlock = eventSuggestion.title
           ? '<section class="workspace-block"><h4>Suggested event</h4>' +
               '<p><strong>' + escapeHtml(eventSuggestion.title) + '</strong></p>' +
@@ -1986,6 +2001,7 @@ function renderClientScript() {
         return '<article class="chat-bubble system workspace-assistant">' +
           '<div class="stack-meta"><strong>SocialOS</strong><span>' + escapeHtml(payload.intent || 'mixed') + '</span></div>' +
           '<p>' + escapeHtml(payload.summary || '') + '</p>' +
+          transcriptionBlock +
           draftBlock +
           peopleBlock +
           eventBlock +
@@ -2032,7 +2048,21 @@ function renderClientScript() {
             if (textField && !String(textField.value || '').trim()) {
               textField.value = response.payload.asset.extractedText || response.payload.asset.previewText || '';
             }
-            await handleWorkspaceChat(composer, composer.querySelector('button[type="submit"]'), { silentUserTurn: true });
+            if (String(textField?.value || '').trim()) {
+              await handleWorkspaceChat(composer, composer.querySelector('button[type="submit"]'), { silentUserTurn: true });
+            } else {
+              const openAiReady = composer.dataset.openaiTranscriptionReady === 'true';
+              appendWorkspaceSystemTurn(
+                'Voice note needs transcription',
+                '<p>Your recording was attached, but there is no transcript yet. ' +
+                  escapeHtml(
+                    openAiReady
+                      ? 'The server did not return a transcript this time, so please type a short fallback summary or try again.'
+                      : 'Add OPENAI_API_KEY to .env or use a browser with built-in speech recognition if you want voice to behave like ChatGPT.'
+                  ) +
+                '</p>'
+              );
+            }
           }
         }
 
@@ -2075,6 +2105,13 @@ function renderClientScript() {
             if (document.querySelector('[data-audio-status]')) {
               document.querySelector('[data-audio-status]').innerHTML =
                 '<strong>Ready</strong><p>Send another message, voice note, screenshot, or business card whenever you want.</p>';
+            }
+            if (window.speechSynthesis && (response.payload.transcription?.transcribedAudioAssets || 0) > 0) {
+              const utterance = new SpeechSynthesisUtterance(String(response.payload.summary || ''));
+              const selectedLang = String(form.elements.voiceLang?.value || 'auto');
+              utterance.lang = selectedLang === 'auto' ? (navigator.language || 'en-US') : selectedLang;
+              window.speechSynthesis.cancel();
+              window.speechSynthesis.speak(utterance);
             }
           }
         } catch (error) {

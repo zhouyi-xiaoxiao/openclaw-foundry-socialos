@@ -27,6 +27,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(process.env.SOCIALOS_REPO_ROOT || path.resolve(__dirname, '../../..'));
+const DOTENV_PATH = path.join(REPO_ROOT, '.env');
 const SCHEMA_PATH = path.join(REPO_ROOT, 'infra/db/schema.sql');
 const QUEUE_PATH = path.join(REPO_ROOT, 'QUEUE.md');
 const RUN_REPORT_DIR = path.join(REPO_ROOT, 'reports/runs');
@@ -38,6 +39,8 @@ const MODE_OVERRIDE_PATH = path.join(REPO_ROOT, '.foundry/PUBLISH_MODE');
 const FOUNDRY_CONFIG_PATH = path.join(REPO_ROOT, 'foundry/openclaw.foundry.json5');
 const FOUNDRY_DISPATCH_PATH = path.join(REPO_ROOT, 'scripts/foundry_dispatch.sh');
 const FOUNDRY_RUNTIME_PATHS = resolveFoundryRuntimePaths({ repoRoot: REPO_ROOT });
+
+loadDotEnvFile(DOTENV_PATH);
 
 export const LOOPBACK_HOST = '127.0.0.1';
 export const DEFAULT_PORT = Number(process.env.SOCIALOS_API_PORT || 8787);
@@ -246,6 +249,32 @@ const PLATFORM_ENTRY_URLS = Object.freeze({
   wechat_moments: 'https://weixin.qq.com/',
   wechat_official: 'https://mp.weixin.qq.com/',
 });
+
+function loadDotEnvFile(filePath) {
+  let raw = '';
+  try {
+    raw = fs.readFileSync(filePath, 'utf8');
+  } catch {
+    return;
+  }
+
+  for (const line of raw.split(/\r?\n/u)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const separatorIndex = trimmed.indexOf('=');
+    if (separatorIndex <= 0) continue;
+    const key = trimmed.slice(0, separatorIndex).trim();
+    if (!key || process.env[key] !== undefined) continue;
+    let value = trimmed.slice(separatorIndex + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    process.env[key] = value;
+  }
+}
 
 const FOUNDRY_AGENT_RESPONSIBILITIES = Object.freeze({
   forge_orchestrator: Object.freeze({
@@ -1875,6 +1904,10 @@ function buildWorkspaceChatPayload(statements, body = {}) {
   const assetIds = cleanList(body.assetIds);
   const assets = selectCaptureAssetsByIds(statements, assetIds);
   const captureDraft = buildCaptureDraft({ text, source, assets });
+  const audioAssets = assets.filter((asset) => asset.kind === 'audio');
+  const imageAssets = assets.filter((asset) => asset.kind === 'image');
+  const hasTranscribedAudio = audioAssets.some((asset) => cleanText(asset.extractedText || asset.previewText));
+  const hasUntypedVoiceOnly = !cleanText(text) && audioAssets.length > 0 && !hasTranscribedAudio;
   const intent = inferWorkspaceIntent(text || captureDraft.combinedText, assets);
   const relatedPeople = searchPeopleMatches(statements, captureDraft.combinedText || text, 4);
   const relatedEvents = searchEventMatches(statements, captureDraft.combinedText || text, 4);
@@ -1884,10 +1917,28 @@ function buildWorkspaceChatPayload(statements, body = {}) {
     ? formatMirrorPayload(latestMirrorRow, statements.listMirrorEvidenceByMirrorId.all(latestMirrorRow.id))
     : null;
 
-  const summary =
-    intent === 'search'
+  const transcription = {
+    openAiConfigured: Boolean(readOptionalString(process.env.OPENAI_API_KEY, '')),
+    audioAssets: audioAssets.length,
+    imageAssets: imageAssets.length,
+    transcribedAudioAssets: audioAssets.filter((asset) => cleanText(asset.extractedText || asset.previewText)).length,
+    needsTranscription: hasUntypedVoiceOnly,
+    message: hasUntypedVoiceOnly
+      ? 'Voice note received, but no transcript is available yet. Enable browser speech recognition or set OPENAI_API_KEY in .env for automatic transcription.'
+      : hasTranscribedAudio
+        ? 'Voice note transcribed and merged into the current chat turn.'
+        : imageAssets.length
+          ? 'Image/card attachment parsed and merged into the current chat turn.'
+          : '',
+  };
+
+  const summary = hasUntypedVoiceOnly
+    ? 'I received the voice note, but I cannot reason over it yet because there is no transcript. As soon as transcription is available, this chat can respond like a normal turn.'
+    : intent === 'search'
       ? `I searched memory and logbook for this query and found ${relatedPeople.length} people match(es) and ${relatedEvents.length} event match(es).`
-      : `I parsed this into a contact draft, a self-signal, and a next-step event suggestion, then checked existing memory for overlap.`;
+      : hasTranscribedAudio
+        ? 'I transcribed your voice note, turned it into structured memory drafts, and checked both people memory and the event logbook for overlap.'
+        : `I parsed this into a contact draft, a self-signal, and a next-step event suggestion, then checked existing memory for overlap.`;
 
   return {
     responseId: makeId('workspace'),
@@ -1915,6 +1966,7 @@ function buildWorkspaceChatPayload(statements, body = {}) {
         captureDraft.personDraft?.followUpSuggestion ||
         'Reply if you want the workflow or operator notes behind this.',
     },
+    transcription,
     agentLanes: buildWorkspaceAgentLanes({
       intent,
       draft: captureDraft,
