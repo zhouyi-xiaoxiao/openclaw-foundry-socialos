@@ -2532,9 +2532,9 @@ async function renderQueuePage(page) {
         renderMetric(String(doneTasks.filter((task) => task.status === 'posted').length), 'posted'),
         renderMetric(String(runtime.ops?.queue?.blocked ?? 0), 'blocked product items'),
       ].join(''),
-      `<div class="info-card"><strong>Current publish mode</strong><p>${escapeHtml(
-        publishMode
-      )} · live still requires env + UI intent + credentials.</p></div>`
+      `<div class="info-card"><strong>Queue posture</strong><p>${escapeHtml(
+        `${formatHumanPublishMode(publishMode)} keeps the next handoff clear. Live publish still needs explicit UI intent, credentials, and environment readiness.`
+      )}</p></div>`
     )}
     <div class="grid three-up">
       ${renderPanel('Ready', renderQueueCards(readyTasks, publishMode), 'Approved here first, still dry-run by default.')}
@@ -2622,7 +2622,7 @@ async function renderSelfMirrorPage(page, requestUrl) {
         renderMetric(payload.latestDailyMirror ? 'ready' : 'pending', 'daily'),
         renderMetric(payload.latestWeeklyMirror ? 'ready' : 'pending', 'weekly'),
       ].join(''),
-      `<div class="info-card"><strong>What Mirror does</strong><p>Mirror is not a personality test. It turns captures, interactions, and self check-ins into a daily reflection and a weekly synthesis with evidence.</p></div>`
+      `<div class="info-card"><strong>Mirror</strong><p>Mirror helps you close the loop on what happened, how it felt, and what pattern is emerging. It stays grounded in evidence instead of abstract labels.</p></div>`
     )}
     ${renderMirrorCadenceTabs(cadence)}
     <div class="grid two-up">
@@ -2634,7 +2634,34 @@ async function renderSelfMirrorPage(page, requestUrl) {
           : 'Daily Mirror closes the loop on what happened today and what it meant.'
       )}
       ${renderPanel(
-        'Generate or refresh',
+        'How to read it',
+        `
+          <div class="stack">
+            <article class="stack-card compact-card">
+              <div class="stack-meta">
+                <strong>${escapeHtml(cadence === 'weekly' ? 'Weekly view' : 'Daily view')}</strong>
+                ${renderPill(cadence === 'weekly' ? 'pattern' : 'today', 'soft')}
+              </div>
+              <p>${escapeHtml(
+                cadence === 'weekly'
+                  ? 'Open the weekly mirror when you want to see what kept repeating and which next experiment is worth trying.'
+                  : 'Open the daily mirror when you want one grounded read on today’s people, events, and self-signals.'
+              )}</p>
+            </article>
+            <article class="stack-card compact-card">
+              <div class="stack-meta">
+                <strong>Evidence first</strong>
+                ${renderPill('supporting cards', 'soft')}
+              </div>
+              <p>Every reflection can open the notes and signals behind it, so the mirror stays explainable instead of vague.</p>
+            </article>
+          </div>
+        `,
+        'Read the reflection first. Refresh only when you want a newer pass.'
+      )}
+    </div>
+    ${renderPanel(
+      'Generate or refresh',
         `
           <div class="control-stack">
             <form class="api-form compact-form" data-api-form="true" data-endpoint="/self-mirror/generate">
@@ -2655,7 +2682,6 @@ async function renderSelfMirrorPage(page, requestUrl) {
         `,
         'Daily keeps today legible. Weekly turns repeated evidence into a higher-level pattern view.'
       )}
-    </div>
     ${renderPanel('Recent Check-ins', renderCheckinCards((payload.checkins || []).slice(0, 8)), 'These are the newest self signals feeding the mirror loop.')}
   `;
 }
@@ -3459,10 +3485,10 @@ function renderClientScript() {
 
       function getWorkspacePrimaryTitle(card) {
         if (!card || !card.type) return 'Main result';
-        if (card.type === 'contact') return 'Contact focus';
-        if (card.type === 'event') return 'Event focus';
-        if (card.type === 'draft') return 'Draft focus';
-        if (card.type === 'mirror') return 'Mirror focus';
+        if (card.type === 'contact') return 'Main contact';
+        if (card.type === 'event') return 'Main event';
+        if (card.type === 'draft') return 'Main draft';
+        if (card.type === 'mirror') return 'Mirror';
         return 'Main result';
       }
 
@@ -4631,6 +4657,9 @@ function renderLayout({ currentPath, title, body }) {
         margin-bottom: 8px;
         font-size: clamp(30px, 4vw, 46px);
       }
+      .workspace-summary-copy > p:last-of-type {
+        max-width: 44ch;
+      }
       .workspace-summary-actions {
         display: grid;
         gap: 12px;
@@ -4888,6 +4917,17 @@ function renderLayout({ currentPath, title, body }) {
       .workspace-presentation-card.compact {
         height: 100%;
       }
+      .workspace-related-group {
+        display: grid;
+        gap: 8px;
+      }
+      .workspace-related-group h5 {
+        margin: 0;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+      }
       .workspace-card-details {
         margin-top: -2px;
       }
@@ -5057,6 +5097,23 @@ function renderLayout({ currentPath, title, body }) {
         transform: translateY(-1px);
         border-color: rgba(21, 111, 106, 0.18);
         box-shadow: 0 18px 36px rgba(18, 33, 49, 0.08);
+      }
+      .queue-card > small {
+        display: block;
+        margin-top: 2px;
+        color: var(--ink-soft);
+      }
+      .queue-details {
+        margin-top: 10px;
+        background: rgba(255, 255, 255, 0.56);
+      }
+      .queue-details summary {
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .queue-details[open] summary {
+        margin-bottom: 10px;
       }
       .score {
         color: var(--accent);
