@@ -648,7 +648,7 @@ function renderDraftCards(drafts) {
                 publishPackage.supportLevel || capability.supportLevel || 'L0 Draft',
                 capability.liveEligible ? 'accent' : 'soft'
               )}
-              ${renderPill(draft.platform, 'neutral')}
+              ${renderPill(draft.platformLabel || draft.platform, 'neutral')}
             </div>
           </div>
           ${renderPublishActions(draft, publishPackage)}
