@@ -867,50 +867,57 @@ function buildPublishSteps(platformId, capability, language) {
 }
 
 function buildPackageSections(platformRule, event, language, options) {
-  const eventPayload = safeParseJsonObject(event.payload, {});
-  const detailText = summarizeEventPayload(eventPayload);
+  const localizedContext = buildLocalizedEventContext(event, language);
   const tone = buildNativeTone(platformRule, language, options);
   const angle = buildNativeAngle(platformRule, language, options);
   const audience = buildNativeAudience(platformRule, language, options);
-  const cta = readOptionalString(
-    options.cta,
-    language === 'zh' ? '如果你也在做类似方向，欢迎交流。' : 'If you are working on something similar, reply and compare notes.'
-  );
+  const requestedCta = readOptionalString(options.cta, '');
+  const cta = isTextAlignedWithLanguage(requestedCta, language)
+    ? requestedCta
+    : buildDefaultCta(platformRule, language);
 
   const headline = (() => {
     switch (platformRule.id) {
       case 'x':
-        return language === 'zh' ? `${event.title}，这次我只想说 1 个判断。` : `${event.title}: one operator takeaway after shipping this.`;
+        return language === 'zh'
+          ? `${localizedContext.localizedTitle}，这次我只想说 1 个判断。`
+          : `${localizedContext.localizedTitle}: one operator takeaway after shipping this.`;
       case 'linkedin':
-        return language === 'zh' ? `${event.title}：一次更像系统升级的推进` : `${event.title}: an operational upgrade, not just a feature update`;
+        return language === 'zh'
+          ? `${localizedContext.localizedTitle}：一次更像系统升级的推进`
+          : `${localizedContext.localizedTitle}: an operational upgrade, not just a feature update`;
       case 'instagram':
-        return language === 'zh' ? `${event.title}，用几张图讲清楚这次推进` : `${event.title}, told like a visual build log`;
+        return language === 'zh'
+          ? `${localizedContext.localizedTitle}，用几张图讲清楚这次推进`
+          : `${localizedContext.localizedTitle}, told like a visual build log`;
       case 'zhihu':
-        return language === 'zh' ? `如果把“${event.title}”讲透，最值得说的是哪几件事？` : `What matters most if we unpack ${event.title}?`;
+        return language === 'zh'
+          ? `如果把“${localizedContext.localizedTitle}”讲透，最值得说的是哪几件事？`
+          : `What matters most if we unpack ${localizedContext.localizedTitle}?`;
       case 'xiaohongshu':
-        return language === 'zh' ? `${event.title} 做完后，我最想提醒大家的 3 件事` : `3 practical notes after shipping ${event.title}`;
+        return language === 'zh'
+          ? `${localizedContext.localizedTitle} 做完后，我最想提醒大家的 3 件事`
+          : `3 practical notes after shipping ${localizedContext.localizedTitle}`;
       case 'wechat_moments':
-        return language === 'zh' ? `关于 ${event.title} 的一个近况` : `A quick update on ${event.title}`;
+        return language === 'zh'
+          ? `关于${localizedContext.localizedTitle}的一个近况`
+          : `A quick update on ${localizedContext.localizedTitle}`;
       case 'wechat_official':
-        return language === 'zh' ? `${event.title}：这次推进里最值得复用的方法` : `${event.title}: the method worth reusing`;
+        return language === 'zh'
+          ? `${localizedContext.localizedTitle}：这次推进里最值得复用的方法`
+          : `${localizedContext.localizedTitle}: the method worth reusing`;
       default:
         return language === 'zh'
-          ? `${formatPlatformLabel(platformRule.id)}更新：${event.title}`
-          : `${formatPlatformLabel(platformRule.id)} update: ${event.title}`;
+          ? `${formatPlatformLabel(platformRule.id)}更新：${localizedContext.localizedTitle}`
+          : `${formatPlatformLabel(platformRule.id)} update: ${localizedContext.localizedTitle}`;
     }
   })();
   const bodyLead =
     language === 'zh'
       ? `这次我想用“${angle}”的角度，面向${audience}分享这次进展。`
       : `Sharing this from a ${angle} angle for ${audience}.`;
-  const detailLine =
-    detailText && language === 'zh'
-      ? `关键信息：${detailText}`
-      : detailText
-        ? `Key context: ${detailText}`
-        : language === 'zh'
-          ? '这条内容会围绕这次事件的核心进展、观察和下一步展开。'
-          : 'This draft centers on the event, what changed, and what comes next.';
+  const detailLine = localizedContext.detailLine;
+  const contextLead = localizedContext.contextLead;
   const closing =
     language === 'zh'
       ? `整体语气保持${tone}，最后用一句明确 CTA 收口。`
@@ -919,9 +926,11 @@ function buildPackageSections(platformRule, event, language, options) {
   return {
     headline,
     bodyLead,
+    contextLead,
     detailLine,
     closing,
     cta,
+    localizedTitle: localizedContext.localizedTitle,
   };
 }
 
@@ -934,6 +943,7 @@ function buildDraftContent(platformRule, event, language, options = {}) {
         return language === 'zh'
           ? [
               sections.headline,
+              sections.contextLead,
               `${sections.detailLine}`,
               '我现在更在意的不是“多做一个页面”，而是让整条 SocialOS 流程真的能跑起来。',
               sections.cta,
@@ -941,6 +951,7 @@ function buildDraftContent(platformRule, event, language, options = {}) {
             ]
           : [
               sections.headline,
+              sections.contextLead,
               sections.detailLine,
               'What matters now is not another screen. It is whether the whole SocialOS loop actually operates end to end.',
               sections.cta,
@@ -951,16 +962,18 @@ function buildDraftContent(platformRule, event, language, options = {}) {
           ? [
               sections.headline,
               '',
+              sections.contextLead,
               '这轮不是 UI 打磨而已，而是把 Quick Capture、People、Drafts、Queue 和 Self Mirror 真正串起来。',
-              `Context: ${sections.detailLine}`,
-              `Why it matters: 这能把“内容写作”变成“持续运营流程”。`,
-              `What next: ${sections.cta}`,
+              `核心信息：${sections.detailLine}`,
+              '为什么这很重要：它把“内容写作”变成了“持续运营流程”。',
+              `下一步：${sections.cta}`,
               '',
               hashtags.slice(0, 5).join(' '),
             ]
           : [
               sections.headline,
               '',
+              sections.contextLead,
               'This was not just a UI refresh. The goal was to make Quick Capture, People, Drafts, Queue, and Self Mirror operate as one workflow.',
               `Context: ${sections.detailLine}`,
               'Why it matters: this turns content writing into an operating loop instead of a pile of drafts.',
@@ -973,6 +986,7 @@ function buildDraftContent(platformRule, event, language, options = {}) {
           ? [
               sections.headline,
               '',
+              sections.contextLead,
               '这次我最想保留下来的，是从一个想法到真正能演示的工作台过程。',
               sections.detailLine,
               '如果你也喜欢看“怎么一步一步做出来”的过程，这组图会比较有代入感。',
@@ -983,6 +997,7 @@ function buildDraftContent(platformRule, event, language, options = {}) {
           : [
               sections.headline,
               '',
+              sections.contextLead,
               'The part I wanted to keep was the shift from a rough idea to something you can actually demo as a working workspace.',
               sections.detailLine,
               'If you like seeing how something gets built step by step, this package leans into that.',
@@ -995,8 +1010,9 @@ function buildDraftContent(platformRule, event, language, options = {}) {
           ? [
               sections.headline,
               '',
+              sections.contextLead,
               '先给结论：如果一个 SocialOS 真的要能用，最重要的不是功能列表，而是录入、检索、生成和发布之间的数据连续性。',
-              `这次 ${event.title} 的关键背景是：${sections.detailLine}`,
+              `这次 ${sections.localizedTitle} 的关键背景是：${sections.detailLine}`,
               '我会重点展开 3 个部分：为什么这样设计、哪些地方卡住、现在怎么让它至少能稳定演示。',
               sections.cta,
               '',
@@ -1005,6 +1021,7 @@ function buildDraftContent(platformRule, event, language, options = {}) {
           : [
               sections.headline,
               '',
+              sections.contextLead,
               'The short answer: a usable SocialOS depends less on feature count and more on continuity between capture, retrieval, generation, and publishing.',
               `Context: ${sections.detailLine}`,
               'I would unpack the design logic, the real bottlenecks, and how to make the system demo reliably.',
@@ -1017,6 +1034,7 @@ function buildDraftContent(platformRule, event, language, options = {}) {
           ? [
               sections.headline,
               '',
+              sections.contextLead,
               '先说结论：这次最有用的不是“多写几篇内容”，而是把整个内容动作做成了能复用的流程。',
               '1. 录入必须足够轻，不然根本没人会用',
               '2. 每个平台都要有自己的语气和结构，不能一稿平推',
@@ -1028,6 +1046,7 @@ function buildDraftContent(platformRule, event, language, options = {}) {
           : [
               sections.headline,
               '',
+              sections.contextLead,
               'Short version: the win was not more content, it was turning the whole motion into a reusable workflow.',
               '1. Capture has to feel light or people stop using it',
               '2. Each platform needs its own voice and structure',
@@ -1040,12 +1059,14 @@ function buildDraftContent(platformRule, event, language, options = {}) {
         return language === 'zh'
           ? [
               sections.headline,
+              sections.contextLead,
               sections.detailLine,
               '这次终于不只是“有个界面”，而是真的把流程跑顺了一些。',
               sections.cta,
             ]
           : [
               sections.headline,
+              sections.contextLead,
               sections.detailLine,
               'This finally feels less like a mockup and more like a loop that can actually run.',
               sections.cta,
@@ -1056,7 +1077,7 @@ function buildDraftContent(platformRule, event, language, options = {}) {
               sections.headline,
               '',
               '导语',
-              `${sections.bodyLead} ${sections.detailLine}`,
+              `${sections.bodyLead} ${sections.contextLead} ${sections.detailLine}`,
               '',
               '正文结构',
               '一、为什么这次不再只是做页面',
@@ -1069,7 +1090,7 @@ function buildDraftContent(platformRule, event, language, options = {}) {
               sections.headline,
               '',
               'Lead',
-              `${sections.bodyLead} ${sections.detailLine}`,
+              `${sections.bodyLead} ${sections.contextLead} ${sections.detailLine}`,
               '',
               'Body structure',
               '1. Why this can no longer be treated as a UI-only project',
@@ -1083,6 +1104,7 @@ function buildDraftContent(platformRule, event, language, options = {}) {
           sections.headline,
           '',
           sections.bodyLead,
+          sections.contextLead,
           sections.detailLine,
           sections.closing,
           '',
