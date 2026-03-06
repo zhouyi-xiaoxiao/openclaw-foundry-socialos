@@ -1713,7 +1713,7 @@ function computeKeywordScore(terms, text) {
 
 function buildSearchResultRow(row, terms, embeddingsSettings) {
   const tags = parseJsonStringArray(row.tags);
-  const notes = readOptionalString(row.notes, '');
+  const notes = compactNotes(row.notes, 220);
   const haystack = `${row.name} ${notes} ${tags.join(' ')}`.toLowerCase();
   const keywordScore = computeKeywordScore(terms, haystack);
   const evidenceSnippet = terms.find((term) => haystack.includes(term))
@@ -2083,6 +2083,7 @@ function searchPeopleMatches(statements, query, limit = 4) {
   const terms = normalizedQuery.split(/\s+/u).filter(Boolean);
   return statements.listAllPeople
     .all()
+    .filter(isDisplayablePersonRow)
     .map((row) => buildSearchResultRow(row, terms, embeddingsSettings))
     .filter((row) => row.score > 0)
     .sort((left, right) => {
@@ -2159,6 +2160,7 @@ function buildWorkspaceSummary({
   captureDraft,
 }) {
   const personName = cleanText(captureDraft?.personDraft?.name || '');
+  const requiresNameConfirmation = Boolean(captureDraft?.personDraft?.requiresNameConfirmation);
   if (hasUntypedVoiceOnly) {
     return preferredChinese
       ? '我收到了这段语音，但现在还没有 transcript，所以先不乱回复。只要浏览器语音识别可用，或者配置好 OPENAI_API_KEY，这里就能像正常聊天一样直接语音转文字。'
@@ -2188,6 +2190,12 @@ function buildWorkspaceSummary({
       : 'I merged that voice note into the current chat turn. Check that the extracted person and next step look right, then save it to memory if you want.';
   }
 
+  if (requiresNameConfirmation) {
+    return preferredChinese
+      ? '我先整理出了一张联系人草稿，但名字还需要你确认一下。先改对名字，再保存进记忆会更稳。'
+      : 'I drafted a contact card, but the name still needs your confirmation. Confirm or edit it first, then save it to memory.';
+  }
+
   if (personName) {
     return preferredChinese
       ? `我先从这句话里提了一个联系人草稿${personName ? `：${personName}` : ''}。如果方向对，就保存；如果还没说完，继续聊就行。`
@@ -2204,7 +2212,7 @@ function buildSuggestedEventPayload(text, draft, relatedPeople = []) {
   const personName = cleanText(draft?.personDraft?.name || relatedPeople[0]?.name || '');
   const firstSentence = combined.split(/[。！？.!?]/u).map((item) => item.trim()).find(Boolean) || combined;
   const baseTitle =
-    personName && personName !== 'New contact'
+    personName && !isPlaceholderContactName(personName)
       ? `Follow-up with ${personName}`
       : firstSentence
         ? truncateText(firstSentence, 48)
@@ -2235,10 +2243,12 @@ function buildWorkspaceAgentLanes({ intent, draft, relatedPeople, relatedEvents 
     {
       id: 'memory',
       label: 'People Memory Agent',
-      status: relatedPeople.length ? 'matched' : draft?.personDraft?.name ? 'drafted' : 'idle',
+      status: relatedPeople.length ? 'matched' : draft?.personDraft?.isConfirmedName ? 'drafted' : draft?.personDraft ? 'review' : 'idle',
       summary: relatedPeople.length
         ? `Found ${relatedPeople.length} contact match(es) connected to this message.`
-        : `Prepared a contact draft for ${readOptionalString(draft?.personDraft?.name, 'this message')}.`,
+        : draft?.personDraft?.isConfirmedName
+          ? `Prepared a contact draft for ${readOptionalString(draft?.personDraft?.name, 'this message')}.`
+          : 'Prepared a contact draft that still needs name confirmation before saving.',
     },
     {
       id: 'self',
@@ -2289,6 +2299,7 @@ function buildWorkspaceContactDraftCard(captureDraft) {
   const personDraft = captureDraft?.personDraft || {};
   const interactionDraft = captureDraft?.interactionDraft || {};
   const name = cleanText(personDraft.name || '');
+  const displayName = cleanText(personDraft.displayName || '') || name || 'Unconfirmed contact';
   const summary = cleanText(
     personDraft.followUpSuggestion ||
       interactionDraft.summary ||
@@ -2299,11 +2310,12 @@ function buildWorkspaceContactDraftCard(captureDraft) {
   if (!name && !summary) return null;
   return buildPresentationCard('contact', {
     kicker: 'Contact draft',
-    title: name || 'New contact draft',
-    subtitle: name ? 'Ready to review before saving' : 'A contact can be drafted from this turn',
+    title: displayName,
+    subtitle: personDraft.requiresNameConfirmation ? 'Confirm the name before saving' : 'Ready to review before saving',
     body: truncateText(summary || 'Keep chatting if you want to refine the person and follow-up context.', 200),
     badges: cleanList(personDraft.tags).slice(0, 3),
     detailLines: [
+      personDraft.requiresNameConfirmation ? 'Name confirmation required' : '',
       personDraft.nextFollowUpAt ? `Next follow-up: ${personDraft.nextFollowUpAt}` : '',
       cleanText(interactionDraft.summary || '') ? `Context: ${truncateText(interactionDraft.summary, 90)}` : '',
     ],
@@ -2452,12 +2464,16 @@ function buildWorkspacePresentation({
 
   const actions = [];
   if (showMemoryAction) {
-    actions.push({ kind: 'mutation', action: 'save-memory', label: 'Save Contact' });
+    actions.push({
+      kind: 'mutation',
+      action: 'review-contact',
+      label: captureDraft?.personDraft?.requiresNameConfirmation ? 'Review Contact' : 'Review & Save',
+    });
   }
   if (personCard?.href) {
     actions.push({ kind: 'link', href: personCard.href, label: 'Open Contact' });
   }
-  if (showEventSuggestion && suggestedEvent?.title) {
+  if (showEventSuggestion && suggestedEvent?.title && !captureDraft?.personDraft?.requiresNameConfirmation) {
     actions.push({ kind: 'mutation', action: 'create-event', label: 'Create Event' });
   }
   if (draftResultCard?.href) {
@@ -2501,7 +2517,7 @@ function buildWorkspaceChatPayload(statements, body = {}) {
   const showMemoryAction =
     intent !== 'search' &&
     Boolean(
-      cleanText(captureDraft.personDraft?.name || '') ||
+      cleanText(captureDraft.personDraft?.displayName || captureDraft.personDraft?.name || '') ||
         cleanText(captureDraft.interactionDraft?.summary || '') ||
         combinedText
     );
@@ -2699,7 +2715,10 @@ function compareFollowUpCandidates(left, right) {
 }
 
 function buildFollowUpCandidates(statements, limit = 6) {
-  const people = statements.listRecentPeople.all(Math.max(limit * 3, 12)).map(formatPersonRow);
+  const people = statements.listRecentPeople
+    .all(Math.max(limit * 3, 12))
+    .filter(isDisplayablePersonRow)
+    .map(formatPersonRow);
 
   return people
     .map((person) => {
@@ -2970,7 +2989,7 @@ function buildAskSearchPayload(statements, query) {
 }
 
 function buildCockpitSummary(statements) {
-  const recentPeople = statements.listRecentPeople.all(8).map(formatPersonRow);
+  const recentPeople = statements.listRecentPeople.all(8).filter(isDisplayablePersonRow).map(formatPersonRow);
   const recentEvents = statements.listRecentEvents.all(8).map(formatEventRow);
   const recentDrafts = dedupeLatestDrafts(statements.listRecentDrafts.all(40).map(formatDraftRow), 20);
   const recentQueueTasks = statements.listRecentQueueTasks.all(20).map(formatQueueTaskRow);
@@ -3289,7 +3308,7 @@ function normalizeTimestampInput(value, fallback = null) {
 
 function findExistingPersonByName(statements, name) {
   const normalizedName = cleanText(name).toLowerCase();
-  if (!normalizedName) return null;
+  if (!normalizedName || isPlaceholderContactName(normalizedName)) return null;
   return statements
     .listAllPeople
     .all()
@@ -3303,15 +3322,18 @@ function touchExistingPerson(statements, personRow, overrides = {}) {
     ...(Array.isArray(overrides.tags) ? overrides.tags : []),
   ]);
   const mergedNotes = cleanText(
-    [readOptionalString(personRow.notes, ''), readOptionalString(overrides.notes, '')]
+    [sanitizeContactDraftText(readOptionalString(personRow.notes, '')), sanitizeContactDraftText(readOptionalString(overrides.notes, ''))]
       .filter(Boolean)
       .join('\n\n')
   );
   const nextFollowUpAt =
     normalizeTimestampInput(overrides.nextFollowUpAt, null) || personRow.next_follow_up_at || null;
+  const safeName = isPlaceholderContactName(overrides.name)
+    ? personRow.name
+    : readOptionalString(overrides.name, personRow.name);
 
   statements.updatePerson.run(
-    readOptionalString(overrides.name, personRow.name),
+    safeName,
     JSON.stringify(mergedTags),
     mergedNotes,
     nextFollowUpAt,
@@ -3323,6 +3345,12 @@ function touchExistingPerson(statements, personRow, overrides = {}) {
 }
 
 function ensurePersonRecord(statements, personDraft = {}, preferredPersonId = '') {
+  if (isPlaceholderContactName(personDraft.name)) {
+    throw new HttpError(400, 'name confirmation required', {
+      field: 'personDraft.name',
+      reason: 'placeholder_name',
+    });
+  }
   const requestedPersonId = cleanText(preferredPersonId || personDraft.personId || '');
   const existingById = requestedPersonId ? statements.selectPersonById.get(requestedPersonId) : null;
 
@@ -3339,9 +3367,9 @@ function ensurePersonRecord(statements, personDraft = {}, preferredPersonId = ''
   const personId = requestedPersonId || makeId('person');
   statements.insertPerson.run(
     personId,
-    readOptionalString(personDraft.name, 'New contact'),
+    readOptionalString(personDraft.name, ''),
     JSON.stringify(cleanList(personDraft.tags)),
-    cleanText(personDraft.notes || ''),
+    sanitizeContactDraftText(personDraft.notes || ''),
     normalizeTimestampInput(personDraft.nextFollowUpAt, null),
     now,
     now
@@ -3388,7 +3416,7 @@ function syncPersonIdentities(statements, personId, identities = []) {
 
 function insertPersonInteraction(statements, personId, interactionDraft = {}) {
   const summary = cleanText(interactionDraft.summary || '');
-  const evidence = cleanText(interactionDraft.evidence || summary);
+  const evidence = sanitizeContactDraftText(interactionDraft.evidence || summary);
   if (!summary && !evidence) return null;
   const interactionId = makeId('interaction');
   const happenedAt = normalizeTimestampInput(interactionDraft.happenedAt, nowIso());
@@ -3460,6 +3488,13 @@ function commitCaptureDraft(statements, body = {}) {
   let personRow;
   let interactionRow;
   let checkinRow;
+
+  if (isPlaceholderContactName(draft.personDraft?.name)) {
+    throw new HttpError(400, 'name confirmation required', {
+      field: 'personDraft.name',
+      reason: 'placeholder_name',
+    });
+  }
 
   statements.db.exec('BEGIN');
   try {
@@ -3835,7 +3870,7 @@ function formatPersonRow(row) {
     personId: row.id,
     name: row.name,
     tags: parseJsonStringArray(row.tags),
-    notes: readOptionalString(row.notes, ''),
+    notes: sanitizeContactDraftText(readOptionalString(row.notes, '')),
     nextFollowUpAt: row.next_follow_up_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -3859,9 +3894,9 @@ function formatInteractionRow(row) {
   return {
     interactionId: row.id,
     personId: row.person_id,
-    summary: readOptionalString(row.summary, ''),
+    summary: sanitizeContactDraftText(readOptionalString(row.summary, '')),
     happenedAt: row.happened_at,
-    evidence: readOptionalString(row.evidence, ''),
+    evidence: sanitizeContactDraftText(readOptionalString(row.evidence, '')),
   };
 }
 
@@ -3994,7 +4029,7 @@ async function routeRequest(req, res, statements) {
     const query = readOptionalString(requestUrl.searchParams.get('query'), '');
 
     if (!query) {
-      const people = statements.listRecentPeople.all(limit).map(formatPersonRow);
+      const people = statements.listRecentPeople.all(limit * 3).filter(isDisplayablePersonRow).map(formatPersonRow).slice(0, limit);
       sendJson(res, 200, { query: '', count: people.length, people, retrieval: null });
       return;
     }
@@ -4002,7 +4037,7 @@ async function routeRequest(req, res, statements) {
     const pattern = `%${query.toLowerCase()}%`;
     const embeddingsSettings = resolveEmbeddingsSettings();
     const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
-    const rows = statements.listAllPeople.all();
+    const rows = statements.listAllPeople.all().filter(isDisplayablePersonRow);
     const results = rows
       .map((row) => buildSearchResultRow(row, terms, embeddingsSettings))
       .filter((row) => row.score > 0)
@@ -4240,8 +4275,14 @@ async function routeRequest(req, res, statements) {
     const personId =
       typeof body.personId === 'string' && body.personId.trim() ? body.personId.trim() : makeId('person');
     const name = requireString(body.name, 'name');
+    if (isPlaceholderContactName(name)) {
+      throw new HttpError(400, 'name confirmation required', {
+        field: 'name',
+        reason: 'placeholder_name',
+      });
+    }
     const tags = normalizeStringList(body.tags);
-    const notes = readOptionalString(body.notes, '');
+    const notes = sanitizeContactDraftText(readOptionalString(body.notes, ''));
     const nextFollowUpAt = readOptionalString(body.nextFollowUpAt, '') || null;
     const existing = statements.selectPersonById.get(personId);
 
@@ -4638,7 +4679,7 @@ async function routeRequest(req, res, statements) {
     const embeddingsSettings = resolveEmbeddingsSettings();
 
     const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
-    const rows = statements.listAllPeople.all();
+    const rows = statements.listAllPeople.all().filter(isDisplayablePersonRow);
 
     const results = rows
       .map((row) => buildSearchResultRow(row, terms, embeddingsSettings))

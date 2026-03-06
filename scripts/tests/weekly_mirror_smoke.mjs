@@ -35,7 +35,7 @@ async function main() {
   const api = await startApiServer({ port: 0, quiet: true, dbPath });
   try {
     await postJson(api.baseUrl, '/capture', {
-      text: '今天推进了协作流程，精力还不错，也有一点压力。',
+      text: '今天遇到了王武，一起推进了协作流程，精力还不错，也有一点压力。',
       source: 'weekly_mirror_smoke',
     });
 

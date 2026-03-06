@@ -505,6 +505,7 @@ function renderPeopleCards(people, showScore = false) {
     .map((person) => {
       const tags = Array.isArray(person.tags) ? person.tags : [];
       const score = showScore && typeof person.score === 'number' ? person.score.toFixed(3) : null;
+      const summary = truncate(person.evidenceSnippet || person.notes || '', 140) || 'No notes yet.';
       return `
         <article class="stack-card">
           <div class="stack-meta">
@@ -512,13 +513,12 @@ function renderPeopleCards(people, showScore = false) {
             <span>${escapeHtml(formatDateTime(person.updatedAt || person.createdAt))}</span>
           </div>
           ${score ? `<p class="score">score ${escapeHtml(score)}</p>` : ''}
-          <p>${escapeHtml(truncate(person.evidenceSnippet || person.notes || '', 180) || 'No notes yet.')}</p>
+          <p>${escapeHtml(summary)}</p>
           <div class="chip-row">
             ${(tags.length ? tags : ['no-tags']).map((tag) => renderPill(tag, 'soft')).join('')}
           </div>
           <div class="inline-actions">
             <a class="mini-link" href="/people/${encodeURIComponent(person.personId)}">Open Detail</a>
-            <code>${escapeHtml(person.personId)}</code>
           </div>
         </article>
       `;
@@ -1553,6 +1553,32 @@ async function renderPeoplePage(page, requestUrl) {
                 <small>Next follow-up: ${escapeHtml(detail.suggestion?.nextFollowUpAt || 'not set')}</small>
                 <p><strong>Suggested follow-up:</strong> ${escapeHtml(detail.suggestion?.followUpMessage || 'n/a')}</p>
               </div>
+              ${renderPanel(
+                'Edit Contact',
+                `
+                  <form class="api-form compact-form" data-api-form="true" data-endpoint="/people/upsert">
+                    <input type="hidden" name="personId" value="${escapeHtml(detail.person.personId)}" />
+                    ${renderFormField('Name', `<input name="name" type="text" value="${escapeHtml(detail.person.name)}" />`)}
+                    ${renderFormField(
+                      'Tags',
+                      `<input name="tags" type="text" value="${escapeHtml((detail.person.tags || []).join(', '))}" />`,
+                      'Comma-separated'
+                    )}
+                    ${renderFormField(
+                      'Notes',
+                      `<textarea name="notes" rows="4">${escapeHtml(detail.person.notes || '')}</textarea>`
+                    )}
+                    ${renderFormField(
+                      'Next Follow-up',
+                      `<input name="nextFollowUpAt" type="datetime-local" value="${escapeHtml(
+                        (detail.person.nextFollowUpAt || '').replace(/:\d{2}\.\d{3}Z$/u, '').replace('Z', '')
+                      )}" />`
+                    )}
+                    <div class="inline-actions"><button type="submit">Save Contact</button></div>
+                    <div class="form-result" data-form-result></div>
+                  </form>
+                `
+              )}
               ${renderPanel('Identities', renderIdentityCards(detail.identities || []))}
               ${renderPanel('Timeline', renderInteractionCards(detail.interactions || []))}
               ${renderPanel('Evidence', renderEvidenceList(detail.evidence || []))}
@@ -2179,6 +2205,14 @@ function renderClientScript() {
         return data;
       }
 
+      function renderWorkspaceField(label, controlHtml, hint = '') {
+        return '<label class="field">' +
+          '<span>' + escapeHtml(label) + '</span>' +
+          controlHtml +
+          (hint ? '<small>' + escapeHtml(hint) + '</small>' : '') +
+        '</label>';
+      }
+
       function renderResult(resultNode, payload) {
         if (!resultNode) return;
         resultNode.innerHTML = '<pre>' + escapeHtml(JSON.stringify(payload, null, 2)) + '</pre>';
@@ -2232,6 +2266,29 @@ function renderClientScript() {
         textField.focus();
         textField.setSelectionRange(nextValue.length, nextValue.length);
         return nextValue;
+      }
+
+      function isInvalidContactDraftName(value) {
+        const normalized = String(value || '').trim().toLowerCase();
+        return !normalized || ['new contact', 'new contact draft', 'unconfirmed contact', 'unknown contact', '新联系人', '未确认联系人'].includes(normalized);
+      }
+
+      function serializeIdentityLines(identities) {
+        return (Array.isArray(identities) ? identities : [])
+          .map((item) => [item?.platform || '', item?.handle || '', item?.url || '', item?.note || ''].join('|'))
+          .join('\n');
+      }
+
+      function updateWorkspaceContactReviewState(form) {
+        if (!(form instanceof HTMLFormElement)) return;
+        const nameInput = form.elements.personName;
+        const submitButton = form.querySelector('[data-review-submit]');
+        const warningNode = form.querySelector('[data-review-warning]');
+        const invalid = isInvalidContactDraftName(nameInput?.value || '');
+        if (submitButton) submitButton.disabled = invalid;
+        if (warningNode) {
+          warningNode.hidden = !invalid;
+        }
       }
 
       function flashMessage(flash) {
@@ -2483,6 +2540,51 @@ function renderClientScript() {
         '</div>';
       }
 
+      function renderWorkspaceContactReviewForm(payload) {
+        const captureDraft = payload.captureDraft || {};
+        const personDraft = captureDraft.personDraft || {};
+        const interactionDraft = captureDraft.interactionDraft || {};
+        const selfCheckinDraft = captureDraft.selfCheckinDraft || {};
+        const displayName = String(personDraft.displayName || personDraft.name || '').trim();
+        const hasDraft =
+          displayName ||
+          String(interactionDraft.summary || '').trim() ||
+          String(interactionDraft.evidence || '').trim();
+        if (!hasDraft) return '';
+
+        const requiresNameConfirmation = Boolean(personDraft.requiresNameConfirmation);
+        const submitDisabled = requiresNameConfirmation && isInvalidContactDraftName(personDraft.name || '');
+
+        return '<section class="workspace-block workspace-review-block">' +
+          '<h4>Review contact draft</h4>' +
+          '<form class="api-form compact-form workspace-review-form" data-capture-commit="true" data-workspace-contact-review="true" data-response-id="' + escapeHtml(payload.responseId || '') + '">' +
+            '<input type="hidden" name="text" value="' + escapeHtml(payload.text || '') + '" />' +
+            '<input type="hidden" name="source" value="' + escapeHtml(captureDraft.source || payload.source || 'workspace-chat') + '" />' +
+            '<input type="hidden" name="combinedText" value="' + escapeHtml(captureDraft.combinedText || '') + '" />' +
+            '<input type="hidden" name="assetIds" value="' + escapeHtml((payload.assets || []).map((asset) => asset.assetId).join(',')) + '" />' +
+            '<input type="hidden" name="energy" value="' + escapeHtml(String(selfCheckinDraft.energy ?? 0)) + '" />' +
+            '<input type="hidden" name="emotions" value="' + escapeHtml((selfCheckinDraft.emotions || []).join(', ')) + '" />' +
+            '<input type="hidden" name="reflection" value="' + escapeHtml(selfCheckinDraft.reflection || '') + '" />' +
+            '<div class="grid two-up workspace-review-grid">' +
+              renderWorkspaceField('Name', '<input name="personName" type="text" value="' + escapeHtml(personDraft.name || '') + '" data-review-name-input placeholder="Confirm the contact name" />') +
+              renderWorkspaceField('Next Follow-up', '<input name="nextFollowUpAt" type="datetime-local" value="' + escapeHtml(personDraft.nextFollowUpAt || '') + '" />') +
+            '</div>' +
+            '<div class="workspace-inline-note result-block result-block-warn" data-review-warning' + (submitDisabled ? '' : ' hidden') + '>' +
+              '<p>Confirm the contact name before saving.</p>' +
+            '</div>' +
+            renderWorkspaceField('Tags', '<input name="personTags" type="text" value="' + escapeHtml((personDraft.tags || []).join(', ')) + '" placeholder="growth, investor, founder" />', 'Comma-separated') +
+            renderWorkspaceField('Notes', '<textarea name="personNotes" rows="4" placeholder="What matters about this person and why you should remember them.">' + escapeHtml(personDraft.notes || '') + '</textarea>') +
+            renderWorkspaceField('Identities', '<textarea name="identities" rows="3" placeholder="platform|handle|url|note">' + escapeHtml(serializeIdentityLines(personDraft.identities || [])) + '</textarea>', 'One identity per line: platform|handle|url|note') +
+            renderWorkspaceField('Interaction Summary', '<textarea name="interactionSummary" rows="3">' + escapeHtml(interactionDraft.summary || '') + '</textarea>') +
+            renderWorkspaceField('Interaction Evidence', '<textarea name="interactionEvidence" rows="4">' + escapeHtml(interactionDraft.evidence || '') + '</textarea>') +
+            '<div class="inline-actions">' +
+              '<button type="submit" data-review-submit' + (submitDisabled ? ' disabled' : '') + '>Save Contact</button>' +
+            '</div>' +
+            '<div class="form-result" data-form-result hidden></div>' +
+          '</form>' +
+        '</section>';
+      }
+
       function renderWorkspaceAssistantTurn(payload) {
         const presentation = payload.presentation || {};
         const primaryCard = presentation.primaryCard || null;
@@ -2509,6 +2611,7 @@ function renderClientScript() {
               renderWorkspacePresentationCard(primaryCard) +
             '</section>'
           : '';
+        const reviewBlock = renderWorkspaceContactReviewForm(payload);
         const secondaryBlock = secondaryCards.length
           ? '<section class="workspace-block"><h4>Related context</h4><div class="workspace-secondary-grid">' +
               secondaryCards.map((card) => renderWorkspacePresentationCard(card, true)).join('') +
@@ -2521,6 +2624,7 @@ function renderClientScript() {
           '<p>' + escapeHtml(presentation.answer || payload.summary || '') + '</p>' +
           transcriptionBlock +
           primaryBlock +
+          reviewBlock +
           secondaryBlock +
           laneBlock +
           actions +
@@ -2593,6 +2697,9 @@ function renderClientScript() {
           if (response.ok) {
             captureState.workspaceResponses.set(response.payload.responseId, response.payload);
             appendWorkspaceHtml(renderWorkspaceAssistantTurn(response.payload));
+            document.querySelectorAll('[data-workspace-contact-review]').forEach((reviewForm) => {
+              updateWorkspaceContactReviewState(reviewForm);
+            });
             form.reset();
             captureState.assets = [];
             captureState.liveTranscript = '';
@@ -2622,15 +2729,11 @@ function renderClientScript() {
 
         setButtonBusy(button, true);
         try {
-          if (action === 'save-memory') {
-            const response = await apiRequest('/capture/commit', payload.commitPayload, 'POST');
-            if (!response.ok) throw new Error(response.payload?.error || 'Save memory failed');
-            appendWorkspaceSystemTurn(
-              'Memory saved',
-              '<p>Saved this turn into people memory and self mirror inputs.</p><div class="inline-actions"><a class="mini-link" href="/people/' +
-                encodeURIComponent(response.payload.person.personId) +
-                '">Open Contact</a></div>'
-            );
+          if (action === 'review-contact') {
+            const reviewForm = document.querySelector('[data-workspace-contact-review][data-response-id="' + responseId + '"]');
+            if (!(reviewForm instanceof HTMLFormElement)) throw new Error('Review form is unavailable for this draft');
+            reviewForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            reviewForm.elements.personName?.focus();
             return;
           }
 
@@ -2733,6 +2836,14 @@ function renderClientScript() {
         const resultNode = form.querySelector('[data-form-result]');
         setButtonBusy(submitter, true);
         try {
+          const invalidName = isInvalidContactDraftName(form.elements.personName?.value || '');
+          if (invalidName) {
+            updateWorkspaceContactReviewState(form);
+            form.elements.personName?.focus();
+            renderWorkspaceComposerResult(resultNode, 'Confirm the contact name before saving.', false);
+            return;
+          }
+
           const payload = {
             text: form.elements.text.value,
             source: form.elements.source.value,
@@ -2761,6 +2872,38 @@ function renderClientScript() {
           };
           const response = await apiRequest('/capture/commit', payload, 'POST');
           renderResult(resultNode, response.payload);
+
+          if (form.hasAttribute('data-workspace-contact-review')) {
+            if (!response.ok) {
+              renderWorkspaceComposerResult(
+                resultNode,
+                response.payload?.error || 'Contact save failed. Please review the draft and try again.',
+                false
+              );
+              if (response.payload?.error === 'name confirmation required') {
+                form.elements.personName?.focus();
+              }
+              return;
+            }
+
+            const responseId = form.dataset.responseId || '';
+            const workspacePayload = captureState.workspaceResponses.get(responseId);
+            updateWorkspaceContactReviewState(form);
+            if (submitter) submitter.disabled = true;
+            renderWorkspaceComposerResult(resultNode, 'Contact saved. You can open the detail page or create an event next.');
+            appendWorkspaceSystemTurn(
+              'Contact saved',
+              '<p>' + escapeHtml(response.payload.person?.name || 'The contact') + ' is now in Contacts with a cleaner memory record.</p>',
+              '<div class="inline-actions">' +
+                '<a class="mini-link" href="/people/' + encodeURIComponent(response.payload.person.personId) + '">Open Contact</a>' +
+                (workspacePayload?.suggestedEvent?.title
+                  ? '<button type="button" class="secondary-button" data-workspace-action="create-event" data-response-id="' + escapeHtml(responseId) + '">Create Event</button>'
+                  : '') +
+              '</div>'
+            );
+            return;
+          }
+
           sessionStorage.setItem(
             flashKey,
             JSON.stringify({
@@ -2899,6 +3042,14 @@ function renderClientScript() {
         if (!form) return;
         event.preventDefault();
         form.requestSubmit(form.querySelector('button[type="submit"]'));
+      });
+
+      document.addEventListener('input', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        const reviewForm = target.closest('form[data-workspace-contact-review]');
+        if (!(reviewForm instanceof HTMLFormElement)) return;
+        updateWorkspaceContactReviewState(reviewForm);
       });
 
       document.addEventListener('click', async (event) => {
@@ -3118,6 +3269,9 @@ function renderClientScript() {
 
       consumeFlash();
       renderWorkspaceAssets();
+      document.querySelectorAll('[data-workspace-contact-review]').forEach((reviewForm) => {
+        updateWorkspaceContactReviewState(reviewForm);
+      });
       maybeRunInitialWorkspaceQuery();
     </script>
   `;
@@ -3877,6 +4031,19 @@ function renderLayout({ currentPath, title, body }) {
       }
       .compact-form {
         gap: 12px;
+      }
+      .workspace-review-block {
+        border-top: 1px solid rgba(22, 33, 50, 0.08);
+        padding-top: 4px;
+      }
+      .workspace-review-form {
+        margin-top: 8px;
+      }
+      .workspace-review-grid {
+        gap: 12px;
+      }
+      .workspace-inline-note {
+        margin: 0;
       }
       .details-shell {
         border: 1px solid rgba(22, 33, 50, 0.1);

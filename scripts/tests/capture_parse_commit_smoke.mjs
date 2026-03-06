@@ -48,8 +48,28 @@ async function main() {
     });
 
     assert(parsed.captureDraft.personDraft.name === '李雷', 'capture parse should infer person name');
+    assert(parsed.captureDraft.personDraft.requiresNameConfirmation === false, 'known contact name should not require confirmation');
     assert(parsed.captureDraft.personDraft.identities.length >= 1, 'capture parse should infer identities');
     assert(parsed.captureDraft.selfCheckinDraft.reflection.includes('李雷'), 'reflection should include combined text');
+
+    const chinesePatternParsed = await requestJson(api.baseUrl, '/capture/parse', {
+      method: 'POST',
+      body: {
+        text: '有一个叫王章的联系人，他做金融，我想下周联系他。',
+        source: 'capture_parse_commit_smoke',
+      },
+    });
+    assert(chinesePatternParsed.captureDraft.personDraft.name === '王章', 'capture parse should support richer Chinese naming patterns');
+
+    const unresolvedParsed = await requestJson(api.baseUrl, '/capture/parse', {
+      method: 'POST',
+      body: {
+        text: '帮我新建一个联系人吧，我们在聚会里见到了他，聊了很多金融和伦敦的事情。',
+        source: 'capture_parse_commit_smoke',
+      },
+    });
+    assert(unresolvedParsed.captureDraft.personDraft.requiresNameConfirmation === true, 'missing name should require confirmation instead of fabricating a placeholder');
+    assert(unresolvedParsed.captureDraft.personDraft.name === '', 'missing name should stay empty');
 
     const committed = await requestJson(api.baseUrl, '/capture/commit', {
       method: 'POST',
@@ -81,6 +101,22 @@ async function main() {
       personDetail.interactions.some((item) => item.summary.includes('李雷') || item.evidence.includes('李雷')),
       'people detail should expose the committed interaction'
     );
+
+    const invalidResponse = await fetch(`${api.baseUrl}/capture/commit`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        text: unresolvedParsed.captureDraft.rawText,
+        source: unresolvedParsed.captureDraft.source,
+        combinedText: unresolvedParsed.captureDraft.combinedText,
+        personDraft: unresolvedParsed.captureDraft.personDraft,
+        selfCheckinDraft: unresolvedParsed.captureDraft.selfCheckinDraft,
+        interactionDraft: unresolvedParsed.captureDraft.interactionDraft,
+      }),
+    });
+    const invalidPayload = await invalidResponse.json();
+    assert(invalidResponse.status === 400, 'placeholder or missing names should be blocked at commit time');
+    assert(invalidPayload.error === 'name confirmation required', 'blocked commit should explain that name confirmation is required');
 
     console.log('capture_parse_commit_smoke: PASS');
   } finally {

@@ -110,7 +110,7 @@ export function inferEmotionTags(text) {
 export function inferPersonName(text) {
   const source = cleanText(text);
   const chinesePatterns = [
-    /(?:有一个|有位|有个)?(?:叫|名叫)\s*([\u4e00-\u9fa5]{2,4})(?:的(?:联系人|朋友|同学|人))?/u,
+    /(?:有一个|有位|有个)?(?:叫|名叫)\s*([\u4e00-\u9fa5]{2,4})(?=的(?:联系人|朋友|同学|人)|[，,。.!?\s]|$)/u,
     /(?:我(?:今天)?(?:在[^，。,.!?]{0,20})?(?:认识了|遇到了|碰到了|见到了)|(?:认识了|遇到了|碰到了|见到了))\s*([\u4e00-\u9fa5]{2,4})/u,
     /(?:他|她)叫\s*([\u4e00-\u9fa5]{2,4})/u,
     /(?:联系人|朋友|同学|嘉宾|同事)\s*[:：]?\s*([\u4e00-\u9fa5]{2,4})/u,

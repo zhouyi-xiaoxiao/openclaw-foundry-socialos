@@ -50,7 +50,7 @@ async function main() {
     assert(people.results.some((entry) => entry.name === 'Product Workspace Tester'), 'saved person should be searchable');
 
     const workspace = await postJson(api.baseUrl, '/workspace/chat', {
-      text: 'I met a product workspace tester and want to turn this into an event plus a follow-up.',
+      text: 'I met Product Workspace Tester and want to turn this into an event plus a follow-up.',
       source: 'product_workspace_smoke',
     });
     assert(typeof workspace.responseId === 'string', 'workspace chat should return a response id');
@@ -60,6 +60,14 @@ async function main() {
     assert(typeof workspace.presentation?.answer === 'string', 'workspace chat should expose presentation answer');
     assert(workspace.presentation?.primaryCard?.type === 'contact', 'capture-like workspace input should foreground a contact card');
     assert(Array.isArray(workspace.presentation?.actions), 'workspace chat should expose lightweight actions');
+    assert(
+      workspace.presentation.actions.some((action) => action.action === 'review-contact'),
+      'workspace contact drafts should be reviewed before saving'
+    );
+    assert(
+      workspace.captureDraft?.personDraft?.isConfirmedName === true,
+      'named workspace contact drafts should be marked as confirmed'
+    );
 
     const searchWorkspace = await postJson(api.baseUrl, '/workspace/chat', {
       text: 'Who is the product workspace tester?',
@@ -75,8 +83,21 @@ async function main() {
       'workspace presentation should cap secondary cards'
     );
 
+    const reviewWorkspace = await postJson(api.baseUrl, '/workspace/chat', {
+      text: '帮我新建一个联系人吧，我在聚会里遇到了他，聊了很多金融和伦敦的事情。',
+      source: 'product_workspace_smoke',
+    });
+    assert(
+      reviewWorkspace.captureDraft?.personDraft?.requiresNameConfirmation === true,
+      'unnamed workspace capture should require name confirmation'
+    );
+    assert(
+      reviewWorkspace.presentation?.actions?.some((action) => action.label === 'Review Contact'),
+      'unnamed workspace capture should guide the user into review first'
+    );
+
     const capture = await postJson(api.baseUrl, '/capture', {
-      text: 'Product workspace smoke capture for event and drafts',
+      text: 'I met Product Workspace Tester again and want to create an event plus drafts from that follow-up.',
       source: 'product_workspace_smoke',
     });
     const event = await postJson(api.baseUrl, '/events', {

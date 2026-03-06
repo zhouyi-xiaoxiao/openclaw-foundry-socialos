@@ -52,13 +52,28 @@ async function main() {
       },
     });
 
+    const updated = await requestJson(api.baseUrl, '/people/upsert', {
+      method: 'POST',
+      body: {
+        personId,
+        name: 'Alice Evidence Updated',
+        tags: ['growth', 'community', 'follow-up'],
+        notes: 'Met at a builder dinner. Strong operator energy. Good fit for follow-up next week.',
+        nextFollowUpAt: '2026-03-12T09:30',
+      },
+    });
+    assert(updated.action === 'updated', 'people upsert should update existing contacts');
+
     const detail = await requestJson(api.baseUrl, `/people/${encodeURIComponent(personId)}`);
+    assert(detail.person.name === 'Alice Evidence Updated', 'people detail should show updated name');
+    assert(detail.person.tags.includes('follow-up'), 'people detail should show updated tags');
+    assert(typeof detail.person.nextFollowUpAt === 'string' && detail.person.nextFollowUpAt.length > 0, 'people detail should show updated follow-up time');
     assert(detail.identities.length === 1, 'people detail should include identities');
     assert(detail.interactions.length === 1, 'people detail should include interactions');
     assert(detail.evidence.length >= 2, 'people detail should expose evidence rows');
     assert(
       typeof detail.suggestion.followUpMessage === 'string' &&
-        detail.suggestion.followUpMessage.includes('Alice Evidence'),
+        detail.suggestion.followUpMessage.includes('Alice Evidence Updated'),
       'people detail should generate follow-up suggestion'
     );
 

@@ -13,6 +13,7 @@ node "${REPO_ROOT}/scripts/tests/plugin_contract_check.mjs"
 node -e 'console.log("privilege_smoke: PASS (publish_execute optional + publisher-only visibility assertions)")'
 node "${REPO_ROOT}/scripts/tests/e2e_smoke.mjs"
 node "${REPO_ROOT}/scripts/tests/capture_parse_commit_smoke.mjs"
+node "${REPO_ROOT}/scripts/tests/workspace_contact_review_smoke.mjs"
 node "${REPO_ROOT}/scripts/tests/people_detail_smoke.mjs"
 node "${REPO_ROOT}/scripts/tests/draft_validation_smoke.mjs"
 node "${REPO_ROOT}/scripts/tests/manual_publish_flow_smoke.mjs"

@@ -28,7 +28,7 @@ async function main() {
     await requestJson(api.baseUrl, '/capture', {
       method: 'POST',
       body: {
-        text: '今天推进了产品工作台，感觉很有进展，也有一点压力。',
+        text: '今天遇到了李静，一起推进了产品工作台，感觉很有进展，也有一点压力。',
         source: 'mirror_evidence_smoke',
       },
     });

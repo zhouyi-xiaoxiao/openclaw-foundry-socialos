@@ -119,7 +119,7 @@ async function main() {
     db = new DatabaseSync(dbPath);
 
     const capture = await postJson(api.baseUrl, '/capture', {
-      text: `quick capture ${tag}`,
+      text: `今天认识了李雷，聊了增长和内容分发。quick capture ${tag}`,
       source: 'e2e_smoke',
     });
     assert(typeof capture.captureId === 'string', 'captureId missing');
