@@ -450,12 +450,12 @@ function renderWorkspaceThreadSeed(captures) {
           ? recent
               .map(
                 (capture) => `
-                  <article class="chat-bubble user">
+                  <article class="chat-bubble system ghost workspace-recent-note">
                     <div class="stack-meta">
-                      <strong>Earlier note</strong>
+                      <strong>Recent note</strong>
                       <span>${escapeHtml(formatDateTime(capture.createdAt))}</span>
                     </div>
-                    <p>${escapeHtml(summarizeCardCopy(capture.text || capture.combinedText || '', 200, 'Earlier note saved in this workspace.'))}</p>
+                    <p>${escapeHtml(summarizeCardCopy(capture.text || capture.combinedText || '', 140, 'A recent note is already in this workspace.'))}</p>
                   </article>
                 `
               )
@@ -4709,6 +4709,12 @@ function renderLayout({ currentPath, title, body }) {
       }
       .chat-bubble.ghost {
         opacity: 0.72;
+      }
+      .workspace-recent-note {
+        max-width: min(420px, 100%);
+        justify-self: start;
+        background: rgba(255, 255, 255, 0.64);
+        border-style: dashed;
       }
       .workspace-layout {
         display: grid;

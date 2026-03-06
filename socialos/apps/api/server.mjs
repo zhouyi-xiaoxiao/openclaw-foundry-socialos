@@ -1915,7 +1915,7 @@ function uniqueSearchTerms(parts = []) {
 
 function hasSearchIntent(value) {
   const source = cleanText(value).toLowerCase();
-  return /(?:^|\b)(?:who|find|search|open|show|which|where|look up|recall|找|搜索|查一下|查找|打开|看看|哪个|哪位|回忆)(?:\b|$)/u.test(
+  return /(?:^|\b)(?:who|find|search|open|show|which|where|look up|recall|the person who|the one from|找|搜索|查一下|查找|打开|看看|哪个|哪位|谁|是谁|那个人|那个做|那个来自|来自.*的人|做.*的人|回忆)(?:\b|$)/u.test(
     source
   );
 }
@@ -2608,7 +2608,7 @@ function inferWorkspaceIntent(text, assets = []) {
   const source = cleanText(text).toLowerCase();
   if (!source && assets.length) return 'capture';
   if (/(能量|情绪|状态|self|mirror|最近.*状态|我最近|最近的我|who am i|energy|theme)/u.test(source)) return 'self';
-  if (/(找|搜索|search|who|哪个人|哪位|回忆|记得)/u.test(source)) return 'search';
+  if (/(找|搜索|search|who|which|who was|the person who|the one from|哪个人|哪位|谁|是谁|那个人|那个做|那个来自|来自.*的人|做.*的人|回忆|记得)/u.test(source)) return 'search';
   if (/(认识|聊了|met|talked to|voice note|名片|business card)/u.test(source)) return 'capture';
   if (/(event|campaign|draft|内容|发布|平台|活动|战役)/u.test(source)) return 'campaign';
   return 'mixed';

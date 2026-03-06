@@ -41,7 +41,7 @@ async function main() {
     const person = await postJson(api.baseUrl, '/people/upsert', {
       name: 'Product Workspace Tester',
       tags: ['design', 'launch'],
-      notes: 'Needs operational workspace coverage.',
+      notes: 'Bristol-based design operator. Needs operational workspace coverage.',
     });
     assert(person.person?.name === 'Product Workspace Tester', 'person upsert should echo saved person');
 
@@ -97,6 +97,17 @@ async function main() {
     assert(
       (searchWorkspace.presentation?.actions || []).length <= 3,
       'workspace presentation should cap actions for search turns'
+    );
+
+    const fuzzyWorkspace = await postJson(api.baseUrl, '/workspace/chat', {
+      text: '那个 Bristol 的 design operator 是谁？',
+      source: 'product_workspace_smoke',
+    });
+    assert(fuzzyWorkspace.presentation?.mode === 'search', 'descriptive workspace recall should switch to search mode');
+    assert(
+      fuzzyWorkspace.presentation?.primaryCard?.type === 'contact' ||
+        (fuzzyWorkspace.presentation?.related?.people || []).length >= 1,
+      'descriptive workspace recall should surface contact context'
     );
 
     const casualWorkspace = await postJson(api.baseUrl, '/workspace/chat', {
