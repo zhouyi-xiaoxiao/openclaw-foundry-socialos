@@ -1740,6 +1740,197 @@ function buildFollowUpMessage(person, interactions = []) {
     : `Follow up with ${person.name} while the context is still fresh.`;
 }
 
+function searchPeopleMatches(statements, query, limit = 4) {
+  const normalizedQuery = cleanText(query).toLowerCase();
+  if (!normalizedQuery) return [];
+  const embeddingsSettings = resolveEmbeddingsSettings();
+  const terms = normalizedQuery.split(/\s+/u).filter(Boolean);
+  return statements.listAllPeople
+    .all()
+    .map((row) => buildSearchResultRow(row, terms, embeddingsSettings))
+    .filter((row) => row.score > 0)
+    .sort((left, right) => {
+      if (left.score !== right.score) return right.score - left.score;
+      return right.updatedAt.localeCompare(left.updatedAt);
+    })
+    .slice(0, limit);
+}
+
+function searchEventMatches(statements, query, limit = 4) {
+  const normalizedQuery = cleanText(query).toLowerCase();
+  if (!normalizedQuery) return [];
+  const terms = normalizedQuery.split(/\s+/u).filter(Boolean);
+
+  return statements.listRecentEvents
+    .all(60)
+    .map(formatEventRow)
+    .map((event) => {
+      const haystack = cleanText(
+        [
+          event.title,
+          event.payload?.audience,
+          event.payload?.tone,
+          event.payload?.languageStrategy,
+          summarizeEventPayload(event.payload || {}),
+        ]
+          .filter(Boolean)
+          .join(' ')
+      ).toLowerCase();
+      const score = computeKeywordScore(terms, haystack);
+      return {
+        ...event,
+        score,
+        snippet: truncateText(summarizeEventPayload(event.payload || {}) || event.title, 180),
+      };
+    })
+    .filter((event) => event.score > 0)
+    .sort((left, right) => {
+      if (left.score !== right.score) return right.score - left.score;
+      return right.createdAt.localeCompare(left.createdAt);
+    })
+    .slice(0, limit);
+}
+
+function inferWorkspaceIntent(text, assets = []) {
+  const source = cleanText(text).toLowerCase();
+  if (!source && assets.length) return 'capture';
+  if (/(找|搜索|search|who|哪个人|哪位|回忆|记得)/u.test(source)) return 'search';
+  if (/(event|campaign|draft|内容|发布|平台|活动|战役)/u.test(source)) return 'campaign';
+  if (/(认识|聊了|met|talked to|voice note|名片|business card)/u.test(source)) return 'capture';
+  return 'mixed';
+}
+
+function buildSuggestedEventPayload(text, draft, relatedPeople = []) {
+  const combined = cleanText(draft?.combinedText || text);
+  const personName = cleanText(draft?.personDraft?.name || relatedPeople[0]?.name || '');
+  const firstSentence = combined.split(/[。！？.!?]/u).map((item) => item.trim()).find(Boolean) || combined;
+  const baseTitle =
+    personName && personName !== 'New contact'
+      ? `Follow-up with ${personName}`
+      : firstSentence
+        ? truncateText(firstSentence, 48)
+        : 'New SocialOS event';
+
+  return {
+    title: baseTitle,
+    audience: draft?.personDraft?.tags?.length
+      ? `people interested in ${draft.personDraft.tags.join(', ')}`
+      : 'builders, collaborators, future users',
+    languageStrategy: 'platform-native',
+    tone: 'platform-native',
+    payload: {
+      focus: 'chat-derived event suggestion',
+      source: 'workspace-chat',
+      personName,
+      summary: truncateText(combined, 220),
+      details: {
+        combinedText: truncateText(combined, 280),
+        followUpSuggestion: readOptionalString(draft?.personDraft?.followUpSuggestion, ''),
+      },
+    },
+  };
+}
+
+function buildWorkspaceAgentLanes({ intent, draft, relatedPeople, relatedEvents }) {
+  return [
+    {
+      id: 'memory',
+      label: 'People Memory Agent',
+      status: relatedPeople.length ? 'matched' : draft?.personDraft?.name ? 'drafted' : 'idle',
+      summary: relatedPeople.length
+        ? `Found ${relatedPeople.length} contact match(es) connected to this message.`
+        : `Prepared a contact draft for ${readOptionalString(draft?.personDraft?.name, 'this message')}.`,
+    },
+    {
+      id: 'self',
+      label: 'Self Mirror Agent',
+      status: draft?.selfCheckinDraft ? 'updated' : 'idle',
+      summary: draft?.selfCheckinDraft
+        ? `Energy ${draft.selfCheckinDraft.energy} with ${cleanList(draft.selfCheckinDraft.emotions).join(', ') || 'neutral'} signal.`
+        : 'No self-signal inferred yet.',
+    },
+    {
+      id: 'campaign',
+      label: 'Campaign Agent',
+      status: relatedEvents.length ? 'linked' : 'ready',
+      summary: relatedEvents.length
+        ? `Matched ${relatedEvents.length} event/logbook item(s) you may want to reuse.`
+        : 'Event suggestion is ready to turn this chat into a campaign record.',
+    },
+    {
+      id: 'publisher',
+      label: 'Publisher Agent',
+      status: 'ready',
+      summary:
+        intent === 'campaign'
+          ? 'Platform-native draft generation can start once you confirm or create an event.'
+          : 'Publisher stays staged until a chat turn is promoted into an event and drafts are generated.',
+    },
+  ];
+}
+
+function buildWorkspaceChatPayload(statements, body = {}) {
+  const source = readOptionalString(body.source, 'workspace-chat');
+  const text = cleanText(body.text || '');
+  const assetIds = cleanList(body.assetIds);
+  const assets = selectCaptureAssetsByIds(statements, assetIds);
+  const captureDraft = buildCaptureDraft({ text, source, assets });
+  const intent = inferWorkspaceIntent(text || captureDraft.combinedText, assets);
+  const relatedPeople = searchPeopleMatches(statements, captureDraft.combinedText || text, 4);
+  const relatedEvents = searchEventMatches(statements, captureDraft.combinedText || text, 4);
+  const suggestedEvent = buildSuggestedEventPayload(text, captureDraft, relatedPeople);
+  const latestMirrorRow = statements.selectLatestMirror.get();
+  const latestMirror = latestMirrorRow
+    ? formatMirrorPayload(latestMirrorRow, statements.listMirrorEvidenceByMirrorId.all(latestMirrorRow.id))
+    : null;
+
+  const summary =
+    intent === 'search'
+      ? `I searched memory and logbook for this query and found ${relatedPeople.length} people match(es) and ${relatedEvents.length} event match(es).`
+      : `I parsed this into a contact draft, a self-signal, and a next-step event suggestion, then checked existing memory for overlap.`;
+
+  return {
+    responseId: makeId('workspace'),
+    intent,
+    summary,
+    text,
+    assets,
+    captureDraft,
+    relatedPeople,
+    relatedEvents,
+    suggestedEvent,
+    commitPayload: {
+      text,
+      source,
+      assetIds,
+      combinedText: captureDraft.combinedText,
+      personDraft: captureDraft.personDraft,
+      selfCheckinDraft: captureDraft.selfCheckinDraft,
+      interactionDraft: captureDraft.interactionDraft,
+    },
+    recommendedDraftRequest: {
+      platforms: [...SUPPORTED_QUEUE_PLATFORMS],
+      languages: ['platform-native'],
+      cta:
+        captureDraft.personDraft?.followUpSuggestion ||
+        'Reply if you want the workflow or operator notes behind this.',
+    },
+    agentLanes: buildWorkspaceAgentLanes({
+      intent,
+      draft: captureDraft,
+      relatedPeople,
+      relatedEvents,
+    }),
+    latestMirror: latestMirror
+      ? {
+          mirrorId: latestMirror.mirrorId,
+          summaryText: latestMirror.summaryText,
+          topThemes: Array.isArray(latestMirror.themes) ? latestMirror.themes.slice(0, 3) : [],
+        }
+      : null,
+  };
+}
+
 function buildPeopleDetailPayload(statements, personId) {
   const personRow = statements.selectPersonById.get(personId);
   if (!personRow) return null;
