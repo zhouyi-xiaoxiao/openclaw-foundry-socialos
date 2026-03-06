@@ -121,6 +121,55 @@ function truncate(value, maxLength = 220) {
   return `${text.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
 }
 
+function normalizeInlineText(value) {
+  return readOptionalString(value, '').replace(/\s+/g, ' ').trim();
+}
+
+function dedupeSentenceFragments(value) {
+  const fragments = readOptionalString(value, '')
+    .split(/(?<=[。！？!?;；])\s+|\s*\|\s*/u)
+    .map((part) => normalizeInlineText(part))
+    .filter(Boolean);
+  const seen = new Set();
+  return fragments.filter((fragment) => {
+    const key = fragment.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function cleanInstructionNoise(value) {
+  let text = normalizeInlineText(value);
+  if (!text) return '';
+  text = text.replace(/^["'“”]+|["'“”]+$/gu, '');
+  text = text.replace(/^(帮我|请帮我|顺便帮我|麻烦帮我)(新建|创建|记录|保存|整理|做成)?/u, '');
+  text = text.replace(/^(i want to know|please help me|help me|can you)\s+/iu, '');
+  text = text.replace(/\b(source|focus|personName|summary|audience|details):\s*/giu, '');
+  text = text.replace(/[{}[\]]/g, '');
+  return dedupeSentenceFragments(text).join(' · ');
+}
+
+function summarizeCardCopy(value, maxLength = 160, fallback = 'No details yet.') {
+  const cleaned = cleanInstructionNoise(value);
+  return truncate(cleaned || fallback, maxLength);
+}
+
+function renderRichTextPreview(value, className = 'rich-preview') {
+  const blocks = readOptionalString(value, '')
+    .split(/\n{2,}/u)
+    .map((block) => normalizeInlineText(block))
+    .filter(Boolean);
+
+  if (!blocks.length) {
+    return `<div class="${escapeHtml(className)}"><p>No draft content yet.</p></div>`;
+  }
+
+  return `<div class="${escapeHtml(className)}">${blocks
+    .map((block) => `<p>${escapeHtml(block)}</p>`)
+    .join('')}</div>`;
+}
+
 function safeJson(value, fallback = {}) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return fallback;
   return value;
@@ -279,16 +328,16 @@ function renderChatComposerIntro() {
 function renderAgentLaneSnapshot(cluster) {
   const agents = Array.isArray(cluster?.agents) ? cluster.agents : [];
   if (!agents.length) return renderEmptyState('No agent lanes available yet.');
-  return `<div class="stack">${agents
+  return `<div class="agent-lane-grid">${agents
     .slice(0, 4)
     .map(
       (agent) => `
-        <article class="stack-card">
+        <article class="stack-card compact-card">
           <div class="stack-meta">
             <strong>${escapeHtml(agent.roleTitle || agent.name || agent.id)}</strong>
             ${renderPill(agent.toolProfile || 'tools', 'soft')}
           </div>
-          <p>${escapeHtml(agent.responsibility || 'custom lane')}</p>
+          <p>${escapeHtml(truncate(agent.responsibility || 'custom lane', 96))}</p>
         </article>
       `
     )
@@ -363,7 +412,11 @@ function renderWorkspaceQueuePreview(queueTasks) {
             <strong>${escapeHtml(task.eventTitle || task.platformLabel || 'Queue item')}</strong>
             ${renderPill(task.status || 'queued', task.status === 'manual_step_needed' ? 'warn' : 'soft')}
           </div>
-          <p>${escapeHtml(truncate(task.content || '', 140))}</p>
+          <p>${escapeHtml(summarizeCardCopy(task.content || task.metadata?.publishPackage?.preview || '', 136, 'Draft package is ready for the next publish step.'))}</p>
+          <div class="chip-row">
+            ${task.platformLabel ? renderPill(task.platformLabel, 'soft') : ''}
+            ${task.language ? renderPill(formatLanguageLabel(task.language), 'neutral') : ''}
+          </div>
           <div class="inline-actions">
             <a class="mini-link" href="/queue">Open Queue</a>
           </div>
