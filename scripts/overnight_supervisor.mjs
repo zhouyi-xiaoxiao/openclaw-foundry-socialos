@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');
 const REPORT_DIR = path.join(REPO_ROOT, 'reports', 'overnight');
+const RUN_REPORT_DIR = path.join(REPO_ROOT, 'reports', 'runs');
+const FOUNDRY_STATE_DIR = path.join(REPO_ROOT, '.foundry');
 const SUMMARY_PATH = path.join(REPORT_DIR, 'latest.md');
 const JSON_PATH = path.join(REPORT_DIR, 'latest.json');
 const DEMO_STATUS_SCRIPT = path.join(REPO_ROOT, 'scripts', 'demo_status.sh');
@@ -131,6 +133,17 @@ function detectGitState() {
 
 function ensureReportDir() {
   fs.mkdirSync(REPORT_DIR, { recursive: true });
+}
+
+function ensureLocalRuntimeDirs() {
+  const created = [];
+  for (const dir of [FOUNDRY_STATE_DIR, RUN_REPORT_DIR]) {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      created.push(path.relative(REPO_ROOT, dir));
+    }
+  }
+  return created;
 }
 
 function writeReports(report) {
@@ -268,6 +281,10 @@ function restartDemoIfNeeded(demo, actions) {
 
 function main() {
   const actions = [];
+  const createdDirs = ensureLocalRuntimeDirs();
+  if (createdDirs.length) {
+    actions.push(`Bootstrapped local runtime directories: ${createdDirs.join(', ')}`);
+  }
   const demoStatusResult = run('bash', [DEMO_STATUS_SCRIPT]);
   const initialDemo = parseDemoStatus(demoStatusResult.stdout);
   const demo = restartDemoIfNeeded(initialDemo, actions);

@@ -6,6 +6,7 @@ const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../.
 const script = path.join(root, 'scripts', 'overnight_supervisor.sh');
 const summaryPath = path.join(root, 'reports', 'overnight', 'latest.md');
 const jsonPath = path.join(root, 'reports', 'overnight', 'latest.json');
+const runReportsPath = path.join(root, 'reports', 'runs');
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -20,6 +21,7 @@ assert([0, 2].includes(result.status ?? 1), `overnight supervisor should exit 0 
 assert(result.stdout.includes('overnight_supervisor:'), 'stdout must include overnight_supervisor status');
 assert(fs.existsSync(summaryPath), 'overnight summary markdown must exist');
 assert(fs.existsSync(jsonPath), 'overnight summary json must exist');
+assert(fs.existsSync(runReportsPath), 'run reports directory must be bootstrapped');
 
 const report = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
 assert(typeof report.decision === 'string' && report.decision.length > 0, 'report.decision must exist');
