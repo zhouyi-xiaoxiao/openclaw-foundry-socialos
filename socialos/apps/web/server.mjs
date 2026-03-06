@@ -555,22 +555,24 @@ function renderEventCards(events) {
     .join('')}</div>`;
 }
 
-function renderPackageHighlights(publishPackage) {
+function renderPackageHighlights(draft, publishPackage) {
+  const zh = isChineseDraftLanguage(draft?.language);
+  const t = (englishLabel, chineseLabel) => (zh ? chineseLabel : englishLabel);
   const detailGroups = [
-    ['Image Ideas', publishPackage.imageIdeas],
-    ['Asset Checklist', publishPackage.assetChecklist],
-    ['Cover Hooks', publishPackage.coverHooks],
-    ['Visual Storyboard', publishPackage.visualStoryboard],
-    ['Caption Variants', publishPackage.captionVariants],
-    ['Article Outline', publishPackage.articleOutline],
-    ['Section Bullets', publishPackage.sectionBullets],
-    ['Codex Assist', publishPackage.codexAssist],
+    [t('Image Ideas', '配图思路'), publishPackage.imageIdeas],
+    [t('Asset Checklist', '素材清单'), publishPackage.assetChecklist],
+    [t('Cover Hooks', '封面钩子'), publishPackage.coverHooks],
+    [t('Visual Storyboard', '图文结构'), publishPackage.visualStoryboard],
+    [t('Caption Variants', '文案备选'), publishPackage.captionVariants],
+    [t('Article Outline', '文章结构'), publishPackage.articleOutline],
+    [t('Section Bullets', '分段要点'), publishPackage.sectionBullets],
+    [t('Codex Assist', '补充建议'), publishPackage.codexAssist],
   ].filter(([, items]) => Array.isArray(items) && items.length);
 
   const detailNotes = [
-    ['Lead Paragraph', publishPackage.leadParagraph],
-    ['Comment Prompt', publishPackage.commentPrompt],
-    ['First Comment', publishPackage.firstComment],
+    [t('Lead Paragraph', '导语'), publishPackage.leadParagraph],
+    [t('Comment Prompt', '评论引导'), publishPackage.commentPrompt],
+    [t('First Comment', '首条评论'), publishPackage.firstComment],
   ].filter(([, value]) => typeof value === 'string' && value.trim());
 
   if (!detailGroups.length && !detailNotes.length) return '';
@@ -764,7 +766,7 @@ function renderDraftCards(drafts) {
                   ? `<ol class="step-list">${steps.map((step) => `<li>${escapeHtml(step)}</li>`).join('')}</ol>`
                   : ''
               }
-              ${renderPackageHighlights(publishPackage)}
+              ${renderPackageHighlights(draft, publishPackage)}
               <form class="api-form compact-form" data-api-form="true" data-method="PATCH" data-endpoint="/drafts/${encodeURIComponent(
                 draft.draftId
               )}">
@@ -1671,11 +1673,10 @@ async function renderEventsPage(page) {
 
 async function renderDraftsPage(page, requestUrl) {
   const selectedEventId = readOptionalString(requestUrl.searchParams.get('eventId'), '');
-  const [eventsRes, draftsRes] = await Promise.all([
-    fetchJsonSafe('/events?limit=12'),
-    fetchJsonSafe(`/drafts?limit=24${selectedEventId ? `&eventId=${encodeURIComponent(selectedEventId)}` : ''}`),
-  ]);
+  const eventsRes = await fetchJsonSafe('/events?limit=12');
   const events = eventsRes.ok ? eventsRes.payload.events || [] : [];
+  const effectiveEventId = selectedEventId || events[0]?.eventId || '';
+  const draftsRes = await fetchJsonSafe(`/drafts?limit=24${effectiveEventId ? `&eventId=${encodeURIComponent(effectiveEventId)}` : ''}`);
   const drafts = draftsRes.ok ? draftsRes.payload.drafts || [] : [];
 
   const eventOptions = events.length
@@ -1683,7 +1684,7 @@ async function renderDraftsPage(page, requestUrl) {
         .map(
           (event) =>
             `<option value="${escapeHtml(event.eventId)}"${
-              event.eventId === selectedEventId ? ' selected' : ''
+              event.eventId === effectiveEventId ? ' selected' : ''
             }>${escapeHtml(event.title)}</option>`
         )
         .join('')
@@ -1693,49 +1694,46 @@ async function renderDraftsPage(page, requestUrl) {
     ${renderHero(
       page,
       [renderMetric(String(events.length), 'events ready'), renderMetric(String(drafts.length), 'drafts visible')].join(''),
-      `<div class="info-card"><strong>Unlock path</strong><p>These publish packages are the L1/L1.5 implementation path for blocked channels before credentials are ready.</p></div>`
+      `<div class="info-card"><strong>Simple draft mode</strong><p>One event, seven standard drafts. LinkedIn, X, Instagram stay in English. 中文平台 stays Chinese.</p></div>`
     )}
     <div class="grid two-up">
       ${renderPanel(
-        'Generate Publish Packages',
+        'Generate 7 Standard Drafts',
         `
           <form class="api-form" data-api-form="true" data-endpoint="/drafts/generate">
             ${renderFormField('Event', `<select name="eventId">${eventOptions}</select>`)}
-            ${renderFormField(
-              'Language Strategy',
-              `<select name="languages">
-                <option value="platform-native">Platform-native (EN for X/LinkedIn/Instagram, 中文 for 知乎/小红书/微信)</option>
-                <option value="en">All English</option>
-                <option value="zh">All Chinese</option>
-                <option value="bilingual">Bilingual variants</option>
-              </select>`
-            )}
-            ${renderFormField('Angle', '<input name="angle" type="text" value="" placeholder="Leave blank to use platform-native angle" />')}
-            ${renderFormField('Tone', '<input name="tone" type="text" value="" placeholder="Leave blank to use platform-native tone" />')}
-            ${renderFormField('Audience', '<input name="audience" type="text" value="" placeholder="Leave blank to target each platform natively" />')}
-            ${renderFormField('CTA', '<input name="cta" type="text" placeholder="Reply if you want to compare notes." />')}
-            <fieldset class="field">
-              <span>Platforms</span>
-              <div class="check-grid">
-                <label><input type="checkbox" name="platforms" value="linkedin" checked /> LinkedIn</label>
-                <label><input type="checkbox" name="platforms" value="x" checked /> X</label>
-                <label><input type="checkbox" name="platforms" value="instagram" checked /> Instagram</label>
-                <label><input type="checkbox" name="platforms" value="zhihu" checked /> Zhihu</label>
-                <label><input type="checkbox" name="platforms" value="xiaohongshu" checked /> Xiaohongshu</label>
-                <label><input type="checkbox" name="platforms" value="wechat_moments" checked /> WeChat Moments</label>
-                <label><input type="checkbox" name="platforms" value="wechat_official" checked /> WeChat Official</label>
+            <input type="hidden" name="languages" value="platform-native" />
+            <input type="hidden" name="platforms" value="linkedin" />
+            <input type="hidden" name="platforms" value="x" />
+            <input type="hidden" name="platforms" value="instagram" />
+            <input type="hidden" name="platforms" value="zhihu" />
+            <input type="hidden" name="platforms" value="xiaohongshu" />
+            <input type="hidden" name="platforms" value="wechat_moments" />
+            <input type="hidden" name="platforms" value="wechat_official" />
+            <div class="info-callout">
+              <strong>Standard output</strong><br />
+              LinkedIn / X / Instagram use English only.<br />
+              知乎 / 小红书 / 朋友圈 / 公众号 use Chinese only.
+            </div>
+            ${renderFormField('CTA', '<input name="cta" type="text" placeholder="Optional closing line if you want one." />')}
+            <details class="draft-details">
+              <summary>Advanced options</summary>
+              <div class="draft-details-body">
+                ${renderFormField('Angle', '<input name="angle" type="text" value="" placeholder="Optional angle override" />')}
+                ${renderFormField('Tone', '<input name="tone" type="text" value="" placeholder="Optional tone override" />')}
+                ${renderFormField('Audience', '<input name="audience" type="text" value="" placeholder="Optional audience override" />')}
               </div>
-            </fieldset>
+            </details>
             <div class="inline-actions">
-              <button type="submit">Generate Drafts</button>
+              <button type="submit">Generate 7 Drafts</button>
             </div>
             <div class="form-result" data-form-result></div>
           </form>
         `,
-        'This is now the real 7-platform workbench instead of a placeholder.'
+        'The default path is now simple and standardized.'
       )}
       ${renderPanel(
-        'Event Feed',
+        'Event Picker',
         events.length
           ? `<div class="stack">${events
               .map(
@@ -1746,21 +1744,24 @@ async function renderDraftsPage(page, requestUrl) {
                       <span>${escapeHtml(formatDateTime(event.createdAt))}</span>
                     </div>
                     <div class="inline-actions">
-                      <a class="mini-link" href="/drafts?eventId=${encodeURIComponent(event.eventId)}">Filter drafts</a>
-                      <code>${escapeHtml(event.eventId)}</code>
+                      <a class="mini-link" href="/drafts?eventId=${encodeURIComponent(event.eventId)}">${escapeHtml(
+                        event.eventId === effectiveEventId ? 'Viewing' : 'Show Drafts'
+                      )}</a>
                     </div>
                   </article>
                 `
               )
               .join('')}</div>`
           : renderEmptyState('Create an event first.'),
-        'Pick an event and generate package variants.'
+        'This page now shows one event at a time instead of mixing draft sets together.'
       )}
     </div>
     ${renderPanel(
-      selectedEventId ? `Draft Library for ${selectedEventId}` : 'Draft Library',
+      effectiveEventId
+        ? `Draft Library · ${escapeHtml(events.find((event) => event.eventId === effectiveEventId)?.title || effectiveEventId)}`
+        : 'Draft Library',
       renderDraftCards(drafts),
-      'Each card shows support level, publishing entrypoint, and queue action.'
+      'Each platform gets one main draft card. Extra publishing metadata is tucked into More options.'
     )}
   `;
 }
@@ -3812,6 +3813,33 @@ function renderLayout({ currentPath, title, body }) {
         gap: 14px;
         align-items: flex-start;
         margin-bottom: 12px;
+      }
+      .draft-subtitle {
+        margin-top: 6px;
+        font-size: 14px;
+      }
+      .draft-tags {
+        margin-top: 12px;
+        color: var(--accent);
+        font-size: 14px;
+      }
+      .draft-queue-form {
+        margin-top: 14px;
+      }
+      .draft-details {
+        margin-top: 14px;
+        border-top: 1px solid rgba(22, 33, 50, 0.08);
+        padding-top: 14px;
+      }
+      .draft-details summary {
+        cursor: pointer;
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .draft-details-body {
+        display: grid;
+        gap: 12px;
+        margin-top: 12px;
       }
       .package-meta {
         display: grid;
