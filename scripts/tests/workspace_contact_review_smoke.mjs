@@ -70,6 +70,19 @@ async function main() {
     const detail = await requestJson(api.baseUrl, `/people/${encodeURIComponent(saved.person.personId)}`);
     assert(detail.person.name === '王章', 'saved review flow should create a real person detail');
 
+    const mixedWorkspace = await requestJson(api.baseUrl, '/workspace/chat', {
+      method: 'POST',
+      body: {
+        text: '今天我在 one cs 遇到了很多人，打桌游，比如 sam，他是 pdra，博后到 staff rep。',
+        source: 'workspace_contact_review_smoke',
+      },
+    });
+    assert(mixedWorkspace.captureDraft?.personDraft?.name === 'Sam', 'workspace should extract Sam instead of a generic group label');
+    assert(
+      mixedWorkspace.presentation?.primaryCard?.title === 'Sam',
+      'workspace primary card should foreground the extracted person name'
+    );
+
     console.log('workspace_contact_review_smoke: PASS');
   } finally {
     await api.close();

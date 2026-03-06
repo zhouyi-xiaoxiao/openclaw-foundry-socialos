@@ -2632,12 +2632,12 @@ function buildWorkspacePresentation({
   };
 }
 
-function buildWorkspaceChatPayload(statements, body = {}) {
+async function buildWorkspaceChatPayload(statements, body = {}) {
   const source = readOptionalString(body.source, 'workspace-chat');
   const text = cleanText(body.text || '');
   const assetIds = cleanList(body.assetIds);
   const assets = selectCaptureAssetsByIds(statements, assetIds);
-  const captureDraft = buildCaptureDraft({ text, source, assets });
+  const captureDraft = await buildCaptureDraftWithModelAssist({ text, source, assets });
   const combinedText = cleanText(captureDraft.combinedText || text);
   const audioAssets = assets.filter((asset) => asset.kind === 'audio');
   const imageAssets = assets.filter((asset) => asset.kind === 'image');
@@ -4828,7 +4828,7 @@ async function routeRequest(req, res, statements) {
     const assetIds = cleanList(body.assetIds);
     const assets = selectCaptureAssetsByIds(statements, assetIds);
     if (!text && !assets.length) throw new HttpError(400, 'text or assetIds is required');
-    const captureDraft = buildCaptureDraft({ text, source, assets });
+    const captureDraft = await buildCaptureDraftWithModelAssist({ text, source, assets });
     sendJson(res, 200, {
       captureDraft,
       foundPersonMatch: findExistingPersonByName(statements, captureDraft.personDraft.name)
@@ -4840,7 +4840,7 @@ async function routeRequest(req, res, statements) {
 
   if (method === 'POST' && pathname === '/workspace/chat') {
     const body = await readJsonBody(req);
-    sendJson(res, 200, buildWorkspaceChatPayload(statements, body));
+    sendJson(res, 200, await buildWorkspaceChatPayload(statements, body));
     return;
   }
 

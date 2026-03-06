@@ -61,6 +61,16 @@ async function main() {
     });
     assert(chinesePatternParsed.captureDraft.personDraft.name === '王章', 'capture parse should support richer Chinese naming patterns');
 
+    const mixedLanguageParsed = await requestJson(api.baseUrl, '/capture/parse', {
+      method: 'POST',
+      body: {
+        text: '今天我在 one cs 遇到了很多人，打桌游，比如 sam，他是 pdra，博后到 staff rep。',
+        source: 'capture_parse_commit_smoke',
+      },
+    });
+    assert(mixedLanguageParsed.captureDraft.personDraft.name === 'Sam', 'capture parse should prefer the explicitly named person in mixed-language notes');
+    assert(mixedLanguageParsed.captureDraft.personDraft.requiresNameConfirmation === false, 'mixed-language explicit names should not require confirmation');
+
     const unresolvedParsed = await requestJson(api.baseUrl, '/capture/parse', {
       method: 'POST',
       body: {
