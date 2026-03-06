@@ -3432,6 +3432,245 @@ async function runOpenAiAudioTranscription({ mimeType, contentBase64 }) {
   }
 }
 
+function shouldUseModelCaptureAssist(source = 'manual') {
+  const apiKey = readOptionalString(process.env.OPENAI_API_KEY, '');
+  if (!apiKey) return false;
+
+  const normalizedSource = readOptionalString(source, '').toLowerCase();
+  if (!normalizedSource) return true;
+
+  return !/(?:smoke|check|test|ci|autodev|seed|fixture)/u.test(normalizedSource);
+}
+
+function parseLooseJsonObject(value) {
+  const source = readOptionalString(value, '');
+  if (!source) return null;
+
+  const directAttempt = (() => {
+    try {
+      return JSON.parse(source);
+    } catch {
+      return null;
+    }
+  })();
+  if (directAttempt && typeof directAttempt === 'object' && !Array.isArray(directAttempt)) {
+    return directAttempt;
+  }
+
+  const fencedMatch = source.match(/```(?:json)?\s*([\s\S]+?)\s*```/iu);
+  if (fencedMatch?.[1]) {
+    try {
+      const parsed = JSON.parse(fencedMatch[1]);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+    } catch {
+      // Ignore and continue to brace scan.
+    }
+  }
+
+  const firstBrace = source.indexOf('{');
+  const lastBrace = source.lastIndexOf('}');
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+    try {
+      const parsed = JSON.parse(source.slice(firstBrace, lastBrace + 1));
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+function normalizeModelIdentityList(value, fallback = []) {
+  const normalized = Array.isArray(value) ? value : [];
+  const output = [];
+  const seen = new Set();
+
+  for (const item of normalized) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
+    const platform = cleanText(item.platform || item.label || '');
+    const handle = cleanText(item.handle || item.username || '');
+    const url = cleanText(item.url || '');
+    const note = cleanText(item.note || '');
+    if (!platform && !handle && !url) continue;
+    const signature = `${platform}::${handle}::${url}`.toLowerCase();
+    if (seen.has(signature)) continue;
+    seen.add(signature);
+    output.push({ platform, handle, url, note });
+  }
+
+  for (const item of Array.isArray(fallback) ? fallback : []) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
+    const platform = cleanText(item.platform || '');
+    const handle = cleanText(item.handle || '');
+    const url = cleanText(item.url || '');
+    const note = cleanText(item.note || '');
+    if (!platform && !handle && !url) continue;
+    const signature = `${platform}::${handle}::${url}`.toLowerCase();
+    if (seen.has(signature)) continue;
+    seen.add(signature);
+    output.push({ platform, handle, url, note });
+  }
+
+  return output;
+}
+
+function mergeModelCaptureDraft(fallbackDraft, parsed = {}, providerMeta = {}) {
+  const fallbackPersonDraft = fallbackDraft?.personDraft || {};
+  const fallbackInteractionDraft = fallbackDraft?.interactionDraft || {};
+  const fallbackSelfCheckinDraft = fallbackDraft?.selfCheckinDraft || {};
+  const fallbackName = cleanText(fallbackPersonDraft.name || '');
+  const modelName = cleanText(parsed.name || parsed.personName || '');
+  const requestedConfirmation = Boolean(parsed.requiresNameConfirmation);
+  const finalName = modelName || fallbackName;
+  const isConfirmedName = !requestedConfirmation && !isPlaceholderContactName(finalName);
+  const displayName = isConfirmedName ? finalName : 'Unconfirmed contact';
+  const combinedTags = cleanList([
+    ...(Array.isArray(parsed.tags) ? parsed.tags : []),
+    ...(Array.isArray(fallbackPersonDraft.tags) ? fallbackPersonDraft.tags : []),
+  ]);
+  const notes = sanitizeContactDraftText(
+    readOptionalString(parsed.notes, fallbackPersonDraft.notes || fallbackDraft?.combinedText || '')
+  );
+  const interactionSummary = sanitizeContactDraftText(
+    readOptionalString(
+      parsed.interactionSummary,
+      fallbackInteractionDraft.summary || fallbackDraft?.combinedText || ''
+    )
+  );
+  const interactionEvidence = sanitizeContactDraftText(
+    readOptionalString(
+      parsed.interactionEvidence,
+      fallbackInteractionDraft.evidence || fallbackDraft?.combinedText || ''
+    )
+  );
+
+  return {
+    ...fallbackDraft,
+    extraction: {
+      method: providerMeta.method || 'heuristic',
+      model: providerMeta.model || '',
+    },
+    personDraft: {
+      ...fallbackPersonDraft,
+      name: isConfirmedName ? finalName : '',
+      displayName,
+      isConfirmedName,
+      requiresNameConfirmation: !isConfirmedName,
+      tags: combinedTags,
+      notes: truncateText(notes || fallbackPersonDraft.notes || '', 220),
+      nextFollowUpAt: cleanText(parsed.nextFollowUpAt || fallbackPersonDraft.nextFollowUpAt || ''),
+      followUpSuggestion: cleanText(
+        parsed.followUpSuggestion || fallbackPersonDraft.followUpSuggestion || ''
+      ),
+      identities: normalizeModelIdentityList(parsed.identities, fallbackPersonDraft.identities),
+    },
+    interactionDraft: {
+      ...fallbackInteractionDraft,
+      summary: truncateText(interactionSummary || fallbackInteractionDraft.summary || '', 220),
+      evidence: interactionEvidence || fallbackInteractionDraft.evidence || '',
+    },
+    selfCheckinDraft: {
+      ...fallbackSelfCheckinDraft,
+      emotions: cleanList(
+        Array.isArray(parsed.emotions) && parsed.emotions.length
+          ? parsed.emotions
+          : fallbackSelfCheckinDraft.emotions
+      ),
+      energy: Number.isFinite(Number(parsed.energy))
+        ? Math.max(-2, Math.min(2, Number(parsed.energy)))
+        : fallbackSelfCheckinDraft.energy,
+    },
+  };
+}
+
+async function buildCaptureDraftWithModelAssist({ text, source = 'manual', assets = [] }) {
+  const fallbackDraft = buildCaptureDraft({ text, source, assets });
+  if (!shouldUseModelCaptureAssist(source)) {
+    return mergeModelCaptureDraft(fallbackDraft, {}, { method: 'heuristic', model: '' });
+  }
+
+  const apiKey = readOptionalString(process.env.OPENAI_API_KEY, '');
+  const model = readOptionalString(process.env.OPENAI_CAPTURE_DRAFT_MODEL, 'gpt-5.4');
+  const combinedText = cleanText(fallbackDraft.combinedText || text);
+  if (!apiKey || !combinedText) {
+    return mergeModelCaptureDraft(fallbackDraft, {}, { method: 'heuristic', model: '' });
+  }
+
+  const prompt = [
+    'Extract one primary contact draft from the user note.',
+    'Rules:',
+    '- Choose a named person, not a generic group like "很多人" or "some people".',
+    '- If the note says "比如 sam" or "for example sam", the primary contact is Sam.',
+    '- If no reliable person name is present, return an empty name and requiresNameConfirmation=true.',
+    '- Keep tags short and useful.',
+    '- Keep notes and interaction fields concise and de-noised.',
+    '- Return JSON only.',
+    'Schema:',
+    '{"name":"","requiresNameConfirmation":true,"tags":[],"notes":"","interactionSummary":"","interactionEvidence":"","followUpSuggestion":"","nextFollowUpAt":"","identities":[],"energy":0,"emotions":[]}',
+  ].join('\n');
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: prompt },
+          {
+            role: 'user',
+            content: JSON.stringify({
+              text: combinedText,
+              source,
+              assets: assets.map((asset) => ({
+                kind: asset.kind,
+                fileName: asset.fileName,
+                extractedText: cleanText(asset.extractedText || asset.previewText || ''),
+              })),
+            }),
+          },
+        ],
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return mergeModelCaptureDraft(fallbackDraft, {}, { method: 'heuristic', model: '' });
+    }
+
+    const rawContent = payload?.choices?.[0]?.message?.content;
+    const parsed = parseLooseJsonObject(
+      typeof rawContent === 'string'
+        ? rawContent
+        : Array.isArray(rawContent)
+          ? rawContent
+              .map((item) =>
+                typeof item === 'string'
+                  ? item
+                  : typeof item?.text === 'string'
+                    ? item.text
+                    : typeof item?.content === 'string'
+                      ? item.content
+                      : ''
+              )
+              .join('\n')
+          : ''
+    );
+
+    if (!parsed) {
+      return mergeModelCaptureDraft(fallbackDraft, {}, { method: 'heuristic', model: '' });
+    }
+
+    return mergeModelCaptureDraft(fallbackDraft, parsed, { method: 'model', model });
+  } catch {
+    return mergeModelCaptureDraft(fallbackDraft, {}, { method: 'heuristic', model: '' });
+  }
+}
+
 function normalizeTimestampInput(value, fallback = null) {
   if (typeof value !== 'string' || !value.trim()) return fallback;
   const trimmed = value.trim();

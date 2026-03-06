@@ -37,6 +37,19 @@ const CONTACT_PLACEHOLDER_NAMES = new Set([
   '新联系人',
   '未确认联系人',
 ]);
+const CHINESE_CONTACT_NAME_STOPWORDS = new Set([
+  '很多人',
+  '几个人',
+  '一些人',
+  '一个人',
+  '朋友们',
+  '同学们',
+  '大家',
+  '别人',
+  '他们',
+  '她们',
+  '我们',
+]);
 const ENGLISH_NAME_STOPWORDS = new Set([
   'SocialOS',
   'Workspace',
@@ -58,6 +71,19 @@ const DRAFT_NOISE_PREFIX_PATTERNS = [
 
 function unique(items) {
   return [...new Set(items.filter(Boolean))];
+}
+
+function normalizeEnglishContactName(value) {
+  const source = cleanText(value);
+  if (!source) return '';
+  return source
+    .split(/\s+/u)
+    .map((part) => part.slice(0, 1).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function isChineseContactStopword(value) {
+  return CHINESE_CONTACT_NAME_STOPWORDS.has(cleanText(value));
 }
 
 function cleanText(value) {
@@ -119,18 +145,30 @@ export function inferPersonName(text) {
 
   for (const pattern of chinesePatterns) {
     const match = source.match(pattern);
-    if (match?.[1]) return match[1];
+    if (match?.[1] && !isChineseContactStopword(match[1])) return match[1];
+  }
+
+  const explicitExampleEnglishPatterns = [
+    /(?:比如|例如|像)\s*([A-Za-z][A-Za-z'-]{1,30}(?:\s+[A-Za-z][A-Za-z'-]{1,30}){0,2})(?=\s*(?:他|她|is|做|在|来自|负责|，|,|。|\.|$))/iu,
+    /(?:he|she)\s+is\s+called\s+([A-Za-z][A-Za-z'-]{1,30}(?:\s+[A-Za-z][A-Za-z'-]{1,30}){0,2})/iu,
+  ];
+
+  for (const pattern of explicitExampleEnglishPatterns) {
+    const match = source.match(pattern);
+    const candidate = normalizeEnglishContactName(match?.[1] || '');
+    if (candidate && !ENGLISH_NAME_STOPWORDS.has(candidate)) return candidate;
   }
 
   const englishPatterns = [
-    /(?:named|called)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})/u,
-    /(?:met|with|talked to)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})/u,
-    /(?:he|she)\s+is\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})/u,
+    /(?:named|called)\s+([A-Za-z][A-Za-z'-]{1,30}(?:\s+[A-Za-z][A-Za-z'-]{1,30}){0,2})/iu,
+    /(?:met|with|talked to)\s+([A-Za-z][A-Za-z'-]{1,30}(?:\s+[A-Za-z][A-Za-z'-]{1,30}){0,2})/iu,
+    /(?:he|she)\s+is\s+([A-Za-z][A-Za-z'-]{1,30}(?:\s+[A-Za-z][A-Za-z'-]{1,30}){0,2})/iu,
   ];
 
   for (const pattern of englishPatterns) {
     const match = source.match(pattern);
-    if (match?.[1]) return match[1];
+    const candidate = normalizeEnglishContactName(match?.[1] || '');
+    if (candidate && !ENGLISH_NAME_STOPWORDS.has(candidate)) return candidate;
   }
 
   const titleCase = source.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b/u);
