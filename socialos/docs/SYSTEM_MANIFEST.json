@@ -1,0 +1,213 @@
+{
+  "system": {
+    "name": "SocialOS",
+    "status": "stable-p1",
+    "posture": "local-first",
+    "defaultPublishMode": "dry-run",
+    "networkExposure": "loopback-only"
+  },
+  "entrypoints": {
+    "human": "README.md",
+    "agent": "AGENTS.md",
+    "playbook": "socialos/docs/AGENT_PLAYBOOK.md",
+    "machine": "socialos/docs/SYSTEM_MANIFEST.json"
+  },
+  "surfaces": [
+    {
+      "id": "workspace",
+      "label": "Workspace",
+      "routes": [
+        "/quick-capture",
+        "/cockpit",
+        "/ask"
+      ],
+      "role": "primary"
+    },
+    {
+      "id": "contacts",
+      "label": "Contacts",
+      "routes": [
+        "/people",
+        "/people/:id"
+      ],
+      "role": "secondary"
+    },
+    {
+      "id": "logbook",
+      "label": "Logbook",
+      "routes": [
+        "/events"
+      ],
+      "role": "secondary"
+    },
+    {
+      "id": "drafts",
+      "label": "Drafts",
+      "routes": [
+        "/drafts"
+      ],
+      "role": "secondary"
+    },
+    {
+      "id": "queue",
+      "label": "Queue",
+      "routes": [
+        "/queue"
+      ],
+      "role": "secondary"
+    },
+    {
+      "id": "self-mirror",
+      "label": "Self Mirror",
+      "routes": [
+        "/self-mirror"
+      ],
+      "role": "secondary"
+    },
+    {
+      "id": "settings",
+      "label": "Settings",
+      "routes": [
+        "/settings",
+        "/dev-digest"
+      ],
+      "role": "secondary"
+    }
+  ],
+  "runtimeAgents": [
+    {
+      "id": "orchestrator",
+      "file": "socialos/openclaw/runtime.openclaw.json5",
+      "responsibility": "route capture, search, campaign, and self requests"
+    },
+    {
+      "id": "people-memory",
+      "file": "socialos/openclaw/runtime.openclaw.json5",
+      "responsibility": "maintain people memory"
+    },
+    {
+      "id": "self-model",
+      "file": "socialos/openclaw/runtime.openclaw.json5",
+      "responsibility": "maintain self check-ins and weekly mirror outputs"
+    },
+    {
+      "id": "compliance",
+      "file": "socialos/openclaw/runtime.openclaw.json5",
+      "responsibility": "run validation and policy checks on drafts"
+    },
+    {
+      "id": "publisher",
+      "file": "socialos/openclaw/runtime.openclaw.json5",
+      "responsibility": "handle queue and publish-side actions"
+    }
+  ],
+  "foundryAgents": [
+    {
+      "id": "forge_orchestrator",
+      "file": "foundry/openclaw.foundry.json5",
+      "responsibility": "coordinate generic task execution"
+    },
+    {
+      "id": "forge_coder",
+      "file": "foundry/openclaw.foundry.json5",
+      "responsibility": "implement changes"
+    },
+    {
+      "id": "forge_tester",
+      "file": "foundry/openclaw.foundry.json5",
+      "responsibility": "run validation gates"
+    },
+    {
+      "id": "forge_reviewer",
+      "file": "foundry/openclaw.foundry.json5",
+      "responsibility": "review and summarize risk"
+    }
+  ],
+  "dataEntities": [
+    "Person",
+    "Identity",
+    "Interaction",
+    "Event",
+    "PostDraft",
+    "PublishTask",
+    "Audit",
+    "CaptureAsset",
+    "DevDigest",
+    "SelfCheckin",
+    "Mirror",
+    "MirrorEvidence"
+  ],
+  "keyEndpoints": [
+    "GET /workspace/bootstrap",
+    "POST /workspace/chat",
+    "POST /capture/assets",
+    "POST /capture/parse",
+    "POST /capture/commit",
+    "GET /people/:id",
+    "POST /events",
+    "POST /drafts/generate",
+    "PATCH /drafts/:id",
+    "POST /drafts/:id/validate",
+    "POST /publish/queue",
+    "POST /publish/approve",
+    "POST /publish/complete",
+    "GET /self-mirror",
+    "GET /self-mirror/evidence"
+  ],
+  "scripts": [
+    {
+      "path": "scripts/demo.sh",
+      "command": "bash scripts/demo.sh",
+      "purpose": "install, deploy runtime, validate safety, start public demo"
+    },
+    {
+      "path": "scripts/demo_status.sh",
+      "command": "bash scripts/demo_status.sh",
+      "purpose": "report local demo service health"
+    },
+    {
+      "path": "scripts/stop_demo.sh",
+      "command": "bash scripts/stop_demo.sh",
+      "purpose": "stop local demo services"
+    },
+    {
+      "path": "scripts/test.sh",
+      "command": "bash scripts/test.sh",
+      "purpose": "run full public validation suite"
+    },
+    {
+      "path": "scripts/foundry_dispatch.sh",
+      "command": "bash scripts/foundry_dispatch.sh STATUS",
+      "purpose": "inspect and control Foundry automation"
+    }
+  ],
+  "subsystemOwnership": [
+    {
+      "subsystem": "ui",
+      "authoritativePath": "socialos/apps/web/server.mjs"
+    },
+    {
+      "subsystem": "api",
+      "authoritativePath": "socialos/apps/api/server.mjs"
+    },
+    {
+      "subsystem": "product-core",
+      "authoritativePath": "socialos/lib/product-core.mjs"
+    },
+    {
+      "subsystem": "foundry-tasks",
+      "authoritativePath": "socialos/lib/foundry-tasks.mjs"
+    },
+    {
+      "subsystem": "db-schema",
+      "authoritativePath": "infra/db/schema.sql"
+    }
+  ],
+  "safetyInvariants": [
+    "API must remain loopback-only",
+    "default publish mode must remain dry-run",
+    "live publish must stay gated by explicit credentials and operator intent",
+    "gateway.bind, gateway.tailscale, and gateway.auth must not be widened casually",
+    "volatile local state must not be committed"
+  ]
+}

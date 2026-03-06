@@ -1,0 +1,41 @@
+name: Bug report
+description: Report a product, runtime, or operations bug in SocialOS
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Product UI
+        - API / Data
+        - Runtime / OpenClaw
+        - Foundry / Automation
+        - Docs / Demo
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the issue and expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      description: Include exact commands, routes, or user actions when possible.
+      placeholder: |
+        1. Run `bash scripts/demo.sh`
+        2. Open `/quick-capture`
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs, screenshots, or evidence
+      description: Paste any useful output or link a screenshot.

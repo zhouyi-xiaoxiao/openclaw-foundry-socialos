@@ -4,15 +4,12 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEPLOY_LOG="/tmp/socialos_deploy.log"
 POLICY_LOG="/tmp/socialos_demo_policy.log"
-API_LOG="/tmp/socialos_demo_api.log"
-WEB_LOG="/tmp/socialos_demo_web.log"
-API_PID_FILE="/tmp/socialos_demo_api.pid"
-WEB_PID_FILE="/tmp/socialos_demo_web.pid"
 API_PORT="${SOCIALOS_API_PORT:-8787}"
 WEB_PORT="${SOCIALOS_WEB_PORT:-4173}"
 API_URL="http://127.0.0.1:${API_PORT}"
 WEB_URL="http://127.0.0.1:${WEB_PORT}"
 NODE_BIN="$(command -v node)"
+CONTROL_SCRIPT="${REPO_ROOT}/scripts/demo_service_control.mjs"
 
 wait_for_http() {
   local url="$1"
@@ -26,29 +23,6 @@ wait_for_http() {
     sleep "${sleep_sec}"
   done
   return 1
-}
-
-start_server_if_needed() {
-  local name="$1"
-  local port="$2"
-  local log_file="$3"
-  local pid_file="$4"
-  shift 4
-
-  if lsof -nP -iTCP:"${port}" -sTCP:LISTEN >/dev/null 2>&1; then
-    echo "${name} already listening on :${port}"
-    return 0
-  fi
-
-  if command -v setsid >/dev/null 2>&1; then
-    nohup setsid "$@" >"${log_file}" 2>&1 < /dev/null &
-  else
-    nohup "$@" >"${log_file}" 2>&1 < /dev/null &
-  fi
-  local pid="$!"
-  disown "${pid}" >/dev/null 2>&1 || true
-  echo "${pid}" > "${pid_file}"
-  echo "started ${name} (pid=${pid}, log=${log_file})"
 }
 
 echo "== SocialOS Demo Bootstrap (one command) =="
@@ -74,8 +48,7 @@ if ! "${NODE_BIN}" --input-type=module -e "await import('node:sqlite')" >/dev/nu
   exit 1
 fi
 
-start_server_if_needed "socialos-api" "${API_PORT}" "${API_LOG}" "${API_PID_FILE}" "${NODE_BIN}" "${REPO_ROOT}/socialos/apps/api/server.mjs" --port "${API_PORT}"
-start_server_if_needed "socialos-web" "${WEB_PORT}" "${WEB_LOG}" "${WEB_PID_FILE}" "${NODE_BIN}" "${REPO_ROOT}/socialos/apps/web/server.mjs" --port "${WEB_PORT}"
+node "${CONTROL_SCRIPT}" start
 
 if wait_for_http "${API_URL}/health"; then
   API_HEALTH="PASS"
@@ -109,9 +82,11 @@ echo "- no widening of gateway.bind / gateway.tailscale / gateway.auth"
 
 echo ""
 echo "Next steps:"
+echo "- Demo status: bash ${REPO_ROOT}/scripts/demo_status.sh"
+echo "- Stop demo: bash ${REPO_ROOT}/scripts/stop_demo.sh"
 echo "- Run full checks: bash ${REPO_ROOT}/scripts/test.sh"
 echo "- Follow runbook: ${REPO_ROOT}/socialos/docs/DEMO_SCRIPT.md"
 echo "- Dashboard: ${WEB_URL}/dev-digest"
 echo "- API ops: ${API_URL}/ops/status"
 echo "- Run one automation pass: bash ${REPO_ROOT}/scripts/foundry_dispatch.sh RUN_DEVLOOP_ONCE"
-echo "- Inspect latest digest: ${REPO_ROOT}/reports/LATEST.md"
+echo "- Public evidence: ${REPO_ROOT}/socialos/docs/EVIDENCE.md"

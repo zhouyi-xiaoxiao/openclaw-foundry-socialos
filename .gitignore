@@ -1,8 +1,8 @@
 .DS_Store
 .locks/
+.demo/
 foundry/backups/
-reports/runs/*.tmp
-reports/runs/*.lock
+reports/
 foundry/WORKSPACE_FOUNDY/*/.openclaw/
 foundry/WORKSPACE_FOUNDY/*/BOOTSTRAP.md
 foundry/WORKSPACE_FOUNDY/*/HEARTBEAT.md
@@ -15,4 +15,6 @@ foundry/WORKSPACE_FOUNDY/*/USER.md
 .env
 .env.local
 .openclaw/
-
+infra/db/*.db
+*.log
+*.pid

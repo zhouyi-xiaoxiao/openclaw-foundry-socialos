@@ -24,10 +24,10 @@
 - `MirrorEvidence`
 
 ## Main product dataflow
-1. `GET /cockpit/summary`
-   - aggregates relationship actions, queue state, and latest self mirror into one home surface
-2. `GET /ask/search`
-   - performs natural-language recall over people, events, drafts, and self signals
+1. `GET /workspace/bootstrap`
+   - aggregates summary, top actions, recent contacts/events, queue preview, latest mirror, and voice readiness
+2. `POST /workspace/chat`
+   - routes natural-language capture/search/campaign/self requests and returns a presentation-focused response contract
 3. `POST /capture/assets`
    - stores image/audio metadata + extracted text
 4. `POST /capture/parse`
@@ -50,6 +50,20 @@
    - records posted / failed / still-manual outcomes
 13. `POST /self-mirror/generate`
    - writes structured mirror + evidence rows
+
+## Presentation contract
+`POST /workspace/chat` returns a presentation-first structure for the unified UI:
+- `presentation.mode`
+- `presentation.answer`
+- `presentation.primaryCard`
+- `presentation.secondaryCards`
+- `presentation.actions`
+
+This keeps the main surface simple:
+- concise answer first
+- one primary result card
+- up to three related cards
+- lightweight actions only
 
 ## Search architecture
 - Retrieval stays safe-by-default:
@@ -97,3 +111,10 @@
 - easy seed/reset
 - enough for current People/Campaign/Mirror loops
 - `Postgres + pgvector` stays isolated in `P2-4`
+
+## Public repo handoff surfaces
+- Human overview: `README.md`
+- Agent handoff: `AGENTS.md`
+- Machine-readable map: `socialos/docs/SYSTEM_MANIFEST.json`
+- Operator playbook: `socialos/docs/AGENT_PLAYBOOK.md`
+- Curated evidence: `socialos/docs/EVIDENCE.md`
