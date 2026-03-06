@@ -2289,6 +2289,10 @@ function shouldShowWorkspaceEventSuggestion(intent, text) {
   );
 }
 
+function shouldUseModelWorkspaceAssist(source = 'workspace-chat') {
+  return shouldUseModelCaptureAssist(source);
+}
+
 function buildWorkspaceSummary({
   preferredChinese,
   hasUntypedVoiceOnly,
@@ -2309,18 +2313,18 @@ function buildWorkspaceSummary({
   if (intent === 'search') {
     if (relatedPeople.length || relatedEvents.length) {
       return preferredChinese
-        ? `我先帮你查了一轮，找到 ${relatedPeople.length} 个联系人命中和 ${relatedEvents.length} 条相关事件。先看最像的结果，不把页面塞满。`
-        : `I checked memory first and found ${relatedPeople.length} contact match(es) and ${relatedEvents.length} related event(s). I am only surfacing the strongest hits.`;
+        ? `我先找到了最相关的 ${relatedPeople.length} 个联系人和 ${relatedEvents.length} 条事件线索，先给你看最值得开的结果。`
+        : `I found the strongest contact and event context first, and I am only surfacing the hits most worth opening.`;
     }
     return preferredChinese
-      ? '我先帮你查了联系人和事件，但这次还没有特别像的命中。你可以再补一个名字、公司、主题词或时间点。'
-      : 'I searched contacts and events first, but there are no strong hits yet. Add a name, company, topic, or time clue and I can narrow it down.';
+      ? '我先查了联系人和事件，但这次还没有特别稳的命中。再补一个名字、主题词或时间点会更准。'
+      : 'I checked contacts and events first, but nothing is strong enough yet. Add a name, topic, or time clue and I can narrow it down.';
   }
 
   if (intent === 'campaign') {
     return preferredChinese
-      ? '这条更像内容或活动请求。我先保持聊天模式，只在你真的要推进时再给 event 和 drafts 动作。'
-      : 'This reads like a campaign request. I am keeping the reply compact and only surfacing event or draft actions when you actually want to move it forward.';
+      ? '这条更像内容或活动请求。我先保持简洁，只在你真的要推进时再给 event 和 drafts 动作。'
+      : 'This reads like a content or event request. I am keeping it compact and only surfacing event or draft actions when they help.';
   }
 
   if (hasTranscribedAudio) {
@@ -2331,19 +2335,19 @@ function buildWorkspaceSummary({
 
   if (requiresNameConfirmation) {
     return preferredChinese
-      ? '我先整理出了一张联系人草稿，但名字还需要你确认一下。先改对名字，再保存进记忆会更稳。'
-      : 'I drafted a contact card, but the name still needs your confirmation. Confirm or edit it first, then save it to memory.';
+      ? '我先整理出了一张联系人草稿，但名字还需要你确认。先改对名字，再保存会更稳。'
+      : 'I drafted a contact card, but the name still needs your confirmation. Edit that first, then save it.';
   }
 
   if (personName) {
     return preferredChinese
-      ? `我先从这句话里提了一个联系人草稿${personName ? `：${personName}` : ''}。如果方向对，就保存；如果还没说完，继续聊就行。`
-      : `I pulled a contact draft out of this message${personName ? `: ${personName}` : ''}. Save it if it looks right, or keep talking to refine it.`;
+      ? `我先从这句话里提了一个联系人草稿：${personName}。方向对的话就保存，不急着一下子展开更多流程。`
+      : `I pulled a contact draft out of this message: ${personName}. Save it if it looks right, or keep talking to refine it.`;
   }
 
   return preferredChinese
-    ? '我先把这条消息接住了，保持正常聊天，不会默认替你展开一整套流程。需要查人、建 event 或出 drafts 时再往前走。'
-    : 'I captured the message and kept the reply lightweight. I will only branch into memory, events, or drafts when you actually need that next step.';
+    ? '我先把这条消息接住，保持正常聊天。需要查人、建 event 或出 drafts 时再往前走。'
+    : 'I captured the message and kept the reply lightweight. I will only branch into memory, events, or drafts when you need that next step.';
 }
 
 function buildSuggestedEventPayload(text, draft, relatedPeople = []) {
@@ -2527,7 +2531,7 @@ function buildWorkspaceDraftCard(draft, kicker = 'Related draft') {
 function buildWorkspaceMirrorCard(latestMirror) {
   if (!latestMirror?.mirrorId) return null;
   return buildPresentationCard('mirror', {
-    kicker: 'Self mirror',
+    kicker: 'Mirror',
     title: 'Latest self signal',
     body: truncateText(latestMirror.summaryText || latestMirror.content || 'Open the mirror for evidence-backed self patterns.', 200),
     href: '/self-mirror',
@@ -2554,6 +2558,201 @@ function dedupePresentationCards(cards, limit = 3) {
   return output;
 }
 
+function normalizeWorkspacePresentationMode(value, fallback = 'mixed') {
+  const normalized = cleanText(value).toLowerCase();
+  return ['capture', 'search', 'campaign', 'self', 'mixed'].includes(normalized) ? normalized : fallback;
+}
+
+function normalizeWorkspaceCardTarget(value) {
+  const normalized = cleanText(value).toLowerCase();
+  const aliases = new Map([
+    ['contactdraft', 'contactDraft'],
+    ['contact-draft', 'contactDraft'],
+    ['contact_draft', 'contactDraft'],
+    ['contactdraftcard', 'contactDraft'],
+    ['contact', 'contact'],
+    ['person', 'contact'],
+    ['personmatch', 'contact'],
+    ['event', 'event'],
+    ['relatedevent', 'event'],
+    ['suggestedevent', 'suggestedEvent'],
+    ['suggested-event', 'suggestedEvent'],
+    ['suggested_event', 'suggestedEvent'],
+    ['draft', 'draft'],
+    ['relateddraft', 'draft'],
+    ['mirror', 'mirror'],
+    ['selfmirror', 'mirror'],
+    ['self-mirror', 'mirror'],
+    ['none', 'none'],
+  ]);
+  return aliases.get(normalized) || '';
+}
+
+function normalizeWorkspaceActionId(value) {
+  const normalized = cleanText(value).toLowerCase();
+  const aliases = new Map([
+    ['review-contact', 'review-contact'],
+    ['reviewcontact', 'review-contact'],
+    ['save-contact', 'review-contact'],
+    ['savecontact', 'review-contact'],
+    ['open-contact', 'open-contact'],
+    ['opencontact', 'open-contact'],
+    ['create-event', 'create-event'],
+    ['createevent', 'create-event'],
+    ['review-drafts', 'review-drafts'],
+    ['reviewdrafts', 'review-drafts'],
+    ['open-self-mirror', 'open-self-mirror'],
+    ['openselfmirror', 'open-self-mirror'],
+    ['open-event', 'open-event'],
+    ['openevent', 'open-event'],
+  ]);
+  return aliases.get(normalized) || '';
+}
+
+async function buildWorkspaceModelAssist({
+  text,
+  source,
+  preferredChinese,
+  captureDraft,
+  relatedPeople,
+  relatedEvents,
+  relatedDrafts,
+  suggestedEvent,
+  latestMirror,
+  showMemoryAction,
+  showEventSuggestion,
+}) {
+  if (!shouldUseModelWorkspaceAssist(source)) {
+    return { method: 'heuristic', model: '', plan: null };
+  }
+
+  const apiKey = readOptionalString(process.env.OPENAI_API_KEY, '');
+  const model = readOptionalString(process.env.OPENAI_WORKSPACE_RESPONSE_MODEL, 'gpt-5.4');
+  const combinedText = cleanText(captureDraft?.combinedText || text);
+  if (!apiKey || !combinedText) {
+    return { method: 'heuristic', model: '', plan: null };
+  }
+
+  const prompt = [
+    'You are shaping a response for a local-first relationship and identity workspace.',
+    'Return compact JSON only.',
+    'Goals:',
+    '- Choose the best mode: capture, search, campaign, self, or mixed.',
+    '- Write one calm, concise answer in the same language as the user note.',
+    '- Choose one primaryTarget and up to three secondaryTargets.',
+    '- Choose up to three lightweight actions.',
+    '- If the user is describing a newly met person, prioritize the contact draft instead of unrelated memory hits.',
+    '- Do not sound like an internal system or a log.',
+    'Valid primaryTarget/secondaryTargets values:',
+    'contactDraft, contact, event, suggestedEvent, draft, mirror, none',
+    'Valid actions:',
+    'review-contact, open-contact, create-event, review-drafts, open-self-mirror, open-event',
+    'Schema:',
+    '{"mode":"capture","answer":"","primaryTarget":"contactDraft","secondaryTargets":[],"actions":[]}',
+  ].join('\n');
+
+  const userPayload = {
+    language: preferredChinese ? 'zh' : 'en',
+    text: combinedText,
+    extraction: captureDraft?.extraction || { method: 'heuristic', model: '' },
+    contactDraft: {
+      name: captureDraft?.personDraft?.name || '',
+      displayName: captureDraft?.personDraft?.displayName || '',
+      requiresNameConfirmation: Boolean(captureDraft?.personDraft?.requiresNameConfirmation),
+      tags: captureDraft?.personDraft?.tags || [],
+      notes: captureDraft?.personDraft?.notes || '',
+      followUpSuggestion: captureDraft?.personDraft?.followUpSuggestion || '',
+    },
+    interactionDraft: {
+      summary: captureDraft?.interactionDraft?.summary || '',
+      evidence: captureDraft?.interactionDraft?.evidence || '',
+    },
+    selfSignal: {
+      energy: captureDraft?.selfCheckinDraft?.energy ?? 0,
+      emotions: captureDraft?.selfCheckinDraft?.emotions || [],
+    },
+    available: {
+      relatedPeople: relatedPeople.slice(0, 2).map((person) => ({
+        name: person.name,
+        tags: person.tags || [],
+        snippet: person.evidenceSnippet || person.notes || '',
+      })),
+      relatedEvents: relatedEvents.slice(0, 2).map((event) => ({
+        title: event.title,
+        snippet: event.snippet || '',
+      })),
+      relatedDrafts: relatedDrafts.slice(0, 2).map((draft) => ({
+        platform: draft.platformLabel || draft.platform,
+        eventTitle: draft.eventTitle || '',
+      })),
+      latestMirror: latestMirror
+        ? {
+            summaryText: latestMirror.summaryText || latestMirror.content || '',
+            themes: Array.isArray(latestMirror.topThemes)
+              ? latestMirror.topThemes.map((item) => item?.theme || '').filter(Boolean)
+              : [],
+          }
+        : null,
+      suggestedEvent: suggestedEvent?.title
+        ? {
+            title: suggestedEvent.title,
+            summary: suggestedEvent.payload?.summary || '',
+          }
+        : null,
+    },
+    gates: {
+      showMemoryAction,
+      showEventSuggestion,
+    },
+  };
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: prompt },
+          { role: 'user', content: JSON.stringify(userPayload) },
+        ],
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { method: 'heuristic', model: '', plan: null };
+    }
+    const rawContent = payload?.choices?.[0]?.message?.content;
+    const parsed = parseLooseJsonObject(
+      typeof rawContent === 'string'
+        ? rawContent
+        : Array.isArray(rawContent)
+          ? rawContent
+              .map((item) =>
+                typeof item === 'string'
+                  ? item
+                  : typeof item?.text === 'string'
+                    ? item.text
+                    : typeof item?.content === 'string'
+                      ? item.content
+                      : ''
+              )
+              .join('\n')
+          : ''
+    );
+    if (!parsed) {
+      return { method: 'heuristic', model: '', plan: null };
+    }
+    return { method: 'model', model, plan: parsed };
+  } catch {
+    return { method: 'heuristic', model: '', plan: null };
+  }
+}
+
 function buildWorkspacePresentation({
   intent,
   summary,
@@ -2565,17 +2764,30 @@ function buildWorkspacePresentation({
   latestMirror,
   showMemoryAction,
   showEventSuggestion,
+  modelAssist,
 }) {
-  const mode = ['capture', 'search', 'campaign', 'self'].includes(intent) ? intent : 'mixed';
+  const fallbackMode = ['capture', 'search', 'campaign', 'self'].includes(intent) ? intent : 'mixed';
   const draftCard = buildWorkspaceContactDraftCard(captureDraft);
-  const personCard = buildWorkspacePersonMatchCard(relatedPeople[0], mode === 'search' ? 'Best contact match' : 'Memory match');
+  const personCard = buildWorkspacePersonMatchCard(
+    relatedPeople[0],
+    fallbackMode === 'search' ? 'Best contact match' : 'Contact memory'
+  );
   const eventCard = buildWorkspaceEventCard(
     relatedEvents[0],
-    mode === 'campaign' ? 'Relevant logbook item' : mode === 'search' ? 'Related event' : 'Event context'
+    fallbackMode === 'campaign' ? 'Relevant event' : fallbackMode === 'search' ? 'Event match' : 'Event context'
   );
   const suggestedEventCard = buildWorkspaceSuggestedEventCard(suggestedEvent);
   const draftResultCard = buildWorkspaceDraftCard(relatedDrafts[0]);
   const mirrorCard = buildWorkspaceMirrorCard(latestMirror);
+  const availableCards = {
+    contactDraft: draftCard,
+    contact: personCard,
+    event: eventCard,
+    suggestedEvent: suggestedEventCard,
+    draft: draftResultCard,
+    mirror: mirrorCard,
+  };
+  const mode = normalizeWorkspacePresentationMode(modelAssist?.plan?.mode, fallbackMode);
 
   let primaryCard = null;
   if (mode === 'capture') {
@@ -2590,7 +2802,12 @@ function buildWorkspacePresentation({
     primaryCard = draftCard || personCard || suggestedEventCard || draftResultCard || mirrorCard;
   }
 
-  const secondaryCards = dedupePresentationCards(
+  const modelPrimaryTarget = normalizeWorkspaceCardTarget(modelAssist?.plan?.primaryTarget);
+  if (modelPrimaryTarget && modelPrimaryTarget !== 'none' && availableCards[modelPrimaryTarget]) {
+    primaryCard = availableCards[modelPrimaryTarget];
+  }
+
+  let secondaryCards = dedupePresentationCards(
     [
       primaryCard === draftCard ? personCard : draftCard,
       primaryCard === personCard ? eventCard : personCard,
@@ -2601,34 +2818,70 @@ function buildWorkspacePresentation({
     ].filter(Boolean),
     3
   );
+  const modelSecondaryTargets = Array.isArray(modelAssist?.plan?.secondaryTargets)
+    ? modelAssist.plan.secondaryTargets.map(normalizeWorkspaceCardTarget).filter(Boolean)
+    : [];
+  if (modelSecondaryTargets.length) {
+    secondaryCards = dedupePresentationCards(
+      [
+        ...modelSecondaryTargets
+          .map((target) => availableCards[target])
+          .filter((card) => card && card !== primaryCard),
+        ...secondaryCards.filter((card) => card && card !== primaryCard),
+      ],
+      3
+    );
+  }
 
-  const actions = [];
+  const availableActions = [];
   if (showMemoryAction) {
-    actions.push({
+    availableActions.push({
+      id: 'review-contact',
       kind: 'mutation',
       action: 'review-contact',
       label: captureDraft?.personDraft?.requiresNameConfirmation ? 'Review Contact' : 'Review & Save',
     });
   }
   if (personCard?.href) {
-    actions.push({ kind: 'link', href: personCard.href, label: 'Open Contact' });
+    availableActions.push({ id: 'open-contact', kind: 'link', href: personCard.href, label: 'Open Contact' });
+  }
+  if (relatedEvents[0]?.eventId) {
+    availableActions.push({
+      id: 'open-event',
+      kind: 'link',
+      href: `/events/${encodeURIComponent(relatedEvents[0].eventId)}`,
+      label: 'Open Event',
+    });
   }
   if (showEventSuggestion && suggestedEvent?.title && !captureDraft?.personDraft?.requiresNameConfirmation) {
-    actions.push({ kind: 'mutation', action: 'create-event', label: 'Create Event' });
+    availableActions.push({ id: 'create-event', kind: 'mutation', action: 'create-event', label: 'Create Event' });
   }
   if (draftResultCard?.href) {
-    actions.push({ kind: 'link', href: draftResultCard.href, label: 'Review Drafts' });
+    availableActions.push({ id: 'review-drafts', kind: 'link', href: draftResultCard.href, label: 'Review Drafts' });
   }
-  if (mode === 'self' && mirrorCard?.href) {
-    actions.push({ kind: 'link', href: mirrorCard.href, label: 'Open Self Mirror' });
+  if (mirrorCard?.href) {
+    availableActions.push({ id: 'open-self-mirror', kind: 'link', href: mirrorCard.href, label: 'Open Self Mirror' });
   }
+
+  let actions = availableActions;
+  const modelActionIds = Array.isArray(modelAssist?.plan?.actions)
+    ? modelAssist.plan.actions.map(normalizeWorkspaceActionId).filter(Boolean)
+    : [];
+  if (modelActionIds.length) {
+    actions = modelActionIds
+      .map((actionId) => availableActions.find((action) => action.id === actionId))
+      .filter(Boolean);
+  }
+  actions = actions
+    .filter((action, index, list) => list.findIndex((entry) => entry.id === action.id) === index)
+    .slice(0, 3);
 
   return {
     mode,
     answer: readOptionalString(summary, ''),
     primaryCard,
     secondaryCards: dedupePresentationCards(secondaryCards, 3),
-    actions: actions.slice(0, 3),
+    actions,
   };
 }
 
@@ -2661,6 +2914,25 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
         cleanText(captureDraft.interactionDraft?.summary || '') ||
         combinedText
     );
+  const modelAssist = await buildWorkspaceModelAssist({
+    text,
+    source,
+    preferredChinese,
+    captureDraft,
+    relatedPeople,
+    relatedEvents,
+    relatedDrafts,
+    suggestedEvent,
+    latestMirror: latestMirror
+      ? {
+          summaryText: latestMirror.summaryText,
+          content: latestMirror.content,
+          topThemes: Array.isArray(latestMirror.themes) ? latestMirror.themes.slice(0, 3) : [],
+        }
+      : null,
+    showMemoryAction,
+    showEventSuggestion,
+  });
   const compactPeople = intent === 'search' ? relatedPeople.slice(0, 3) : relatedPeople.slice(0, 1);
   const compactEvents =
     intent === 'search' || showEventSuggestion ? relatedEvents.slice(0, showEventSuggestion ? 2 : 1) : [];
@@ -2699,10 +2971,11 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
     relatedEvents,
     captureDraft,
   });
+  const answer = cleanText(modelAssist?.plan?.answer || '') || summary;
 
   const presentation = buildWorkspacePresentation({
     intent,
-    summary,
+    summary: answer,
     captureDraft,
     relatedPeople,
     relatedEvents,
@@ -2719,16 +2992,18 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
       : null,
     showMemoryAction,
     showEventSuggestion,
+    modelAssist,
   });
 
   return {
     responseId: makeId('workspace'),
     intent,
-    summary,
+    summary: answer,
     presentation,
     text,
     assets,
     captureDraft,
+    extraction: captureDraft.extraction || { method: 'heuristic', model: '' },
     relatedPeople,
     relatedEvents,
     relatedDrafts,
@@ -2789,12 +3064,13 @@ function isNoiseCheckinRow(row) {
 }
 
 function normalizeCheckinRow(row) {
+  const reflection = sanitizeContactDraftText(readOptionalString(row.reflection, ''));
   return {
     checkinId: row.id || row.checkinId || '',
     energy: Number(row.energy || 0),
     emotions: Array.isArray(row.emotions) ? row.emotions : parseJsonStringArray(row.emotions),
     triggerText: row.trigger_text || row.triggerText || '',
-    reflection: readOptionalString(row.reflection, ''),
+    reflection,
     createdAt: row.created_at || row.createdAt || '',
   };
 }
@@ -3223,24 +3499,24 @@ function buildWorkspaceBootstrapPayload(statements) {
   const cluster = buildFoundryClusterSummary();
   const codex = buildCodexLayerSummary();
   const embeddings = resolveEmbeddingsSettings();
-  const drafts = dedupeLatestDrafts(statements.listRecentDrafts.all(30).map(formatDraftRow), 12).slice(0, 4);
+  const drafts = dedupeLatestDrafts(statements.listRecentDrafts.all(30).map(formatDraftRow), 12).slice(0, 3);
   const captures = statements.listRecentCaptures.all(8).map(formatCaptureRow);
   const publishMode = readMode();
 
   return {
     generatedAt: nowIso(),
     summaryText: cockpit.summaryText,
-    topActions: cockpit.actions.slice(0, 4),
-    recentContacts: cockpit.recentPeople.slice(0, 4),
-    recentEvents: cockpit.recentEvents.slice(0, 4),
+    topActions: cockpit.actions.slice(0, 3),
+    recentContacts: cockpit.recentPeople.slice(0, 3),
+    recentEvents: cockpit.recentEvents.slice(0, 3),
     recentDrafts: drafts,
     queuePreview: [
       ...cockpit.queue.awaitingApproval,
       ...cockpit.queue.manualSteps,
-    ].slice(0, 4),
+    ].slice(0, 3),
     latestMirror: cockpit.latestMirror,
-    recentCheckins: cockpit.recentCheckins.slice(0, 4),
-    recentCaptures: captures,
+    recentCheckins: cockpit.recentCheckins.slice(0, 3),
+    recentCaptures: captures.slice(0, 2),
     agentLaneSummary: Array.isArray(cluster.agents) ? cluster.agents.slice(0, 4) : [],
     foundry: cluster,
     codex,

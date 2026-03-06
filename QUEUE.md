@@ -39,7 +39,7 @@ Legend:
 - [x] OPS-5 llm-task health surface in Settings and `/ops/cluster`
 
 ## Auto Optimization Pool
-- [x] AUTO-OPT-TEST-DEBT
+- [!] AUTO-OPT-TEST-DEBT
 - [x] AUTO-OPT-PERF-DEBT
 - [x] AUTO-OPT-DOC-DEBT
 - [x] AUTO-OPT-OBS-DEBT
@@ -51,6 +51,14 @@ Legend:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
 - [x] AUTOFIX-AUTOFIX_AUTO_OPT_TEST_DEBT_015144-015214 Coder stage failed for AUTOFIX-AUTO_OPT_TEST_DEBT-015144
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+- [!] AUTOFIX-AUTO_OPT_TEST_DEBT-193455 Tester gate failed for AUTO-OPT-TEST-DEBT
+  - Done When:
+    - blocker root cause is fixed
+    - related tests and reviewer checks pass
+- [x] AUTOFIX-AUTOFIX_AUTO_OPT_TEST_DEBT_193455-193543 Coder stage failed for AUTOFIX-AUTO_OPT_TEST_DEBT-193455
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
