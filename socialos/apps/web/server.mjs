@@ -221,6 +221,63 @@ function renderEmptyState(message) {
   return `<div class="empty-state"><p>${escapeHtml(message)}</p></div>`;
 }
 
+function isDemoNoiseCapture(capture) {
+  const source = readOptionalString(capture?.source, '').toLowerCase();
+  const text = readOptionalString(capture?.text, '').toLowerCase();
+  return (
+    source.includes('smoke') ||
+    source.includes('backfill') ||
+    text.includes('weekly_mirror_smoke') ||
+    text.includes('e2e_') ||
+    text.includes('product workspace smoke')
+  );
+}
+
+function filterMeaningfulCaptures(captures, limit = 4) {
+  const seen = new Set();
+  return captures
+    .filter((capture) => !isDemoNoiseCapture(capture))
+    .filter((capture) => {
+      const key = truncate(readOptionalString(capture.text, ''), 80).toLowerCase();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, limit);
+}
+
+function renderChatComposerIntro() {
+  return `
+    <div class="chat-shell">
+      <div class="chat-bubble system">
+        <strong>How to demo this</strong>
+        <p>Type one real moment, or tap voice and say it like a WeChat note. We parse first, then you confirm before anything is saved.</p>
+      </div>
+      <div class="chat-bubble user ghost">
+        <p>今天认识了一个做增长的人，下周二要跟进。</p>
+      </div>
+    </div>
+  `;
+}
+
+function renderCaptureFeed(captures) {
+  const meaningfulCaptures = filterMeaningfulCaptures(captures, 4);
+  if (!meaningfulCaptures.length) return renderEmptyState('No demo-ready captures yet.');
+  return `<div class="chat-shell">${meaningfulCaptures
+    .map(
+      (capture, index) => `
+        <article class="chat-bubble ${index % 2 === 0 ? 'user' : 'system'}">
+          <div class="stack-meta">
+            ${renderPill(capture.source || 'manual', 'soft')}
+            <span>${escapeHtml(formatDateTime(capture.createdAt))}</span>
+          </div>
+          <p>${escapeHtml(truncate(capture.text, 220))}</p>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
 function renderCaptureCards(captures) {
   if (!captures.length) return renderEmptyState('No captures yet.');
   return `<div class="stack">${captures

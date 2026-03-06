@@ -1573,6 +1573,61 @@ function runLocalImageOcr({ mimeType, contentBase64 }) {
   }
 }
 
+async function runOpenAiAudioTranscription({ mimeType, contentBase64 }) {
+  const apiKey = readOptionalString(process.env.OPENAI_API_KEY, '');
+  if (!apiKey || !contentBase64) return { text: '', provider: apiKey ? 'openai-skipped' : 'disabled' };
+
+  const audioBuffer = decodeDataUrl(contentBase64);
+  if (!audioBuffer.length) return { text: '', provider: 'openai-empty-audio' };
+
+  const extension = mimeType.includes('mp3')
+    ? 'mp3'
+    : mimeType.includes('wav')
+      ? 'wav'
+      : mimeType.includes('m4a')
+        ? 'm4a'
+        : 'webm';
+
+  const form = new FormData();
+  form.set(
+    'file',
+    new Blob([audioBuffer], { type: mimeType || 'audio/webm' }),
+    `capture-note.${extension}`
+  );
+  form.set(
+    'model',
+    readOptionalString(process.env.OPENAI_AUDIO_TRANSCRIBE_MODEL, 'gpt-4o-mini-transcribe')
+  );
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+      },
+      body: form,
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return {
+        text: '',
+        provider: 'openai-error',
+        error: readOptionalString(payload?.error?.message, `status ${response.status}`),
+      };
+    }
+    return {
+      text: cleanText(payload.text || ''),
+      provider: 'openai',
+    };
+  } catch (error) {
+    return {
+      text: '',
+      provider: 'openai-error',
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 function normalizeTimestampInput(value, fallback = null) {
   if (typeof value !== 'string' || !value.trim()) return fallback;
   const trimmed = value.trim();
@@ -2599,8 +2654,13 @@ async function routeRequest(req, res, statements) {
     const fileName = readOptionalString(body.fileName, `${kind}-${Date.now()}`);
     const inlineText = cleanText(body.extractedText || body.transcript || body.previewText || '');
     const contentBase64 = readOptionalString(body.contentBase64, '') || readOptionalString(body.dataUrl, '');
+    const openAiTranscription =
+      !inlineText && kind === 'audio'
+        ? await runOpenAiAudioTranscription({ mimeType, contentBase64 })
+        : { text: '', provider: 'skipped' };
     const extractedText =
       inlineText ||
+      (kind === 'audio' ? openAiTranscription.text : '') ||
       (kind === 'image' ? runLocalImageOcr({ mimeType, contentBase64 }) : '');
     const status = extractedText ? 'parsed' : 'manual_review';
     const assetId = makeId('asset');
@@ -2610,11 +2670,15 @@ async function routeRequest(req, res, statements) {
       transcriptMethod:
         kind === 'audio'
           ? extractedText
-            ? 'browser_or_manual'
+            ? openAiTranscription.provider === 'openai'
+              ? 'openai-transcription'
+              : 'browser_or_manual'
             : 'manual_required'
           : readOptionalString(body.ocrMethod, extractedText ? 'local-ocr' : 'manual_required'),
       previewText: truncateText(extractedText, 280),
       status,
+      transcriptionProvider: kind === 'audio' ? openAiTranscription.provider : null,
+      transcriptionError: kind === 'audio' ? readOptionalString(openAiTranscription.error, '') : '',
       contentBytes: contentBase64 ? Buffer.byteLength(contentBase64, 'utf8') : 0,
     };
 
