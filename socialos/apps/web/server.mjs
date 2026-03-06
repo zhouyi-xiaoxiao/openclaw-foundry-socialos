@@ -36,12 +36,14 @@ const PAGE_DEFINITIONS = [
     title: 'Contacts',
     path: '/people',
     summary: 'A lighter directory view for people memory, identities, and follow-up context.',
+    nav: false,
   },
   {
     id: 'events',
     title: 'Logbook',
     path: '/events',
     summary: 'A structured record of campaign-worthy events and the timeline behind them.',
+    nav: false,
   },
   {
     id: 'drafts',
@@ -57,7 +59,7 @@ const PAGE_DEFINITIONS = [
   },
   {
     id: 'self-mirror',
-    title: 'Self Mirror',
+    title: 'Mirror',
     path: '/self-mirror',
     summary: 'Review recent check-ins and regenerate the weekly mirror when you want a fresh synthesis.',
   },
@@ -66,6 +68,7 @@ const PAGE_DEFINITIONS = [
     title: 'Dev Digest',
     path: '/dev-digest',
     summary: 'Track run reports, blocked items, and what the devloop is doing instead of idle spinning.',
+    nav: false,
   },
   {
     id: 'settings',
@@ -240,6 +243,53 @@ function normalizePath(pathname) {
     return pathname.slice(0, -1);
   }
   return pathname;
+}
+
+function buildWorkspaceHref(params = {}) {
+  const url = new URL('/quick-capture', 'http://localhost');
+  for (const [key, value] of Object.entries(params)) {
+    const normalized = readOptionalString(String(value ?? ''), '');
+    if (normalized) url.searchParams.set(key, normalized);
+  }
+  return `${url.pathname}${url.search}`;
+}
+
+function normalizeWorkspaceHref(href) {
+  const raw = readOptionalString(href, '');
+  if (!raw) return '/quick-capture';
+
+  if (raw.startsWith('/people/')) {
+    return buildWorkspaceHref({
+      panel: 'people',
+      contactId: decodeURIComponent(raw.replace(/^\/people\//u, '')),
+    });
+  }
+  if (raw === '/people') return buildWorkspaceHref({ panel: 'people' });
+  if (raw.startsWith('/events/')) {
+    return buildWorkspaceHref({
+      panel: 'events',
+      eventId: decodeURIComponent(raw.replace(/^\/events\//u, '')),
+    });
+  }
+  if (raw === '/events') return buildWorkspaceHref({ panel: 'events' });
+  if (raw.startsWith('/self-mirror')) return buildWorkspaceHref({ panel: 'mirror' });
+  if (raw.startsWith('/ask')) {
+    try {
+      const parsed = new URL(raw, 'http://localhost');
+      return buildWorkspaceHref({
+        q: readOptionalString(parsed.searchParams.get('q'), ''),
+      });
+    } catch {
+      return buildWorkspaceHref();
+    }
+  }
+  if (raw.startsWith('/drafts?')) return raw;
+  return raw;
+}
+
+function resolveWorkspacePanel(rawPanel) {
+  const panel = readOptionalString(rawPanel, '').toLowerCase();
+  return ['people', 'events', 'drafts', 'mirror'].includes(panel) ? panel : 'people';
 }
 
 function renderNavigation(currentPath) {
