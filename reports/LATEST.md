@@ -1,6 +1,6 @@
-Run: 20260306_040018_AUTO-OPT-TEST-DEBT
+Run: 20260306_040104_AUTO-OPT-TEST-DEBT
 What: AUTO-OPT test debt sweep completed
 Why: Continuous loop validates quality gates instead of idle spinning
 Risk: low
-Verify: /tmp/socialos_test_20260306_040018_AUTO-OPT-TEST-DEBT.log
+Verify: /tmp/socialos_test_20260306_040104_AUTO-OPT-TEST-DEBT.log
 Next: continue auto optimization pool
