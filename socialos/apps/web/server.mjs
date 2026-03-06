@@ -415,10 +415,9 @@ function renderChatComposerIntro() {
   return `
     <article class="chat-bubble system workspace-welcome">
       <div class="stack-meta">
-        <strong>Start naturally</strong>
-        <span>ready</span>
+        <strong>Start here</strong>
       </div>
-      <p>Say what happened, ask what you need, or drop in a voice note. SocialOS keeps the thread calm and only opens the next useful person, event, draft, or mirror.</p>
+      <p>Say what happened, ask what you need, or drop in a voice note. We will keep the thread calm and only surface the next useful contact, event, draft, or mirror.</p>
     </article>
   `;
 }
@@ -2094,7 +2093,7 @@ async function renderQuickCapturePage(page, requestUrl) {
         <div class="panel-head">
           <div>
             <h2>Conversation</h2>
-            <p class="panel-subtitle">Keep the thread natural. SocialOS only opens people memory, events, or drafts when the next step is genuinely useful.</p>
+            <p class="panel-subtitle">Keep the thread natural. SocialOS only opens the next useful contact, event, draft, or mirror when it helps.</p>
           </div>
         </div>
         ${renderWorkspaceThreadSeed(bootstrap.recentCaptures || [])}
@@ -2127,7 +2126,7 @@ async function renderQuickCapturePage(page, requestUrl) {
           </form>
           <div class="workspace-transcript-preview" data-transcript-preview hidden></div>
           <div class="workspace-composer-note" data-audio-status>
-            Ask anything, attach context, or record a voice note. When voice stops, we draft the transcript into the composer so you can edit it before sending.
+            Ask, attach context, or record a voice note. When the voice note stops, the transcript lands in the composer so you can edit it before sending.
           </div>
         </div>
         <div class="form-result" data-form-result hidden></div>

@@ -17,7 +17,7 @@ async function main() {
       'workspace composer should render a transcript preview area'
     );
     assert(
-      html.includes('we draft the transcript into the composer so you can edit it before sending'),
+      html.includes('the transcript lands in the composer so you can edit it before sending'),
       'workspace composer note should explain manual send after transcription'
     );
     assert(
