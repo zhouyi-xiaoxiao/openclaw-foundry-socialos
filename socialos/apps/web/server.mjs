@@ -637,7 +637,7 @@ function renderPeopleCards(people, showScore = false) {
             ${(tags.length ? tags : ['no-tags']).map((tag) => renderPill(tag, 'soft')).join('')}
           </div>
           <div class="inline-actions">
-            <a class="mini-link" href="/people/${encodeURIComponent(person.personId)}">Open Detail</a>
+            <a class="mini-link" href="${escapeHtml(buildWorkspaceHref({ panel: 'people', contactId: person.personId }))}">Open Detail</a>
           </div>
         </article>
       `;
@@ -675,7 +675,7 @@ function renderEventCards(events) {
           <p>${escapeHtml(detailPreview || 'No structured payload yet.')}</p>
           ${badges.length ? `<div class="chip-row">${badges.map((badge) => renderPill(badge, 'soft')).join('')}</div>` : ''}
           <div class="inline-actions">
-            <a class="mini-link" href="/drafts?eventId=${encodeURIComponent(event.eventId)}">Open in Drafts</a>
+            <a class="mini-link" href="${escapeHtml(buildWorkspaceHref({ panel: 'events', eventId: event.eventId }))}">Open Event</a>
           </div>
         </article>
       `;
@@ -1091,7 +1091,7 @@ function renderCockpitActionCards(actions) {
           </div>
           <p>${escapeHtml(summarizeCardCopy(action.reason || '', 132, 'A useful next action is ready.'))}</p>
           <div class="inline-actions">
-            <a class="mini-link" href="${escapeHtml(action.href || '/quick-capture')}">Open</a>
+            <a class="mini-link" href="${escapeHtml(normalizeWorkspaceHref(action.href || '/quick-capture'))}">Open</a>
           </div>
         </article>
       `
@@ -1115,7 +1115,7 @@ function renderFollowUpCards(followUps) {
           </div>
           <small>Last interaction: ${escapeHtml(formatDateTime(item.lastInteractionAt || item.updatedAt))}</small>
           <div class="inline-actions">
-            <a class="mini-link" href="/people/${encodeURIComponent(item.personId)}">Open Contact</a>
+            <a class="mini-link" href="${escapeHtml(buildWorkspaceHref({ panel: 'people', contactId: item.personId }))}">Open Contact</a>
           </div>
         </article>
       `
@@ -1131,11 +1131,11 @@ function renderAskActionCards(actions) {
         <article class="stack-card">
           <div class="stack-meta">
             <strong>${escapeHtml(action.label || 'Open')}</strong>
-            <span>${escapeHtml(action.href || '/ask')}</span>
+            <span>${escapeHtml(normalizeWorkspaceHref(action.href || '/quick-capture'))}</span>
           </div>
           <p>${escapeHtml(action.reason || '')}</p>
           <div class="inline-actions">
-            <a class="mini-link" href="${escapeHtml(action.href || '/ask')}">Open</a>
+            <a class="mini-link" href="${escapeHtml(normalizeWorkspaceHref(action.href || '/quick-capture'))}">Open</a>
           </div>
         </article>
       `
@@ -1155,7 +1155,7 @@ function renderAskDraftCards(drafts) {
           </div>
           <p>${escapeHtml(summarizeCardCopy(draft.snippet || draft.content || '', 164, 'A platform-ready draft already exists for this event.'))}</p>
           <div class="inline-actions">
-            <a class="mini-link" href="/drafts?eventId=${encodeURIComponent(draft.eventId || '')}">Open Drafts</a>
+            <a class="mini-link" href="${escapeHtml(buildWorkspaceHref({ panel: 'drafts', eventId: draft.eventId || '' }))}">Open Drafts</a>
             ${draft.eventTitle ? `<span class="quiet-label">${escapeHtml(truncate(draft.eventTitle, 42))}</span>` : ''}
           </div>
         </article>
