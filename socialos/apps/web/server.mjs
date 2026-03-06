@@ -2452,8 +2452,15 @@ function renderClientScript() {
           event.preventDefault();
           const form = recordToggle.closest('form');
           const statusNode = document.querySelector('[data-audio-status]');
+          const openAiReady = form?.dataset.openaiTranscriptionReady === 'true';
+          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
           if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
             statusNode.innerHTML = '<strong>Browser audio tools</strong><p>MediaRecorder is unavailable in this browser. Upload an audio file instead.</p>';
+            return;
+          }
+
+          if (!captureState.recorder && !SpeechRecognition && !openAiReady) {
+            statusNode.innerHTML = '<strong>Voice chat is not ready yet</strong><p>This browser has no built-in speech recognition, and the server has no OpenAI transcription key right now. Add OPENAI_API_KEY to .env if you want one-tap voice send with automatic replies.</p>';
             return;
           }
           if (!captureState.recorder) {
@@ -2467,12 +2474,13 @@ function renderClientScript() {
             recordToggle.dataset.originalLabel = recordToggle.textContent;
             recordToggle.textContent = 'Stop';
 
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             const textField = form?.elements?.text;
             if (SpeechRecognition && textField) {
               captureState.recognition = new SpeechRecognition();
               captureState.recognition.continuous = true;
               captureState.recognition.interimResults = true;
+              const selectedLang = String(form?.elements?.voiceLang?.value || 'auto');
+              captureState.recognition.lang = selectedLang === 'auto' ? (navigator.language || 'en-US') : selectedLang;
               captureState.recognition.onresult = (speechEvent) => {
                 const transcript = Array.from(speechEvent.results)
                   .map((result) => result[0]?.transcript || '')
@@ -2483,7 +2491,7 @@ function renderClientScript() {
               captureState.recognition.start();
             }
 
-            statusNode.innerHTML = '<strong>Recording</strong><p>Speak naturally, then tap the same Mic button again to finish.</p>';
+            statusNode.innerHTML = '<strong>Recording</strong><p>Speak naturally, then tap the same Mic button again to finish and send.</p>';
             return;
           }
 
@@ -2914,6 +2922,9 @@ function renderLayout({ currentPath, title, body }) {
       }
       .workspace-icon-button {
         min-width: 78px;
+      }
+      .workspace-lang-select {
+        min-width: 110px;
       }
       .workspace-side {
         display: grid;

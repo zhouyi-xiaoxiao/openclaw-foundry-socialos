@@ -78,6 +78,23 @@ async function main() {
       'audio asset without transcript should fall back to manual review'
     );
 
+    const workspaceFallback = await requestJson(api.baseUrl, '/workspace/chat', {
+      method: 'POST',
+      body: {
+        text: '',
+        source: 'audio_capture_smoke',
+        assetIds: [fallbackAsset.asset.assetId],
+      },
+    });
+    assert(
+      workspaceFallback.transcription?.needsTranscription === true,
+      'workspace chat should explicitly mark missing transcription for voice-only input'
+    );
+    assert(
+      String(workspaceFallback.summary || '').toLowerCase().includes('transcript'),
+      'workspace chat should explain that it cannot reason over a voice note without a transcript'
+    );
+
     console.log('audio_capture_smoke: PASS');
   } finally {
     await api.close();
