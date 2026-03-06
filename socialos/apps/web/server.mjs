@@ -3831,12 +3831,30 @@ function renderLayout({ currentPath, title, body }) {
       }
       .workspace-side {
         display: grid;
-        gap: 20px;
+        gap: 16px;
+        position: sticky;
+        top: 24px;
+        max-height: calc(100vh - 48px);
+        overflow: auto;
+        padding-right: 4px;
+      }
+      .workspace-side .panel {
+        padding: 18px;
+      }
+      .workspace-side .panel h2 {
+        font-size: 20px;
+      }
+      .workspace-side .stack-card {
+        padding: 14px;
       }
       .workspace-secondary-grid {
         display: grid;
         gap: 10px;
         grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .agent-lane-grid {
+        display: grid;
+        gap: 10px;
       }
       .workspace-presentation-card {
         display: grid;
@@ -3902,6 +3920,9 @@ function renderLayout({ currentPath, title, body }) {
       }
       .compact-card {
         padding: 12px;
+      }
+      .compact-card p {
+        font-size: 13px;
       }
       .workspace-assistant {
         max-width: min(760px, 100%);
@@ -4016,6 +4037,15 @@ function renderLayout({ currentPath, title, body }) {
         padding: 16px;
         border: 1px solid rgba(22, 33, 50, 0.1);
         background: var(--panel-strong);
+        transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+      }
+      .stack-card:hover,
+      .draft-card:hover,
+      .cluster-card:hover,
+      .info-card:hover {
+        transform: translateY(-1px);
+        border-color: rgba(21, 111, 106, 0.18);
+        box-shadow: 0 18px 36px rgba(18, 33, 49, 0.08);
       }
       .score {
         color: var(--accent);
@@ -4023,7 +4053,11 @@ function renderLayout({ currentPath, title, body }) {
       }
       .draft-grid,
       .cluster-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
+      .draft-card {
+        display: grid;
+        gap: 14px;
       }
       .draft-head {
         display: flex;
@@ -4036,10 +4070,34 @@ function renderLayout({ currentPath, title, body }) {
         margin-top: 6px;
         font-size: 14px;
       }
+      .draft-title {
+        color: var(--ink);
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .draft-hook {
+        color: var(--accent);
+        font-size: 14px;
+      }
+      .draft-preview {
+        display: grid;
+        gap: 10px;
+        padding: 16px;
+        border-radius: 18px;
+        border: 1px solid rgba(22, 33, 50, 0.08);
+        background: rgba(255, 255, 255, 0.72);
+      }
+      .draft-preview p {
+        color: var(--ink);
+      }
       .draft-tags {
         margin-top: 12px;
         color: var(--accent);
         font-size: 14px;
+      }
+      .quiet-label {
+        color: var(--ink-soft);
+        font-size: 12px;
       }
       .draft-queue-form {
         margin-top: 14px;
@@ -4206,6 +4264,12 @@ function renderLayout({ currentPath, title, body }) {
         .workspace-thread {
           min-height: 320px;
           max-height: none;
+        }
+        .workspace-side {
+          position: static;
+          max-height: none;
+          overflow: visible;
+          padding-right: 0;
         }
         .workspace-secondary-grid {
           grid-template-columns: 1fr;
