@@ -2377,6 +2377,7 @@ function buildWorkspaceSummary({
 function buildSuggestedEventPayload(text, draft, relatedPeople = []) {
   const combined = cleanText(draft?.combinedText || text);
   const personName = cleanText(draft?.personDraft?.name || relatedPeople[0]?.name || '');
+  const personId = cleanText(draft?.personDraft?.personId || relatedPeople[0]?.personId || '');
   const preferredLanguage = hasHanCharacters(combined) || hasHanCharacters(personName) ? 'zh' : 'en';
   const cleanCombined = sanitizeEventNarrative(combined, preferredLanguage, 280);
   const followUpSuggestion = sanitizeContactDraftText(readOptionalString(draft?.personDraft?.followUpSuggestion, ''));
@@ -2399,6 +2400,7 @@ function buildSuggestedEventPayload(text, draft, relatedPeople = []) {
       focus: 'contact follow-up',
       sourceType: 'workspace-chat',
       personName,
+      personId,
       summary: truncateText(cleanCombined || combined, 220),
       combinedText: cleanCombined || truncateText(combined, 280),
       followUpSuggestion,
@@ -2542,7 +2544,7 @@ function buildWorkspaceDraftCard(draft, kicker = 'Related draft') {
   if (!draft?.draftId) return null;
   return buildPresentationCard('draft', {
     kicker,
-    title: `${draft.platformLabel || draft.platform || 'Draft'} · ${draft.eventTitle || draft.eventId || ''}`.trim(),
+    title: `${draft.platformShellLabel || draft.platformLabel || draft.platform || 'Draft'} · ${draft.eventTitle || draft.eventId || ''}`.trim(),
     body: truncateText(draft.snippet || draft.content || 'A platform package already exists for this topic.', 200),
     href: `/drafts?eventId=${encodeURIComponent(draft.eventId || '')}`,
     badges: [draft.language, draft.publishPackage?.supportLevel || draft.capability?.supportLevel],
@@ -2792,14 +2794,8 @@ function buildWorkspacePresentation({
 }) {
   const fallbackMode = ['capture', 'search', 'campaign', 'self'].includes(intent) ? intent : 'mixed';
   const draftCard = buildWorkspaceContactDraftCard(captureDraft);
-  const personCard = buildWorkspacePersonMatchCard(
-    relatedPeople[0],
-    fallbackMode === 'search' ? 'Best contact match' : 'Contact memory'
-  );
-  const eventCard = buildWorkspaceEventCard(
-    relatedEvents[0],
-    fallbackMode === 'campaign' ? 'Relevant event' : fallbackMode === 'search' ? 'Event match' : 'Event context'
-  );
+  const personCard = buildWorkspacePersonMatchCard(relatedPeople[0], 'Contact');
+  const eventCard = buildWorkspaceEventCard(relatedEvents[0], 'Event');
   const suggestedEventCard = buildWorkspaceSuggestedEventCard(suggestedEvent);
   const draftResultCard = buildWorkspaceDraftCard(relatedDrafts[0]);
   const mirrorCard = buildWorkspaceMirrorCard(latestMirror);
@@ -2900,10 +2896,38 @@ function buildWorkspacePresentation({
     .filter((action, index, list) => list.findIndex((entry) => entry.id === action.id) === index)
     .slice(0, 3);
 
+  const related = {
+    people: dedupePresentationCards(
+      relatedPeople
+        .slice(0, 3)
+        .map((person) => buildWorkspacePersonMatchCard(person, 'Contact')),
+      3
+    ),
+    events: dedupePresentationCards(
+      [
+        ...relatedEvents.slice(0, 2).map((event) => buildWorkspaceEventCard(event, 'Event')),
+        suggestedEventCard,
+      ].filter(Boolean),
+      3
+    ),
+    drafts: dedupePresentationCards(
+      relatedDrafts.slice(0, 3).map((draft) => buildWorkspaceDraftCard(draft, 'Draft')),
+      3
+    ),
+    mirror: dedupePresentationCards(mirrorCard ? [mirrorCard] : [], 1),
+  };
+
   return {
     mode,
-    answer: readOptionalString(summary, ''),
+    answer: truncateText(
+      readOptionalString(summary, '')
+        .split(/\n{2,}/u)
+        .map((part) => cleanText(part))
+        .filter(Boolean)[0] || '',
+      240
+    ),
     primaryCard,
+    related,
     secondaryCards: dedupePresentationCards(secondaryCards, 3),
     actions,
   };
@@ -2925,7 +2949,8 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
   const relatedEvents = searchEventMatches(statements, combinedText, 4);
   const relatedDrafts = searchDraftMatches(statements, combinedText, 3);
   const suggestedEvent = buildSuggestedEventPayload(text, captureDraft, relatedPeople);
-  const latestMirrorRow = statements.selectLatestMirror.get();
+  const latestMirrorRow =
+    statements.selectLatestMirrorByCadence.get('daily') || statements.selectLatestMirrorByCadence.get('weekly');
   const latestMirror = latestMirrorRow
     ? formatMirrorPayload(latestMirrorRow, statements.listMirrorEvidenceByMirrorId.all(latestMirrorRow.id))
     : null;
@@ -3031,6 +3056,7 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
     relatedPeople,
     relatedEvents,
     relatedDrafts,
+    related: presentation.related,
     suggestedEvent,
     ui: {
       showMemoryAction,
@@ -3604,6 +3630,15 @@ function buildWorkspaceBootstrapPayload(statements) {
   const drafts = dedupeLatestDrafts(statements.listRecentDrafts.all(30).map(formatDraftRow), 12).slice(0, 3);
   const captures = dedupeMeaningfulCaptureRows(statements.listRecentCaptures.all(12), 1);
   const publishMode = readMode();
+  const latestDailyMirrorRow = statements.selectLatestMirrorByCadence.get('daily');
+  const latestWeeklyMirrorRow = statements.selectLatestMirrorByCadence.get('weekly');
+  const latestDailyMirror = latestDailyMirrorRow
+    ? formatMirrorPayload(latestDailyMirrorRow, statements.listMirrorEvidenceByMirrorId.all(latestDailyMirrorRow.id))
+    : null;
+  const latestWeeklyMirror = latestWeeklyMirrorRow
+    ? formatMirrorPayload(latestWeeklyMirrorRow, statements.listMirrorEvidenceByMirrorId.all(latestWeeklyMirrorRow.id))
+    : null;
+  const latestMirror = latestDailyMirror || latestWeeklyMirror || cockpit.latestMirror || null;
 
   return {
     generatedAt: nowIso(),
@@ -3616,7 +3651,9 @@ function buildWorkspaceBootstrapPayload(statements) {
       ...cockpit.queue.awaitingApproval,
       ...cockpit.queue.manualSteps,
     ].slice(0, 3),
-    latestMirror: cockpit.latestMirror,
+    latestMirror,
+    latestDailyMirror,
+    latestWeeklyMirror,
     recentCheckins: cockpit.recentCheckins.slice(0, 3),
     recentCaptures: captures.slice(0, 2),
     agentLaneSummary: Array.isArray(cluster.agents) ? cluster.agents.slice(0, 4) : [],
@@ -3674,6 +3711,8 @@ function buildEventDetailPayload(statements, eventId) {
     assets: normalizeStringList(payload.assets),
     details: payload.details || {},
     relatedDrafts,
+    relatedPeople: listRelatedPeopleForEvent(statements, eventId),
+    graphOverview: buildGraphOverview(statements, { focusType: 'event', focusId: eventId }),
   };
 }
 
@@ -3706,10 +3745,138 @@ function buildPeopleDetailPayload(statements, personId) {
     identities,
     interactions,
     evidence,
+    relatedEvents: listRelatedEventsForPerson(statements, personId),
+    graphOverview: buildGraphOverview(statements, { focusType: 'person', focusId: personId }),
     suggestion: {
       followUpMessage: buildFollowUpMessage(person, interactions),
       nextFollowUpAt: person.nextFollowUpAt,
     },
+  };
+}
+
+function formatEventPersonLinkRow(row) {
+  return {
+    linkId: row.id,
+    eventId: row.event_id,
+    personId: row.person_id,
+    role: readOptionalString(row.role, 'participant'),
+    sourceType: readOptionalString(row.source_type, 'manual'),
+    sourceId: readOptionalString(row.source_id, ''),
+    weight: Number(row.weight || 1),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function listRelatedPeopleForEvent(statements, eventId) {
+  return statements.listEventPersonLinksByEventId
+    .all(eventId)
+    .map((row) => {
+      const personRow = statements.selectPersonById.get(row.person_id);
+      if (!personRow || !isDisplayablePersonRow(personRow)) return null;
+      return {
+        ...formatPersonRow(personRow),
+        link: formatEventPersonLinkRow(row),
+      };
+    })
+    .filter(Boolean);
+}
+
+function listRelatedEventsForPerson(statements, personId) {
+  return statements.listEventPersonLinksByPersonId
+    .all(personId)
+    .map((row) => {
+      const eventRow = statements.selectEventDetailById.get(row.event_id);
+      if (!eventRow) return null;
+      return {
+        ...formatEventRow(eventRow),
+        link: formatEventPersonLinkRow(row),
+      };
+    })
+    .filter(Boolean);
+}
+
+function buildGraphOverview(statements, { focusType, focusId }) {
+  const nodes = [];
+  const edges = [];
+  const nodeById = new Map();
+
+  function upsertNode(node) {
+    if (!node?.id || nodeById.has(node.id)) return;
+    nodeById.set(node.id, node);
+    nodes.push(node);
+  }
+
+  function addEdge(edge) {
+    if (!edge?.id) return;
+    edges.push(edge);
+  }
+
+  if (focusType === 'person') {
+    const person = statements.selectPersonById.get(focusId);
+    if (!person) return { focusType, focusId, nodes: [], edges: [] };
+    upsertNode({
+      id: `person:${person.id}`,
+      entityType: 'person',
+      entityId: person.id,
+      label: readOptionalString(person.name, 'Contact'),
+      x: 0.5,
+      y: 0.5,
+    });
+    const relatedEvents = listRelatedEventsForPerson(statements, focusId).slice(0, 6);
+    relatedEvents.forEach((event, index) => {
+      const angle = (Math.PI * 2 * index) / Math.max(relatedEvents.length, 1);
+      upsertNode({
+        id: `event:${event.eventId}`,
+        entityType: 'event',
+        entityId: event.eventId,
+        label: readOptionalString(event.title, 'Event'),
+        x: 0.5 + Math.cos(angle) * 0.28,
+        y: 0.5 + Math.sin(angle) * 0.28,
+      });
+      addEdge({
+        id: `${focusId}:${event.eventId}`,
+        from: `person:${focusId}`,
+        to: `event:${event.eventId}`,
+        role: event.link?.role || 'participant',
+      });
+    });
+  } else if (focusType === 'event') {
+    const event = statements.selectEventDetailById.get(focusId);
+    if (!event) return { focusType, focusId, nodes: [], edges: [] };
+    upsertNode({
+      id: `event:${event.id}`,
+      entityType: 'event',
+      entityId: event.id,
+      label: readOptionalString(event.title, 'Event'),
+      x: 0.5,
+      y: 0.5,
+    });
+    const relatedPeople = listRelatedPeopleForEvent(statements, focusId).slice(0, 6);
+    relatedPeople.forEach((person, index) => {
+      const angle = (Math.PI * 2 * index) / Math.max(relatedPeople.length, 1);
+      upsertNode({
+        id: `person:${person.personId}`,
+        entityType: 'person',
+        entityId: person.personId,
+        label: readOptionalString(person.name, 'Contact'),
+        x: 0.5 + Math.cos(angle) * 0.28,
+        y: 0.5 + Math.sin(angle) * 0.28,
+      });
+      addEdge({
+        id: `${focusId}:${person.personId}`,
+        from: `event:${focusId}`,
+        to: `person:${person.personId}`,
+        role: person.link?.role || 'participant',
+      });
+    });
+  }
+
+  return {
+    focusType,
+    focusId,
+    nodes,
+    edges,
   };
 }
 
@@ -3753,6 +3920,8 @@ function formatMirrorPayload(row, evidenceRows = []) {
   return {
     mirrorId: row.id,
     rangeLabel: row.range_label,
+    cadence: readOptionalString(row.cadence, 'weekly'),
+    periodKey: readOptionalString(row.period_key, ''),
     content: row.content,
     createdAt: row.created_at,
     ...structured,
@@ -4217,6 +4386,83 @@ function syncPersonIdentities(statements, personId, identities = []) {
   return inserted.filter(Boolean);
 }
 
+function upsertEventPersonLink(
+  statements,
+  { eventId, personId, role = 'participant', sourceType = 'manual', sourceId = '', weight = 1 }
+) {
+  if (!eventId || !personId) return null;
+  const existing = statements.selectEventPersonLinkByEventAndPerson.get(eventId, personId);
+  const updatedAt = nowIso();
+  if (existing) {
+    statements.updateEventPersonLink.run(
+      readOptionalString(role, 'participant'),
+      readOptionalString(sourceType, 'manual'),
+      readOptionalString(sourceId, ''),
+      Number.isFinite(Number(weight)) ? Number(weight) : 1,
+      updatedAt,
+      existing.id
+    );
+    return formatEventPersonLinkRow(
+      statements.selectEventPersonLinkByEventAndPerson.get(eventId, personId)
+    );
+  }
+
+  const createdAt = updatedAt;
+  const linkId = makeId('event_person');
+  statements.insertEventPersonLink.run(
+    linkId,
+    eventId,
+    personId,
+    readOptionalString(role, 'participant'),
+    readOptionalString(sourceType, 'manual'),
+    readOptionalString(sourceId, ''),
+    Number.isFinite(Number(weight)) ? Number(weight) : 1,
+    createdAt,
+    updatedAt
+  );
+  return formatEventPersonLinkRow(statements.selectEventPersonLinkByEventAndPerson.get(eventId, personId));
+}
+
+function resolvePeopleForEventLinking(statements, body = {}, normalizedPayload = {}) {
+  const candidates = [];
+  const explicitIds = cleanList(body.relatedPeople || normalizedPayload.relatedPeople);
+  explicitIds.forEach((personId) => {
+    const row = statements.selectPersonById.get(personId);
+    if (row) candidates.push({ personId: row.id, role: 'participant', sourceType: 'manual', sourceId: '' });
+  });
+
+  const hintedPersonId = cleanText(body.personId || normalizedPayload.personId || '');
+  if (hintedPersonId) {
+    const row = statements.selectPersonById.get(hintedPersonId);
+    if (row) candidates.push({ personId: row.id, role: 'subject', sourceType: 'suggestion', sourceId: '' });
+  }
+
+  const hintedName = cleanText(body.personName || normalizedPayload.personName || normalizedPayload.details?.personName || '');
+  if (hintedName) {
+    const row = findExistingPersonByName(statements, hintedName);
+    if (row) candidates.push({ personId: row.id, role: 'subject', sourceType: 'suggestion', sourceId: '' });
+  }
+
+  const deduped = new Map();
+  for (const candidate of candidates) {
+    if (!candidate.personId || deduped.has(candidate.personId)) continue;
+    deduped.set(candidate.personId, candidate);
+  }
+  return [...deduped.values()];
+}
+
+function toDateKey(value = nowIso()) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return nowIso().slice(0, 10);
+  return date.toISOString().slice(0, 10);
+}
+
+function isRowInDateRange(value, startInclusive, endExclusive) {
+  const timestamp = Date.parse(value || '');
+  if (!Number.isFinite(timestamp)) return false;
+  return timestamp >= startInclusive && timestamp < endExclusive;
+}
+
 function insertPersonInteraction(statements, personId, interactionDraft = {}) {
   const summary = cleanText(interactionDraft.summary || '');
   const evidence = sanitizeContactDraftText(interactionDraft.evidence || summary);
@@ -4368,6 +4614,71 @@ function upsertMirrorEvidenceRows(statements, mirrorId, structuredMirror) {
   }
 }
 
+function buildMirrorWindow(cadence, periodKey = '') {
+  if (cadence === 'daily') {
+    const key = readOptionalString(periodKey, toDateKey());
+    const start = Date.parse(`${key}T00:00:00.000Z`);
+    const end = start + 24 * 60 * 60 * 1000;
+    return {
+      cadence: 'daily',
+      periodKey: key,
+      rangeLabel: `daily:${key}`,
+      startInclusive: start,
+      endExclusive: end,
+    };
+  }
+
+  const todayKey = toDateKey();
+  const end = Date.parse(`${todayKey}T23:59:59.999Z`) + 1;
+  const start = end - 7 * 24 * 60 * 60 * 1000;
+  return {
+    cadence: 'weekly',
+    periodKey: readOptionalString(periodKey, todayKey),
+    rangeLabel: 'last-7d',
+    startInclusive: start,
+    endExclusive: end,
+  };
+}
+
+function filterMirrorSourceRows(rows, fieldName, window) {
+  return rows.filter((row) => isRowInDateRange(row?.[fieldName], window.startInclusive, window.endExclusive));
+}
+
+function buildMirrorPayloadFromWindow(statements, { cadence = 'weekly', periodKey = '' } = {}) {
+  const window = buildMirrorWindow(cadence, periodKey);
+  const checkins = dedupeMeaningfulCheckins(
+    filterMirrorSourceRows(statements.listRecentSelfCheckins.all(80), 'created_at', window),
+    cadence === 'daily' ? 12 : 24
+  );
+  const captures = filterMirrorSourceRows(
+    statements.listRecentCaptures.all(80).map(formatCaptureRow),
+    'createdAt',
+    window
+  );
+  const interactions = filterMirrorSourceRows(
+    statements.listRecentInteractions.all(80).map(formatInteractionRow),
+    'happenedAt',
+    window
+  );
+
+  const structuredMirror = buildStructuredMirror({ checkins, captures, interactions });
+
+  if (cadence === 'daily') {
+    structuredMirror.summaryText =
+      structuredMirror.summaryText && !structuredMirror.summaryText.includes('本周')
+        ? structuredMirror.summaryText
+        : 'Today reflected a lighter loop of people, progress, and self signal.';
+  }
+
+  return {
+    window,
+    structuredMirror,
+    checkins,
+    captures,
+    interactions,
+  };
+}
+
 async function readJsonBody(req) {
   let raw = '';
   for await (const chunk of req) {
@@ -4438,6 +4749,37 @@ function buildStatements(db) {
       FROM Event
       ORDER BY created_at DESC
       LIMIT ?
+    `),
+    insertEventPersonLink: db.prepare(`
+      INSERT INTO EventPersonLink(id, event_id, person_id, role, source_type, source_id, weight, created_at, updated_at)
+      VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `),
+    selectEventPersonLinkByEventAndPerson: db.prepare(`
+      SELECT id, event_id, person_id, role, source_type, source_id, weight, created_at, updated_at
+      FROM EventPersonLink
+      WHERE event_id = ? AND person_id = ?
+      LIMIT 1
+    `),
+    updateEventPersonLink: db.prepare(`
+      UPDATE EventPersonLink
+      SET role = ?, source_type = ?, source_id = ?, weight = ?, updated_at = ?
+      WHERE id = ?
+    `),
+    deleteEventPersonLinkByEventAndPerson: db.prepare(`
+      DELETE FROM EventPersonLink
+      WHERE event_id = ? AND person_id = ?
+    `),
+    listEventPersonLinksByEventId: db.prepare(`
+      SELECT id, event_id, person_id, role, source_type, source_id, weight, created_at, updated_at
+      FROM EventPersonLink
+      WHERE event_id = ?
+      ORDER BY updated_at DESC
+    `),
+    listEventPersonLinksByPersonId: db.prepare(`
+      SELECT id, event_id, person_id, role, source_type, source_id, weight, created_at, updated_at
+      FROM EventPersonLink
+      WHERE person_id = ?
+      ORDER BY updated_at DESC
     `),
 
     insertPerson: db.prepare(`
@@ -4616,19 +4958,33 @@ function buildStatements(db) {
     `),
 
     insertMirror: db.prepare(
-      'INSERT INTO Mirror(id, range_label, content, created_at) VALUES(?, ?, ?, ?)'
+      'INSERT INTO Mirror(id, range_label, cadence, period_key, content, created_at) VALUES(?, ?, ?, ?, ?, ?)'
     ),
     selectMirrorById: db.prepare(`
-      SELECT id, range_label, content, created_at
+      SELECT id, range_label, cadence, period_key, content, created_at
       FROM Mirror
       WHERE id = ?
       LIMIT 1
     `),
     selectLatestMirror: db.prepare(`
-      SELECT id, range_label, content, created_at
+      SELECT id, range_label, cadence, period_key, content, created_at
       FROM Mirror
       ORDER BY created_at DESC
       LIMIT 1
+    `),
+    selectLatestMirrorByCadence: db.prepare(`
+      SELECT id, range_label, cadence, period_key, content, created_at
+      FROM Mirror
+      WHERE cadence = ?
+      ORDER BY created_at DESC
+      LIMIT 1
+    `),
+    listRecentMirrorsByCadence: db.prepare(`
+      SELECT id, range_label, cadence, period_key, content, created_at
+      FROM Mirror
+      WHERE cadence = ?
+      ORDER BY created_at DESC
+      LIMIT ?
     `),
     insertMirrorEvidence: db.prepare(`
       INSERT INTO MirrorEvidence(id, mirror_id, claim_key, source_type, source_id, snippet, created_at)
@@ -4727,6 +5083,7 @@ function formatDraftRow(row) {
     eventTitle: readOptionalString(row.event_title, ''),
     platform: row.platform,
     platformLabel: formatPlatformLabel(row.platform),
+    platformShellLabel: formatPlatformShellLabel(row.platform),
     language: row.language,
     content: row.content,
     metadata,
@@ -4858,6 +5215,14 @@ async function routeRequest(req, res, statements) {
     return;
   }
 
+  if (method === 'GET' && pathname === '/graph/overview') {
+    const focusType = readOptionalString(requestUrl.searchParams.get('focusType'), '');
+    const focusId = readOptionalString(requestUrl.searchParams.get('focusId'), '');
+    if (!focusType || !focusId) throw new HttpError(400, 'focusType and focusId are required');
+    sendJson(res, 200, buildGraphOverview(statements, { focusType, focusId }));
+    return;
+  }
+
   if (method === 'GET' && pathname === '/events') {
     const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 12, 50);
     const events = statements.listRecentEvents.all(limit).map(formatEventRow);
@@ -4916,6 +5281,44 @@ async function routeRequest(req, res, statements) {
     const detail = buildPeopleDetailPayload(statements, personId);
     if (!detail) throw new HttpError(404, 'personId not found');
     sendJson(res, 200, detail);
+    return;
+  }
+
+  const eventPeopleMatch = pathname.match(/^\/events\/([^/]+)\/people$/u);
+  if (method === 'POST' && eventPeopleMatch) {
+    const eventId = decodeURIComponent(eventPeopleMatch[1]);
+    const event = statements.selectEventById.get(eventId);
+    if (!event) throw new HttpError(404, 'eventId not found');
+    const body = await readJsonBody(req);
+    const personId = requireString(body.personId, 'personId');
+    const person = statements.selectPersonById.get(personId);
+    if (!person) throw new HttpError(404, 'personId not found');
+    const link = upsertEventPersonLink(statements, {
+      eventId,
+      personId,
+      role: readOptionalString(body.role, 'participant'),
+      sourceType: readOptionalString(body.sourceType, 'manual'),
+      sourceId: readOptionalString(body.sourceId, ''),
+      weight: Number(body.weight || 1),
+    });
+    sendJson(res, 201, {
+      link,
+      event: buildEventDetailPayload(statements, eventId),
+      person: buildPeopleDetailPayload(statements, personId),
+    });
+    return;
+  }
+
+  const eventPersonDeleteMatch = pathname.match(/^\/events\/([^/]+)\/people\/([^/]+)$/u);
+  if (method === 'DELETE' && eventPersonDeleteMatch) {
+    const eventId = decodeURIComponent(eventPersonDeleteMatch[1]);
+    const personId = decodeURIComponent(eventPersonDeleteMatch[2]);
+    statements.deleteEventPersonLinkByEventAndPerson.run(eventId, personId);
+    sendJson(res, 200, {
+      ok: true,
+      event: buildEventDetailPayload(statements, eventId),
+      person: buildPeopleDetailPayload(statements, personId),
+    });
     return;
   }
 
@@ -5013,10 +5416,26 @@ async function routeRequest(req, res, statements) {
   }
 
   if (method === 'GET' && pathname === '/self-mirror') {
-    const latestMirror = statements.selectLatestMirror.get();
+    const cadence = readOptionalString(requestUrl.searchParams.get('cadence'), 'weekly') || 'weekly';
+    const periodKey = readOptionalString(requestUrl.searchParams.get('periodKey'), '');
+    const latestMirror =
+      periodKey
+        ? statements.listRecentMirrorsByCadence
+            .all(cadence, 24)
+            .find((row) => readOptionalString(row.period_key, '') === periodKey)
+        : statements.selectLatestMirrorByCadence.get(cadence);
+    const latestDailyMirrorRow = statements.selectLatestMirrorByCadence.get('daily');
+    const latestWeeklyMirrorRow = statements.selectLatestMirrorByCadence.get('weekly');
     const checkins = dedupeMeaningfulCheckins(statements.listRecentSelfCheckins.all(40), 20);
     const evidenceRows = latestMirror ? statements.listMirrorEvidenceByMirrorId.all(latestMirror.id) : [];
     sendJson(res, 200, {
+      cadence,
+      latestDailyMirror: latestDailyMirrorRow
+        ? formatMirrorPayload(latestDailyMirrorRow, statements.listMirrorEvidenceByMirrorId.all(latestDailyMirrorRow.id))
+        : null,
+      latestWeeklyMirror: latestWeeklyMirrorRow
+        ? formatMirrorPayload(latestWeeklyMirrorRow, statements.listMirrorEvidenceByMirrorId.all(latestWeeklyMirrorRow.id))
+        : null,
       latestMirror: latestMirror ? formatMirrorPayload(latestMirror, evidenceRows) : null,
       checkins,
     });
@@ -5044,7 +5463,8 @@ async function routeRequest(req, res, statements) {
 
   if (method === 'POST' && pathname === '/self-mirror/generate') {
     const body = await readJsonBody(req);
-    const rangeLabel = readOptionalString(body.range, 'last-7d');
+    const cadence = readOptionalString(body.cadence, body.range === 'today' ? 'daily' : 'weekly') || 'weekly';
+    const periodKey = readOptionalString(body.periodKey, cadence === 'daily' ? toDateKey() : toDateKey());
     let checkins = statements.listRecentSelfCheckins.all(12);
 
     if (checkins.length === 0) {
@@ -5082,20 +5502,20 @@ async function routeRequest(req, res, statements) {
       }
     }
 
-    const meaningfulCheckins = dedupeMeaningfulCheckins(checkins, 12);
-
-    const captures = statements.listRecentCaptures.all(12).map(formatCaptureRow);
-    const interactions = statements.listRecentInteractions.all(12).map(formatInteractionRow);
-    const structuredMirror = buildStructuredMirror({
-      checkins: meaningfulCheckins,
-      captures,
-      interactions,
-    });
+    const mirrorPayload = buildMirrorPayloadFromWindow(statements, { cadence, periodKey });
+    const structuredMirror = mirrorPayload.structuredMirror;
     const mirrorId = makeId('mirror');
     const createdAt = nowIso();
     statements.db.exec('BEGIN');
     try {
-      statements.insertMirror.run(mirrorId, rangeLabel, JSON.stringify(structuredMirror), createdAt);
+      statements.insertMirror.run(
+        mirrorId,
+        mirrorPayload.window.rangeLabel,
+        cadence,
+        mirrorPayload.window.periodKey,
+        JSON.stringify(structuredMirror),
+        createdAt
+      );
       upsertMirrorEvidenceRows(statements, mirrorId, structuredMirror);
       statements.db.exec('COMMIT');
     } catch (error) {
@@ -5109,7 +5529,9 @@ async function routeRequest(req, res, statements) {
       formatMirrorPayload(
         {
           id: mirrorId,
-          range_label: rangeLabel,
+          range_label: mirrorPayload.window.rangeLabel,
+          cadence,
+          period_key: mirrorPayload.window.periodKey,
           content: JSON.stringify(structuredMirror),
           created_at: createdAt,
         },
@@ -5508,16 +5930,21 @@ async function routeRequest(req, res, statements) {
     });
 
     statements.insertEvent.run(eventId, title, payload, createdAt);
+    const linkedPeople = resolvePeopleForEventLinking(statements, body, normalizedPayload);
+    linkedPeople.forEach((link) => {
+      upsertEventPersonLink(statements, {
+        eventId,
+        personId: link.personId,
+        role: link.role,
+        sourceType: link.sourceType,
+        sourceId: captureId || link.sourceId || '',
+      });
+    });
 
     sendJson(res, 201, {
       eventId,
       createdAt,
-      event: formatEventRow({
-        id: eventId,
-        title,
-        payload,
-        created_at: createdAt,
-      }),
+      event: buildEventDetailPayload(statements, eventId),
     });
     return;
   }
