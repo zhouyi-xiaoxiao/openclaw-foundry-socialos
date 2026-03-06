@@ -12,6 +12,7 @@ import {
   buildStructuredMirror,
   cleanList,
   cleanText,
+  inferTagsFromText,
   inferEmotionTags as inferEmotionTagsCore,
   inferEnergyFromText as inferEnergyFromTextCore,
 } from '../../lib/product-core.mjs';
@@ -455,6 +456,218 @@ function summarizeEventPayload(payload) {
   }
 
   return parts.join(' | ');
+}
+
+function hasHanCharacters(value) {
+  return /[\u4e00-\u9fff]/u.test(readOptionalString(value, ''));
+}
+
+function hasLatinLetters(value) {
+  return /[A-Za-z]/u.test(readOptionalString(value, ''));
+}
+
+function inferLocation(rawText) {
+  const source = cleanText(rawText).toLowerCase();
+  if (source.includes('london')) return 'London';
+  if (source.includes('singapore')) return 'Singapore';
+  if (source.includes('new york')) return 'New York';
+  if (source.includes('san francisco')) return 'San Francisco';
+  if (source.includes('shanghai')) return 'Shanghai';
+  if (source.includes('beijing')) return 'Beijing';
+  return '';
+}
+
+function inferScenePhrase(rawText, language) {
+  const source = cleanText(rawText).toLowerCase();
+  const location = inferLocation(source);
+  if (source.includes('hackathon')) {
+    return language === 'zh'
+      ? `${location ? `${location} 的 ` : ''}hackathon`
+      : `${location ? `a hackathon in ${location}` : 'a hackathon'}`;
+  }
+  if (source.includes('meetup') || source.includes('builder meetup')) {
+    return language === 'zh'
+      ? `${location ? `${location} 的 ` : ''}builder meetup`
+      : `${location ? `a builder meetup in ${location}` : 'a builder meetup'}`;
+  }
+  if (source.includes('conference') || source.includes('summit')) {
+    return language === 'zh'
+      ? `${location ? `${location} 的 ` : ''}活动交流`
+      : `${location ? `a conference conversation in ${location}` : 'a conference conversation'}`;
+  }
+  return language === 'zh' ? '最近的一次交流' : 'a recent conversation';
+}
+
+function inferRolePhrase(rawText, language) {
+  const source = cleanText(rawText).toLowerCase();
+  const roles = [];
+
+  if (source.includes('growth') || source.includes('增长')) {
+    roles.push(language === 'zh' ? '增长' : 'growth');
+  }
+  if (
+    source.includes('community') ||
+    source.includes('社区') ||
+    source.includes('运营')
+  ) {
+    roles.push(language === 'zh' ? '社区运营' : 'community');
+  }
+  if (source.includes('product') || source.includes('产品')) {
+    roles.push(language === 'zh' ? '产品' : 'product');
+  }
+  if (
+    source.includes('content') ||
+    source.includes('内容') ||
+    source.includes('distribution') ||
+    source.includes('分发')
+  ) {
+    roles.push(language === 'zh' ? '内容分发' : 'content distribution');
+  }
+  if (source.includes('investor') || source.includes('投资')) {
+    roles.push(language === 'zh' ? '投资' : 'investing');
+  }
+
+  return [...new Set(roles)].slice(0, 3);
+}
+
+function inferTopicPhrase(rawText, language) {
+  const source = cleanText(rawText).toLowerCase();
+  const topics = [];
+  const push = (zh, en) => {
+    topics.push(language === 'zh' ? zh : en);
+  };
+
+  if (source.includes('socialos')) push('SocialOS', 'SocialOS');
+  if (source.includes('agent workflow') || source.includes('agent') || source.includes('agents')) {
+    push('agent workflow', 'agent workflows');
+  }
+  if (source.includes('demo')) push('demo 扩散', 'demo distribution');
+  if (source.includes('content')) push('内容策略', 'content strategy');
+  if (source.includes('community') || source.includes('社区')) push('社区运营', 'community building');
+  if (source.includes('growth') || source.includes('增长')) push('增长动作', 'growth loops');
+  if (source.includes('product') || source.includes('产品')) push('产品推进', 'product execution');
+
+  if (!topics.length) {
+    const inferred = inferTagsFromText(rawText);
+    for (const tag of inferred) {
+      if (tag === 'growth') push('增长动作', 'growth loops');
+      if (tag === 'community') push('社区运营', 'community building');
+      if (tag === 'product') push('产品推进', 'product execution');
+      if (tag === 'engineering') push('工程落地', 'engineering execution');
+    }
+  }
+
+  return [...new Set(topics)].slice(0, 4);
+}
+
+function joinPhrases(items, language) {
+  const values = items.filter(Boolean);
+  if (!values.length) return '';
+  if (language === 'zh') return values.join('、');
+  if (values.length === 1) return values[0];
+  if (values.length === 2) return `${values[0]} and ${values[1]}`;
+  return `${values.slice(0, -1).join(', ')}, and ${values.at(-1)}`;
+}
+
+function buildLocalizedEventTitle(event, language, payload = {}) {
+  const rawTitle = cleanText(event?.title || '');
+  const personName = cleanText(payload.personName || '');
+  const followUpMatch = rawTitle.match(/^follow-up with\s+(.+)$/iu);
+
+  if (followUpMatch?.[1]) {
+    const subject = cleanText(personName || followUpMatch[1]);
+    return language === 'zh' ? `和${subject}的后续跟进` : `Follow-up with ${subject}`;
+  }
+
+  if (language === 'zh') {
+    if (rawTitle && hasHanCharacters(rawTitle) && !hasLatinLetters(rawTitle)) return rawTitle;
+    if (personName) return `和${personName}的后续跟进`;
+    return rawTitle && hasHanCharacters(rawTitle) ? rawTitle : '这次推进的后续跟进';
+  }
+
+  if (rawTitle && !hasHanCharacters(rawTitle)) return rawTitle;
+  if (personName) return `Follow-up with ${personName}`;
+  return 'Campaign follow-up';
+}
+
+function buildLocalizedEventContext(event, language) {
+  const eventPayload = safeParseJsonObject(event.payload, {});
+  const rawContext = cleanText(
+    eventPayload.details?.combinedText || eventPayload.summary || eventPayload.description || ''
+  );
+  const scene = inferScenePhrase(rawContext, language);
+  const roles = inferRolePhrase(rawContext, language);
+  const topics = inferTopicPhrase(rawContext, language);
+  const localizedTitle = buildLocalizedEventTitle(event, language, eventPayload);
+  const personName = cleanText(eventPayload.personName || '');
+  const roleText = joinPhrases(roles, language);
+  const topicText = joinPhrases(topics, language);
+
+  const contextLead = language === 'zh'
+    ? personName
+      ? `这次内容来自最近和${personName}的一次交流，场景是在${scene}。`
+      : `这次内容来自${scene}。`
+    : personName
+      ? `This came out of ${scene} with ${personName}.`
+      : `This came out of ${scene}.`;
+
+  const detailLine = language === 'zh'
+    ? [
+        roleText ? `对方主要在做${roleText}。` : '',
+        topicText ? `这次聊到的重点是${topicText}。` : '这次内容会围绕关系跟进、内容表达和下一步动作展开。',
+      ]
+        .filter(Boolean)
+        .join('')
+    : [
+        roleText ? `The conversation was grounded in ${roleText}.` : '',
+        topicText
+          ? `We focused on ${topicText}.`
+          : 'The draft centers on relationship follow-up, content expression, and the next concrete step.',
+      ]
+        .filter(Boolean)
+        .join(' ');
+
+  return {
+    localizedTitle,
+    contextLead,
+    detailLine,
+    personName,
+  };
+}
+
+function isTextAlignedWithLanguage(text, language) {
+  const value = cleanText(text);
+  if (!value) return false;
+  const hasHan = hasHanCharacters(value);
+  const hasLatin = hasLatinLetters(value);
+
+  if (language === 'zh') return hasHan && !hasLatin;
+  if (language === 'en') return hasLatin && !hasHan;
+  return true;
+}
+
+function buildDefaultCta(platformRule, language) {
+  if (language === 'zh') {
+    switch (platformRule.id) {
+      case 'xiaohongshu':
+        return '如果你也在做类似流程，欢迎评论区告诉我你最卡的一步。';
+      case 'wechat_moments':
+        return '如果你也在折腾类似的事，欢迎来聊聊。';
+      case 'wechat_official':
+        return '如果你也在做类似方向，欢迎留言交流。';
+      default:
+        return '如果你也在做类似方向，欢迎交流。';
+    }
+  }
+
+  switch (platformRule.id) {
+    case 'instagram':
+      return 'Comment if you want the workflow notes behind this build.';
+    case 'x':
+      return 'Reply if you want the short operator notes behind this workflow.';
+    default:
+      return 'Reply if you want to compare notes on a similar workflow.';
+  }
 }
 
 function getPlatformNativeLanguage(platformId) {
