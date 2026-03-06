@@ -2722,11 +2722,11 @@ function renderClientScript() {
         const raw = String(href || '').trim();
         if (!raw) return '/quick-capture';
         if (raw.startsWith('/people/')) {
-          return buildWorkspaceHrefClient({ panel: 'people', contactId: decodeURIComponent(raw.replace(/^\/people\//u, '')) });
+          return buildWorkspaceHrefClient({ panel: 'people', contactId: decodeURIComponent(raw.replace(/^\\/people\\//u, '')) });
         }
         if (raw === '/people') return buildWorkspaceHrefClient({ panel: 'people' });
         if (raw.startsWith('/events/')) {
-          return buildWorkspaceHrefClient({ panel: 'events', eventId: decodeURIComponent(raw.replace(/^\/events\//u, '')) });
+          return buildWorkspaceHrefClient({ panel: 'events', eventId: decodeURIComponent(raw.replace(/^\\/events\\//u, '')) });
         }
         if (raw === '/events') return buildWorkspaceHrefClient({ panel: 'events' });
         if (raw.startsWith('/self-mirror')) return buildWorkspaceHrefClient({ panel: 'mirror' });
