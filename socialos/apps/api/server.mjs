@@ -1892,12 +1892,15 @@ function parseQueueSummary(queueMarkdown) {
     done: 0,
     currentTask: null,
   };
+  let firstActionableTask = null;
 
   for (const line of lines) {
     const taskMatch = line.match(/^- \[([ xX!\-])\] (.+)$/u);
     if (!taskMatch) continue;
     const marker = taskMatch[1];
     const taskText = taskMatch[2].trim();
+    const isActionable = marker === ' ' || marker === '-' || marker === '!';
+    if (isActionable && !firstActionableTask) firstActionableTask = taskText;
 
     if (marker === ' ') summary.pending += 1;
     if (marker === '-') {
@@ -1908,6 +1911,7 @@ function parseQueueSummary(queueMarkdown) {
     if (marker === 'x' || marker === 'X') summary.done += 1;
   }
 
+  if (!summary.currentTask) summary.currentTask = firstActionableTask;
   return summary;
 }
 
