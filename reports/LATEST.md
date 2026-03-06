@@ -1,6 +1,6 @@
-Run: 20260306_020839_AUTO-OPT-TEST-DEBT
-What: AUTO-OPT test debt sweep completed
-Why: Continuous loop validates quality gates instead of idle spinning
-Risk: low
-Verify: /tmp/socialos_test_20260306_020839_AUTO-OPT-TEST-DEBT.log
-Next: continue auto optimization pool
+Run: 20260306_021435_AUTO-OPT-TEST-DEBT
+What: Coder stage failed for AUTO-OPT-TEST-DEBT
+Why: task handler command failed
+Risk: medium
+Verify: /tmp/socialos_20260306_021435_AUTO-OPT-TEST-DEBT.log
+Next: autofix task created; retry next cron cycle

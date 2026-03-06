@@ -3206,6 +3206,12 @@ async function routeRequest(req, res, statements) {
     return;
   }
 
+  if (method === 'POST' && pathname === '/workspace/chat') {
+    const body = await readJsonBody(req);
+    sendJson(res, 200, buildWorkspaceChatPayload(statements, body));
+    return;
+  }
+
   if (method === 'POST' && pathname === '/capture/commit') {
     const body = await readJsonBody(req);
     const committed = commitCaptureDraft(statements, body);

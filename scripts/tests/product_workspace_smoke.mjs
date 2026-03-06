@@ -49,6 +49,14 @@ async function main() {
     assert(Array.isArray(people.results), 'people query should return results');
     assert(people.results.some((entry) => entry.name === 'Product Workspace Tester'), 'saved person should be searchable');
 
+    const workspace = await postJson(api.baseUrl, '/workspace/chat', {
+      text: 'I met a product workspace tester and want to turn this into an event plus a follow-up.',
+      source: 'product_workspace_smoke',
+    });
+    assert(typeof workspace.responseId === 'string', 'workspace chat should return a response id');
+    assert(Array.isArray(workspace.agentLanes) && workspace.agentLanes.length >= 4, 'workspace chat should expose agent lanes');
+    assert(workspace.suggestedEvent?.title, 'workspace chat should return an event suggestion');
+
     const capture = await postJson(api.baseUrl, '/capture', {
       text: 'Product workspace smoke capture for event and drafts',
       source: 'product_workspace_smoke',

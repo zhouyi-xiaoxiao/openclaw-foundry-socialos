@@ -1,0 +1,29 @@
+{
+  "runId": "20260306_021305_AUTO-OPT-TEST-DEBT",
+  "taskId": "AUTO-OPT-TEST-DEBT",
+  "taskText": "- [ ] AUTO-OPT-TEST-DEBT",
+  "status": "blocked",
+  "summary": "Coder stage failed for AUTO-OPT-TEST-DEBT",
+  "why": "task handler command failed",
+  "risk": "medium",
+  "verify": "/tmp/socialos_20260306_021305_AUTO-OPT-TEST-DEBT.log",
+  "next": "autofix task created; retry next cron cycle",
+  "startedAt": "2026-03-06T02:13:05Z",
+  "finishedAt": "2026-03-06T02:13:14Z",
+  "durationMs": 9000,
+  "stages": {
+    "plan": "pass",
+    "coder": "fail",
+    "tester": "pending",
+    "reviewer": "pending",
+    "gitSync": "fetched",
+    "push": "pending"
+  },
+  "lock": {
+    "status": "acquired",
+    "staleRecovered": "false",
+    "ownerPid": "",
+    "ownerAlive": "unknown",
+    "ownerHeartbeatAgeSec": ""
+  }
+}

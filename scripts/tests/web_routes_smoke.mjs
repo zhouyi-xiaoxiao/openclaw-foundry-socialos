@@ -42,7 +42,7 @@ async function main() {
     const peopleDetail = await fetch(`${web.baseUrl}/people/demo-person`);
     const peopleDetailHtml = await peopleDetail.text();
     assert(peopleDetail.status === 200, `/people/:id should resolve through the People page (got ${peopleDetail.status})`);
-    assert(peopleDetailHtml.includes('<h1>People</h1>'), '/people/:id should still render the People page shell');
+    assert(peopleDetailHtml.includes('<h1>Contacts</h1>'), '/people/:id should still render the Contacts page shell');
 
     const missing = await fetch(`${web.baseUrl}/missing-route`, { redirect: 'manual' });
     assert(missing.status === 404, `missing route should return 404 (got ${missing.status})`);

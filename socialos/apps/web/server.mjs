@@ -13,21 +13,21 @@ export const DEFAULT_API_BASE_URL = readOptionalString(
 const PAGE_DEFINITIONS = [
   {
     id: 'quick-capture',
-    title: 'Quick Capture',
+    title: 'Workspace',
     path: '/quick-capture',
-    summary: 'Capture notes, turn them into structured memory, and seed the rest of the loop.',
+    summary: 'One chat surface for capture, memory lookup, event suggestions, and multi-agent coordination.',
   },
   {
     id: 'people',
-    title: 'People',
+    title: 'Contacts',
     path: '/people',
-    summary: 'Search people memory, review evidence, and add follow-up cards that the system can reuse.',
+    summary: 'A lighter directory view for people memory, identities, and follow-up context.',
   },
   {
     id: 'events',
-    title: 'Events',
+    title: 'Logbook',
     path: '/events',
-    summary: 'Create campaign events from captures and keep the pipeline moving into draft generation.',
+    summary: 'A structured record of campaign-worthy events and the timeline behind them.',
   },
   {
     id: 'drafts',
@@ -250,12 +250,61 @@ function renderChatComposerIntro() {
   return `
     <div class="chat-shell">
       <div class="chat-bubble system">
-        <strong>How to demo this</strong>
-        <p>Type one real moment, or tap voice and say it like a WeChat note. We parse first, then you confirm before anything is saved.</p>
+        <strong>Workspace chat is the main surface now</strong>
+        <p>Send a text, voice note, screenshot, or business card here. Memory, self signal, event suggestion, and publish next-steps all come back in one thread.</p>
       </div>
       <div class="chat-bubble user ghost">
-        <p>今天认识了一个做增长的人，下周二要跟进。</p>
+        <p>今天认识了一个做增长的人，下周二要跟进，顺便帮我看看是不是已经在记忆里。</p>
       </div>
+    </div>
+  `;
+}
+
+function renderAgentLaneSnapshot(cluster) {
+  const agents = Array.isArray(cluster?.agents) ? cluster.agents : [];
+  if (!agents.length) return renderEmptyState('No agent lanes available yet.');
+  return `<div class="stack">${agents
+    .slice(0, 4)
+    .map(
+      (agent) => `
+        <article class="stack-card">
+          <div class="stack-meta">
+            <strong>${escapeHtml(agent.roleTitle || agent.name || agent.id)}</strong>
+            ${renderPill(agent.toolProfile || 'tools', 'soft')}
+          </div>
+          <p>${escapeHtml(agent.responsibility || 'custom lane')}</p>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
+function renderWorkspaceThreadSeed(captures) {
+  const recent = filterMeaningfulCaptures(captures, 3);
+  return `
+    <div class="chat-shell workspace-thread" data-workspace-thread>
+      ${renderChatComposerIntro()}
+      ${
+        recent.length
+          ? recent
+              .map(
+                (capture) => `
+                  <article class="chat-bubble user">
+                    <div class="stack-meta">
+                      ${renderPill(capture.source || 'capture', 'soft')}
+                      <span>${escapeHtml(formatDateTime(capture.createdAt))}</span>
+                    </div>
+                    <p>${escapeHtml(truncate(capture.text, 220))}</p>
+                  </article>
+                `
+              )
+              .join('')
+          : `
+            <article class="chat-bubble system ghost">
+              <p>No saved turns yet. The first message you send here can become a contact, a self check-in, or an event suggestion.</p>
+            </article>
+          `
+      }
     </div>
   `;
 }
@@ -946,125 +995,80 @@ function renderCodexSummary(codex) {
 }
 
 async function renderQuickCapturePage(page) {
-  const [capturesRes, mirrorRes, assetsRes, peopleRes] = await Promise.all([
+  const [capturesRes, mirrorRes, assetsRes, peopleRes, eventsRes, clusterRes] = await Promise.all([
     fetchJsonSafe('/captures?limit=8'),
     fetchJsonSafe('/self-mirror'),
     fetchJsonSafe('/capture/assets?limit=8'),
     fetchJsonSafe('/people?limit=4'),
+    fetchJsonSafe('/events?limit=6'),
+    fetchJsonSafe('/ops/cluster'),
   ]);
   const captures = capturesRes.ok ? capturesRes.payload.captures || [] : [];
+  const mirrorPayload = mirrorRes.ok ? mirrorRes.payload : {};
   const checkins = mirrorRes.ok ? mirrorRes.payload.checkins || [] : [];
   const assets = assetsRes.ok ? assetsRes.payload.assets || [] : [];
   const people = peopleRes.ok ? peopleRes.payload.people || [] : [];
+  const events = eventsRes.ok ? eventsRes.payload.events || [] : [];
+  const cluster = clusterRes.ok ? clusterRes.payload.foundry || {} : {};
 
   return `
     ${renderHero(
       page,
       [
         renderMetric(String(filterMeaningfulCaptures(captures, 99).length), 'usable captures'),
-        renderMetric(String(checkins.length), 'recent check-ins'),
-        renderMetric(String(people.length), 'people cards'),
-      ].join('')
+        renderMetric(String(people.length), 'contacts loaded'),
+        renderMetric(String(events.length), 'logbook items'),
+        renderMetric(String((cluster.agents || []).length), 'agent lanes'),
+      ].join(''),
+      `<div class="info-card"><strong>Chat-first mode</strong><p>The main demo path now starts here. Contacts and logbook stay as supporting surfaces behind the chat.</p></div>`
     )}
-    ${renderPanel(
-      'Chat Composer',
-      `
-        ${renderChatComposerIntro()}
-        <form class="capture-form chat-composer-form" data-capture-parse="true">
-          <input type="hidden" name="source" value="chat-composer" />
+    <div class="workspace-layout">
+      <section class="panel workspace-main-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Workspace Chat</h2>
+            <p class="panel-subtitle">Talk to the system like a message thread. It will surface contacts, event suggestions, self signals, and next actions in one place.</p>
+          </div>
+        </div>
+        ${renderWorkspaceThreadSeed(captures)}
+        <div class="workspace-asset-tray" data-workspace-assets>
+          ${assets.length ? assets.slice(0, 3).map((asset) => `<span class="asset-chip tone-soft">${escapeHtml(asset.fileName || asset.assetId)}</span>`).join('') : ''}
+        </div>
+        <form class="workspace-composer" data-workspace-chat-form>
+          <input type="hidden" name="source" value="workspace-chat" />
           <input type="hidden" name="assetIds" value="" data-capture-asset-ids />
-          <div class="composer-row">
-            <textarea name="text" rows="3" placeholder="像发微信一样写一句：今天认识了谁、聊了什么、你现在什么状态。"></textarea>
-            <div class="composer-actions">
-              <button type="button" class="secondary-button" data-audio-record-start>Voice</button>
-              <button type="button" class="secondary-button" data-audio-record-stop disabled>Stop</button>
-              <button type="submit">Send</button>
-            </div>
-          </div>
-          <div class="info-card compact-info" data-audio-status>
-            <strong>Voice mode</strong>
-            <p>浏览器支持时可直接录音。若配置了 OPENAI_API_KEY，音频会自动转写；否则也可以手动补 transcript。</p>
-          </div>
-          <div class="form-result" data-form-result></div>
+          <input type="file" data-workspace-file accept="image/*,audio/*" multiple hidden />
+          <button type="button" class="secondary-button workspace-icon-button" data-workspace-attach>Attach</button>
+          <textarea name="text" rows="2" placeholder="像聊天一样发一句：认识了谁、要跟进什么、想找哪个人、想把什么变成内容。"></textarea>
+          <button type="button" class="secondary-button workspace-icon-button" data-audio-record-toggle>Mic</button>
+          <button type="submit">Send</button>
         </form>
-        <details class="details-shell">
-          <summary>More ways to capture</summary>
-          <div class="grid two-up">
-            ${renderPanel(
-              'Upload a Business Card',
-              `
-                <form class="asset-upload-form compact-form" data-asset-upload="image">
-                  ${renderFormField('Image', '<input name="file" type="file" accept="image/*" />', 'Use this when you only have a card or screenshot.')}
-                  <div class="inline-actions">
-                    <button type="submit">Scan Card</button>
-                  </div>
-                  <div class="form-result" data-form-result></div>
-                </form>
-              `
-            )}
-            ${renderPanel(
-              'Upload Audio Manually',
-              `
-                <form class="asset-upload-form compact-form" data-asset-upload="audio">
-                  ${renderFormField('Audio file', '<input name="file" type="file" accept="audio/*" />', 'Works even if browser recording is unavailable.')}
-                  ${renderFormField('Transcript (optional)', '<textarea name="transcript" rows="3" placeholder="Paste transcript here if you already have one."></textarea>')}
-                  <div class="inline-actions">
-                    <button type="submit">Add Audio</button>
-                  </div>
-                  <div class="form-result" data-form-result></div>
-                </form>
-              `
-            )}
-          </div>
-        </details>
-      `,
-      'One message in, structured draft out.'
-    )}
-    <section class="panel" data-capture-commit-panel hidden>
-      <div class="panel-head">
-        <div>
-          <h2>Commit Structured Capture</h2>
-          <p class="panel-subtitle">Step 2 is fully editable before it writes to Person / Identity / Interaction / SelfCheckin / Audit.</p>
-        </div>
-      </div>
-      <form class="capture-commit-form" data-capture-commit="true">
-        <input type="hidden" name="text" value="" />
-        <input type="hidden" name="source" value="dashboard" />
-        <input type="hidden" name="assetIds" value="" />
-        <input type="hidden" name="combinedText" value="" />
-        <div class="grid two-up">
-          <div>
-            ${renderFormField('Person Name', '<input name="personName" type="text" />')}
-            ${renderFormField('Tags', '<input name="personTags" type="text" />', 'Comma-separated')}
-            ${renderFormField('Next Follow-up', '<input name="nextFollowUpAt" type="datetime-local" />')}
-            ${renderFormField('Notes', '<textarea name="personNotes" rows="6"></textarea>')}
-            ${renderFormField(
-              'Identities',
-              '<textarea name="identities" rows="5" placeholder="platform|handle|url|note"></textarea>',
-              'One line per identity: platform|handle|url|note'
-            )}
-          </div>
-          <div>
-            ${renderFormField('Energy', '<input name="energy" type="number" min="-2" max="2" step="1" />')}
-            ${renderFormField('Emotions', '<input name="emotions" type="text" />', 'Comma-separated')}
-            ${renderFormField('Reflection', '<textarea name="reflection" rows="5"></textarea>')}
-            ${renderFormField('Interaction Summary', '<textarea name="interactionSummary" rows="4"></textarea>')}
-            ${renderFormField('Interaction Evidence', '<textarea name="interactionEvidence" rows="4"></textarea>')}
-          </div>
-        </div>
-        <div class="inline-actions">
-          <button type="submit">Commit Capture</button>
+        <div class="info-card compact-info" data-audio-status>
+          <strong>Voice + multimodal</strong>
+          <p>点一次 Mic 开始说，点同一个按钮结束。图片、名片、录音都会作为同一条聊天上下文进入分析。</p>
         </div>
         <div class="form-result" data-form-result></div>
-      </form>
-    </section>
-    <div class="grid two-up">
-      ${renderPanel('Recent Conversation Feed', renderCaptureFeed(captures), 'Filtered to keep demo-noise out of the way.')}
-      ${renderPanel('People To Follow Up', renderPeopleCards(people), 'Use this page like a lightweight relationship inbox.')}
-    </div>
-    <div class="grid two-up">
-      ${renderPanel('Voice / Card Assets', renderCaptureAssetCards(assets))}
-      ${renderPanel('Fresh Energy Signal', renderCheckinCards(checkins.slice(0, 4)), 'Latest mirror inputs')}
+      </section>
+      <aside class="workspace-side">
+        ${renderPanel('Contacts Snapshot', renderPeopleCards(people), 'Chat 命中的联系人可以直接点开详情。')}
+        ${renderPanel('Event Logbook', renderEventCards(events), '聊天里提到的事情，可以一键落成 event。')}
+        ${renderPanel('Agent Coordination', renderAgentLaneSnapshot(cluster), '主界面展示的是协作结果，底层仍由多条 lane 分工。')}
+        ${renderPanel(
+          'Latest Mirror Signal',
+          mirrorPayload.latestMirror
+            ? `
+                <div class="stack-card">
+                  <div class="stack-meta">
+                    ${renderPill(mirrorPayload.latestMirror.rangeLabel || 'mirror', 'accent')}
+                    <span>${escapeHtml(formatDateTime(mirrorPayload.latestMirror.createdAt))}</span>
+                  </div>
+                  <p>${escapeHtml(truncate(mirrorPayload.latestMirror.summaryText || mirrorPayload.latestMirror.content || '', 220))}</p>
+                </div>
+              `
+            : renderCheckinCards(checkins.slice(0, 3)),
+          'Self signal still feeds the same chat-first workspace.'
+        )}
+      </aside>
     </div>
   `;
 }
@@ -1697,6 +1701,7 @@ function renderClientScript() {
       const flashKey = 'socialos.dashboard.flash';
       const captureState = {
         assets: [],
+        workspaceResponses: new Map(),
         recorder: null,
         recordChunks: [],
         recognition: null,
@@ -1776,6 +1781,7 @@ function renderClientScript() {
         for (const input of document.querySelectorAll('[data-capture-asset-ids]')) {
           input.value = value;
         }
+        renderWorkspaceAssets();
       }
 
       function appendCaptureAsset(asset) {
@@ -1784,6 +1790,34 @@ function renderClientScript() {
           captureState.assets.push(asset);
         }
         updateCaptureAssetInputs();
+      }
+
+      function removeCaptureAsset(assetId) {
+        captureState.assets = captureState.assets.filter((asset) => asset.assetId !== assetId);
+        updateCaptureAssetInputs();
+      }
+
+      function renderWorkspaceAssets() {
+        const tray = document.querySelector('[data-workspace-assets]');
+        if (!tray) return;
+        if (!captureState.assets.length) {
+          tray.innerHTML = '';
+          tray.hidden = true;
+          return;
+        }
+
+        tray.hidden = false;
+        tray.innerHTML = captureState.assets
+          .map((asset) => {
+            const label = asset.kind === 'audio' ? 'voice' : asset.kind === 'image' ? 'image' : 'asset';
+            const preview = asset.extractedText || asset.previewText || asset.fileName || asset.assetId;
+            return '<span class="asset-chip">' +
+              '<strong>' + escapeHtml(label) + '</strong>' +
+              '<span>' + escapeHtml(preview.slice(0, 48)) + '</span>' +
+              '<button type="button" class="asset-remove" data-remove-asset="' + escapeHtml(asset.assetId) + '">x</button>' +
+            '</span>';
+          })
+          .join('');
       }
 
       function parseIdentityLines(value) {
@@ -1836,6 +1870,280 @@ function renderClientScript() {
           reader.onerror = () => reject(reader.error || new Error('Failed to read file'));
           reader.readAsDataURL(file);
         });
+      }
+
+      function getWorkspaceThread() {
+        return document.querySelector('[data-workspace-thread]');
+      }
+
+      function appendWorkspaceHtml(html) {
+        const thread = getWorkspaceThread();
+        if (!thread) return;
+        thread.insertAdjacentHTML('beforeend', html);
+        thread.scrollTop = thread.scrollHeight;
+      }
+
+      function appendWorkspaceUserTurn(text, assets) {
+        const assetSummary = Array.isArray(assets) && assets.length
+          ? '<div class="chip-row">' + assets.map((asset) => '<span class="pill tone-soft">' + escapeHtml(asset.fileName || asset.assetId) + '</span>').join('') + '</div>'
+          : '';
+        appendWorkspaceHtml(
+          '<article class="chat-bubble user">' +
+            '<div class="stack-meta"><span>you</span><span>' + new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + '</span></div>' +
+            (text ? '<p>' + escapeHtml(text) + '</p>' : '<p>[voice/image only]</p>') +
+            assetSummary +
+          '</article>'
+        );
+      }
+
+      function appendWorkspaceSystemTurn(title, body, actions = '') {
+        appendWorkspaceHtml(
+          '<article class="chat-bubble system">' +
+            '<div class="stack-meta"><strong>' + escapeHtml(title) + '</strong><span>agent</span></div>' +
+            '<div>' + body + '</div>' +
+            actions +
+          '</article>'
+        );
+      }
+
+      function renderWorkspaceAssistantTurn(payload) {
+        const people = Array.isArray(payload.relatedPeople) ? payload.relatedPeople : [];
+        const events = Array.isArray(payload.relatedEvents) ? payload.relatedEvents : [];
+        const lanes = Array.isArray(payload.agentLanes) ? payload.agentLanes : [];
+        const draft = payload.captureDraft || {};
+        const personDraft = draft.personDraft || {};
+        const selfDraft = draft.selfCheckinDraft || {};
+        const eventSuggestion = payload.suggestedEvent || {};
+        const topThemes = Array.isArray(payload.latestMirror?.topThemes) ? payload.latestMirror.topThemes : [];
+
+        const peopleBlock = people.length
+          ? '<section class="workspace-block"><h4>Memory matches</h4><div class="stack">' +
+              people.map((person) =>
+                '<article class="stack-card compact-card">' +
+                  '<div class="stack-meta"><strong>' + escapeHtml(person.name) + '</strong><span>score ' + escapeHtml(String(person.score || 0).slice(0, 5)) + '</span></div>' +
+                  '<p>' + escapeHtml(person.evidenceSnippet || person.notes || '') + '</p>' +
+                  '<div class="inline-actions"><a class="mini-link" href="/people/' + encodeURIComponent(person.personId) + '">Open Contact</a></div>' +
+                '</article>'
+              ).join('') +
+            '</div></section>'
+          : '';
+
+        const eventBlock = events.length
+          ? '<section class="workspace-block"><h4>Related events</h4><div class="stack">' +
+              events.map((event) =>
+                '<article class="stack-card compact-card">' +
+                  '<div class="stack-meta"><strong>' + escapeHtml(event.title) + '</strong><span>' + escapeHtml((event.payload && event.payload.languageStrategy) || 'n/a') + '</span></div>' +
+                  '<p>' + escapeHtml(event.snippet || '') + '</p>' +
+                  '<div class="inline-actions"><a class="mini-link" href="/drafts?eventId=' + encodeURIComponent(event.eventId) + '">Open Drafts</a></div>' +
+                '</article>'
+              ).join('') +
+            '</div></section>'
+          : '';
+
+        const laneBlock = lanes.length
+          ? '<section class="workspace-block"><h4>Agent lanes</h4><div class="agent-inline-grid">' +
+              lanes.map((lane) =>
+                '<article class="detail-card">' +
+                  '<div class="stack-meta"><strong>' + escapeHtml(lane.label) + '</strong><span>' + escapeHtml(lane.status) + '</span></div>' +
+                  '<p>' + escapeHtml(lane.summary || '') + '</p>' +
+                '</article>'
+              ).join('') +
+            '</div></section>'
+          : '';
+
+        const draftBlock = personDraft.name
+          ? '<section class="workspace-block"><h4>Drafted memory</h4>' +
+              '<p><strong>Person:</strong> ' + escapeHtml(personDraft.name) + '</p>' +
+              '<p><strong>Tags:</strong> ' + escapeHtml((personDraft.tags || []).join(', ') || 'none yet') + '</p>' +
+              '<p><strong>Next follow-up:</strong> ' + escapeHtml(personDraft.followUpSuggestion || 'n/a') + '</p>' +
+              '<p><strong>Self signal:</strong> energy ' + escapeHtml(String(selfDraft.energy ?? 0)) + ' · ' + escapeHtml((selfDraft.emotions || []).join(', ') || 'neutral') + '</p>' +
+            '</section>'
+          : '';
+
+        const mirrorBlock = topThemes.length
+          ? '<section class="workspace-block"><h4>Mirror context</h4><div class="chip-row">' +
+              topThemes.map((theme) => '<span class="pill tone-soft">' + escapeHtml((theme.theme || 'theme') + ' (' + theme.count + ')') + '</span>').join('') +
+            '</div></section>'
+          : '';
+
+        const eventSuggestionBlock = eventSuggestion.title
+          ? '<section class="workspace-block"><h4>Suggested event</h4>' +
+              '<p><strong>' + escapeHtml(eventSuggestion.title) + '</strong></p>' +
+              '<p>' + escapeHtml((eventSuggestion.payload && eventSuggestion.payload.summary) || '') + '</p>' +
+              '<small>language strategy: ' + escapeHtml(eventSuggestion.languageStrategy || 'platform-native') + '</small>' +
+            '</section>'
+          : '';
+
+        const actions = '<div class="inline-actions action-strip">' +
+          (payload.intent !== 'search'
+            ? '<button type="button" class="secondary-button" data-workspace-action="save-memory" data-response-id="' + escapeHtml(payload.responseId) + '">Save Memory</button>'
+            : '') +
+          (eventSuggestion.title
+            ? '<button type="button" class="secondary-button" data-workspace-action="create-event" data-response-id="' + escapeHtml(payload.responseId) + '">Create Event</button>'
+            : '') +
+          '</div>';
+
+        return '<article class="chat-bubble system workspace-assistant">' +
+          '<div class="stack-meta"><strong>SocialOS</strong><span>' + escapeHtml(payload.intent || 'mixed') + '</span></div>' +
+          '<p>' + escapeHtml(payload.summary || '') + '</p>' +
+          draftBlock +
+          peopleBlock +
+          eventBlock +
+          eventSuggestionBlock +
+          mirrorBlock +
+          laneBlock +
+          actions +
+        '</article>';
+      }
+
+      async function uploadWorkspaceAsset(file, { autoSend = false } = {}) {
+        const composer = document.querySelector('[data-workspace-chat-form]');
+        const statusNode = document.querySelector('[data-audio-status]');
+        const resultNode = composer?.querySelector('[data-form-result]');
+        if (!file || !composer) return null;
+
+        const payload = {
+          kind: (file.type || '').startsWith('audio/') ? 'audio' : 'image',
+          mimeType: file.type || 'application/octet-stream',
+          fileName: file.name || 'upload.bin',
+          contentBase64: await encodeFileAsDataUrl(file),
+          source: 'workspace-chat',
+        };
+
+        const response = await apiRequest('/capture/assets', payload, 'POST');
+        if (!response.ok) {
+          renderResult(resultNode, response.payload);
+          return null;
+        }
+
+        if (response.payload.asset) {
+          appendCaptureAsset(response.payload.asset);
+          appendWorkspaceSystemTurn(
+            'Asset uploaded',
+            '<p>' + escapeHtml(response.payload.asset.fileName || response.payload.asset.assetId) + ' is now attached to the chat. ' +
+              escapeHtml(response.payload.asset.extractedText || response.payload.asset.previewText || 'No extracted text yet.') + '</p>'
+          );
+          if (statusNode) {
+            statusNode.innerHTML = '<strong>Attachment ready</strong><p>The file is attached to the current chat turn.</p>';
+          }
+
+          if (autoSend) {
+            const textField = composer.elements.text;
+            if (textField && !String(textField.value || '').trim()) {
+              textField.value = response.payload.asset.extractedText || response.payload.asset.previewText || '';
+            }
+            await handleWorkspaceChat(composer, composer.querySelector('button[type="submit"]'), { silentUserTurn: true });
+          }
+        }
+
+        return response.payload.asset || null;
+      }
+
+      async function handleWorkspaceChat(form, submitter, { silentUserTurn = false } = {}) {
+        const resultNode = form.querySelector('[data-form-result]');
+        const text = String(form.elements.text.value || '').trim();
+        const assets = [...captureState.assets];
+
+        if (!text && !assets.length) {
+          renderResult(resultNode, { error: 'Type a message or attach a file first.' });
+          return;
+        }
+
+        setButtonBusy(submitter, true);
+        try {
+          if (!silentUserTurn) {
+            appendWorkspaceUserTurn(text, assets);
+          }
+          const response = await apiRequest(
+            '/workspace/chat',
+            {
+              text,
+              source: form.elements.source.value || 'workspace-chat',
+              assetIds: assets.map((asset) => asset.assetId),
+            },
+            'POST'
+          );
+
+          renderResult(resultNode, response.payload);
+
+          if (response.ok) {
+            captureState.workspaceResponses.set(response.payload.responseId, response.payload);
+            appendWorkspaceHtml(renderWorkspaceAssistantTurn(response.payload));
+            form.reset();
+            captureState.assets = [];
+            updateCaptureAssetInputs();
+            if (document.querySelector('[data-audio-status]')) {
+              document.querySelector('[data-audio-status]').innerHTML =
+                '<strong>Ready</strong><p>Send another message, voice note, screenshot, or business card whenever you want.</p>';
+            }
+          }
+        } catch (error) {
+          renderResult(resultNode, { error: error.message || String(error) });
+        } finally {
+          setButtonBusy(submitter, false);
+        }
+      }
+
+      async function runWorkspaceAction(button) {
+        const action = button.dataset.workspaceAction;
+        const responseId = button.dataset.responseId || '';
+        const payload = captureState.workspaceResponses.get(responseId);
+        if (!action || !payload) return;
+
+        setButtonBusy(button, true);
+        try {
+          if (action === 'save-memory') {
+            const response = await apiRequest('/capture/commit', payload.commitPayload, 'POST');
+            if (!response.ok) throw new Error(response.payload?.error || 'Save memory failed');
+            appendWorkspaceSystemTurn(
+              'Memory saved',
+              '<p>Saved this turn into people memory and self mirror inputs.</p><div class="inline-actions"><a class="mini-link" href="/people/' +
+                encodeURIComponent(response.payload.person.personId) +
+                '">Open Contact</a></div>'
+            );
+            return;
+          }
+
+          if (action === 'create-event') {
+            const response = await apiRequest('/events', payload.suggestedEvent, 'POST');
+            if (!response.ok) throw new Error(response.payload?.error || 'Create event failed');
+            appendWorkspaceSystemTurn(
+              'Event created',
+              '<p>' + escapeHtml(response.payload.event.title) + ' is now in the logbook.</p>',
+              '<div class="inline-actions action-strip">' +
+                '<a class="mini-link" href="/events">Open Logbook</a>' +
+                '<a class="mini-link" href="/drafts?eventId=' + encodeURIComponent(response.payload.event.eventId) + '">Open Drafts</a>' +
+                '<button type="button" class="secondary-button" data-workspace-action="generate-drafts" data-response-id="' + escapeHtml(responseId) + '" data-event-id="' + escapeHtml(response.payload.event.eventId) + '">Generate 7 Drafts</button>' +
+              '</div>'
+            );
+            return;
+          }
+
+          if (action === 'generate-drafts') {
+            const eventId = button.dataset.eventId || '';
+            if (!eventId) throw new Error('Missing eventId for draft generation');
+            const response = await apiRequest(
+              '/drafts/generate',
+              {
+                eventId,
+                platforms: payload.recommendedDraftRequest?.platforms || [],
+                languages: payload.recommendedDraftRequest?.languages || ['platform-native'],
+                cta: payload.recommendedDraftRequest?.cta || '',
+              },
+              'POST'
+            );
+            if (!response.ok) throw new Error(response.payload?.error || 'Generate drafts failed');
+            appendWorkspaceSystemTurn(
+              'Drafts ready',
+              '<p>Generated ' + escapeHtml(String(response.payload.count || 0)) + ' platform-native draft(s).</p>',
+              '<div class="inline-actions"><a class="mini-link" href="/drafts?eventId=' + encodeURIComponent(eventId) + '">Review Drafts</a></div>'
+            );
+          }
+        } catch (error) {
+          appendWorkspaceSystemTurn('Action failed', '<p>' + escapeHtml(error.message || String(error)) + '</p>');
+        } finally {
+          setButtonBusy(button, false);
+        }
       }
 
       function populateCaptureCommitForm(captureDraft) {
@@ -2027,6 +2335,11 @@ function renderClientScript() {
       document.addEventListener('submit', (event) => {
         const form = event.target;
         if (!(form instanceof HTMLFormElement)) return;
+        if (form.hasAttribute('data-workspace-chat-form')) {
+          event.preventDefault();
+          handleWorkspaceChat(form, event.submitter || form.querySelector('button[type="submit"]'));
+          return;
+        }
         if (form.dataset.captureParse) {
           event.preventDefault();
           handleCaptureParse(form, event.submitter || form.querySelector('button[type="submit"]'));
@@ -2049,6 +2362,10 @@ function renderClientScript() {
 
       document.addEventListener('click', async (event) => {
         const copyButton = event.target.closest('[data-copy-text]');
+        const removeAssetButton = event.target.closest('[data-remove-asset]');
+        const workspaceAction = event.target.closest('[data-workspace-action]');
+        const attachButton = event.target.closest('[data-workspace-attach]');
+        const recordToggle = event.target.closest('[data-audio-record-toggle]');
         if (copyButton) {
           event.preventDefault();
           const text = copyButton.getAttribute('data-copy-text') || '';
@@ -2074,61 +2391,72 @@ function renderClientScript() {
           return;
         }
 
-        const startButton = event.target.closest('[data-audio-record-start]');
-        const stopButton = event.target.closest('[data-audio-record-stop]');
+        if (removeAssetButton) {
+          event.preventDefault();
+          removeCaptureAsset(removeAssetButton.getAttribute('data-remove-asset') || '');
+          return;
+        }
 
-        if (startButton) {
-          const form = startButton.closest('form');
+        if (workspaceAction) {
+          event.preventDefault();
+          await runWorkspaceAction(workspaceAction);
+          return;
+        }
+
+        if (attachButton) {
+          event.preventDefault();
+          const form = attachButton.closest('form');
+          const fileInput = form?.querySelector('[data-workspace-file]');
+          if (fileInput) fileInput.click();
+          return;
+        }
+
+        if (recordToggle) {
+          event.preventDefault();
+          const form = recordToggle.closest('form');
           const statusNode = document.querySelector('[data-audio-status]');
           if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
             statusNode.innerHTML = '<strong>Browser audio tools</strong><p>MediaRecorder is unavailable in this browser. Upload an audio file instead.</p>';
             return;
           }
-
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          captureState.recordChunks = [];
-          captureState.recorder = new MediaRecorder(stream);
-          captureState.recorder.ondataavailable = (recordEvent) => {
-            if (recordEvent.data.size > 0) captureState.recordChunks.push(recordEvent.data);
-          };
-          captureState.recorder.start();
-          startButton.disabled = true;
-          if (stopButton) stopButton.disabled = false;
-
-          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-          const transcriptField = form?.querySelector('textarea[name="transcript"]');
-          if (SpeechRecognition && transcriptField) {
-            captureState.recognition = new SpeechRecognition();
-            captureState.recognition.continuous = true;
-            captureState.recognition.interimResults = true;
-            captureState.recognition.onresult = (speechEvent) => {
-              const transcript = Array.from(speechEvent.results)
-                .map((result) => result[0]?.transcript || '')
-                .join(' ')
-                .trim();
-              transcriptField.value = transcript;
+          if (!captureState.recorder) {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            captureState.recordChunks = [];
+            captureState.recorder = new MediaRecorder(stream);
+            captureState.recorder.ondataavailable = (recordEvent) => {
+              if (recordEvent.data.size > 0) captureState.recordChunks.push(recordEvent.data);
             };
-            captureState.recognition.start();
+            captureState.recorder.start();
+            recordToggle.dataset.originalLabel = recordToggle.textContent;
+            recordToggle.textContent = 'Stop';
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const textField = form?.elements?.text;
+            if (SpeechRecognition && textField) {
+              captureState.recognition = new SpeechRecognition();
+              captureState.recognition.continuous = true;
+              captureState.recognition.interimResults = true;
+              captureState.recognition.onresult = (speechEvent) => {
+                const transcript = Array.from(speechEvent.results)
+                  .map((result) => result[0]?.transcript || '')
+                  .join(' ')
+                  .trim();
+                textField.value = transcript;
+              };
+              captureState.recognition.start();
+            }
+
+            statusNode.innerHTML = '<strong>Recording</strong><p>Speak naturally, then tap the same Mic button again to finish.</p>';
+            return;
           }
 
-          statusNode.innerHTML = '<strong>Recording</strong><p>Audio capture is running. Stop when the note is complete.</p>';
-          return;
-        }
-
-        if (stopButton) {
-          const form = stopButton.closest('form');
-          const statusNode = document.querySelector('[data-audio-status]');
-          const startButton = form?.querySelector('[data-audio-record-start]');
-          if (!captureState.recorder) return;
-
-          stopButton.disabled = true;
           captureState.recorder.onstop = async () => {
             const blob = new Blob(captureState.recordChunks, { type: 'audio/webm' });
             const file = new File([blob], 'recorded-note.webm', { type: 'audio/webm' });
-            statusNode.innerHTML = '<strong>Recorded</strong><p>Uploading the recorded note into capture assets.</p>';
-            await handleAssetUpload(form, form.querySelector('button[type="submit"]'), file);
-            if (startButton) startButton.disabled = false;
-            statusNode.innerHTML = '<strong>Audio ready</strong><p>The recorded note has been added to capture assets. You can now parse the capture.</p>';
+            statusNode.innerHTML = '<strong>Uploading voice note</strong><p>Adding this recording to the current chat turn.</p>';
+            await uploadWorkspaceAsset(file, { autoSend: true });
+            recordToggle.textContent = recordToggle.dataset.originalLabel || 'Mic';
+            statusNode.innerHTML = '<strong>Voice sent</strong><p>Your voice note has been attached and routed through the chat workflow.</p>';
           };
 
           captureState.recorder.stop();
@@ -2138,10 +2466,23 @@ function renderClientScript() {
             captureState.recognition = null;
           }
           captureState.recorder = null;
+          return;
         }
       });
 
+      document.addEventListener('change', async (event) => {
+        const input = event.target;
+        if (!(input instanceof HTMLInputElement)) return;
+        if (!input.hasAttribute('data-workspace-file')) return;
+        const files = Array.from(input.files || []);
+        for (const file of files) {
+          await uploadWorkspaceAsset(file);
+        }
+        input.value = '';
+      });
+
       consumeFlash();
+      renderWorkspaceAssets();
     </script>
   `;
 }
@@ -2507,6 +2848,85 @@ function renderLayout({ currentPath, title, body }) {
       .chat-bubble.ghost {
         opacity: 0.72;
       }
+      .workspace-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+        gap: 20px;
+        align-items: start;
+      }
+      .workspace-main-panel {
+        display: grid;
+        gap: 16px;
+      }
+      .workspace-thread {
+        min-height: 480px;
+        max-height: 72vh;
+        overflow: auto;
+        padding-right: 6px;
+      }
+      .workspace-composer {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto auto;
+        gap: 10px;
+        align-items: end;
+      }
+      .workspace-composer textarea {
+        min-height: 70px;
+        padding: 16px 18px;
+        border-radius: 24px;
+      }
+      .workspace-icon-button {
+        min-width: 78px;
+      }
+      .workspace-side {
+        display: grid;
+        gap: 20px;
+      }
+      .workspace-asset-tray {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .asset-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(22, 33, 50, 0.12);
+        background: rgba(255, 255, 255, 0.78);
+        color: var(--ink-soft);
+        font-size: 13px;
+      }
+      .asset-remove {
+        min-width: 28px;
+        min-height: 28px;
+        padding: 0;
+        border-radius: 999px;
+        box-shadow: none;
+        background: rgba(22, 33, 50, 0.08);
+        color: var(--ink);
+      }
+      .workspace-block {
+        display: grid;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .workspace-block h4 {
+        margin: 0;
+        font-size: 14px;
+        font-family: "IBM Plex Sans", "Noto Sans SC", sans-serif;
+      }
+      .agent-inline-grid {
+        display: grid;
+        gap: 10px;
+      }
+      .compact-card {
+        padding: 12px;
+      }
+      .workspace-assistant {
+        max-width: min(760px, 100%);
+      }
       .chat-composer-form textarea {
         min-height: 96px;
         padding: 18px 20px;
@@ -2647,10 +3067,17 @@ function renderLayout({ currentPath, title, body }) {
         .hero,
         .two-up,
         .three-up,
+        .workspace-layout,
         .draft-grid,
         .cluster-grid,
         .compact-grid {
           grid-template-columns: 1fr;
+        }
+        .workspace-composer {
+          grid-template-columns: 1fr 1fr;
+        }
+        .workspace-composer textarea {
+          grid-column: 1 / -1;
         }
         .composer-row {
           grid-template-columns: 1fr;
