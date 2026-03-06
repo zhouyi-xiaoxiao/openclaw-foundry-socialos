@@ -1048,8 +1048,7 @@ async function renderQuickCapturePage(page) {
               ${Array.from({ length: 14 }, (_, index) => `<span class="audio-meter-bar" data-audio-meter-bar="${index}"></span>`).join('')}
             </div>
             <select name="voiceLang" class="workspace-lang-select" aria-label="Voice language">
-              <option value="auto">Auto</option>
-              <option value="zh-CN">中文</option>
+              <option value="zh-CN" selected>中文</option>
               <option value="en-US">English</option>
               <option value="ja-JP">日本語</option>
               <option value="es-ES">Español</option>
@@ -1720,6 +1719,9 @@ function renderClientScript() {
         recorder: null,
         recordChunks: [],
         recognition: null,
+        liveTranscript: '',
+        recognitionWaiter: null,
+        resolveRecognitionWaiter: null,
         audioContext: null,
         audioSource: null,
         audioAnalyser: null,
@@ -2098,6 +2100,10 @@ function renderClientScript() {
         const statusNode = document.querySelector('[data-audio-status]');
         const resultNode = composer?.querySelector('[data-form-result]');
         if (!file || !composer) return null;
+        const transcriptText =
+          (file.type || '').startsWith('audio/')
+            ? String(composer.elements.text?.value || captureState.liveTranscript || '').trim()
+            : '';
 
         const payload = {
           kind: (file.type || '').startsWith('audio/') ? 'audio' : 'image',
@@ -2106,6 +2112,7 @@ function renderClientScript() {
           contentBase64: await encodeFileAsDataUrl(file),
           source: 'workspace-chat',
         };
+        if (transcriptText) payload.transcript = transcriptText;
 
         const response = await apiRequest('/capture/assets', payload, 'POST');
         if (!response.ok) {
@@ -2538,6 +2545,7 @@ function renderClientScript() {
             if (!captureState.recorder) {
               const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
               captureState.recordChunks = [];
+              captureState.liveTranscript = '';
               await startAudioMeter(stream);
               captureState.recorder = new MediaRecorder(stream);
               captureState.recorder.ondataavailable = (recordEvent) => {
@@ -2554,14 +2562,21 @@ function renderClientScript() {
                 captureState.recognition = new SpeechRecognition();
                 captureState.recognition.continuous = true;
                 captureState.recognition.interimResults = true;
-                const selectedLang = String(form?.elements?.voiceLang?.value || 'auto');
-                captureState.recognition.lang = selectedLang === 'auto' ? (navigator.language || 'en-US') : selectedLang;
+                const selectedLang = String(form?.elements?.voiceLang?.value || navigator.language || 'zh-CN');
+                captureState.recognition.lang = selectedLang;
                 captureState.recognition.onresult = (speechEvent) => {
                   const transcript = Array.from(speechEvent.results)
                     .map((result) => result[0]?.transcript || '')
                     .join(' ')
                     .trim();
+                  captureState.liveTranscript = transcript;
                   textField.value = transcript;
+                };
+                captureState.recognition.onerror = () => {
+                  if (captureState.resolveRecognitionWaiter) captureState.resolveRecognitionWaiter();
+                };
+                captureState.recognition.onend = () => {
+                  if (captureState.resolveRecognitionWaiter) captureState.resolveRecognitionWaiter();
                 };
                 captureState.recognition.start();
               }
@@ -2574,6 +2589,10 @@ function renderClientScript() {
             captureState.recorder.onstop = async () => {
               const blob = new Blob(captureState.recordChunks, { type: 'audio/webm' });
               const file = new File([blob], 'recorded-note.webm', { type: 'audio/webm' });
+              if (captureState.recognitionWaiter) {
+                await captureState.recognitionWaiter;
+                captureState.recognitionWaiter = null;
+              }
               statusNode.innerHTML = '<strong>Uploading voice note</strong><p>Adding this recording to the current chat turn.</p>';
               await uploadWorkspaceAsset(file, { autoSend: true });
               recordToggle.textContent = recordToggle.dataset.originalLabel || 'Mic';
@@ -2585,13 +2604,26 @@ function renderClientScript() {
             stopAudioMeter();
             captureState.recorder.stream.getTracks().forEach((track) => track.stop());
             if (captureState.recognition) {
+              captureState.recognitionWaiter = new Promise((resolve) => {
+                let settled = false;
+                captureState.resolveRecognitionWaiter = () => {
+                  if (settled) return;
+                  settled = true;
+                  captureState.resolveRecognitionWaiter = null;
+                  resolve();
+                };
+                window.setTimeout(captureState.resolveRecognitionWaiter, 700);
+              });
               captureState.recognition.stop();
               captureState.recognition = null;
+            } else {
+              captureState.recognitionWaiter = null;
             }
             captureState.recorder = null;
             return;
           } catch (error) {
             stopAudioMeter();
+            captureState.liveTranscript = '';
             recordToggle.textContent = recordToggle.dataset.originalLabel || 'Mic';
             recordToggle.setAttribute('aria-pressed', 'false');
             recordToggle.classList.remove('is-recording');
