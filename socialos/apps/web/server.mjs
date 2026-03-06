@@ -3974,14 +3974,23 @@ function renderLayout({ currentPath, title, body }) {
       * {
         box-sizing: border-box;
       }
+      html {
+        min-height: 100%;
+        background:
+          radial-gradient(circle at top left, rgba(21, 111, 106, 0.12), transparent 26%),
+          radial-gradient(circle at bottom right, rgba(181, 93, 52, 0.14), transparent 28%),
+          linear-gradient(180deg, #fcf8f0 0%, #f3ede2 100%);
+      }
       body {
         margin: 0;
+        min-height: 100vh;
         color: var(--ink);
         font-family: var(--font-body);
         background:
           radial-gradient(circle at top left, rgba(21, 111, 106, 0.12), transparent 26%),
           radial-gradient(circle at bottom right, rgba(181, 93, 52, 0.14), transparent 28%),
           linear-gradient(180deg, #fcf8f0 0%, #f3ede2 100%);
+        overflow-x: hidden;
       }
       .shell {
         min-height: 100vh;
@@ -4938,6 +4947,54 @@ function renderLayout({ currentPath, title, body }) {
         margin-top: 24px;
         color: var(--ink-soft);
         font-size: 13px;
+      }
+      @media (max-width: 1360px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+        nav {
+          min-height: auto;
+          position: sticky;
+          z-index: 20;
+          padding: 16px 18px;
+          border-right: 0;
+          border-bottom: 1px solid rgba(22, 33, 50, 0.08);
+        }
+        .nav-links {
+          display: flex;
+          gap: 8px;
+          overflow-x: auto;
+          padding-bottom: 4px;
+        }
+        .nav-link {
+          white-space: nowrap;
+          flex: 0 0 auto;
+          margin-bottom: 0;
+        }
+        .nav-footer {
+          display: none;
+        }
+        main {
+          padding: 24px 20px 120px;
+        }
+        .workspace-summary-strip,
+        .workspace-home-header,
+        .workspace-layout {
+          grid-template-columns: 1fr;
+        }
+        .workspace-action-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .workspace-context-rail,
+        .workspace-side {
+          position: static;
+          max-height: none;
+          overflow: visible;
+          padding-right: 0;
+        }
+        .workspace-summary-copy h1 {
+          font-size: clamp(28px, 4vw, 40px);
+        }
       }
       @media (max-width: 1080px) {
         .shell {
