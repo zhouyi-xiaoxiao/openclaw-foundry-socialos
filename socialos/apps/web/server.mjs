@@ -3643,7 +3643,9 @@ function renderClientScript() {
           renderWorkspaceComposerResult(resultNode, 'Type a message or attach a file first.', false);
           return;
         }
+        if (form.dataset.submitting === 'true') return;
 
+        form.dataset.submitting = 'true';
         setButtonBusy(submitter, true);
         try {
           if (!silentUserTurn) {
@@ -3682,6 +3684,7 @@ function renderClientScript() {
         } catch (error) {
           renderWorkspaceComposerResult(resultNode, error.message || String(error), false);
         } finally {
+          form.dataset.submitting = 'false';
           setButtonBusy(submitter, false);
         }
       }
@@ -3975,6 +3978,7 @@ function renderClientScript() {
         if (!(form instanceof HTMLFormElement)) return;
         if (form.hasAttribute('data-workspace-chat-form')) {
           event.preventDefault();
+          if (form.dataset.submitting === 'true') return;
           handleWorkspaceChat(form, event.submitter || form.querySelector('button[type="submit"]'));
           return;
         }
@@ -4005,8 +4009,10 @@ function renderClientScript() {
         if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
         const form = target.closest('form[data-workspace-chat-form]');
         if (!form) return;
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (form.dataset.submitting === 'true' || submitButton?.disabled) return;
         event.preventDefault();
-        form.requestSubmit(form.querySelector('button[type="submit"]'));
+        form.requestSubmit(submitButton);
       });
 
       document.addEventListener('input', (event) => {

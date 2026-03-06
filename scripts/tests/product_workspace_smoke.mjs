@@ -99,6 +99,24 @@ async function main() {
       'workspace presentation should cap actions for search turns'
     );
 
+    const casualWorkspace = await postJson(api.baseUrl, '/workspace/chat', {
+      text: '好的，那我们先顺着聊就好。',
+      source: 'product_workspace_smoke',
+    });
+    assert(typeof casualWorkspace.presentation?.answer === 'string', 'casual workspace input should still return an answer');
+    assert(!casualWorkspace.presentation?.primaryCard, 'casual workspace input should not force a primary card');
+    assert(
+      (casualWorkspace.presentation?.actions || []).length === 0,
+      'casual workspace input should not force product actions'
+    );
+    assert(
+      (casualWorkspace.presentation?.related?.people || []).length === 0 &&
+        (casualWorkspace.presentation?.related?.events || []).length === 0 &&
+        (casualWorkspace.presentation?.related?.drafts || []).length === 0 &&
+        (casualWorkspace.presentation?.related?.mirror || []).length === 0,
+      'casual workspace input should keep related sections quiet by default'
+    );
+
     const reviewWorkspace = await postJson(api.baseUrl, '/workspace/chat', {
       text: '帮我新建一个联系人吧，我在聚会里遇到了他，聊了很多金融和伦敦的事情。',
       source: 'product_workspace_smoke',

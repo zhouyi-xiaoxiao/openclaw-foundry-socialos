@@ -33,6 +33,10 @@ async function main() {
       'voice stop should upload the asset without triggering auto-send'
     );
     assert(
+      html.includes("if (form.dataset.submitting === 'true' || submitButton?.disabled) return;"),
+      'workspace enter handling should guard against repeat submits while a send is already in flight'
+    );
+    assert(
       !html.includes('autoSend: true'),
       'workspace voice flow should no longer auto-send on stop'
     );

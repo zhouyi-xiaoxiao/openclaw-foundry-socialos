@@ -1880,7 +1880,9 @@ function buildSearchResultRow(row, terms, embeddingsSettings) {
     : truncateText(notes || row.name, 120);
 
   const semanticScore = embeddingsSettings.semanticBoostEnabled
-    ? Math.min(1, keywordScore + Math.min(notes.length / 240, 0.25))
+    ? keywordScore > 0
+      ? Math.min(1, keywordScore + Math.min(notes.length / 240, 0.25))
+      : 0
     : 0;
 
   const blendedScore = embeddingsSettings.semanticBoostEnabled
@@ -2317,6 +2319,46 @@ function shouldUseModelWorkspaceAssist(source = 'workspace-chat') {
   return shouldUseModelCaptureAssist(source);
 }
 
+function hasWorkspaceContactSignal(captureDraft) {
+  const personDraft = captureDraft?.personDraft || {};
+  const interactionDraft = captureDraft?.interactionDraft || {};
+  return Boolean(
+    cleanText(personDraft.name || '') ||
+      (cleanText(personDraft.displayName || '') &&
+        !isPlaceholderContactName(personDraft.displayName || '')) ||
+      cleanList(personDraft.tags || []).length ||
+      (Array.isArray(personDraft.identities) && personDraft.identities.length) ||
+      cleanText(interactionDraft.summary || '').length >= 18 ||
+      cleanText(interactionDraft.evidence || '').length >= 24
+  );
+}
+
+function isWorkspaceCasualTurn({
+  intent,
+  text,
+  captureDraft,
+  relatedPeople,
+  relatedEvents,
+  relatedDrafts,
+  showEventSuggestion,
+  hasUntypedVoiceOnly,
+}) {
+  const source = cleanText(captureDraft?.combinedText || text);
+  const personDraft = captureDraft?.personDraft || {};
+  const hasStructuredPersonFocus = Boolean(
+    cleanText(personDraft.name || '') ||
+      ((cleanText(personDraft.displayName || '') &&
+        !isPlaceholderContactName(personDraft.displayName || '')) ||
+        cleanList(personDraft.tags || []).length ||
+        (Array.isArray(personDraft.identities) && personDraft.identities.length))
+  );
+  if (!source || intent !== 'mixed') return false;
+  if (showEventSuggestion || hasUntypedVoiceOnly) return false;
+  if (relatedPeople.length || relatedEvents.length || relatedDrafts.length) return false;
+  if (hasStructuredPersonFocus) return false;
+  return source.length <= 120;
+}
+
 function buildWorkspaceSummary({
   preferredChinese,
   hasUntypedVoiceOnly,
@@ -2325,6 +2367,7 @@ function buildWorkspaceSummary({
   relatedPeople,
   relatedEvents,
   captureDraft,
+  isCasualConversation,
 }) {
   const personName = cleanText(captureDraft?.personDraft?.name || '');
   const requiresNameConfirmation = Boolean(captureDraft?.personDraft?.requiresNameConfirmation);
@@ -2355,6 +2398,12 @@ function buildWorkspaceSummary({
     return preferredChinese
       ? '我已经把语音转进当前对话了。你先顺手看看人名和重点对不对，没问题再保存就行。'
       : 'I folded the voice note into this turn. Take a quick look at the person and the key point, then save it if it feels right.';
+  }
+
+  if (isCasualConversation) {
+    return preferredChinese
+      ? '我先顺着这句话接住，保持正常聊天。真要找人、记事、起草内容的时候，我再往前推一步。'
+      : 'I am keeping this as a natural back-and-forth for now. When you want a contact, event, draft, or mirror view, I can bring it in gently.';
   }
 
   if (requiresNameConfirmation) {
@@ -2647,6 +2696,7 @@ async function buildWorkspaceModelAssist({
   latestMirror,
   showMemoryAction,
   showEventSuggestion,
+  minimalPresentationHint,
 }) {
   if (!shouldUseModelWorkspaceAssist(source)) {
     return { method: 'heuristic', model: '', plan: null };
@@ -2668,6 +2718,7 @@ async function buildWorkspaceModelAssist({
     '- Choose one primaryTarget and up to three secondaryTargets.',
     '- Choose up to three lightweight actions.',
     '- If the user is describing a newly met person, prioritize the contact draft instead of unrelated memory hits.',
+    '- If the user is simply chatting, acknowledging, or continuing the conversation without asking for structure, choose primaryTarget none, no secondaryTargets, and no actions.',
     '- Do not sound like an internal system or a log.',
     'Valid primaryTarget/secondaryTargets values:',
     'contactDraft, contact, event, suggestedEvent, draft, mirror, none',
@@ -2729,6 +2780,7 @@ async function buildWorkspaceModelAssist({
     gates: {
       showMemoryAction,
       showEventSuggestion,
+      minimalPresentationHint,
     },
   };
 
@@ -2791,12 +2843,13 @@ function buildWorkspacePresentation({
   showMemoryAction,
   showEventSuggestion,
   modelAssist,
+  minimalPresentationHint,
 }) {
   const fallbackMode = ['capture', 'search', 'campaign', 'self'].includes(intent) ? intent : 'mixed';
   const draftCard = buildWorkspaceContactDraftCard(captureDraft);
   const personCard = buildWorkspacePersonMatchCard(relatedPeople[0], 'Contact');
   const eventCard = buildWorkspaceEventCard(relatedEvents[0], 'Event');
-  const suggestedEventCard = buildWorkspaceSuggestedEventCard(suggestedEvent);
+  const suggestedEventCard = showEventSuggestion ? buildWorkspaceSuggestedEventCard(suggestedEvent) : null;
   const draftResultCard = buildWorkspaceDraftCard(relatedDrafts[0]);
   const mirrorCard = buildWorkspaceMirrorCard(latestMirror);
   const availableCards = {
@@ -2825,6 +2878,8 @@ function buildWorkspacePresentation({
   const modelPrimaryTarget = normalizeWorkspaceCardTarget(modelAssist?.plan?.primaryTarget);
   if (modelPrimaryTarget && modelPrimaryTarget !== 'none' && availableCards[modelPrimaryTarget]) {
     primaryCard = availableCards[modelPrimaryTarget];
+  } else if (modelPrimaryTarget === 'none') {
+    primaryCard = null;
   }
 
   let secondaryCards = dedupePresentationCards(
@@ -2852,9 +2907,18 @@ function buildWorkspacePresentation({
       3
     );
   }
+  const modelWantsMinimal =
+    modelPrimaryTarget === 'none' &&
+    modelSecondaryTargets.length === 0 &&
+    !(Array.isArray(modelAssist?.plan?.actions) && modelAssist.plan.actions.length);
+  const preferMinimalPresentation =
+    modelWantsMinimal || (minimalPresentationHint && !modelSecondaryTargets.length && !modelPrimaryTarget);
+  if (preferMinimalPresentation) {
+    primaryCard = null;
+  }
 
   const availableActions = [];
-  if (showMemoryAction) {
+  if (showMemoryAction && !preferMinimalPresentation) {
     availableActions.push({
       id: 'review-contact',
       kind: 'mutation',
@@ -2896,26 +2960,28 @@ function buildWorkspacePresentation({
     .filter((action, index, list) => list.findIndex((entry) => entry.id === action.id) === index)
     .slice(0, 3);
 
-  const related = {
-    people: dedupePresentationCards(
-      relatedPeople
-        .slice(0, 3)
-        .map((person) => buildWorkspacePersonMatchCard(person, 'Contact')),
-      3
-    ),
-    events: dedupePresentationCards(
-      [
-        ...relatedEvents.slice(0, 2).map((event) => buildWorkspaceEventCard(event, 'Event')),
-        suggestedEventCard,
-      ].filter(Boolean),
-      3
-    ),
-    drafts: dedupePresentationCards(
-      relatedDrafts.slice(0, 3).map((draft) => buildWorkspaceDraftCard(draft, 'Draft')),
-      3
-    ),
-    mirror: dedupePresentationCards(mirrorCard ? [mirrorCard] : [], 1),
-  };
+  const related = preferMinimalPresentation
+    ? { people: [], events: [], drafts: [], mirror: [] }
+    : {
+        people: dedupePresentationCards(
+          relatedPeople
+            .slice(0, 3)
+            .map((person) => buildWorkspacePersonMatchCard(person, 'Contact')),
+          3
+        ),
+        events: dedupePresentationCards(
+          [
+            ...relatedEvents.slice(0, 2).map((event) => buildWorkspaceEventCard(event, 'Event')),
+            suggestedEventCard,
+          ].filter(Boolean),
+          3
+        ),
+        drafts: dedupePresentationCards(
+          relatedDrafts.slice(0, 3).map((draft) => buildWorkspaceDraftCard(draft, 'Draft')),
+          3
+        ),
+        mirror: dedupePresentationCards(mirrorCard ? [mirrorCard] : [], 1),
+      };
 
   return {
     mode,
@@ -2928,8 +2994,8 @@ function buildWorkspacePresentation({
     ),
     primaryCard,
     related,
-    secondaryCards: dedupePresentationCards(secondaryCards, 3),
-    actions,
+    secondaryCards: preferMinimalPresentation ? [] : dedupePresentationCards(secondaryCards, 3),
+    actions: preferMinimalPresentation ? [] : actions,
   };
 }
 
@@ -2956,13 +3022,20 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
     : null;
   const preferredChinese = prefersChineseWorkspaceReply(combinedText);
   const showEventSuggestion = shouldShowWorkspaceEventSuggestion(intent, combinedText);
+  const hasContactSignal = hasWorkspaceContactSignal(captureDraft);
   const showMemoryAction =
-    intent !== 'search' &&
-    Boolean(
-      cleanText(captureDraft.personDraft?.displayName || captureDraft.personDraft?.name || '') ||
-        cleanText(captureDraft.interactionDraft?.summary || '') ||
-        combinedText
-    );
+    intent === 'capture' &&
+    hasContactSignal;
+  const minimalPresentationHint = isWorkspaceCasualTurn({
+    intent,
+    text,
+    captureDraft,
+    relatedPeople,
+    relatedEvents,
+    relatedDrafts,
+    showEventSuggestion,
+    hasUntypedVoiceOnly,
+  });
   const modelAssist = await buildWorkspaceModelAssist({
     text,
     source,
@@ -2981,6 +3054,7 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
       : null,
     showMemoryAction,
     showEventSuggestion,
+    minimalPresentationHint,
   });
   const compactPeople = intent === 'search' ? relatedPeople.slice(0, 3) : relatedPeople.slice(0, 1);
   const compactEvents =
@@ -3019,6 +3093,7 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
     relatedPeople,
     relatedEvents,
     captureDraft,
+    isCasualConversation: minimalPresentationHint,
   });
   const answer = cleanText(modelAssist?.plan?.answer || '') || summary;
 
@@ -3042,6 +3117,7 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
     showMemoryAction,
     showEventSuggestion,
     modelAssist,
+    minimalPresentationHint,
   });
 
   return {
