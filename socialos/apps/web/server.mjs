@@ -605,9 +605,32 @@ function renderPublishActions(draft, publishPackage) {
   `;
 }
 
+const DRAFT_PLATFORM_DISPLAY_ORDER = Object.freeze([
+  'linkedin',
+  'x',
+  'instagram',
+  'zhihu',
+  'xiaohongshu',
+  'wechat_moments',
+  'wechat_official',
+]);
+
+function sortDraftsForDisplay(drafts) {
+  const rankMap = new Map(DRAFT_PLATFORM_DISPLAY_ORDER.map((platform, index) => [platform, index]));
+  return [...drafts].sort((left, right) => {
+    const leftRank = rankMap.get(left.platform) ?? Number.MAX_SAFE_INTEGER;
+    const rightRank = rankMap.get(right.platform) ?? Number.MAX_SAFE_INTEGER;
+    if (leftRank !== rightRank) return leftRank - rightRank;
+
+    const leftTime = Date.parse(left.updatedAt || left.createdAt || 0);
+    const rightTime = Date.parse(right.updatedAt || right.createdAt || 0);
+    return rightTime - leftTime;
+  });
+}
+
 function renderDraftCards(drafts) {
   if (!drafts.length) return renderEmptyState('No drafts generated yet.');
-  return `<div class="draft-grid">${drafts
+  return `<div class="draft-grid">${sortDraftsForDisplay(drafts)
     .map((draft) => {
       const capability = safeJson(draft.capability, {});
       const publishPackage = safeJson(draft.publishPackage, {});
@@ -1609,9 +1632,9 @@ async function renderDraftsPage(page, requestUrl) {
             <fieldset class="field">
               <span>Platforms</span>
               <div class="check-grid">
-                <label><input type="checkbox" name="platforms" value="instagram" checked /> Instagram</label>
-                <label><input type="checkbox" name="platforms" value="x" checked /> X</label>
                 <label><input type="checkbox" name="platforms" value="linkedin" checked /> LinkedIn</label>
+                <label><input type="checkbox" name="platforms" value="x" checked /> X</label>
+                <label><input type="checkbox" name="platforms" value="instagram" checked /> Instagram</label>
                 <label><input type="checkbox" name="platforms" value="zhihu" checked /> Zhihu</label>
                 <label><input type="checkbox" name="platforms" value="xiaohongshu" checked /> Xiaohongshu</label>
                 <label><input type="checkbox" name="platforms" value="wechat_moments" checked /> WeChat Moments</label>
