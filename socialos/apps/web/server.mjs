@@ -251,7 +251,7 @@ function renderChatComposerIntro() {
     <div class="chat-shell">
       <div class="chat-bubble system">
         <strong>Workspace chat is the main surface now</strong>
-        <p>Send a text, voice note, screenshot, or business card here. Memory, self signal, event suggestion, and publish next-steps all come back in one thread.</p>
+        <p>Send a text, voice note, screenshot, or business card here. The thread stays lightweight and only brings in contacts, events, or content actions when they are actually useful.</p>
       </div>
       <div class="chat-bubble user ghost">
         <p>今天认识了一个做增长的人，下周二要跟进，顺便帮我看看是不是已经在记忆里。</p>
@@ -2988,20 +2988,26 @@ function renderLayout({ currentPath, title, body }) {
       }
       .workspace-composer {
         display: grid;
-        grid-template-columns: auto minmax(0, 1fr) auto auto;
+        grid-template-columns: auto minmax(0, 1fr) auto;
         gap: 10px;
         align-items: end;
       }
       .workspace-composer textarea {
-        min-height: 70px;
+        min-height: 72px;
         padding: 16px 18px;
         border-radius: 24px;
       }
+      .workspace-composer-controls {
+        display: grid;
+        grid-auto-flow: column;
+        gap: 10px;
+        align-items: center;
+      }
       .workspace-icon-button {
-        min-width: 78px;
+        min-width: 58px;
       }
       .workspace-lang-select {
-        min-width: 110px;
+        min-width: 102px;
       }
       .workspace-side {
         display: grid;
@@ -3042,6 +3048,13 @@ function renderLayout({ currentPath, title, body }) {
         font-size: 14px;
         font-family: "IBM Plex Sans", "Noto Sans SC", sans-serif;
       }
+      .workspace-note {
+        margin-top: 12px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(21, 111, 106, 0.08);
+        color: var(--ink-soft);
+      }
       .agent-inline-grid {
         display: grid;
         gap: 10px;
@@ -3051,6 +3064,54 @@ function renderLayout({ currentPath, title, body }) {
       }
       .workspace-assistant {
         max-width: min(760px, 100%);
+      }
+      .agent-chip-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .agent-chip {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(22, 33, 50, 0.07);
+        color: var(--ink-soft);
+        font-size: 12px;
+      }
+      .agent-chip strong {
+        color: var(--ink);
+      }
+      .audio-meter {
+        display: inline-flex;
+        align-items: end;
+        gap: 3px;
+        min-width: 68px;
+        height: 32px;
+        padding: 0 4px;
+      }
+      .audio-meter-bar {
+        width: 4px;
+        height: 100%;
+        border-radius: 999px;
+        background: rgba(22, 33, 50, 0.16);
+        transform-origin: center bottom;
+        transform: scaleY(0.2);
+        transition: transform 120ms ease, background 120ms ease;
+      }
+      .audio-meter-bar.live {
+        background: rgba(21, 111, 106, 0.72);
+      }
+      .workspace-icon-button.is-recording {
+        background: rgba(181, 93, 52, 0.14);
+        color: var(--warn);
+        border-color: rgba(181, 93, 52, 0.26);
+      }
+      .result-block-warn {
+        border-color: rgba(181, 93, 52, 0.2);
+        background: var(--warn-soft);
       }
       .chat-composer-form textarea {
         min-height: 96px;
@@ -3199,10 +3260,11 @@ function renderLayout({ currentPath, title, body }) {
           grid-template-columns: 1fr;
         }
         .workspace-composer {
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: 1fr;
         }
-        .workspace-composer textarea {
-          grid-column: 1 / -1;
+        .workspace-composer-controls {
+          grid-auto-flow: row;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
         .composer-row {
           grid-template-columns: 1fr;
