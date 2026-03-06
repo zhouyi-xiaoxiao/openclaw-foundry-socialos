@@ -489,25 +489,144 @@ function isDisplayablePersonRow(row) {
   return isDisplayablePersonName(row?.name);
 }
 
-function summarizeEventPayload(payload) {
-  const source = payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : {};
-  const details = source.details && typeof source.details === 'object' && !Array.isArray(source.details)
-    ? source.details
-    : source;
-  const parts = [];
+function normalizeRecord(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
 
-  for (const [key, rawValue] of Object.entries(details)) {
-    if (parts.length >= 4) break;
-    if (typeof rawValue === 'string' && rawValue.trim()) {
-      parts.push(`${key}: ${rawValue.trim()}`);
+function getEventPayloadLayers(payload) {
+  const source = normalizeRecord(payload);
+  const details = normalizeRecord(source.details);
+  const nested = normalizeRecord(details.details);
+  return { source, details, nested };
+}
+
+function sanitizeEventNarrative(value, language = 'en', maxLength = 220) {
+  let text = sanitizeContactDraftText(readOptionalString(value, ''));
+  if (!text) return '';
+
+  text = text
+    .replace(/\b(?:focus|source|sourceType|sourceFocus|personName|summary)\s*:\s*[^|]+(?:\|\s*)?/giu, ' ')
+    .replace(/\b(?:chat-derived event suggestion|workspace-chat)\b/giu, ' ')
+    .replace(/[|]/gu, ' ')
+    .replace(
+      /(?:顺便|然后|再)\s*帮我把这条后面变成一个\s*event(?:，|,)?\s*再准备多平台草稿。?/gu,
+      ''
+    )
+    .replace(
+      /(?:and|then)\s*(?:help me )?(?:turn this into an event|prepare multi-platform drafts).*$/iu,
+      ''
+    )
+    .replace(
+      /(?:wechat|微信)\s*(?:是|[:：])\s*[A-Za-z0-9_.-]{3,40}/giu,
+      language === 'zh' ? '交换了微信' : 'we exchanged contact details'
+    )
+    .replace(
+      /linkedin\s*[:：]?\s*(?:https?:\/\/\S+|[A-Za-z0-9_.-]{3,60})/giu,
+      language === 'zh' ? '互留了 LinkedIn' : 'we exchanged LinkedIn profiles'
+    );
+
+  return truncateText(cleanText(text), maxLength);
+}
+
+function getEventPersonName(payload) {
+  const { source, details, nested } = getEventPayloadLayers(payload);
+  return cleanText(details.personName || nested.personName || source.personName || '');
+}
+
+function getEventNarrativeText(payload, language = 'en', maxLength = 220) {
+  const { source, details, nested } = getEventPayloadLayers(payload);
+  const candidates = [
+    nested.combinedText,
+    details.combinedText,
+    details.summary,
+    source.summary,
+    details.description,
+    source.description,
+    details.focus,
+    source.focus,
+  ];
+
+  for (const candidate of candidates) {
+    const next = sanitizeEventNarrative(candidate, language, maxLength);
+    if (next) return next;
+  }
+
+  return '';
+}
+
+function normalizeEventPayloadDetails(value) {
+  const source = normalizeRecord(value);
+  const details = normalizeRecord(source.details);
+  const nested = normalizeRecord(details.details);
+  const passthrough = {};
+
+  for (const [key, rawValue] of Object.entries(source)) {
+    if (
+      ['details', 'summary', 'combinedText', 'followUpSuggestion', 'personName', 'source', 'sourceType'].includes(key)
+    ) {
+      continue;
+    }
+    if (typeof rawValue === 'string' && cleanText(rawValue)) {
+      passthrough[key] = cleanText(rawValue);
       continue;
     }
     if (typeof rawValue === 'number' || typeof rawValue === 'boolean') {
-      parts.push(`${key}: ${String(rawValue)}`);
+      passthrough[key] = rawValue;
     }
   }
 
-  return parts.join(' | ');
+  const personName = cleanText(source.personName || details.personName || nested.personName || '');
+  const combinedText = getEventNarrativeText(
+    {
+      combinedText: source.combinedText,
+      summary: source.summary,
+      focus: source.focus,
+      details: {
+        combinedText: details.combinedText,
+        summary: details.summary,
+        focus: details.focus,
+        details: {
+          combinedText: nested.combinedText,
+        },
+      },
+    },
+    hasHanCharacters(personName) ? 'zh' : 'en',
+    280
+  );
+  const summary = sanitizeEventNarrative(
+    source.summary || details.summary || combinedText,
+    hasHanCharacters(personName) ? 'zh' : 'en',
+    220
+  );
+  const followUpSuggestion = sanitizeContactDraftText(
+    readOptionalString(source.followUpSuggestion || details.followUpSuggestion || nested.followUpSuggestion, '')
+  );
+  const focus = cleanText(source.focus || details.focus || '');
+  const sourceType = cleanText(source.sourceType || source.source || details.sourceType || details.source || '');
+
+  return {
+    ...passthrough,
+    ...(focus ? { focus } : {}),
+    ...(sourceType ? { sourceType } : {}),
+    ...(personName ? { personName } : {}),
+    ...(summary ? { summary } : {}),
+    ...(combinedText ? { combinedText } : {}),
+    ...(followUpSuggestion ? { followUpSuggestion } : {}),
+  };
+}
+
+function summarizeEventPayload(payload) {
+  const source = normalizeRecord(payload);
+  const preferredLanguage = hasHanCharacters(JSON.stringify(source)) ? 'zh' : 'en';
+  const summary = getEventNarrativeText(source, preferredLanguage, 180);
+  if (summary) return summary;
+
+  const personName = getEventPersonName(source);
+  if (personName) {
+    return preferredLanguage === 'zh' ? `和${personName}有关的后续推进` : `A follow-up conversation with ${personName}`;
+  }
+
+  return cleanText(readOptionalString(source.focus, ''));
 }
 
 function hasHanCharacters(value) {
@@ -623,7 +742,7 @@ function joinPhrases(items, language) {
 
 function buildLocalizedEventTitle(event, language, payload = {}) {
   const rawTitle = cleanText(event?.title || '');
-  const personName = cleanText(payload.personName || '');
+  const personName = cleanText(payload.personName || getEventPersonName(payload) || '');
   const followUpMatch = rawTitle.match(/^follow-up with\s+(.+)$/iu);
 
   if (followUpMatch?.[1]) {
@@ -644,14 +763,12 @@ function buildLocalizedEventTitle(event, language, payload = {}) {
 
 function buildLocalizedEventContext(event, language) {
   const eventPayload = safeParseJsonObject(event.payload, {});
-  const rawContext = cleanText(
-    eventPayload.details?.combinedText || eventPayload.summary || eventPayload.description || ''
-  );
+  const rawContext = getEventNarrativeText(eventPayload, language, 240);
   const scene = inferScenePhrase(rawContext, language);
   const roles = inferRolePhrase(rawContext, language);
   const topics = inferTopicPhrase(rawContext, language);
   const localizedTitle = buildLocalizedEventTitle(event, language, eventPayload);
-  const personName = cleanText(eventPayload.personName || '');
+  const personName = getEventPersonName(eventPayload);
   const roleText = joinPhrases(roles, language);
   const topicText = joinPhrases(topics, language);
 
@@ -666,15 +783,19 @@ function buildLocalizedEventContext(event, language) {
   const detailLine = language === 'zh'
     ? [
         roleText ? `对方主要在做${roleText}。` : '',
-        topicText ? `这次聊到的重点是${topicText}。` : '这次内容会围绕关系跟进、内容表达和下一步动作展开。',
+        topicText ? `这次聊到的重点是${topicText}。` : '',
+        !roleText && !topicText && rawContext ? `这次最值得延展的是：${truncateText(rawContext, 64)}。` : '',
+        !roleText && !topicText && !rawContext ? '这次内容会围绕关系跟进、内容表达和下一步动作展开。' : '',
       ]
         .filter(Boolean)
         .join('')
     : [
         roleText ? `The conversation was grounded in ${roleText}.` : '',
-        topicText
-          ? `We focused on ${topicText}.`
-          : 'The draft centers on relationship follow-up, content expression, and the next concrete step.',
+        topicText ? `We focused on ${topicText}.` : '',
+        !roleText && !topicText && rawContext ? `The clearest thread here was ${truncateText(rawContext, 100)}.` : '',
+        !roleText && !topicText && !rawContext
+          ? 'The draft centers on relationship follow-up, content expression, and the next concrete step.'
+          : '',
       ]
         .filter(Boolean)
         .join(' ');
@@ -984,7 +1105,7 @@ function buildPackageSections(platformRule, event, language, options) {
   const bodyLead =
     language === 'zh'
       ? `这次我想用“${angle}”的角度，面向${audience}分享这次进展。`
-      : `Sharing this from a ${angle} angle for ${audience}.`;
+      : `Sharing this for ${audience}, through a ${angle} lens.`;
   const detailLine = localizedContext.detailLine;
   const contextLead = localizedContext.contextLead;
   const closing =
@@ -2210,6 +2331,9 @@ function buildWorkspaceSummary({
 function buildSuggestedEventPayload(text, draft, relatedPeople = []) {
   const combined = cleanText(draft?.combinedText || text);
   const personName = cleanText(draft?.personDraft?.name || relatedPeople[0]?.name || '');
+  const preferredLanguage = hasHanCharacters(combined) || hasHanCharacters(personName) ? 'zh' : 'en';
+  const cleanCombined = sanitizeEventNarrative(combined, preferredLanguage, 280);
+  const followUpSuggestion = sanitizeContactDraftText(readOptionalString(draft?.personDraft?.followUpSuggestion, ''));
   const firstSentence = combined.split(/[。！？.!?]/u).map((item) => item.trim()).find(Boolean) || combined;
   const baseTitle =
     personName && !isPlaceholderContactName(personName)
@@ -2226,14 +2350,12 @@ function buildSuggestedEventPayload(text, draft, relatedPeople = []) {
     languageStrategy: 'platform-native',
     tone: 'platform-native',
     payload: {
-      focus: 'chat-derived event suggestion',
-      source: 'workspace-chat',
+      focus: 'contact follow-up',
+      sourceType: 'workspace-chat',
       personName,
-      summary: truncateText(combined, 220),
-      details: {
-        combinedText: truncateText(combined, 280),
-        followUpSuggestion: readOptionalString(draft?.personDraft?.followUpSuggestion, ''),
-      },
+      summary: truncateText(cleanCombined || combined, 220),
+      combinedText: cleanCombined || truncateText(combined, 280),
+      followUpSuggestion,
     },
   };
 }
@@ -4640,6 +4762,10 @@ async function routeRequest(req, res, statements) {
 
     const eventId = makeId('event');
     const createdAt = nowIso();
+    const payloadDetails =
+      body.payload && typeof body.payload === 'object' && !Array.isArray(body.payload)
+        ? normalizeEventPayloadDetails(body.payload)
+        : {};
     const normalizedPayload = {
       captureId,
       audience: readOptionalString(body.audience, ''),
@@ -4647,10 +4773,7 @@ async function routeRequest(req, res, statements) {
       tone: readOptionalString(body.tone, ''),
       links: normalizeStringList(body.links),
       assets: normalizeStringList(body.assets),
-      details:
-        body.payload && typeof body.payload === 'object' && !Array.isArray(body.payload)
-          ? body.payload
-          : {},
+      details: payloadDetails,
     };
     const payload = JSON.stringify({
       ...normalizedPayload,

@@ -159,6 +159,51 @@ async function main() {
     const listedDrafts = await getJson(api.baseUrl, `/drafts?eventId=${encodeURIComponent(event.eventId)}&limit=10`);
     assert(listedDrafts.count >= 3, 'draft list should include generated drafts');
 
+    const legacyWorkspaceEvent = await postJson(api.baseUrl, '/events', {
+      title: 'Follow-up with 陈一',
+      payload: {
+        focus: 'chat-derived event suggestion',
+        source: 'workspace-chat',
+        personName: '陈一',
+        summary:
+          '今天在 London 的 AI builder meetup 认识了陈一，做产品增长和社区运营，微信是 chenyi_growth。我们聊了 SocialOS、agent workflow 和 demo 扩散，我当时挺兴奋，想这周末跟进。顺便帮我把这条后面变成一个 event，再准备多平台草稿。',
+        details: {
+          combinedText:
+            '今天在 London 的 AI builder meetup 认识了陈一，做产品增长和社区运营，微信是 chenyi_growth。我们聊了 SocialOS、agent workflow 和 demo 扩散，我当时挺兴奋，想这周末跟进。顺便帮我把这条后面变成一个 event，再准备多平台草稿。',
+          followUpSuggestion:
+            'Message 陈一 with one growth experiment you mentioned and invite a quick compare-notes follow-up.',
+        },
+      },
+    });
+    const cleanedDrafts = await postJson(api.baseUrl, '/drafts/generate', {
+      eventId: legacyWorkspaceEvent.eventId,
+      platforms: ['linkedin', 'x', 'xiaohongshu', 'wechat_official'],
+      languages: ['platform-native'],
+    });
+    const cleanedLinkedIn = cleanedDrafts.drafts.find((draft) => draft.platform === 'linkedin');
+    const cleanedX = cleanedDrafts.drafts.find((draft) => draft.platform === 'x');
+    const cleanedXiaohongshu = cleanedDrafts.drafts.find((draft) => draft.platform === 'xiaohongshu');
+    const cleanedOfficial = cleanedDrafts.drafts.find((draft) => draft.platform === 'wechat_official');
+    assert(cleanedLinkedIn?.language === 'en', 'legacy workspace events should keep LinkedIn in English');
+    assert(cleanedXiaohongshu?.language === 'zh', 'legacy workspace events should keep 小红书 in Chinese');
+    assert(
+      !/focus:|source:|personName:|summary:/i.test(cleanedLinkedIn?.content || '') &&
+        !/workspace-chat/i.test(cleanedLinkedIn?.content || '') &&
+        !/focus:|source:|personName:|summary:/i.test(cleanedX?.content || ''),
+      'English drafts should not leak internal workspace metadata'
+    );
+    assert(
+      !/focus:|source:|personName:|summary:/i.test(cleanedXiaohongshu?.content || '') &&
+        !/\bMessage\b/u.test(cleanedXiaohongshu?.content || '') &&
+        !/\bMessage\b/u.test(cleanedOfficial?.content || ''),
+      'Chinese drafts should not leak metadata or English follow-up copy'
+    );
+    assert(
+      String(cleanedXiaohongshu?.publishPackage?.title || '').includes('和陈一的后续跟进') &&
+        String(cleanedOfficial?.publishPackage?.title || '').includes('和陈一的后续跟进'),
+      'Chinese platform packages should localize follow-up titles'
+    );
+
     const queued = await postJson(api.baseUrl, '/publish/queue', {
       draftId: generated.drafts[0].draftId,
       mode: 'dry-run',

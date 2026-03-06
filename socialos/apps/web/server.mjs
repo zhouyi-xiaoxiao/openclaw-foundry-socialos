@@ -728,6 +728,42 @@ function buildClipboardText(draft, publishPackage, mode = 'body') {
   return sections.filter(Boolean).join('\n\n');
 }
 
+function buildDraftPreviewBody(draft, publishPackage) {
+  const title = normalizeInlineText(publishPackage.title || '');
+  const hook = normalizeInlineText(publishPackage.hook || '');
+  const hashtagLine = normalizeInlineText(
+    Array.isArray(publishPackage.hashtags) ? publishPackage.hashtags.join(' ') : ''
+  );
+  const lines = String(draft.content || '')
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const cleaned = [...lines];
+
+  while (cleaned.length) {
+    const current = normalizeInlineText(cleaned[0]);
+    if (!current) {
+      cleaned.shift();
+      continue;
+    }
+    if (title && current === title) {
+      cleaned.shift();
+      continue;
+    }
+    if (hook && current === hook) {
+      cleaned.shift();
+      continue;
+    }
+    break;
+  }
+
+  if (cleaned.length && hashtagLine && normalizeInlineText(cleaned.at(-1)) === hashtagLine) {
+    cleaned.pop();
+  }
+
+  return cleaned.join('\n');
+}
+
 function renderPublishActions(draft, publishPackage) {
   const entryUrl = readOptionalString(publishPackage.entryUrl, '');
   const copyBody = buildClipboardText(draft, publishPackage, 'body');
@@ -784,6 +820,7 @@ function renderDraftCards(drafts) {
       const validation = safeJson(draft.validation, {});
       const steps = Array.isArray(publishPackage.steps) ? publishPackage.steps : [];
       const hashtags = Array.isArray(publishPackage.hashtags) ? publishPackage.hashtags : [];
+      const previewBody = buildDraftPreviewBody(draft, publishPackage) || draft.content;
       const hasIssues = validation && Object.keys(validation).length && validation.ok === false;
       const supportLabel = publishPackage.supportLevel || capability.supportLevel || 'L0 Draft';
       const entryLabel = publishPackage.entryTarget || capability.entryTarget || 'manual';
@@ -808,7 +845,7 @@ function renderDraftCards(drafts) {
           ${renderPublishActions(draft, publishPackage)}
           ${publishPackage.title ? `<p class="draft-title">${escapeHtml(publishPackage.title)}</p>` : ''}
           ${publishPackage.hook ? `<p class="draft-hook">${escapeHtml(publishPackage.hook)}</p>` : ''}
-          ${renderRichTextPreview(draft.content, 'draft-preview')}
+          ${renderRichTextPreview(previewBody, 'draft-preview')}
           ${
             hashtags.length
               ? `<p class="draft-tags">${escapeHtml(hashtags.join(' '))}</p>`
