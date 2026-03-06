@@ -130,8 +130,33 @@ try {
   console.log(`duration_ms: ${run.durationMs}`);
   console.log(`push: ${run?.stages?.push || 'unknown'}`);
   console.log(`next: ${run.next}`);
+  } catch {
+    console.log(`unable to parse: ${runPath}`);
+  }
+NODE
+elif [[ -f "${LATEST}" ]]; then
+  node - "${LATEST}" <<'NODE'
+const fs = require('fs');
+const digestPath = process.argv[2];
+try {
+  const content = fs.readFileSync(digestPath, 'utf8');
+  const lines = content.split('\n');
+  const readValue = (label) => {
+    const prefix = `${label}:`;
+    const line = lines.find((entry) => entry.startsWith(prefix));
+    return line ? line.slice(prefix.length).trim() : '';
+  };
+  const runId = readValue('Run') || 'unknown';
+  const summary = readValue('What') || 'unknown';
+  const next = readValue('Next') || 'unknown';
+  console.log(`run_id: ${runId}`);
+  console.log('status: unknown (digest-only)');
+  console.log(`summary: ${summary}`);
+  console.log('duration_ms: unknown');
+  console.log('push: unknown');
+  console.log(`next: ${next}`);
 } catch {
-  console.log(`unable to parse: ${runPath}`);
+  console.log(`unable to parse digest fallback: ${digestPath}`);
 }
 NODE
 else
