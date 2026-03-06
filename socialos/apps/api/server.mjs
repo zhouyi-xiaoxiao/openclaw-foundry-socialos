@@ -1829,6 +1829,68 @@ function inferWorkspaceIntent(text, assets = []) {
   return 'mixed';
 }
 
+function prefersChineseWorkspaceReply(text) {
+  return /[\u3400-\u9fff]/u.test(cleanText(text));
+}
+
+function shouldShowWorkspaceEventSuggestion(intent, text) {
+  if (intent === 'campaign') return true;
+  const source = cleanText(text).toLowerCase();
+  return /(create event|make an event|turn .* into .*event|生成event|生成活动|生成事件|写成内容|生成草稿|出草稿|做内容|发帖|campaign)/u.test(
+    source
+  );
+}
+
+function buildWorkspaceSummary({
+  preferredChinese,
+  hasUntypedVoiceOnly,
+  hasTranscribedAudio,
+  intent,
+  relatedPeople,
+  relatedEvents,
+  captureDraft,
+}) {
+  const personName = cleanText(captureDraft?.personDraft?.name || '');
+  if (hasUntypedVoiceOnly) {
+    return preferredChinese
+      ? '我收到了这段语音，但现在还没有 transcript，所以先不乱回复。只要浏览器语音识别可用，或者配置好 OPENAI_API_KEY，这里就能像正常聊天一样直接语音转文字。'
+      : 'I got the voice note, but there is no transcript yet, so I will not guess. Once browser speech recognition or OPENAI_API_KEY transcription is available, this chat can behave like a normal voice turn.';
+  }
+
+  if (intent === 'search') {
+    if (relatedPeople.length || relatedEvents.length) {
+      return preferredChinese
+        ? `我先帮你查了一轮，找到 ${relatedPeople.length} 个联系人命中和 ${relatedEvents.length} 条相关事件。先看最像的结果，不把页面塞满。`
+        : `I checked memory first and found ${relatedPeople.length} contact match(es) and ${relatedEvents.length} related event(s). I am only surfacing the strongest hits.`;
+    }
+    return preferredChinese
+      ? '我先帮你查了联系人和事件，但这次还没有特别像的命中。你可以再补一个名字、公司、主题词或时间点。'
+      : 'I searched contacts and events first, but there are no strong hits yet. Add a name, company, topic, or time clue and I can narrow it down.';
+  }
+
+  if (intent === 'campaign') {
+    return preferredChinese
+      ? '这条更像内容或活动请求。我先保持聊天模式，只在你真的要推进时再给 event 和 drafts 动作。'
+      : 'This reads like a campaign request. I am keeping the reply compact and only surfacing event or draft actions when you actually want to move it forward.';
+  }
+
+  if (hasTranscribedAudio) {
+    return preferredChinese
+      ? '我已经把这段语音并进当前对话了。你先看看提取出来的人和要点对不对，确认后再存进记忆就行。'
+      : 'I merged that voice note into the current chat turn. Check that the extracted person and next step look right, then save it to memory if you want.';
+  }
+
+  if (personName) {
+    return preferredChinese
+      ? `我先从这句话里提了一个联系人草稿${personName ? `：${personName}` : ''}。如果方向对，就保存；如果还没说完，继续聊就行。`
+      : `I pulled a contact draft out of this message${personName ? `: ${personName}` : ''}. Save it if it looks right, or keep talking to refine it.`;
+  }
+
+  return preferredChinese
+    ? '我先把这条消息接住了，保持正常聊天，不会默认替你展开一整套流程。需要查人、建 event 或出 drafts 时再往前走。'
+    : 'I captured the message and kept the reply lightweight. I will only branch into memory, events, or drafts when you actually need that next step.';
+}
+
 function buildSuggestedEventPayload(text, draft, relatedPeople = []) {
   const combined = cleanText(draft?.combinedText || text);
   const personName = cleanText(draft?.personDraft?.name || relatedPeople[0]?.name || '');
@@ -1904,18 +1966,41 @@ function buildWorkspaceChatPayload(statements, body = {}) {
   const assetIds = cleanList(body.assetIds);
   const assets = selectCaptureAssetsByIds(statements, assetIds);
   const captureDraft = buildCaptureDraft({ text, source, assets });
+  const combinedText = cleanText(captureDraft.combinedText || text);
   const audioAssets = assets.filter((asset) => asset.kind === 'audio');
   const imageAssets = assets.filter((asset) => asset.kind === 'image');
   const hasTranscribedAudio = audioAssets.some((asset) => cleanText(asset.extractedText || asset.previewText));
   const hasUntypedVoiceOnly = !cleanText(text) && audioAssets.length > 0 && !hasTranscribedAudio;
-  const intent = inferWorkspaceIntent(text || captureDraft.combinedText, assets);
-  const relatedPeople = searchPeopleMatches(statements, captureDraft.combinedText || text, 4);
-  const relatedEvents = searchEventMatches(statements, captureDraft.combinedText || text, 4);
+  const intent = inferWorkspaceIntent(combinedText, assets);
+  const relatedPeople = searchPeopleMatches(statements, combinedText, 4);
+  const relatedEvents = searchEventMatches(statements, combinedText, 4);
   const suggestedEvent = buildSuggestedEventPayload(text, captureDraft, relatedPeople);
   const latestMirrorRow = statements.selectLatestMirror.get();
   const latestMirror = latestMirrorRow
     ? formatMirrorPayload(latestMirrorRow, statements.listMirrorEvidenceByMirrorId.all(latestMirrorRow.id))
     : null;
+  const preferredChinese = prefersChineseWorkspaceReply(combinedText);
+  const showEventSuggestion = shouldShowWorkspaceEventSuggestion(intent, combinedText);
+  const showMemoryAction =
+    intent !== 'search' &&
+    Boolean(
+      cleanText(captureDraft.personDraft?.name || '') ||
+        cleanText(captureDraft.interactionDraft?.summary || '') ||
+        combinedText
+    );
+  const compactPeople = intent === 'search' ? relatedPeople.slice(0, 3) : relatedPeople.slice(0, 1);
+  const compactEvents =
+    intent === 'search' || showEventSuggestion ? relatedEvents.slice(0, showEventSuggestion ? 2 : 1) : [];
+  const coordination = buildWorkspaceAgentLanes({
+    intent,
+    draft: captureDraft,
+    relatedPeople,
+    relatedEvents,
+  }).map((lane) => ({
+    id: lane.id,
+    label: lane.label,
+    status: lane.status,
+  }));
 
   const transcription = {
     openAiConfigured: Boolean(readOptionalString(process.env.OPENAI_API_KEY, '')),
@@ -1932,13 +2017,15 @@ function buildWorkspaceChatPayload(statements, body = {}) {
           : '',
   };
 
-  const summary = hasUntypedVoiceOnly
-    ? 'I received the voice note, but I cannot reason over it yet because there is no transcript. As soon as transcription is available, this chat can respond like a normal turn.'
-    : intent === 'search'
-      ? `I searched memory and logbook for this query and found ${relatedPeople.length} people match(es) and ${relatedEvents.length} event match(es).`
-      : hasTranscribedAudio
-        ? 'I transcribed your voice note, turned it into structured memory drafts, and checked both people memory and the event logbook for overlap.'
-        : `I parsed this into a contact draft, a self-signal, and a next-step event suggestion, then checked existing memory for overlap.`;
+  const summary = buildWorkspaceSummary({
+    preferredChinese,
+    hasUntypedVoiceOnly,
+    hasTranscribedAudio,
+    intent,
+    relatedPeople,
+    relatedEvents,
+    captureDraft,
+  });
 
   return {
     responseId: makeId('workspace'),
@@ -1950,6 +2037,13 @@ function buildWorkspaceChatPayload(statements, body = {}) {
     relatedPeople,
     relatedEvents,
     suggestedEvent,
+    ui: {
+      showMemoryAction,
+      showEventSuggestion,
+      people: compactPeople,
+      events: compactEvents,
+      coordination,
+    },
     commitPayload: {
       text,
       source,
@@ -1959,7 +2053,7 @@ function buildWorkspaceChatPayload(statements, body = {}) {
       selfCheckinDraft: captureDraft.selfCheckinDraft,
       interactionDraft: captureDraft.interactionDraft,
     },
-    recommendedDraftRequest: {
+      recommendedDraftRequest: {
       platforms: [...SUPPORTED_QUEUE_PLATFORMS],
       languages: ['platform-native'],
       cta:
