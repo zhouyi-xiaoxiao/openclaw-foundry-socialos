@@ -4717,6 +4717,9 @@ function renderLayout({ currentPath, title, body }) {
         display: grid;
         gap: 4px;
       }
+      .workspace-transcript-preview[hidden] {
+        display: none !important;
+      }
       .workspace-transcript-preview strong {
         display: block;
         color: var(--ink);
