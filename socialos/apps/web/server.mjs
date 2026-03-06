@@ -292,6 +292,33 @@ function resolveWorkspacePanel(rawPanel) {
   return ['people', 'events', 'drafts', 'mirror'].includes(panel) ? panel : 'people';
 }
 
+function buildWorkspaceStateHref(requestUrl, overrides = {}) {
+  const nextPanel = Object.prototype.hasOwnProperty.call(overrides, 'panel')
+    ? resolveWorkspacePanel(overrides.panel)
+    : resolveWorkspacePanel(requestUrl?.searchParams?.get('panel'));
+  const params = {
+    q: Object.prototype.hasOwnProperty.call(overrides, 'q')
+      ? overrides.q
+      : readOptionalString(requestUrl?.searchParams?.get('q'), ''),
+    panel: nextPanel,
+    contactId: Object.prototype.hasOwnProperty.call(overrides, 'contactId')
+      ? overrides.contactId
+      : readOptionalString(requestUrl?.searchParams?.get('contactId'), ''),
+    eventId: Object.prototype.hasOwnProperty.call(overrides, 'eventId')
+      ? overrides.eventId
+      : readOptionalString(requestUrl?.searchParams?.get('eventId'), ''),
+  };
+
+  if (nextPanel !== 'people' && !Object.prototype.hasOwnProperty.call(overrides, 'contactId')) {
+    params.contactId = '';
+  }
+  if (nextPanel !== 'events' && !Object.prototype.hasOwnProperty.call(overrides, 'eventId')) {
+    params.eventId = '';
+  }
+
+  return buildWorkspaceHref(params);
+}
+
 function renderNavigation(currentPath) {
   return DASHBOARD_PAGES.map((page) => {
     const active = currentPath === page.path ? 'nav-link active' : 'nav-link';
