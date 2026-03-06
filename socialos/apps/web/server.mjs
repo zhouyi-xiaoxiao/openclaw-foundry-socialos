@@ -155,6 +155,22 @@ function summarizeCardCopy(value, maxLength = 160, fallback = 'No details yet.')
   return truncate(cleaned || fallback, maxLength);
 }
 
+function summarizeStructuredValues(values) {
+  return values
+    .map((value) => {
+      if (typeof value === 'string') return value;
+      if (Array.isArray(value)) return value.join(', ');
+      if (value && typeof value === 'object') {
+        return Object.entries(value)
+          .slice(0, 3)
+          .map(([key, nested]) => `${key} ${typeof nested === 'string' ? nested : JSON.stringify(nested)}`)
+          .join(' ');
+      }
+      return String(value || '');
+    })
+    .join(' ');
+}
+
 function renderRichTextPreview(value, className = 'rich-preview') {
   const blocks = readOptionalString(value, '')
     .split(/\n{2,}/u)
@@ -591,7 +607,7 @@ function renderEventCards(events) {
           payload.summary ||
           payload.description ||
           payload.audience ||
-          Object.values(details).join(' '),
+          summarizeStructuredValues(Object.values(details)),
         168,
         'Structured event details are ready for draft generation.'
       );
@@ -982,7 +998,7 @@ function renderCockpitActionCards(actions) {
             <strong>${escapeHtml(action.title || 'Next action')}</strong>
             ${renderPill(action.tone === 'warn' ? 'priority' : action.tone === 'good' ? 'ready' : 'next', action.tone || 'soft')}
           </div>
-          <p>${escapeHtml(action.reason || '')}</p>
+          <p>${escapeHtml(summarizeCardCopy(action.reason || '', 132, 'A useful next action is ready.'))}</p>
           <div class="inline-actions">
             <a class="mini-link" href="${escapeHtml(action.href || '/quick-capture')}">Open</a>
           </div>
@@ -1002,7 +1018,7 @@ function renderFollowUpCards(followUps) {
             <strong>${escapeHtml(item.name)}</strong>
             ${renderPill(item.followUpState || 'warm', item.followUpState === 'due now' ? 'warn' : item.followUpState === 'up next' ? 'accent' : 'soft')}
           </div>
-          <p>${escapeHtml(item.followUpMessage || item.evidenceSnippet || 'Keep the relationship warm.')}</p>
+          <p>${escapeHtml(summarizeCardCopy(item.followUpMessage || item.evidenceSnippet || '', 140, 'Keep the relationship warm.'))}</p>
           <div class="chip-row">
             ${(Array.isArray(item.tags) && item.tags.length ? item.tags : ['no-tags']).map((tag) => renderPill(tag, 'soft')).join('')}
           </div>
