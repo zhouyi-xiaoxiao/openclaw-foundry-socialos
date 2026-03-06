@@ -39,7 +39,7 @@ Legend:
 - [x] OPS-5 llm-task health surface in Settings and `/ops/cluster`
 
 ## Auto Optimization Pool
-- [!] AUTO-OPT-TEST-DEBT
+- [x] AUTO-OPT-TEST-DEBT
 - [x] AUTO-OPT-PERF-DEBT
 - [x] AUTO-OPT-DOC-DEBT
 - [x] AUTO-OPT-OBS-DEBT

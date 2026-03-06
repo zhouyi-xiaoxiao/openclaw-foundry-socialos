@@ -462,16 +462,24 @@ export function buildStructuredMirror({ checkins = [], captures = [], interactio
     },
   ];
 
+  const summaryParts = [];
+  if (themes.length) {
+    summaryParts.push(
+      `This week centered on ${themes.map((item) => `${item.theme} (${item.count})`).join(', ')}.`
+    );
+  }
+  if (energizers.length) {
+    summaryParts.push(`Strongest lift: ${energizers[0].snippet}`);
+  }
+  if (drainers.length) {
+    summaryParts.push(`Watch-out: ${drainers[0].snippet}`);
+  }
+  summaryParts.push('Next experiment: protect one follow-up block and one recovery block.');
+
   return {
     summaryText:
       themes.length || energyRows.length
-        ? [
-            'Weekly Self Mirror',
-            `Themes: ${themes.map((item) => `${item.theme} (${item.count})`).join(', ') || 'none yet'}`,
-            `Energizers: ${energizers.map((row) => row.snippet).join(' | ') || 'none yet'}`,
-            `Drainers: ${drainers.map((row) => row.snippet).join(' | ') || 'none yet'}`,
-            'Next experiment: protect one follow-up block and one recovery block.',
-          ].join('\n')
+        ? summaryParts.join(' ')
         : '本周暂无足够 check-in 数据。建议至少完成 3 次 Quick Capture 后再生成 Self Mirror。',
     themes,
     energizers,

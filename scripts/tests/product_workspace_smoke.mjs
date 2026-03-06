@@ -58,8 +58,11 @@ async function main() {
     assert(workspace.suggestedEvent?.title, 'workspace chat should return an event suggestion');
     assert(typeof workspace.presentation?.mode === 'string', 'workspace chat should expose presentation mode');
     assert(typeof workspace.presentation?.answer === 'string', 'workspace chat should expose presentation answer');
+    assert(typeof workspace.extraction?.method === 'string', 'workspace chat should expose extraction method');
+    assert(typeof workspace.extraction?.model === 'string', 'workspace chat should expose extraction model');
     assert(workspace.presentation?.primaryCard?.type === 'contact', 'capture-like workspace input should foreground a contact card');
     assert(Array.isArray(workspace.presentation?.actions), 'workspace chat should expose lightweight actions');
+    assert((workspace.presentation?.actions || []).length <= 3, 'workspace chat should cap lightweight actions');
     assert(
       workspace.presentation.actions.some((action) => action.action === 'review-contact'),
       'workspace contact drafts should be reviewed before saving'
@@ -81,6 +84,10 @@ async function main() {
     assert(
       (searchWorkspace.presentation?.secondaryCards || []).length <= 3,
       'workspace presentation should cap secondary cards'
+    );
+    assert(
+      (searchWorkspace.presentation?.actions || []).length <= 3,
+      'workspace presentation should cap actions for search turns'
     );
 
     const reviewWorkspace = await postJson(api.baseUrl, '/workspace/chat', {

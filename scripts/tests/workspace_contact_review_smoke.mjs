@@ -38,6 +38,8 @@ async function main() {
     assert(workspace.presentation?.primaryCard?.type === 'contact', 'workspace should still foreground a contact draft');
     assert(workspace.captureDraft?.personDraft?.requiresNameConfirmation === true, 'draft should require name confirmation when extraction is unresolved');
     assert(workspace.captureDraft?.personDraft?.name === '', 'workspace draft should not fabricate a placeholder contact name');
+    assert(typeof workspace.extraction?.method === 'string', 'workspace should expose extraction method');
+    assert(typeof workspace.extraction?.model === 'string', 'workspace should expose extraction model');
     assert(
       workspace.presentation?.actions?.some((action) => action.action === 'review-contact'),
       'workspace should expose a review action instead of direct save'
@@ -81,6 +83,10 @@ async function main() {
     assert(
       mixedWorkspace.presentation?.primaryCard?.title === 'Sam',
       'workspace primary card should foreground the extracted person name'
+    );
+    assert(
+      ['model', 'heuristic'].includes(String(mixedWorkspace.extraction?.method || '')),
+      'workspace extraction method should be surfaced for contact review debugging'
     );
 
     console.log('workspace_contact_review_smoke: PASS');

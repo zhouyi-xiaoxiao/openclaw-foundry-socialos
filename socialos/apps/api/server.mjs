@@ -3063,6 +3063,23 @@ function isNoiseCheckinRow(row) {
   );
 }
 
+function isLikelySelfReflection(row) {
+  const reflection = cleanText(row?.reflection || '');
+  if (!reflection) return false;
+
+  const lowered = reflection.toLowerCase();
+  const emotions = Array.isArray(row?.emotions) ? row.emotions : parseJsonStringArray(row?.emotions);
+  const energy = Number(row?.energy || 0);
+
+  if (emotions.length || energy !== 0) return true;
+
+  if (/[?？]/u.test(reflection)) return false;
+
+  return /(我觉得|我当时|我有点|我很|我想|让我|心里|情绪|能量|压力|兴奋|开心|疲惫|累|焦虑|紧张|放松|恢复|耗电|充电|很棒|还不错|有点空|energized|excited|tired|stretched|drained|overwhelmed|calm|neutral)/iu.test(
+    lowered
+  );
+}
+
 function normalizeCheckinRow(row) {
   const reflection = sanitizeContactDraftText(readOptionalString(row.reflection, ''));
   return {
@@ -3081,6 +3098,7 @@ function dedupeMeaningfulCheckins(rows, limit = 8) {
 
   for (const row of rows) {
     if (isNoiseCheckinRow(row)) continue;
+    if (!isLikelySelfReflection(row)) continue;
     const normalized = normalizeCheckinRow(row);
     const signature = [
       normalized.energy,
@@ -3091,6 +3109,38 @@ function dedupeMeaningfulCheckins(rows, limit = 8) {
     if (seen.has(signature)) continue;
     seen.add(signature);
     results.push(normalized);
+    if (results.length >= limit) break;
+  }
+
+  return results;
+}
+
+function isNoiseCaptureRow(row) {
+  const payload = safeParseJsonObject(row?.payload, {});
+  const source = readOptionalString(payload.source, '').toLowerCase();
+  const text = readOptionalString(payload.text, '').toLowerCase();
+
+  return (
+    source.includes('smoke') ||
+    source.includes('seed') ||
+    source.includes('demo') ||
+    source.includes('backfill') ||
+    text.includes('weekly_mirror_smoke') ||
+    text.includes('product workspace smoke')
+  );
+}
+
+function dedupeMeaningfulCaptureRows(rows, limit = 2) {
+  const seen = new Set();
+  const results = [];
+
+  for (const row of rows) {
+    if (isNoiseCaptureRow(row)) continue;
+    const formatted = formatCaptureRow(row);
+    const signature = cleanText(formatted.text || formatted.combinedText || '').toLowerCase();
+    if (!signature || seen.has(signature)) continue;
+    seen.add(signature);
+    results.push(formatted);
     if (results.length >= limit) break;
   }
 
@@ -3500,7 +3550,7 @@ function buildWorkspaceBootstrapPayload(statements) {
   const codex = buildCodexLayerSummary();
   const embeddings = resolveEmbeddingsSettings();
   const drafts = dedupeLatestDrafts(statements.listRecentDrafts.all(30).map(formatDraftRow), 12).slice(0, 3);
-  const captures = statements.listRecentCaptures.all(8).map(formatCaptureRow);
+  const captures = dedupeMeaningfulCaptureRows(statements.listRecentCaptures.all(12), 1);
   const publishMode = readMode();
 
   return {

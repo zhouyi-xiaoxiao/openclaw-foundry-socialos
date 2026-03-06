@@ -124,6 +124,14 @@ function truncate(value, maxLength = 220) {
   return `${text.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
 }
 
+function joinNaturalList(items = []) {
+  const values = items.filter(Boolean);
+  if (!values.length) return '';
+  if (values.length === 1) return values[0];
+  if (values.length === 2) return `${values[0]} and ${values[1]}`;
+  return `${values.slice(0, -1).join(', ')}, and ${values.at(-1)}`;
+}
+
 function normalizeInlineText(value) {
   return readOptionalString(value, '').replace(/\s+/g, ' ').trim();
 }
@@ -352,10 +360,9 @@ function renderHero(page, metricsHtml = '', asideHtml = '') {
   return `
     <header class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">SocialOS Product Workspace</p>
+        <p class="eyebrow">SocialOS</p>
         <h1>${escapeHtml(page.title)}</h1>
         <p>${escapeHtml(page.summary)}</p>
-        <p class="api-hint">API base: <code>${escapeHtml(DEFAULT_API_BASE_URL)}</code></p>
       </div>
       <div class="hero-rail">
         ${metricsHtml ? `<div class="metric-strip">${metricsHtml}</div>` : ''}
@@ -384,6 +391,8 @@ function isDemoNoiseCapture(capture) {
   const text = readOptionalString(capture?.text, '').toLowerCase();
   return (
     source.includes('smoke') ||
+    source.includes('seed') ||
+    source.includes('demo') ||
     source.includes('backfill') ||
     text.includes('weekly_mirror_smoke') ||
     text.includes('e2e_') ||
@@ -406,15 +415,13 @@ function filterMeaningfulCaptures(captures, limit = 4) {
 
 function renderChatComposerIntro() {
   return `
-    <div class="chat-shell">
-      <div class="chat-bubble system">
-        <strong>Workspace chat is the main surface now</strong>
-        <p>Send a text, voice note, screenshot, or business card here. The thread stays lightweight and only brings in contacts, events, or content actions when they are actually useful.</p>
+    <article class="chat-bubble system workspace-welcome">
+      <div class="stack-meta">
+        <strong>Start naturally</strong>
+        <span>model-guided</span>
       </div>
-      <div class="chat-bubble user ghost">
-        <p>今天认识了一个做增长的人，下周二要跟进，顺便帮我看看是不是已经在记忆里。</p>
-      </div>
-    </div>
+      <p>Drop in a note, a question, a voice memo, or a screenshot. SocialOS keeps the thread calm and only surfaces the next useful person, event, or draft.</p>
+    </article>
   `;
 }
 
@@ -438,7 +445,7 @@ function renderAgentLaneSnapshot(cluster) {
 }
 
 function renderWorkspaceThreadSeed(captures) {
-  const recent = filterMeaningfulCaptures(captures, 3);
+  const recent = filterMeaningfulCaptures(captures, 1);
   return `
     <div class="chat-shell workspace-thread" data-workspace-thread>
       ${renderChatComposerIntro()}
@@ -449,10 +456,10 @@ function renderWorkspaceThreadSeed(captures) {
                 (capture) => `
                   <article class="chat-bubble user">
                     <div class="stack-meta">
-                      ${renderPill(capture.source || 'capture', 'soft')}
+                      <strong>Earlier note</strong>
                       <span>${escapeHtml(formatDateTime(capture.createdAt))}</span>
                     </div>
-                    <p>${escapeHtml(truncate(capture.text, 220))}</p>
+                    <p>${escapeHtml(summarizeCardCopy(capture.text || capture.combinedText || '', 200, 'Earlier note saved in this workspace.'))}</p>
                   </article>
                 `
               )
@@ -522,7 +529,7 @@ function renderWorkspaceQueuePreview(queueTasks) {
 function renderWorkspaceTopActionCards(actions, requestUrl) {
   if (!Array.isArray(actions) || !actions.length) return renderEmptyState('Start with one message and SocialOS will suggest the next step.');
   return `<div class="workspace-action-grid">${actions
-    .slice(0, 4)
+    .slice(0, 3)
     .map(
       (action) => `
         <article class="workspace-action-card">
@@ -547,13 +554,25 @@ function renderWorkspaceSystemStatus(bootstrap = {}) {
   const voiceTone = voiceReadiness.openAiConfigured ? 'good' : 'soft';
   return `
     <div class="workspace-status-cluster">
-      <div class="chip-row">
-        ${renderPill(status.publishMode || 'dry-run', status.publishMode === 'dry-run' ? 'soft' : 'warn')}
-        ${renderPill(status.loopbackOnly ? 'loopback only' : 'network exposed', status.loopbackOnly ? 'good' : 'warn')}
-        ${renderPill(status.foundryEnabled ? 'foundry ready' : 'foundry unavailable', foundryTone)}
-        ${renderPill(voiceReadiness.openAiConfigured ? 'voice ready' : 'browser voice', voiceTone)}
+      <div class="workspace-status-grid">
+        <article class="workspace-status-item">
+          <span class="workspace-status-label">Publish</span>
+          ${renderPill(status.publishMode || 'dry-run', status.publishMode === 'dry-run' ? 'soft' : 'warn')}
+        </article>
+        <article class="workspace-status-item">
+          <span class="workspace-status-label">Network</span>
+          ${renderPill(status.loopbackOnly ? 'loopback only' : 'network exposed', status.loopbackOnly ? 'good' : 'warn')}
+        </article>
+        <article class="workspace-status-item">
+          <span class="workspace-status-label">Foundry</span>
+          ${renderPill(status.foundryEnabled ? 'ready' : 'offline', foundryTone)}
+        </article>
+        <article class="workspace-status-item">
+          <span class="workspace-status-label">Voice</span>
+          ${renderPill(voiceReadiness.openAiConfigured ? 'server-ready' : 'browser-only', voiceTone)}
+        </article>
       </div>
-      <p>${escapeHtml(status.summary || bootstrap.summaryText || 'Local-first workspace is ready.')}</p>
+      <p class="workspace-status-summary">${escapeHtml(status.summary || bootstrap.summaryText || 'Local-first workspace is ready.')}</p>
     </div>
   `;
 }
@@ -564,10 +583,13 @@ function renderWorkspaceSummaryStrip(bootstrap = {}, requestUrl) {
       <div class="workspace-summary-copy">
         <p class="eyebrow">Workspace</p>
         <h1>Workspace</h1>
-        <p class="workspace-home-title">One place to remember, write, and follow through.</p>
+        <p class="workspace-home-title">Remember clearly. Move lightly.</p>
+        <p>A calm operating surface for people memory, event context, and platform-native follow-through.</p>
         <p>${escapeHtml(
-          bootstrap.summaryText ||
+          summarizeCardCopy(
+            bootstrap.summaryText ||
             'Capture what just happened, recall the right person or event, and only then branch into drafts or follow-up.'
+          , 168)
         )}</p>
         ${renderWorkspaceSystemStatus(bootstrap)}
       </div>
@@ -584,6 +606,15 @@ function renderWorkspaceSummaryStrip(bootstrap = {}, requestUrl) {
 
 function renderWorkspaceMirrorSnapshot(bootstrap = {}) {
   if (bootstrap.latestMirror) {
+    const themes = Array.isArray(bootstrap.latestMirror.themes) ? bootstrap.latestMirror.themes.slice(0, 3) : [];
+    const energizer = summarizeCardCopy(bootstrap.latestMirror.energizers?.[0]?.snippet || '', 96, '');
+    const drainer = summarizeCardCopy(bootstrap.latestMirror.drainers?.[0]?.snippet || '', 96, '');
+    const summaryParts = [];
+    if (themes.length) {
+      summaryParts.push(`This week centered on ${joinNaturalList(themes.map((item) => `${item.theme}`))}.`);
+    }
+    if (energizer) summaryParts.push(`Strongest lift: ${energizer}`);
+    if (drainer) summaryParts.push(`Watch-out: ${drainer}`);
     return `
       <div class="stack">
         <article class="stack-card">
@@ -591,10 +622,10 @@ function renderWorkspaceMirrorSnapshot(bootstrap = {}) {
             <strong>${escapeHtml(bootstrap.latestMirror.rangeLabel || 'Latest mirror')}</strong>
             <span>${escapeHtml(formatDateTime(bootstrap.latestMirror.createdAt))}</span>
           </div>
-          <p>${escapeHtml(truncate(bootstrap.latestMirror.summaryText || bootstrap.latestMirror.content || '', 220))}</p>
+          <p>${escapeHtml(summaryParts.join(' ') || truncate(bootstrap.latestMirror.summaryText || bootstrap.latestMirror.content || '', 220))}</p>
           ${
-            Array.isArray(bootstrap.latestMirror.themes) && bootstrap.latestMirror.themes.length
-              ? `<div class="chip-row">${bootstrap.latestMirror.themes
+            themes.length
+              ? `<div class="chip-row">${themes
                   .slice(0, 4)
                   .map((item) => renderPill(`${item.theme} (${item.count})`, 'soft'))
                   .join('')}</div>`
@@ -631,16 +662,16 @@ function renderWorkspaceRail(activePanel, bootstrap = {}, requestUrl) {
     { id: 'mirror', label: 'Mirror' },
   ];
   const titleByPanel = {
-    people: 'Recent people',
-    events: 'Recent events',
-    drafts: 'Recent drafts',
-    mirror: 'Mirror signal',
+    people: 'People nearby',
+    events: 'Event threads',
+    drafts: 'Draft momentum',
+    mirror: 'Mirror pulse',
   };
   const subtitleByPanel = {
-    people: 'Contacts stay inside the workspace instead of becoming a separate mode.',
-    events: 'Recent logbook entries stay visible without turning this into a dashboard wall.',
-    drafts: 'Jump back into the latest platform-ready packages from the same shell.',
-    mirror: 'Self signal stays nearby, but not louder than the conversation itself.',
+    people: 'The strongest contact context stays one click away from the main conversation.',
+    events: 'Recent logbook entries stay close without pulling you into a separate workflow.',
+    drafts: 'Return to the latest platform-ready packages from the same shell.',
+    mirror: 'Self signal stays nearby, but never louder than the live conversation.',
   };
 
   return `
@@ -686,7 +717,7 @@ function renderWorkspaceContactDrawer(detail, requestUrl) {
       </div>
       <div class="grid two-up workspace-drawer-grid">
         ${renderPanel(
-          'Edit contact',
+          'Profile',
           `
             <form class="api-form compact-form" data-api-form="true" data-endpoint="/people/upsert">
               <input type="hidden" name="personId" value="${escapeHtml(person.personId)}" />
@@ -698,10 +729,10 @@ function renderWorkspaceContactDrawer(detail, requestUrl) {
               <div class="form-result" data-form-result></div>
             </form>
           `,
-          'Keep the contact card accurate without leaving the main workspace.'
+          'Refine the memory card without leaving the main workspace.'
         )}
         ${renderPanel(
-          'Memory context',
+          'Relationship context',
           `
             <div class="stack">
               <article class="stack-card compact-card">
@@ -714,7 +745,7 @@ function renderWorkspaceContactDrawer(detail, requestUrl) {
               ${renderPanel('Identities', renderIdentityCards(detail.identities || []))}
             </div>
           `,
-          'Identity bindings and relationship cues stay close to the edit surface.'
+          'Keep identities, next steps, and the relationship tone visible while you edit.'
         )}
       </div>
       <div class="grid two-up workspace-drawer-grid">
@@ -765,7 +796,7 @@ function renderWorkspaceEventDrawer(detail, requestUrl) {
               }
             </div>
           `,
-          'Use the logbook entry as the anchor before creating platform-native drafts.'
+          'Use the event as the anchor before branching into platform-native drafts.'
         )}
         ${renderPanel(
           'Draft actions',
@@ -788,7 +819,7 @@ function renderWorkspaceEventDrawer(detail, requestUrl) {
             </form>
             ${relatedDrafts.length ? renderAskDraftCards(relatedDrafts.slice(0, 3)) : renderEmptyState('No draft packages exist for this event yet.')}
           `,
-          'Keep the event-to-draft jump inside the same operating surface.'
+          'Generate and review draft packages without leaving the same operating surface.'
         )}
       </div>
     </section>
@@ -841,7 +872,7 @@ function renderCheckinCards(checkins) {
             ${renderPill(`energy ${checkin.energy}`, checkin.energy >= 0 ? 'good' : 'warn')}
             <span>${escapeHtml(formatDateTime(checkin.createdAt))}</span>
           </div>
-          <p>${escapeHtml(truncate(checkin.reflection, 180))}</p>
+          <p>${escapeHtml(summarizeCardCopy(checkin.reflection, 148, 'Self reflection saved.'))}</p>
           <small>${escapeHtml((checkin.emotions || []).join(', ') || 'neutral')}</small>
         </article>
       `
@@ -940,7 +971,7 @@ function renderPeopleCards(people, showScore = false) {
             ${(tags.length ? tags : ['no-tags']).map((tag) => renderPill(tag, 'soft')).join('')}
           </div>
           <div class="inline-actions">
-            <a class="mini-link" href="${escapeHtml(buildWorkspaceHref({ panel: 'people', contactId: person.personId }))}">Open Detail</a>
+            <a class="mini-link" href="${escapeHtml(buildWorkspaceHref({ panel: 'people', contactId: person.personId }))}">Open</a>
           </div>
         </article>
       `;
@@ -1182,6 +1213,10 @@ function renderDraftCards(drafts) {
       const supportLabel = publishPackage.supportLevel || capability.supportLevel || 'L0 Draft';
       const entryLabel = publishPackage.entryTarget || capability.entryTarget || 'manual';
       const blockedLabel = publishPackage.blockedBy || capability.blockedBy || 'n/a';
+      const displayTitle = readOptionalString(publishPackage.title, '');
+      const displayHook = readOptionalString(publishPackage.hook, '');
+      const showDisplayTitle = displayTitle && !/demo package/iu.test(displayTitle);
+      const showDisplayHook = displayHook && !/demo package/iu.test(displayHook) && displayHook !== displayTitle;
       return `
         <article class="draft-card">
           <div class="draft-head">
@@ -1200,8 +1235,8 @@ function renderDraftCards(drafts) {
             </div>
           </div>
           ${renderPublishActions(draft, publishPackage)}
-          ${publishPackage.title ? `<p class="draft-title">${escapeHtml(publishPackage.title)}</p>` : ''}
-          ${publishPackage.hook ? `<p class="draft-hook">${escapeHtml(publishPackage.hook)}</p>` : ''}
+          ${showDisplayTitle ? `<p class="draft-title">${escapeHtml(displayTitle)}</p>` : ''}
+          ${showDisplayHook ? `<p class="draft-hook">${escapeHtml(displayHook)}</p>` : ''}
           ${renderRichTextPreview(previewBody, 'draft-preview')}
           ${
             hashtags.length
@@ -1275,6 +1310,34 @@ function renderDraftCards(drafts) {
     .join('')}</div>`;
 }
 
+function collapseQueueTasksForDisplay(queueTasks, limit = queueTasks.length) {
+  const latestByKey = new Map();
+
+  for (const task of queueTasks) {
+    const key = [task.status || '', task.eventId || task.eventTitle || '', task.platform || ''].join('::');
+    const existing = latestByKey.get(key);
+    const taskTime = Date.parse(task.updatedAt || task.createdAt || 0);
+    const existingTime = existing ? Date.parse(existing.updatedAt || existing.createdAt || 0) : 0;
+
+    if (!existing || taskTime >= existingTime) {
+      latestByKey.set(key, {
+        ...task,
+        duplicateCount: (existing?.duplicateCount || 0) + 1,
+      });
+      continue;
+    }
+
+    existing.duplicateCount = (existing.duplicateCount || 1) + 1;
+  }
+
+  return [...latestByKey.values()]
+    .sort(
+      (left, right) =>
+        Date.parse(right.updatedAt || right.createdAt || 0) - Date.parse(left.updatedAt || left.createdAt || 0)
+    )
+    .slice(0, limit);
+}
+
 function renderQueueCards(queueTasks, publishMode) {
   if (!queueTasks.length) return renderEmptyState('No queue tasks yet.');
   return `<div class="stack">${queueTasks
@@ -1297,10 +1360,11 @@ function renderQueueCards(queueTasks, publishMode) {
             ${renderPill(task.mode, task.mode === 'live' ? 'accent' : 'soft')}
             ${renderPill(task.capability?.supportLevel || 'L0 Draft', 'neutral')}
             ${renderPill(formatLanguageLabel(task.language), 'soft')}
+            ${task.duplicateCount > 1 ? renderPill(`${task.duplicateCount} recent attempts`, 'soft') : ''}
           </div>
           ${renderPublishActions(task, publishPackage)}
-          <p>${escapeHtml(truncate(task.content, 220))}</p>
-          <small>draft ${escapeHtml(task.draftId)} · current workspace publish mode ${escapeHtml(publishMode)}</small>
+          <p>${escapeHtml(summarizeCardCopy(task.content || publishPackage.preview || publishPackage.title || '', 170, 'Draft package is ready for the next step.'))}</p>
+          <small>${escapeHtml(`Current workspace publish mode: ${publishMode}`)}</small>
           ${
             queued
               ? `
@@ -1326,7 +1390,6 @@ function renderQueueCards(queueTasks, publishMode) {
                   </div>
                   <div class="inline-actions">
                     <button type="submit">Approve + Execute</button>
-                    <code>${escapeHtml(task.taskId)}</code>
                   </div>
                   <div class="form-result" data-form-result></div>
                 </form>
@@ -1351,7 +1414,6 @@ function renderQueueCards(queueTasks, publishMode) {
                     ${renderFormField('Note', '<textarea name="note" rows="3" placeholder="What happened in the manual step?"></textarea>')}
                     <div class="inline-actions">
                       <button type="submit">Record Outcome</button>
-                      <code>${escapeHtml(task.taskId)}</code>
                     </div>
                     <div class="form-result" data-form-result></div>
                   </form>
@@ -1470,6 +1532,15 @@ function renderAskDraftCards(drafts) {
 function renderMirrorBlock(mirrorPayload) {
   const latestMirror = mirrorPayload.latestMirror || null;
   const checkins = Array.isArray(mirrorPayload.checkins) ? mirrorPayload.checkins : [];
+  const mirrorThemes = Array.isArray(latestMirror?.themes) ? latestMirror.themes.slice(0, 3) : [];
+  const mirrorLeadParts = [];
+  if (mirrorThemes.length) {
+    mirrorLeadParts.push(`This week centered on ${joinNaturalList(mirrorThemes.map((item) => item.theme))}.`);
+  }
+  const mirrorEnergizer = summarizeCardCopy(latestMirror?.energizers?.[0]?.snippet || '', 92, '');
+  const mirrorDrainer = summarizeCardCopy(latestMirror?.drainers?.[0]?.snippet || '', 92, '');
+  if (mirrorEnergizer) mirrorLeadParts.push(`Strongest lift: ${mirrorEnergizer}`);
+  if (mirrorDrainer) mirrorLeadParts.push(`Watch-out: ${mirrorDrainer}`);
 
   return `
     <div class="grid two-up">
@@ -1482,7 +1553,7 @@ function renderMirrorBlock(mirrorPayload) {
                   ${renderPill(latestMirror.rangeLabel || 'mirror', 'accent')}
                   <span>${escapeHtml(formatDateTime(latestMirror.createdAt))}</span>
                 </div>
-                <p>${escapeHtml(latestMirror.summaryText || latestMirror.content || '')}</p>
+                <p>${escapeHtml(mirrorLeadParts.join(' ') || latestMirror.summaryText || latestMirror.content || '')}</p>
                 ${
                   Array.isArray(latestMirror.themes) && latestMirror.themes.length
                     ? `<div class="chip-row">${latestMirror.themes
@@ -1521,7 +1592,7 @@ function renderMirrorBlock(mirrorPayload) {
             `
           : renderEmptyState('No mirror generated yet.')
       )}
-      ${renderPanel('Recent Check-ins', renderCheckinCards(checkins.slice(0, 8)))}
+      ${renderPanel('Recent Check-Ins', renderCheckinCards(checkins.slice(0, 6)))}
     </div>
   `;
 }
@@ -1915,8 +1986,8 @@ async function renderQuickCapturePage(page, requestUrl) {
       <section class="panel workspace-main-panel">
         <div class="panel-head">
           <div>
-            <h2>Workspace</h2>
-            <p class="panel-subtitle">Ask naturally, note who you met, and only open memory, events, or drafts when they actually help.</p>
+            <h2>Conversation</h2>
+            <p class="panel-subtitle">Keep the thread natural. SocialOS only opens people memory, events, or drafts when the next step is genuinely useful.</p>
           </div>
         </div>
         ${renderWorkspaceThreadSeed(bootstrap.recentCaptures || [])}
@@ -1949,7 +2020,7 @@ async function renderQuickCapturePage(page, requestUrl) {
           </form>
           <div class="workspace-transcript-preview" data-transcript-preview hidden></div>
           <div class="workspace-composer-note" data-audio-status>
-            Ask anything, drop a screenshot, or record a voice note. When voice stops, we draft the transcript into the composer so you can edit it before sending.
+            Ask anything, attach context, or record a voice note. When voice stops, we draft the transcript into the composer so you can edit it before sending.
           </div>
         </div>
         <div class="form-result" data-form-result hidden></div>
@@ -2271,9 +2342,9 @@ async function renderQueuePage(page) {
   const queueTasks = queueRes.ok ? queueRes.payload.queueTasks || [] : [];
   const runtime = runtimeRes.ok ? runtimeRes.payload : {};
   const publishMode = runtime.publishMode || 'dry-run';
-  const readyTasks = queueTasks.filter((task) => task.status === 'queued');
-  const manualTasks = queueTasks.filter((task) => task.status === 'manual_step_needed');
-  const doneTasks = queueTasks.filter((task) => ['posted', 'failed'].includes(task.status));
+  const readyTasks = collapseQueueTasksForDisplay(queueTasks.filter((task) => task.status === 'queued'), 12);
+  const manualTasks = collapseQueueTasksForDisplay(queueTasks.filter((task) => task.status === 'manual_step_needed'), 8);
+  const doneTasks = collapseQueueTasksForDisplay(queueTasks.filter((task) => ['posted', 'failed'].includes(task.status)), 8);
 
   return `
     ${renderHero(
@@ -3094,6 +3165,24 @@ function renderClientScript() {
         '</section>';
       }
 
+      function formatWorkspaceModeLabel(mode) {
+        const normalized = String(mode || '').trim().toLowerCase();
+        if (normalized === 'capture') return 'capture';
+        if (normalized === 'search') return 'search';
+        if (normalized === 'campaign') return 'campaign';
+        if (normalized === 'self') return 'self';
+        return 'guided';
+      }
+
+      function getWorkspacePrimaryTitle(card) {
+        if (!card || !card.type) return 'Main result';
+        if (card.type === 'contact') return 'Contact focus';
+        if (card.type === 'event') return 'Event focus';
+        if (card.type === 'draft') return 'Draft focus';
+        if (card.type === 'mirror') return 'Mirror focus';
+        return 'Main result';
+      }
+
       function renderWorkspaceActionStrip(actions, payload) {
         if (!Array.isArray(actions) || !actions.length) return '';
         return '<div class="inline-actions action-strip">' +
@@ -3158,25 +3247,20 @@ function renderClientScript() {
         const presentation = payload.presentation || {};
         const primaryCard = presentation.primaryCard || null;
         const secondaryCards = Array.isArray(presentation.secondaryCards) ? presentation.secondaryCards : [];
-        const lanes = Array.isArray(payload.agentLanes) ? payload.agentLanes.filter((lane) => lane.status && lane.status !== 'idle') : [];
         const transcription = payload.transcription || {};
-
-        const laneBlock = lanes.length
-          ? '<div class="agent-chip-row">' +
-              lanes.map((lane) =>
-                '<span class="agent-chip">' +
-                  '<strong>' + escapeHtml(lane.label.replace(' Agent', '')) + '</strong>' +
-                  '<span>' + escapeHtml(lane.status) + '</span>' +
-                '</span>'
-              ).join('') +
-            '</div>'
-          : '';
+        const extraction = payload.extraction || {};
+        const metaChips = [
+          formatWorkspaceModeLabel(presentation.mode || payload.intent || 'guided'),
+          extraction.method === 'model'
+            ? (extraction.model ? 'model ' + extraction.model : 'model-guided')
+            : 'heuristic fallback',
+        ].filter(Boolean);
 
         const transcriptionBlock = transcription.message
           ? '<div class="workspace-note">' + escapeHtml(transcription.message) + '</div>'
           : '';
         const primaryBlock = primaryCard
-          ? '<section class="workspace-block"><h4>Main result</h4>' +
+          ? '<section class="workspace-block"><h4>' + escapeHtml(getWorkspacePrimaryTitle(primaryCard)) + '</h4>' +
               renderWorkspacePresentationCard(primaryCard) +
             '</section>'
           : '';
@@ -3189,13 +3273,15 @@ function renderClientScript() {
         const actions = renderWorkspaceActionStrip(presentation.actions || [], payload);
 
         return '<article class="chat-bubble system workspace-assistant">' +
-          '<div class="stack-meta"><strong>SocialOS</strong><span>' + escapeHtml(presentation.mode || payload.intent || 'mixed') + '</span></div>' +
+          '<div class="stack-meta"><strong>SocialOS</strong><span>Concise guide</span></div>' +
+          (metaChips.length
+            ? '<div class="chip-row workspace-response-meta">' + metaChips.map((chip) => '<span class="pill tone-soft">' + escapeHtml(chip) + '</span>').join('') + '</div>'
+            : '') +
           '<p>' + escapeHtml(presentation.answer || payload.summary || '') + '</p>' +
           transcriptionBlock +
           primaryBlock +
           reviewBlock +
           secondaryBlock +
-          laneBlock +
           actions +
         '</article>';
       }
@@ -3855,13 +3941,13 @@ function renderLayout({ currentPath, title, body }) {
     <title>${escapeHtml(title)} · SocialOS Workspace</title>
     <style>
       :root {
-        --bg: #f4efe5;
-        --ink: #162132;
-        --ink-soft: #4e5d73;
-        --panel: rgba(255, 250, 242, 0.84);
-        --panel-strong: rgba(255, 247, 236, 0.94);
+        --bg: #f5efe4;
+        --ink: #182132;
+        --ink-soft: #58667d;
+        --panel: rgba(255, 251, 244, 0.88);
+        --panel-strong: rgba(255, 248, 238, 0.96);
         --line: rgba(22, 33, 50, 0.12);
-        --nav-bg: rgba(255, 251, 244, 0.88);
+        --nav-bg: rgba(255, 251, 245, 0.9);
         --nav-ink: #162132;
         --accent: #156f6a;
         --accent-soft: #daf4f1;
@@ -3870,6 +3956,10 @@ function renderLayout({ currentPath, title, body }) {
         --good: #2e7d51;
         --good-soft: #dff2e7;
         --shadow: 0 20px 70px rgba(18, 33, 49, 0.12);
+        --shadow-soft: 0 14px 32px rgba(18, 33, 49, 0.08);
+        --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+        --font-body: "Avenir Next", "IBM Plex Sans", "Noto Sans SC", sans-serif;
+        --font-mono: "IBM Plex Mono", "SFMono-Regular", monospace;
       }
       * {
         box-sizing: border-box;
@@ -3877,7 +3967,7 @@ function renderLayout({ currentPath, title, body }) {
       body {
         margin: 0;
         color: var(--ink);
-        font-family: "Avenir Next", "IBM Plex Sans", "Noto Sans SC", sans-serif;
+        font-family: var(--font-body);
         background:
           radial-gradient(circle at top left, rgba(21, 111, 106, 0.12), transparent 26%),
           radial-gradient(circle at bottom right, rgba(181, 93, 52, 0.14), transparent 28%),
@@ -3913,7 +4003,7 @@ function renderLayout({ currentPath, title, body }) {
       .brand-title {
         margin: 0 0 24px;
         font-size: 26px;
-        font-family: "Iowan Old Style", "Palatino Linotype", serif;
+        font-family: var(--font-display);
       }
       .nav-link {
         display: block;
@@ -4000,7 +4090,7 @@ function renderLayout({ currentPath, title, body }) {
       }
       h1, h2, h3 {
         margin: 0;
-        font-family: "Iowan Old Style", "Palatino Linotype", serif;
+        font-family: var(--font-display);
         font-weight: 600;
       }
       h1 {
@@ -4022,12 +4112,14 @@ function renderLayout({ currentPath, title, body }) {
         margin-top: 14px;
       }
       code,
-      pre,
+      pre {
+        font-family: var(--font-mono);
+      }
       select,
       input,
       textarea,
       button {
-        font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+        font-family: var(--font-body);
       }
       pre {
         margin: 0;
@@ -4056,6 +4148,7 @@ function renderLayout({ currentPath, title, body }) {
       .metric strong {
         font-size: 24px;
         color: var(--ink);
+        font-family: var(--font-display);
       }
       .metric span {
         color: var(--ink-soft);
@@ -4155,6 +4248,9 @@ function renderLayout({ currentPath, title, body }) {
         flex-wrap: wrap;
         align-items: center;
       }
+      .workspace-response-meta {
+        margin: 8px 0 10px;
+      }
       .stretch {
         align-items: stretch;
       }
@@ -4214,14 +4310,14 @@ function renderLayout({ currentPath, title, body }) {
       .workspace-layout {
         display: grid;
         grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
-        gap: 20px;
+        gap: 22px;
         align-items: start;
       }
       .workspace-summary-strip {
         display: grid;
         grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
-        gap: 20px;
-        margin-bottom: 24px;
+        gap: 18px;
+        margin-bottom: 20px;
       }
       .workspace-summary-copy,
       .workspace-summary-actions,
@@ -4235,26 +4331,27 @@ function renderLayout({ currentPath, title, body }) {
       }
       .workspace-summary-copy,
       .workspace-summary-actions {
-        padding: 24px;
+        padding: 24px 24px 22px;
       }
       .workspace-summary-copy h1 {
-        margin-bottom: 10px;
-        font-size: clamp(28px, 3.8vw, 44px);
+        margin-bottom: 8px;
+        font-size: clamp(30px, 4vw, 46px);
       }
       .workspace-summary-actions {
         display: grid;
-        gap: 14px;
+        gap: 12px;
       }
       .workspace-action-grid {
         display: grid;
-        gap: 12px;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
       .workspace-action-card {
-        padding: 14px;
+        padding: 14px 14px 13px;
         border-radius: 20px;
         border: 1px solid rgba(22, 33, 50, 0.08);
-        background: rgba(255, 255, 255, 0.58);
+        background: rgba(255, 255, 255, 0.62);
+        box-shadow: var(--shadow-soft);
       }
       .workspace-status-cluster {
         display: grid;
@@ -4264,6 +4361,28 @@ function renderLayout({ currentPath, title, body }) {
         border-radius: 20px;
         background: rgba(255, 255, 255, 0.56);
         border: 1px solid rgba(22, 33, 50, 0.08);
+      }
+      .workspace-status-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .workspace-status-item {
+        display: grid;
+        gap: 6px;
+        padding: 10px 12px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(22, 33, 50, 0.08);
+      }
+      .workspace-status-label {
+        color: var(--ink-soft);
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .workspace-status-summary {
+        color: var(--ink-soft);
       }
       .workspace-home-header {
         display: grid;
@@ -4300,11 +4419,18 @@ function renderLayout({ currentPath, title, body }) {
         display: grid;
         gap: 16px;
       }
+      .workspace-main-panel .panel-head {
+        margin-bottom: 4px;
+      }
       .workspace-thread {
-        min-height: 480px;
+        min-height: 420px;
         max-height: 72vh;
         overflow: auto;
         padding-right: 6px;
+      }
+      .workspace-welcome {
+        border-style: dashed;
+        background: rgba(255, 255, 255, 0.56);
       }
       .workspace-composer-shell {
         position: sticky;
@@ -4312,9 +4438,9 @@ function renderLayout({ currentPath, title, body }) {
         z-index: 5;
         padding: 14px 16px 12px;
         border-radius: 30px;
-        background: rgba(255, 250, 242, 0.96);
+        background: rgba(255, 251, 244, 0.98);
         border: 1px solid rgba(22, 33, 50, 0.1);
-        box-shadow: 0 24px 54px rgba(18, 33, 49, 0.12);
+        box-shadow: 0 24px 54px rgba(18, 33, 49, 0.14);
         backdrop-filter: blur(20px);
       }
       .workspace-composer {
@@ -4406,6 +4532,7 @@ function renderLayout({ currentPath, title, body }) {
         padding: 18px;
         max-height: calc(100vh - 48px);
         overflow: auto;
+        background: rgba(255, 250, 242, 0.9);
       }
       .workspace-rail-tabs {
         display: grid;
@@ -4439,6 +4566,7 @@ function renderLayout({ currentPath, title, body }) {
       }
       .workspace-drawer {
         padding: 22px;
+        background: rgba(255, 249, 241, 0.96);
       }
       .workspace-drawer-head {
         display: flex;
@@ -4529,25 +4657,6 @@ function renderLayout({ currentPath, title, body }) {
       }
       .workspace-assistant {
         max-width: min(760px, 100%);
-      }
-      .agent-chip-row {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin-top: 12px;
-      }
-      .agent-chip {
-        display: inline-flex;
-        gap: 8px;
-        align-items: center;
-        padding: 8px 12px;
-        border-radius: 999px;
-        background: rgba(22, 33, 50, 0.07);
-        color: var(--ink-soft);
-        font-size: 12px;
-      }
-      .agent-chip strong {
-        color: var(--ink);
       }
       .audio-meter {
         display: inline-flex;
@@ -4886,6 +4995,9 @@ function renderLayout({ currentPath, title, body }) {
         .workspace-action-grid {
           grid-template-columns: 1fr;
         }
+        .workspace-status-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
         .workspace-secondary-grid {
           grid-template-columns: 1fr;
         }
@@ -4907,14 +5019,14 @@ function renderLayout({ currentPath, title, body }) {
           ${renderNavigation(currentPath)}
         </div>
         <div class="nav-footer">
-          <p>Foundry now keeps the loop warm.</p>
-          <p>Codex can work across UI, API, tests, and orchestration.</p>
+          <p>Local-first by default, calm by design.</p>
+          <p>Memory, follow-up, and content stay in one loop.</p>
         </div>
       </nav>
       <main>
         <div class="flash" data-flash hidden></div>
         ${body}
-        <footer>Product workspace on loopback · capture → people → event → drafts → queue → mirror → digest</footer>
+        <footer>Relationship memory, follow-up, content, and reflection — in one local-first workspace.</footer>
       </main>
     </div>
     ${renderClientScript()}
