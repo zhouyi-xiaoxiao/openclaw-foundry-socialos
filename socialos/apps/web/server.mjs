@@ -612,21 +612,30 @@ function formatLanguageLabel(language) {
   }
 }
 
+function isChineseDraftLanguage(language) {
+  return String(language || '').toLowerCase() === 'zh';
+}
+
+function pickDraftUiCopy(draft, englishLabel, chineseLabel) {
+  return isChineseDraftLanguage(draft?.language) ? chineseLabel : englishLabel;
+}
+
 function buildClipboardText(draft, publishPackage, mode = 'body') {
   const hashtags = Array.isArray(publishPackage.hashtags) ? publishPackage.hashtags.join(' ') : '';
   const sections = [];
+  const zh = isChineseDraftLanguage(draft?.language);
 
   if (mode === 'bundle') {
-    sections.push(`${draft.platformLabel} Publish Package`);
-    if (publishPackage.title) sections.push(`Title\n${publishPackage.title}`);
-    if (publishPackage.hook) sections.push(`Hook\n${publishPackage.hook}`);
-    if (publishPackage.preview || draft.content) sections.push(`Body\n${publishPackage.preview || draft.content}`);
-    if (hashtags) sections.push(`Tags\n${hashtags}`);
+    sections.push(zh ? `${draft.platformLabel} 发布包` : `${draft.platformLabel} Publish Package`);
+    if (publishPackage.title) sections.push(`${zh ? '标题' : 'Title'}\n${publishPackage.title}`);
+    if (publishPackage.hook) sections.push(`${zh ? '开头' : 'Hook'}\n${publishPackage.hook}`);
+    if (publishPackage.preview || draft.content) sections.push(`${zh ? '正文' : 'Body'}\n${publishPackage.preview || draft.content}`);
+    if (hashtags) sections.push(`${zh ? '标签' : 'Tags'}\n${hashtags}`);
     if (Array.isArray(publishPackage.assetChecklist) && publishPackage.assetChecklist.length) {
-      sections.push(`Assets\n${publishPackage.assetChecklist.join('\n')}`);
+      sections.push(`${zh ? '素材' : 'Assets'}\n${publishPackage.assetChecklist.join('\n')}`);
     }
     if (Array.isArray(publishPackage.steps) && publishPackage.steps.length) {
-      sections.push(`Publish Steps\n${publishPackage.steps.join('\n')}`);
+      sections.push(`${zh ? '发布步骤' : 'Publish Steps'}\n${publishPackage.steps.join('\n')}`);
     }
     return sections.filter(Boolean).join('\n\n');
   }
@@ -646,11 +655,17 @@ function renderPublishActions(draft, publishPackage) {
 
   return `
     <div class="inline-actions action-strip">
-      <button type="button" class="secondary-button" data-copy-text="${escapeHtml(copyBody)}">Copy Post</button>
-      <button type="button" class="secondary-button" data-copy-text="${escapeHtml(copyBundle)}">Copy Package</button>
+      <button type="button" class="secondary-button" data-copy-text="${escapeHtml(copyBody)}">${escapeHtml(
+        pickDraftUiCopy(draft, 'Copy Draft', '复制草稿')
+      )}</button>
+      <button type="button" class="secondary-button" data-copy-text="${escapeHtml(copyBundle)}">${escapeHtml(
+        pickDraftUiCopy(draft, 'Copy Package', '复制发布包')
+      )}</button>
       ${
         entryUrl
-          ? `<a class="mini-link action-link" href="${escapeHtml(entryUrl)}" target="_blank" rel="noreferrer">Open Platform</a>`
+          ? `<a class="mini-link action-link" href="${escapeHtml(entryUrl)}" target="_blank" rel="noreferrer">${escapeHtml(
+              pickDraftUiCopy(draft, 'Open Platform', '打开平台')
+            )}</a>`
           : ''
       }
     </div>
@@ -688,79 +703,96 @@ function renderDraftCards(drafts) {
       const publishPackage = safeJson(draft.publishPackage, {});
       const validation = safeJson(draft.validation, {});
       const steps = Array.isArray(publishPackage.steps) ? publishPackage.steps : [];
+      const hashtags = Array.isArray(publishPackage.hashtags) ? publishPackage.hashtags : [];
+      const hasIssues = validation && Object.keys(validation).length && validation.ok === false;
+      const supportLabel = publishPackage.supportLevel || capability.supportLevel || 'L0 Draft';
+      const entryLabel = publishPackage.entryTarget || capability.entryTarget || 'manual';
+      const blockedLabel = publishPackage.blockedBy || capability.blockedBy || 'n/a';
       return `
         <article class="draft-card">
           <div class="draft-head">
             <div>
               <p class="card-kicker">${escapeHtml(draft.eventTitle || draft.eventId || 'untitled event')}</p>
               <h3>${escapeHtml(draft.platformLabel)} · ${escapeHtml(formatLanguageLabel(draft.language))}</h3>
+              <p class="draft-subtitle">${escapeHtml(
+                isChineseDraftLanguage(draft.language)
+                  ? '中文平台稿件，直接复制即可。'
+                  : 'English platform draft, ready to copy.'
+              )}</p>
             </div>
             <div class="chip-row">
-              ${renderPill(
-                publishPackage.supportLevel || capability.supportLevel || 'L0 Draft',
-                capability.liveEligible ? 'accent' : 'soft'
-              )}
-              ${renderPill(draft.platformLabel || draft.platform, 'neutral')}
+              ${renderPill(supportLabel, capability.liveEligible ? 'accent' : 'soft')}
+              ${renderPill(formatLanguageLabel(draft.language), 'neutral')}
             </div>
           </div>
           ${renderPublishActions(draft, publishPackage)}
           <pre>${escapeHtml(draft.content)}</pre>
-          <div class="package-meta">
-            <p><strong>Entry:</strong> ${escapeHtml(publishPackage.entryTarget || capability.entryTarget || 'manual')}</p>
-            <p><strong>Blocked By:</strong> ${escapeHtml(publishPackage.blockedBy || capability.blockedBy || 'n/a')}</p>
-          </div>
           ${
-            validation && Object.keys(validation).length
+            hashtags.length
+              ? `<p class="draft-tags">${escapeHtml(hashtags.join(' '))}</p>`
+              : ''
+          }
+          ${
+            hasIssues
               ? `<div class="result-block">
-                  <p><strong>Validation:</strong> ${escapeHtml(validation.ok ? 'pass' : 'needs review')}</p>
+                  <p><strong>${escapeHtml(pickDraftUiCopy(draft, 'Validation', '校验'))}:</strong> ${escapeHtml(
+                    pickDraftUiCopy(draft, 'needs review', '需要检查')
+                  )}</p>
                   <small>${escapeHtml(
                     (validation.issues || []).map((issue) => issue.message).join(' | ') || 'No issues'
                   )}</small>
                 </div>`
               : ''
           }
-          ${
-            steps.length
-              ? `<ol class="step-list">${steps.map((step) => `<li>${escapeHtml(step)}</li>`).join('')}</ol>`
-              : ''
-          }
-          ${renderPackageHighlights(publishPackage)}
-          <form class="api-form compact-form" data-api-form="true" data-method="PATCH" data-endpoint="/drafts/${encodeURIComponent(
-            draft.draftId
-          )}">
-            ${renderFormField(
-              'Edit Draft',
-              `<textarea name="content" rows="8">${escapeHtml(draft.content)}</textarea>`,
-              'P1 uses plain text editing with live preview via the card itself.'
-            )}
-            ${renderFormField(
-              'Variants',
-              `<textarea name="variants" rows="3">${escapeHtml((draft.variants || []).join('\n'))}</textarea>`,
-              'One line per variant note.'
-            )}
-            <div class="inline-actions">
-              <button type="submit">Save Edit</button>
-              <code>${escapeHtml(draft.draftId)}</code>
-            </div>
-            <div class="form-result" data-form-result></div>
-          </form>
-          <form class="api-form compact-form" data-api-form="true" data-endpoint="/drafts/${encodeURIComponent(
-            draft.draftId
-          )}/validate">
-            <div class="inline-actions">
-              <button type="submit">Run Validation</button>
-            </div>
-            <div class="form-result" data-form-result></div>
-          </form>
-          <form class="api-form compact-form" data-api-form="true" data-endpoint="/publish/queue">
+          <form class="api-form compact-form draft-queue-form" data-api-form="true" data-endpoint="/publish/queue">
             <input type="hidden" name="draftId" value="${escapeHtml(draft.draftId)}" />
             <input type="hidden" name="mode" value="dry-run" />
             <div class="inline-actions">
-              <button type="submit">Queue Draft</button>
-              <code>${escapeHtml(draft.draftId)}</code>
+              <button type="submit">${escapeHtml(pickDraftUiCopy(draft, 'Queue Draft', '加入队列'))}</button>
             </div>
             <div class="form-result" data-form-result></div>
           </form>
+          <details class="draft-details">
+            <summary>${escapeHtml(pickDraftUiCopy(draft, 'More options', '更多选项'))}</summary>
+            <div class="draft-details-body">
+              <div class="package-meta">
+                <p><strong>${escapeHtml(pickDraftUiCopy(draft, 'Entry', '入口'))}:</strong> ${escapeHtml(entryLabel)}</p>
+                <p><strong>${escapeHtml(pickDraftUiCopy(draft, 'Blocked By', '受限于'))}:</strong> ${escapeHtml(blockedLabel)}</p>
+              </div>
+              ${
+                steps.length
+                  ? `<ol class="step-list">${steps.map((step) => `<li>${escapeHtml(step)}</li>`).join('')}</ol>`
+                  : ''
+              }
+              ${renderPackageHighlights(publishPackage)}
+              <form class="api-form compact-form" data-api-form="true" data-method="PATCH" data-endpoint="/drafts/${encodeURIComponent(
+                draft.draftId
+              )}">
+                ${renderFormField(
+                  pickDraftUiCopy(draft, 'Edit Draft', '编辑草稿'),
+                  `<textarea name="content" rows="8">${escapeHtml(draft.content)}</textarea>`,
+                  pickDraftUiCopy(draft, 'Edit the final copy before publishing.', '发布前可以在这里微调正文。')
+                )}
+                ${renderFormField(
+                  pickDraftUiCopy(draft, 'Variants', '备注'),
+                  `<textarea name="variants" rows="3">${escapeHtml((draft.variants || []).join('\n'))}</textarea>`,
+                  pickDraftUiCopy(draft, 'Optional notes, one line each.', '可选备注，每行一条。')
+                )}
+                <div class="inline-actions">
+                  <button type="submit">${escapeHtml(pickDraftUiCopy(draft, 'Save Edit', '保存修改'))}</button>
+                </div>
+                <div class="form-result" data-form-result></div>
+              </form>
+              <form class="api-form compact-form" data-api-form="true" data-endpoint="/drafts/${encodeURIComponent(
+                draft.draftId
+              )}/validate">
+                <div class="inline-actions">
+                  <button type="submit">${escapeHtml(pickDraftUiCopy(draft, 'Run Validation', '重新校验'))}</button>
+                </div>
+                <div class="form-result" data-form-result></div>
+              </form>
+            </div>
+          </details>
         </article>
       `;
     })
