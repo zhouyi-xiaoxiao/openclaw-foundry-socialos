@@ -24,27 +24,31 @@
 - `MirrorEvidence`
 
 ## Main product dataflow
-1. `POST /capture/assets`
+1. `GET /cockpit/summary`
+   - aggregates relationship actions, queue state, and latest self mirror into one home surface
+2. `GET /ask/search`
+   - performs natural-language recall over people, events, drafts, and self signals
+3. `POST /capture/assets`
    - stores image/audio metadata + extracted text
-2. `POST /capture/parse`
+4. `POST /capture/parse`
    - builds `Person Draft + Self Check-in Draft + Interaction Draft`
-3. `POST /capture/commit`
+5. `POST /capture/commit`
    - persists person memory, interaction, self check-in, audit
-4. `POST /events`
+6. `POST /events`
    - stores structured campaign seed
-5. `POST /drafts/generate`
+7. `POST /drafts/generate`
    - generates platform-specific publish packages
-6. `PATCH /drafts/:id`
+8. `PATCH /drafts/:id`
    - edits draft content/variants
-7. `POST /drafts/:id/validate`
+9. `POST /drafts/:id/validate`
    - stores format/pii/sensitive validation
-8. `POST /publish/queue`
+10. `POST /publish/queue`
    - creates queued publish tasks
-9. `POST /publish/approve`
+11. `POST /publish/approve`
    - turns queued tasks into assisted/manual handoff with preflight
-10. `POST /publish/complete`
+12. `POST /publish/complete`
    - records posted / failed / still-manual outcomes
-11. `POST /self-mirror/generate`
+13. `POST /self-mirror/generate`
    - writes structured mirror + evidence rows
 
 ## Search architecture

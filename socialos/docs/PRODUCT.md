@@ -1,16 +1,25 @@
 # SocialOS Product Spec (stable P1)
 
 ## One-liner
-SocialOS = people memory + 7-platform campaign workbench + self mirror, all running local-first with a Foundry execution layer.
+SocialOS = cockpit + people memory + ask/search + 7-platform campaign workbench + self mirror, all running local-first with a Foundry execution layer.
 
 ## Product goals
-- 可演示：Quick Capture -> People -> Event -> Drafts -> Queue -> Self Mirror 六段链路都能在 UI 内完成。
+- 可演示：Cockpit -> Quick Capture -> Ask -> People -> Event -> Drafts -> Queue -> Self Mirror 八段链路都能在 UI 内完成。
 - 可复现：`bash scripts/demo.sh` 后直接可用，页面不是空壳。
 - 可扩展：发布层按 `L1 assisted -> L2 gated` 递进；embedding provider 可切换；Foundry 可接结构化产品任务。
 - 可解释：搜索、mirror、publish handoff 都要带 evidence / preflight / audit 线索。
 
 ## Current stable P1 capabilities
-### 1. Quick Capture
+### 1. Cockpit
+- `Cockpit` 是新的总控页，不再要求用户先知道自己该去哪一页。
+- 页面会聚合：
+  - 当前最该联系的人
+  - 队列里待处理的 drafts
+  - 最近 event / capture / self mirror 信号
+  - 一个大型 quick-launch capture box
+- 重点不是“展示数据”，而是“告诉用户下一步做什么”。
+
+### 2. Quick Capture
 - 文本输入是主路径，支持两段式 `parse -> commit`。
 - UI 入口优先做成聊天框式 composer，而不是复杂后台表单。
 - 输出结构化 `Person Draft + Self Check-in Draft + Interaction Draft`。
@@ -24,7 +33,20 @@ SocialOS = people memory + 7-platform campaign workbench + self mirror, all runn
   - `SelfCheckin`
   - `Audit`
 
-### 2. People
+### 3. Ask / Search
+- 提供自然语言入口来问：
+  - 人是谁
+  - 哪个 event 相关
+  - 哪个 draft 已经存在
+  - 最近最该联系谁
+  - 最近 self mirror 在说什么
+- 返回必须包含：
+  - 简洁 answer
+  - people/event/draft 命中
+  - suggested actions
+  - self mirror / evidence 线索
+
+### 4. People
 - 支持 keyword/hybrid 搜索。
 - 支持联系人详情页：
   - 基础档案
@@ -34,7 +56,7 @@ SocialOS = people memory + 7-platform campaign workbench + self mirror, all runn
   - follow-up suggestion
 - 支持在详情页直接补 identity / interaction。
 
-### 3. Events & Campaigns
+### 5. Events & Campaigns
 - Event 表单包含：
   - title
   - capture link
@@ -56,7 +78,7 @@ SocialOS = people memory + 7-platform campaign workbench + self mirror, all runn
   - 微信朋友圈
   - 微信公众号
 
-### 4. Drafts
+### 6. Drafts
 - 每个平台 draft 至少包含：
   - support level
   - entry target
@@ -71,7 +93,7 @@ SocialOS = people memory + 7-platform campaign workbench + self mirror, all runn
   - pii
   - sensitive wording
 
-### 5. Queue / Publish
+### 7. Queue / Publish
 - 状态模型：
   - `queued`
   - `manual_step_needed`
@@ -85,7 +107,7 @@ SocialOS = people memory + 7-platform campaign workbench + self mirror, all runn
   - `Audit`
   - `DevDigest`
 
-### 6. Self Mirror
+### 8. Self Mirror
 - 输出结构：
   - `summaryText`
   - `themes`
@@ -124,7 +146,9 @@ SocialOS = people memory + 7-platform campaign workbench + self mirror, all runn
 
 ## P1 acceptance
 - 从空 DB 启动 demo，5 分钟内可完成：
+  - 打开 cockpit，看见下一步动作
   - 录入一个人
+  - 用 ask/search 找到这个人
   - 找到这个人
   - 创建一个 event
   - 生成 7 平台 drafts
