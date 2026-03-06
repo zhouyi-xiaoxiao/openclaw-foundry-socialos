@@ -2886,18 +2886,15 @@ function renderClientScript() {
         const previewNode = getTranscriptPreviewNode();
         if (!previewNode) return;
         const value = String(text || '').trim();
-        if (!value) {
+        if (!value || tone === 'ready') {
           previewNode.hidden = true;
           previewNode.dataset.tone = '';
           previewNode.innerHTML = '';
           return;
         }
 
-        const label = tone === 'live' ? 'Listening' : tone === 'ready' ? 'Transcript ready' : 'Transcript note';
-        const displayText =
-          tone === 'ready'
-            ? 'The transcript is now in the composer. Edit it there before sending.'
-            : value;
+        const label = tone === 'live' ? 'Listening' : 'Transcript note';
+        const displayText = value;
         previewNode.hidden = false;
         previewNode.dataset.tone = tone;
         previewNode.innerHTML =
