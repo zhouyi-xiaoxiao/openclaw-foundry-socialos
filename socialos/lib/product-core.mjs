@@ -29,6 +29,32 @@ const PII_PATTERNS = [
   { code: 'phone', pattern: /(?:\+?\d[\d\s-]{6,}\d)/gu },
   { code: 'wechat', pattern: /(?:wechat|微信)[^,\n]{0,24}/giu },
 ];
+const CONTACT_PLACEHOLDER_NAMES = new Set([
+  'new contact',
+  'new contact draft',
+  'unconfirmed contact',
+  'unknown contact',
+  '新联系人',
+  '未确认联系人',
+]);
+const ENGLISH_NAME_STOPWORDS = new Set([
+  'SocialOS',
+  'Workspace',
+  'Cockpit',
+  'Ask',
+  'London',
+  'Singapore',
+  'Instagram',
+  'LinkedIn',
+  'Twitter',
+  'Wechat',
+  'WeChat',
+]);
+const DRAFT_NOISE_PREFIX_PATTERNS = [
+  /^(?:请|麻烦(?:你)?|帮我|可以帮我|请帮我)?(?:先|顺便|再|再帮我)?(?:新建|创建|记录|保存|加上?|添加|整理|生成|做一个)\s*(?:一个|一下|一条)?\s*(?:新的)?\s*(?:联系人(?:卡)?|联系人的资料|contact|person card|event|事件|活动|草稿|内容包)?(?:吧|一下)?[，,。:：\s]*/u,
+  /^(?:我想知道|想知道|帮我看看|帮我找一下|帮我确认一下|记一下|请记一下|帮我记一下|帮我记住)[，,。:：\s]*/u,
+  /^(?:顺便|另外|然后|并且|同时)\s*(?:帮我)?(?:把这条)?(?:后面)?(?:变成|做成|生成)\s*(?:一个)?\s*(?:event|事件|活动|草稿|内容包)?[，,。:：\s]*/u,
+];
 
 function unique(items) {
   return [...new Set(items.filter(Boolean))];
@@ -83,16 +109,66 @@ export function inferEmotionTags(text) {
 
 export function inferPersonName(text) {
   const source = cleanText(text);
-  const chineseMatch = source.match(/(?:认识了|遇到了|和|跟)\s*([\u4e00-\u9fa5]{2,4})/u);
-  if (chineseMatch?.[1]) return chineseMatch[1];
+  const chinesePatterns = [
+    /(?:有一个|有位|有个)?(?:叫|名叫)\s*([\u4e00-\u9fa5]{2,4})(?:的(?:联系人|朋友|同学|人))?/u,
+    /(?:我(?:今天)?(?:在[^，。,.!?]{0,20})?(?:认识了|遇到了|碰到了|见到了)|(?:认识了|遇到了|碰到了|见到了))\s*([\u4e00-\u9fa5]{2,4})/u,
+    /(?:他|她)叫\s*([\u4e00-\u9fa5]{2,4})/u,
+    /(?:联系人|朋友|同学|嘉宾|同事)\s*[:：]?\s*([\u4e00-\u9fa5]{2,4})/u,
+    /(?:^|[，,。\s])([\u4e00-\u9fa5]{2,4})[，,、]\s*(?:做|在|是|来自|负责|搞)/u,
+  ];
 
-  const englishMatch = source.match(/(?:met|with|talked to)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/u);
-  if (englishMatch?.[1]) return englishMatch[1];
+  for (const pattern of chinesePatterns) {
+    const match = source.match(pattern);
+    if (match?.[1]) return match[1];
+  }
 
-  const titleCase = source.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b/u);
-  if (titleCase?.[1]) return titleCase[1];
+  const englishPatterns = [
+    /(?:named|called)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})/u,
+    /(?:met|with|talked to)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})/u,
+    /(?:he|she)\s+is\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})/u,
+  ];
+
+  for (const pattern of englishPatterns) {
+    const match = source.match(pattern);
+    if (match?.[1]) return match[1];
+  }
+
+  const titleCase = source.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b/u);
+  if (titleCase?.[1] && !ENGLISH_NAME_STOPWORDS.has(titleCase[1])) return titleCase[1];
 
   return '';
+}
+
+export function isPlaceholderContactName(value) {
+  const normalized = cleanText(value).toLowerCase();
+  return !normalized || CONTACT_PLACEHOLDER_NAMES.has(normalized);
+}
+
+export function sanitizeContactDraftText(value) {
+  const source = cleanText(value);
+  if (!source) return '';
+
+  const fragments = source
+    .split(/(?<=[。！？!?])\s*|\s{2,}|\s*(?=[。！？!?])/u)
+    .map((fragment) => cleanText(fragment))
+    .filter(Boolean);
+  const seen = new Set();
+  const cleaned = [];
+
+  for (const fragment of fragments) {
+    let next = fragment;
+    for (const pattern of DRAFT_NOISE_PREFIX_PATTERNS) {
+      next = next.replace(pattern, '');
+    }
+    next = cleanText(next.replace(/^[-*•]\s*/u, ''));
+    if (!next) continue;
+    const signature = next.toLowerCase();
+    if (seen.has(signature)) continue;
+    seen.add(signature);
+    cleaned.push(next);
+  }
+
+  return cleanText(cleaned.join(' '));
 }
 
 export function inferTagsFromText(text) {
@@ -159,19 +235,24 @@ export function buildCaptureDraft({ text, source = 'manual', assets = [] }) {
     .filter(Boolean)
     .join(' ');
   const combinedText = cleanText([rawText, assetNotes].filter(Boolean).join(' '));
+  const sanitizedText = sanitizeContactDraftText(combinedText) || combinedText;
   const personName = inferPersonName(combinedText);
   const tags = inferTagsFromText(combinedText);
   const identities = extractIdentitiesFromText(combinedText);
   const energy = inferEnergyFromText(combinedText);
   const emotions = inferEmotionTags(combinedText);
-  const summary = combinedText.slice(0, 220) || 'Quick capture summary';
+  const summary = sanitizedText.slice(0, 220) || 'Quick capture summary';
+  const isConfirmedName = !isPlaceholderContactName(personName);
 
   return {
     rawText,
     combinedText,
     source,
     personDraft: {
-      name: personName || 'New contact',
+      name: isConfirmedName ? personName : '',
+      displayName: isConfirmedName ? personName : 'Unconfirmed contact',
+      isConfirmedName,
+      requiresNameConfirmation: !isConfirmedName,
       tags,
       notes: summary,
       nextFollowUpAt: '',
@@ -187,7 +268,7 @@ export function buildCaptureDraft({ text, source = 'manual', assets = [] }) {
     interactionDraft: {
       summary,
       happenedAt: '',
-      evidence: combinedText,
+      evidence: sanitizedText || combinedText,
     },
     assets: assets.map((asset) => ({
       assetId: asset.assetId || '',

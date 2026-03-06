@@ -15,6 +15,8 @@ import {
   inferTagsFromText,
   inferEmotionTags as inferEmotionTagsCore,
   inferEnergyFromText as inferEnergyFromTextCore,
+  isPlaceholderContactName,
+  sanitizeContactDraftText,
 } from '../../lib/product-core.mjs';
 import {
   createStructuredTask,
@@ -473,6 +475,18 @@ function truncateText(value, maxLength) {
   const text = readOptionalString(value, '');
   if (text.length <= maxLength) return text;
   return `${text.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+}
+
+function compactNotes(value, maxLength = 220) {
+  return truncateText(sanitizeContactDraftText(value) || readOptionalString(value, ''), maxLength);
+}
+
+function isDisplayablePersonName(value) {
+  return !isPlaceholderContactName(value);
+}
+
+function isDisplayablePersonRow(row) {
+  return isDisplayablePersonName(row?.name);
 }
 
 function summarizeEventPayload(payload) {
