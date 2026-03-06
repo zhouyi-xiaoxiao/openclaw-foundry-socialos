@@ -1341,6 +1341,18 @@ function collapseQueueTasksForDisplay(queueTasks, limit = queueTasks.length) {
 function renderQueueCards(queueTasks, publishMode) {
   if (!queueTasks.length) return renderEmptyState('No queue tasks yet.');
   const liveApprovalEnabled = String(publishMode || '').toLowerCase() === 'live';
+  const statusTone = (status) => {
+    if (status === 'queued' || status === 'manual_step_needed' || status === 'failed') return 'warn';
+    return 'good';
+  };
+  const renderLiveFallback = (liveFallbackReason) =>
+    Object.keys(liveFallbackReason).length
+      ? `<p><strong>Live Fallback:</strong> env=${escapeHtml(
+          String(Boolean(liveFallbackReason.envEnabled))
+        )} · ui=${escapeHtml(String(Boolean(liveFallbackReason.uiEnabled)))} · creds=${escapeHtml(
+          String(Boolean(liveFallbackReason.credentialsReady))
+        )}</p>`
+      : '';
   return `<div class="stack">${queueTasks
     .map((task) => {
       const result = safeJson(task.result, {});
@@ -1357,7 +1369,7 @@ function renderQueueCards(queueTasks, publishMode) {
             <span>${escapeHtml(formatDateTime(task.updatedAt))}</span>
           </div>
           <div class="chip-row">
-            ${renderPill(task.status, queued ? 'warn' : 'good')}
+            ${renderPill(task.status, statusTone(task.status))}
             ${renderPill(task.mode, task.mode === 'live' ? 'accent' : 'soft')}
             ${renderPill(task.capability?.supportLevel || 'L0 Draft', 'neutral')}
             ${renderPill(formatLanguageLabel(task.language), 'soft')}
@@ -1405,6 +1417,7 @@ function renderQueueCards(queueTasks, publishMode) {
                   <div class="result-block">
                     <p><strong>Entry Target:</strong> ${escapeHtml(execution.preflight?.entryTarget || task.capability?.entryTarget || 'manual')}</p>
                     <p><strong>Preflight:</strong> ${escapeHtml(execution.preflight?.note || execution.delivery?.reason || 'manual handoff ready')}</p>
+                    ${renderLiveFallback(liveFallbackReason)}
                   </div>
                   <form class="api-form compact-form" data-api-form="true" data-endpoint="/publish/complete">
                     <input type="hidden" name="taskId" value="${escapeHtml(task.taskId)}" />
@@ -1432,15 +1445,7 @@ function renderQueueCards(queueTasks, publishMode) {
                   )}</p>
                   ${manualCompletion.link ? `<p><strong>Link:</strong> ${escapeHtml(manualCompletion.link)}</p>` : ''}
                   ${manualCompletion.note ? `<p><strong>Note:</strong> ${escapeHtml(manualCompletion.note)}</p>` : ''}
-                  ${
-                    Object.keys(liveFallbackReason).length
-                      ? `<p><strong>Live Fallback:</strong> env=${escapeHtml(
-                          String(Boolean(liveFallbackReason.envEnabled))
-                        )} · ui=${escapeHtml(String(Boolean(liveFallbackReason.uiEnabled)))} · creds=${escapeHtml(
-                          String(Boolean(liveFallbackReason.credentialsReady))
-                        )}</p>`
-                      : ''
-                  }
+                  ${renderLiveFallback(liveFallbackReason)}
                 </div>
               `
           }
