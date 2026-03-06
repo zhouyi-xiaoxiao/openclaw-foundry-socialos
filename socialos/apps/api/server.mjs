@@ -3132,7 +3132,7 @@ function buildCockpitSummary(statements) {
   const recentPeople = statements.listRecentPeople.all(8).filter(isDisplayablePersonRow).map(formatPersonRow);
   const recentEvents = statements.listRecentEvents.all(8).map(formatEventRow);
   const recentDrafts = dedupeLatestDrafts(statements.listRecentDrafts.all(40).map(formatDraftRow), 20);
-  const recentQueueTasks = statements.listRecentQueueTasks.all(20).map(formatQueueTaskRow);
+  const recentQueueTasks = dedupeLatestQueueTasks(statements.listRecentQueueTasks.all(40).map(formatQueueTaskRow), 20);
   const recentCheckins = dedupeMeaningfulCheckins(statements.listRecentSelfCheckins.all(24), 8);
   const latestMirrorRow = statements.selectLatestMirror.get();
   const latestMirror = latestMirrorRow
@@ -4075,6 +4075,28 @@ function dedupeLatestDrafts(drafts, limit = drafts.length) {
 
   return [...latestByKey.values()]
     .sort((left, right) => Date.parse(right.createdAt || 0) - Date.parse(left.createdAt || 0))
+    .slice(0, limit);
+}
+
+function dedupeLatestQueueTasks(queueTasks, limit = queueTasks.length) {
+  const latestByKey = new Map();
+
+  for (const task of queueTasks) {
+    const key = [task.draftId || '', task.platform || ''].join('::');
+    const existing = latestByKey.get(key);
+    const taskTime = Date.parse(task.updatedAt || task.createdAt || 0);
+    const existingTime = existing ? Date.parse(existing.updatedAt || existing.createdAt || 0) : 0;
+
+    if (!existing || taskTime >= existingTime) {
+      latestByKey.set(key, task);
+    }
+  }
+
+  return [...latestByKey.values()]
+    .sort(
+      (left, right) =>
+        Date.parse(right.updatedAt || right.createdAt || 0) - Date.parse(left.updatedAt || left.createdAt || 0)
+    )
     .slice(0, limit);
 }
 

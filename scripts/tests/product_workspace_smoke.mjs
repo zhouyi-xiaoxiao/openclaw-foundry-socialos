@@ -210,10 +210,20 @@ async function main() {
     });
     assert(typeof queued.taskId === 'string', 'queue from draft should return task id');
     assert(queued.draftId === generated.drafts[0].draftId, 'queue should reuse existing draft');
+    const queuedRetry = await postJson(api.baseUrl, '/publish/queue', {
+      draftId: generated.drafts[0].draftId,
+      mode: 'dry-run',
+    });
+    assert(typeof queuedRetry.taskId === 'string', 'second queue from same draft should return a task id');
+    assert(queuedRetry.taskId !== queued.taskId, 'second queue should create a distinct task row');
 
     const queueTasks = await getJson(api.baseUrl, '/queue/tasks?limit=10');
     assert(Array.isArray(queueTasks.queueTasks), 'queue/tasks should return queue task list');
     assert(queueTasks.queueTasks.some((task) => task.taskId === queued.taskId), 'queued task should appear in queue list');
+    assert(
+      queueTasks.queueTasks.some((task) => task.taskId === queuedRetry.taskId),
+      'second queued task should appear in queue list history'
+    );
 
     const cluster = await getJson(api.baseUrl, '/ops/cluster');
     assert(Array.isArray(cluster.foundry?.agents), 'ops/cluster should expose foundry agents');
@@ -230,6 +240,11 @@ async function main() {
     assert(typeof cockpit.summaryText === 'string' && cockpit.summaryText.length > 0, 'cockpit should expose an action summary');
     assert(Array.isArray(cockpit.actions), 'cockpit should expose action cards');
     assert(Array.isArray(cockpit.followUps), 'cockpit should expose follow-up candidates');
+    const queuedForDraft = cockpit.queue.awaitingApproval.filter((task) => task.draftId === generated.drafts[0].draftId);
+    assert(
+      queuedForDraft.length === 1,
+      'cockpit queue summary should dedupe repeated queue rows for the same draft/platform'
+    );
 
     const bootstrap = await getJson(api.baseUrl, '/workspace/bootstrap');
     assert(typeof bootstrap.summaryText === 'string' && bootstrap.summaryText.length > 0, 'workspace bootstrap should expose a summary');
@@ -237,6 +252,8 @@ async function main() {
     assert(Array.isArray(bootstrap.recentContacts), 'workspace bootstrap should expose recent contacts');
     assert(Array.isArray(bootstrap.recentEvents), 'workspace bootstrap should expose recent events');
     assert(Array.isArray(bootstrap.queuePreview), 'workspace bootstrap should expose queue preview');
+    const previewForDraft = bootstrap.queuePreview.filter((task) => task.draftId === generated.drafts[0].draftId);
+    assert(previewForDraft.length === 1, 'workspace queue preview should avoid duplicate queue rows');
     assert(typeof bootstrap.voiceReadiness?.summary === 'string', 'workspace bootstrap should expose voice readiness');
 
     const ask = await getJson(
