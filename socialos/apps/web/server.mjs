@@ -4614,7 +4614,7 @@ function renderLayout({ currentPath, title, body }) {
         display: flex;
         gap: 10px;
         flex-wrap: wrap;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
       }
       .asset-chip {
         display: inline-flex;
@@ -4702,16 +4702,17 @@ function renderLayout({ currentPath, title, body }) {
         font-size: 13px;
       }
       .workspace-transcript-preview {
-        margin-top: 10px;
-        padding: 12px 14px;
-        border-radius: 18px;
+        margin-top: 8px;
+        padding: 10px 12px;
+        border-radius: 16px;
         border: 1px solid rgba(22, 33, 50, 0.08);
         background: rgba(255, 255, 255, 0.72);
         color: var(--ink-soft);
+        display: grid;
+        gap: 4px;
       }
       .workspace-transcript-preview strong {
         display: block;
-        margin-bottom: 6px;
         color: var(--ink);
         font-size: 12px;
         letter-spacing: 0.04em;
@@ -4719,7 +4720,8 @@ function renderLayout({ currentPath, title, body }) {
       }
       .workspace-transcript-preview p {
         margin: 0;
-        line-height: 1.6;
+        line-height: 1.45;
+        font-size: 13px;
         white-space: pre-wrap;
       }
       .workspace-transcript-preview[data-tone="live"] {
