@@ -423,6 +423,19 @@ function formatPlatformLabel(platformId) {
   return PLATFORM_COMPLIANCE_RULES[platformId]?.label || platformId;
 }
 
+function formatPlatformShellLabel(platformId) {
+  const labels = {
+    instagram: 'Instagram',
+    x: 'X',
+    linkedin: 'LinkedIn',
+    zhihu: 'Zhihu',
+    xiaohongshu: 'Xiaohongshu',
+    wechat_moments: 'WeChat Moments',
+    wechat_official: 'WeChat Official Account',
+  };
+  return labels[platformId] || formatPlatformLabel(platformId);
+}
+
 function getPlatformCapability(platformId) {
   return PLATFORM_PRODUCT_CAPABILITIES[platformId] || {
     supportLevel: 'L0 Draft',
@@ -431,6 +444,17 @@ function getPlatformCapability(platformId) {
     liveEligible: false,
     blockedBy: 'manual completion required',
   };
+}
+
+function ensureColumn(db, tableName, columnName, definition) {
+  const columns = db.prepare(`PRAGMA table_info(${tableName})`).all();
+  if (columns.some((column) => column.name === columnName)) return;
+  db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+}
+
+function runSchemaMigrations(db) {
+  ensureColumn(db, 'Mirror', 'cadence', "TEXT NOT NULL DEFAULT 'weekly'");
+  ensureColumn(db, 'Mirror', 'period_key', "TEXT NOT NULL DEFAULT ''");
 }
 
 function localizeCapability(capability, platformId, language) {
@@ -4365,6 +4389,7 @@ async function readJsonBody(req) {
 function initDb(dbPath) {
   const db = new DatabaseSync(dbPath);
   db.exec(fs.readFileSync(SCHEMA_PATH, 'utf8'));
+  runSchemaMigrations(db);
   return db;
 }
 

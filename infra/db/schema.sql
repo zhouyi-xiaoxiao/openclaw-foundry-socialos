@@ -33,6 +33,18 @@ CREATE TABLE IF NOT EXISTS Event (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS EventPersonLink (
+  id TEXT PRIMARY KEY,
+  event_id TEXT NOT NULL,
+  person_id TEXT NOT NULL,
+  role TEXT DEFAULT 'participant',
+  source_type TEXT DEFAULT 'manual',
+  source_id TEXT DEFAULT '',
+  weight REAL DEFAULT 1,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS PostDraft (
   id TEXT PRIMARY KEY,
   event_id TEXT,
@@ -94,6 +106,8 @@ CREATE TABLE IF NOT EXISTS SelfCheckin (
 CREATE TABLE IF NOT EXISTS Mirror (
   id TEXT PRIMARY KEY,
   range_label TEXT NOT NULL,
+  cadence TEXT NOT NULL DEFAULT 'weekly',
+  period_key TEXT NOT NULL DEFAULT '',
   content TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
