@@ -44,7 +44,10 @@ SocialOS = people memory + 7-platform campaign workbench + self mirror, all runn
   - links
   - assets
   - payload details
-- Generate Drafts 会生成 7 平台 package：
+- Generate Drafts 会生成 7 平台 package，默认走平台原生语言：
+  - `X / LinkedIn / Instagram`: 英文
+  - `知乎 / 小红书 / 微信朋友圈 / 微信公众号`: 中文
+  - 而且不是“一稿平推”，每个平台都有明显不同的语气、结构和发布包。
   - Instagram
   - X
   - LinkedIn

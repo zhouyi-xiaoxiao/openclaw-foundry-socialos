@@ -67,32 +67,46 @@ async function main() {
     const generated = await postJson(api.baseUrl, '/drafts/generate', {
       eventId: event.eventId,
       platforms: ['x', 'instagram', 'xiaohongshu', 'wechat_moments', 'wechat_official'],
-      languages: ['en'],
-      tone: 'clear',
-      angle: 'operator update',
+      languages: ['platform-native'],
     });
     assert(generated.count === 5, `expected 5 drafts, got ${generated.count}`);
     const instagramDraft = generated.drafts.find((draft) => draft.platform === 'instagram');
+    assert(instagramDraft?.language === 'en', 'instagram should default to English in platform-native mode');
     assert(
       instagramDraft?.publishPackage?.visualStoryboard?.length === 4,
       'instagram package should include a 4-step visual storyboard'
     );
     const xiaohongshuDraft = generated.drafts.find((draft) => draft.platform === 'xiaohongshu');
+    assert(xiaohongshuDraft?.language === 'zh', 'xiaohongshu should default to Chinese in platform-native mode');
     assert(
       xiaohongshuDraft?.publishPackage?.coverHooks?.length === 3,
       'xiaohongshu package should include cover hooks'
     );
     const momentsDraft = generated.drafts.find((draft) => draft.platform === 'wechat_moments');
+    assert(momentsDraft?.language === 'zh', 'wechat moments should default to Chinese in platform-native mode');
     assert(
       momentsDraft?.publishPackage?.captionVariants?.length === 3,
       'wechat moments package should include caption variants'
     );
     const wechatDraft = generated.drafts.find((draft) => draft.platform === 'wechat_official');
+    assert(wechatDraft?.language === 'zh', 'wechat official should default to Chinese in platform-native mode');
     assert(wechatDraft?.publishPackage?.articleOutline?.length === 3, 'wechat package should include article outline');
     const xDraft = generated.drafts.find((draft) => draft.platform === 'x');
+    assert(xDraft?.language === 'en', 'x should default to English in platform-native mode');
     assert(
       String(xDraft?.capability?.supportLevel || '').includes('L2'),
       'x draft should surface L2 support level'
+    );
+    assert(
+      xDraft?.content !== xiaohongshuDraft?.content &&
+        xDraft?.content !== wechatDraft?.content &&
+        xiaohongshuDraft?.content !== wechatDraft?.content,
+      'platform-native drafts should not collapse into the same content'
+    );
+    assert(
+      /^https?:\/\//.test(String(xDraft?.publishPackage?.entryUrl || '')) &&
+        /^https?:\/\//.test(String(wechatDraft?.publishPackage?.entryUrl || '')),
+      'publish packages should expose platform entry URLs'
     );
 
     const listedDrafts = await getJson(api.baseUrl, `/drafts?eventId=${encodeURIComponent(event.eventId)}&limit=10`);

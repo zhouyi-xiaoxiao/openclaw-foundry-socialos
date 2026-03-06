@@ -47,16 +47,17 @@ System design, at a glance:
 5. Queue writes audit logs and manual publish outcomes.
 6. Self Mirror reads recent evidence and produces weekly synthesis.
 
-## Bounty-Specific Integration
-This project is specifically built around an OpenClaw-powered workflow:
+## OpenClaw / Runtime Integration
+This project is built around an OpenClaw-powered workflow:
 - OpenClaw acts as the local multi-agent runtime.
 - Foundry is the first-layer execution cluster for devloop, generic tasks, verification, and digest generation.
 - SocialOS uses OpenClaw-style runtime isolation to keep publisher actions gated and local-first.
 - High-risk publish actions remain `dry-run` by default and require explicit gates before live execution.
 
-Why that matters for the bounty:
+Why that matters for the current generic build:
 - The product is not just a static dashboard. It demonstrates a real OpenClaw-backed system that captures, structures, generates, validates, and operationalizes content workflows.
 - The integration is visible in product UX, runtime configuration, and the local automation layer.
+ - Specific bounty mapping can be layered on top later without changing the product loop itself.
 
 ## Demo Runbook
 - Canonical demo flow: `socialos/docs/DEMO_SCRIPT.md`
