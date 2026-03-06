@@ -33,17 +33,25 @@ async function main() {
       },
     });
 
-    const mirror = await requestJson(api.baseUrl, '/self-mirror/generate', {
+    const dailyMirror = await requestJson(api.baseUrl, '/self-mirror/generate', {
       method: 'POST',
-      body: { range: 'last-7d' },
+      body: { cadence: 'daily' },
     });
-    assert(Array.isArray(mirror.conclusions) && mirror.conclusions.length === 3, 'mirror should expose structured conclusions');
-    assert(Array.isArray(mirror.evidence), 'mirror should expose flattened evidence rows');
+    assert(dailyMirror.cadence === 'daily', 'daily mirror generation should mark cadence');
+    assert(Array.isArray(dailyMirror.conclusions) && dailyMirror.conclusions.length === 3, 'daily mirror should expose structured conclusions');
+    assert(Array.isArray(dailyMirror.evidence), 'daily mirror should expose flattened evidence rows');
 
-    const claimKey = mirror.conclusions[0].title;
+    const weeklyMirror = await requestJson(api.baseUrl, '/self-mirror/generate', {
+      method: 'POST',
+      body: { cadence: 'weekly' },
+    });
+    assert(weeklyMirror.cadence === 'weekly', 'weekly mirror generation should mark cadence');
+    assert(Array.isArray(weeklyMirror.conclusions) && weeklyMirror.conclusions.length === 3, 'weekly mirror should expose structured conclusions');
+
+    const claimKey = weeklyMirror.conclusions[0].title;
     const evidence = await requestJson(
       api.baseUrl,
-      `/self-mirror/evidence?mirrorId=${encodeURIComponent(mirror.mirrorId)}&claimKey=${encodeURIComponent(claimKey)}`
+      `/self-mirror/evidence?mirrorId=${encodeURIComponent(weeklyMirror.mirrorId)}&claimKey=${encodeURIComponent(claimKey)}`
     );
     assert(evidence.count >= 1, 'mirror evidence endpoint should return evidence for a claim');
     assert(
@@ -51,8 +59,11 @@ async function main() {
       'mirror evidence endpoint should filter by claim key'
     );
 
-    const latest = await requestJson(api.baseUrl, '/self-mirror');
-    assert(latest.latestMirror?.mirrorId === mirror.mirrorId, 'latest self mirror should return the new mirror');
+    const latestDaily = await requestJson(api.baseUrl, '/self-mirror?cadence=daily');
+    assert(latestDaily.latestMirror?.mirrorId === dailyMirror.mirrorId, 'daily self mirror should return the new daily mirror');
+    const latestWeekly = await requestJson(api.baseUrl, '/self-mirror?cadence=weekly');
+    assert(latestWeekly.latestMirror?.mirrorId === weeklyMirror.mirrorId, 'weekly self mirror should return the new weekly mirror');
+    assert(latestWeekly.latestDailyMirror?.mirrorId === dailyMirror.mirrorId, 'self mirror payload should expose latest daily mirror alongside weekly view');
 
     console.log('mirror_evidence_smoke: PASS');
   } finally {

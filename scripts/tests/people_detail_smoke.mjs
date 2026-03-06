@@ -64,6 +64,20 @@ async function main() {
     });
     assert(updated.action === 'updated', 'people upsert should update existing contacts');
 
+    const event = await requestJson(api.baseUrl, '/events', {
+      method: 'POST',
+      body: {
+        title: 'Alice Evidence follow-up thread',
+        relatedPeople: [personId],
+        payload: {
+          audience: 'operators',
+          details: {
+            summary: 'A relationship thread linked back to Alice for graph coverage.',
+          },
+        },
+      },
+    });
+
     const detail = await requestJson(api.baseUrl, `/people/${encodeURIComponent(personId)}`);
     assert(detail.person.name === 'Alice Evidence Updated', 'people detail should show updated name');
     assert(detail.person.tags.includes('follow-up'), 'people detail should show updated tags');
@@ -71,11 +85,38 @@ async function main() {
     assert(detail.identities.length === 1, 'people detail should include identities');
     assert(detail.interactions.length === 1, 'people detail should include interactions');
     assert(detail.evidence.length >= 2, 'people detail should expose evidence rows');
+    assert(Array.isArray(detail.relatedEvents) && detail.relatedEvents.some((row) => row.eventId === event.eventId), 'people detail should expose related events');
+    assert(Array.isArray(detail.graphOverview?.nodes) && detail.graphOverview.nodes.length >= 2, 'people detail should expose graph overview');
     assert(
       typeof detail.suggestion.followUpMessage === 'string' &&
         detail.suggestion.followUpMessage.includes('Alice Evidence Updated'),
       'people detail should generate follow-up suggestion'
     );
+
+    const graph = await requestJson(
+      api.baseUrl,
+      `/graph/overview?focusType=person&focusId=${encodeURIComponent(personId)}`
+    );
+    assert(graph.focusType === 'person', 'graph overview should preserve person focus');
+    assert(Array.isArray(graph.edges) && graph.edges.length >= 1, 'graph overview should include at least one edge');
+
+    const removed = await requestJson(
+      api.baseUrl,
+      `/events/${encodeURIComponent(event.eventId)}/people/${encodeURIComponent(personId)}`,
+      { method: 'DELETE' }
+    );
+    assert(removed.ok === true, 'event/person unlink should return ok');
+    assert(Array.isArray(removed.person.relatedEvents) && removed.person.relatedEvents.length === 0, 'unlink should remove related events from person detail');
+
+    const relinked = await requestJson(api.baseUrl, `/events/${encodeURIComponent(event.eventId)}/people`, {
+      method: 'POST',
+      body: {
+        personId,
+        role: 'speaker',
+      },
+    });
+    assert(relinked.link.personId === personId, 'event/person relink should return the saved link');
+    assert(Array.isArray(relinked.event.relatedPeople) && relinked.event.relatedPeople.some((row) => row.personId === personId), 'relink should restore related people on event detail');
 
     const search = await requestJson(api.baseUrl, '/people?query=builder%20growth&limit=5');
     assert(search.count >= 1, 'people search should still return keyword-backed hits');
