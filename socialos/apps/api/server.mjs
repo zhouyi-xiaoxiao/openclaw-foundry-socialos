@@ -2330,48 +2330,48 @@ function buildWorkspaceSummary({
   const requiresNameConfirmation = Boolean(captureDraft?.personDraft?.requiresNameConfirmation);
   if (hasUntypedVoiceOnly) {
     return preferredChinese
-      ? '我收到了这段语音，但现在还没有 transcript，所以先不乱回复。只要浏览器语音识别可用，或者配置好 OPENAI_API_KEY，这里就能像正常聊天一样直接语音转文字。'
-      : 'I got the voice note, but there is no transcript yet, so I will not guess. Once browser speech recognition or OPENAI_API_KEY transcription is available, this chat can behave like a normal voice turn.';
+      ? '我先收到了这段语音，但现在还没有可靠转写，所以先不乱猜。你可以继续补一句文字，或者等转写准备好再发。'
+      : 'I have the voice note, but not a reliable transcript yet, so I do not want to guess. You can add a quick text note now or wait for transcription to be ready.';
   }
 
   if (intent === 'search') {
     if (relatedPeople.length || relatedEvents.length) {
       return preferredChinese
-        ? `我先找到了最相关的 ${relatedPeople.length} 个联系人和 ${relatedEvents.length} 条事件线索，先给你看最值得开的结果。`
-        : `I found the strongest contact and event context first, and I am only surfacing the hits most worth opening.`;
+        ? '我先把最像的结果放在前面，你先看这一条对不对；如果方向还不够准，我们再一起收窄。'
+        : 'I pulled the strongest match to the front first. If it is close but not quite right, we can narrow it down together.';
     }
     return preferredChinese
-      ? '我先查了联系人和事件，但这次还没有特别稳的命中。再补一个名字、主题词或时间点会更准。'
-      : 'I checked contacts and events first, but nothing is strong enough yet. Add a name, topic, or time clue and I can narrow it down.';
+      ? '我还没有抓到特别稳的结果。再补一个名字、主题词，或者时间点，我就能更快收窄。'
+      : 'I do not have a confident match yet. Add a name, topic, or time clue and I can narrow it down quickly.';
   }
 
   if (intent === 'campaign') {
     return preferredChinese
-      ? '这条更像内容或活动请求。我先保持简洁，只在你真的要推进时再给 event 和 drafts 动作。'
-      : 'This reads like a content or event request. I am keeping it compact and only surfacing event or draft actions when they help.';
+      ? '这条更像是要推进内容或事件。我先把下一步收得很轻，只给你最值得开的入口。'
+      : 'This reads like an event or content push. I am keeping the next step light and only surfacing the one or two actions that matter.';
   }
 
   if (hasTranscribedAudio) {
     return preferredChinese
-      ? '我已经把这段语音并进当前对话了。你先看看提取出来的人和要点对不对，确认后再存进记忆就行。'
-      : 'I merged that voice note into the current chat turn. Check that the extracted person and next step look right, then save it to memory if you want.';
+      ? '我已经把语音转进当前对话了。你先顺手看看人名和重点对不对，没问题再保存就行。'
+      : 'I folded the voice note into this turn. Take a quick look at the person and the key point, then save it if it feels right.';
   }
 
   if (requiresNameConfirmation) {
     return preferredChinese
-      ? '我先整理出了一张联系人草稿，但名字还需要你确认。先改对名字，再保存会更稳。'
-      : 'I drafted a contact card, but the name still needs your confirmation. Edit that first, then save it.';
+      ? '我先整理出一张联系人草稿，但名字还需要你点一下确认。先把名字改准，再保存会更稳。'
+      : 'I drafted the contact for you, but the name still needs a quick confirmation. Edit that first, then save it.';
   }
 
   if (personName) {
     return preferredChinese
-      ? `我先从这句话里提了一个联系人草稿：${personName}。方向对的话就保存，不急着一下子展开更多流程。`
-      : `I pulled a contact draft out of this message: ${personName}. Save it if it looks right, or keep talking to refine it.`;
+      ? `我先把 ${personName} 整理成了一张联系人草稿。方向对的话就保存；如果还差一点，我们就继续顺着聊。`
+      : `I turned ${personName} into a contact draft first. Save it if it looks right, or keep talking and we can refine it together.`;
   }
 
   return preferredChinese
-    ? '我先把这条消息接住，保持正常聊天。需要查人、建 event 或出 drafts 时再往前走。'
-    : 'I captured the message and kept the reply lightweight. I will only branch into memory, events, or drafts when you need that next step.';
+    ? '我先把这条消息接住，保持正常聊天。真的需要查人、建事件，或者起草内容时，我再往前推一步。'
+    : 'I have this turn in context now. We can stay in a natural chat flow, and only branch into contacts, events, drafts, or mirror when it is actually useful.';
 }
 
 function buildSuggestedEventPayload(text, draft, relatedPeople = []) {
@@ -2479,7 +2479,7 @@ function buildWorkspaceContactDraftCard(captureDraft) {
   );
   if (!name && !summary) return null;
   return buildPresentationCard('contact', {
-    kicker: 'Contact draft',
+    kicker: 'Ready to review',
     title: displayName,
     subtitle: personDraft.requiresNameConfirmation ? 'Confirm the name before saving' : 'Ready to review before saving',
     body: truncateText(summary || 'Keep chatting if you want to refine the person and follow-up context.', 200),
@@ -2495,7 +2495,7 @@ function buildWorkspaceContactDraftCard(captureDraft) {
 function buildWorkspacePersonMatchCard(person, kicker = 'Memory match') {
   if (!person?.personId) return null;
   return buildPresentationCard('contact', {
-    kicker,
+    kicker: kicker === 'Memory match' ? 'Best contact fit' : kicker,
     title: person.name || 'Contact',
     body: truncateText(person.evidenceSnippet || person.notes || 'This looks like the closest contact match.', 200),
     href: `/people/${encodeURIComponent(person.personId)}`,
@@ -2527,7 +2527,7 @@ function buildWorkspaceEventCard(event, kicker = 'Related event') {
 function buildWorkspaceSuggestedEventCard(eventSuggestion) {
   if (!eventSuggestion?.title) return null;
   return buildPresentationCard('event', {
-    kicker: 'Suggested event',
+    kicker: 'Good next step',
     title: eventSuggestion.title,
     body: truncateText(readOptionalString(eventSuggestion.payload?.summary, ''), 200),
     badges: [
@@ -2543,7 +2543,7 @@ function buildWorkspaceSuggestedEventCard(eventSuggestion) {
 function buildWorkspaceDraftCard(draft, kicker = 'Related draft') {
   if (!draft?.draftId) return null;
   return buildPresentationCard('draft', {
-    kicker,
+    kicker: kicker === 'Related draft' ? 'Draft ready' : kicker,
     title: `${draft.platformShellLabel || draft.platformLabel || draft.platform || 'Draft'} · ${draft.eventTitle || draft.eventId || ''}`.trim(),
     body: truncateText(draft.snippet || draft.content || 'A platform package already exists for this topic.', 200),
     href: `/drafts?eventId=${encodeURIComponent(draft.eventId || '')}`,
@@ -2558,7 +2558,7 @@ function buildWorkspaceMirrorCard(latestMirror) {
   if (!latestMirror?.mirrorId) return null;
   return buildPresentationCard('mirror', {
     kicker: 'Mirror',
-    title: 'Latest self signal',
+    title: latestMirror.cadence === 'daily' ? 'Today’s reflection' : 'Weekly reflection',
     body: truncateText(latestMirror.summaryText || latestMirror.content || 'Open the mirror for evidence-backed self patterns.', 200),
     href: '/self-mirror',
     badges: Array.isArray(latestMirror.topThemes)
