@@ -1444,6 +1444,7 @@ function renderQueueCards(queueTasks, publishMode) {
       const publishPackage = safeJson(task.metadata?.publishPackage, {});
       const queued = task.status === 'queued';
       const needsManual = task.status === 'manual_step_needed';
+      const taskPrefersLive = liveApprovalEnabled && String(task.mode || '').toLowerCase() === 'live';
       return `
         <article class="stack-card queue-card">
           <div class="stack-meta">
@@ -1470,17 +1471,17 @@ function renderQueueCards(queueTasks, publishMode) {
                     ${renderFormField(
                       'Mode',
                       `<select name="mode">
-                        <option value="dry-run">dry-run</option>
-                        <option value="live"${liveApprovalEnabled ? '' : ' disabled'}>live</option>
+                        <option value="dry-run"${taskPrefersLive ? '' : ' selected'}>dry-run</option>
+                        <option value="live"${taskPrefersLive ? ' selected' : ''}${liveApprovalEnabled ? '' : ' disabled'}>live</option>
                       </select>`
                     )}
                     ${renderFormField(
                       'Live Gate',
-                      `<label class="toggle"><input type="checkbox" name="liveEnabled" value="true"${liveApprovalEnabled ? '' : ' disabled'} /> <span>UI live intent</span></label>`
+                      `<label class="toggle"><input type="checkbox" name="liveEnabled" value="true"${taskPrefersLive ? ' checked' : ''}${liveApprovalEnabled ? '' : ' disabled'} /> <span>UI live intent</span></label>`
                     )}
                     ${renderFormField(
                       'Credentials',
-                      `<label class="toggle"><input type="checkbox" name="credentialsReady" value="true"${liveApprovalEnabled ? '' : ' disabled'} /> <span>credentials ready</span></label>`
+                      `<label class="toggle"><input type="checkbox" name="credentialsReady" value="true"${taskPrefersLive ? ' checked' : ''}${liveApprovalEnabled ? '' : ' disabled'} /> <span>credentials ready</span></label>`
                     )}
                   </div>
                   ${
