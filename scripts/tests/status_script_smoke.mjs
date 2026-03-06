@@ -13,9 +13,15 @@ const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'socialos-status-script-')
 const runDir = path.join(tempDir, 'runs');
 const latestDigest = path.join(tempDir, 'LATEST.md');
 const missingQueue = path.join(tempDir, 'MISSING_QUEUE.md');
+const queueFile = path.join(tempDir, 'QUEUE.md');
 
 fs.mkdirSync(runDir, { recursive: true });
 fs.writeFileSync(latestDigest, '# digest placeholder\n', 'utf8');
+fs.writeFileSync(
+  queueFile,
+  ['- [ ] Build workspace follow-up panel', '- [!] Live publish credential handoff', '- [!] Postgres migration handoff'].join('\n'),
+  'utf8',
+);
 fs.writeFileSync(
   path.join(runDir, 'sample.json'),
   JSON.stringify({
@@ -40,12 +46,28 @@ const result = spawnSync('bash', [script], {
   },
 });
 
+const queueResult = spawnSync('bash', [script], {
+  cwd: root,
+  encoding: 'utf8',
+  env: {
+    ...process.env,
+    SOCIALOS_QUEUE_FILE: queueFile,
+    SOCIALOS_RUN_DIR: runDir,
+    SOCIALOS_LATEST_DIGEST_FILE: latestDigest,
+  },
+});
+
 try {
   assert(result.status === 0, `status script should exit 0, got ${result.status}`);
   assert(result.stdout.includes('== Foundry Status =='), 'status output header missing');
   assert(result.stdout.includes('queue_file: missing'), 'status should report missing queue file');
   assert(result.stdout.includes('none (queue file missing)'), 'blocked queue section should report missing queue file');
   assert(result.stdout.includes('run_id: sample'), 'status should still render latest run details');
+  assert(queueResult.status === 0, `status script with queue should exit 0, got ${queueResult.status}`);
+  assert(queueResult.stdout.includes('current_task: Build workspace follow-up panel'), 'current task should strip checkbox and marker noise');
+  assert(queueResult.stdout.includes('Live publish credential handoff'), 'blocked queue head should include blocked task text');
+  assert(!queueResult.stdout.includes('1:- [ ]'), 'current task should not include grep line-number output');
+  assert(!queueResult.stdout.includes('2:- [!]'), 'blocked queue head should not include grep line-number output');
   console.log('status_script_smoke: PASS');
 } finally {
   fs.rmSync(tempDir, { recursive: true, force: true });

@@ -38,7 +38,7 @@ if [[ -f "${QUEUE_FILE}" ]]; then
   blocked_count="$(grep -cE '^- \[!\] ' "${QUEUE_FILE}" || true)"
   # Keep queue accounting aligned with API parsing, which treats both [x] and [X] as done.
   done_count="$(grep -cE '^- \[[xX]\] ' "${QUEUE_FILE}" || true)"
-  current_task="$(grep -nE '^- \[( |-|!)\] ' "${QUEUE_FILE}" | head -n 1 || true)"
+  current_task="$(grep -E '^- \[( |-|!)\] ' "${QUEUE_FILE}" | head -n 1 | sed -E 's/^- \[[^]]\] //' || true)"
   [[ -z "${current_task}" ]] && current_task="none"
 else
   queue_notice="missing (${QUEUE_FILE})"
@@ -140,7 +140,7 @@ fi
 echo
 echo "Blocked queue head:"
 if [[ -f "${QUEUE_FILE}" ]]; then
-  grep -nE '^- \[!\] ' "${QUEUE_FILE}" | head -n 5 || true
+  grep -E '^- \[!\] ' "${QUEUE_FILE}" | head -n 5 | sed -E 's/^- \[!\] //' || true
 else
   echo "none (queue file missing)"
 fi
