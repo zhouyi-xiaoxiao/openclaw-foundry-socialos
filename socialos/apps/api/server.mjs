@@ -2427,9 +2427,12 @@ function searchDraftMatches(statements, query, limit = 4) {
   if (!normalizedQuery) return [];
   const terms = normalizedQuery.split(/\s+/u).filter(Boolean);
 
-  return statements.listRecentDrafts
-    .all(60)
-    .map(formatDraftRow)
+  return dedupeLatestDrafts(
+    statements.listRecentDrafts
+      .all(60)
+      .map(formatDraftRow),
+    60
+  )
     .map((draft) => {
       const haystack = cleanText(
         [
@@ -2667,7 +2670,7 @@ function buildAskSearchPayload(statements, query) {
 function buildCockpitSummary(statements) {
   const recentPeople = statements.listRecentPeople.all(8).map(formatPersonRow);
   const recentEvents = statements.listRecentEvents.all(8).map(formatEventRow);
-  const recentDrafts = statements.listRecentDrafts.all(20).map(formatDraftRow);
+  const recentDrafts = dedupeLatestDrafts(statements.listRecentDrafts.all(40).map(formatDraftRow), 20);
   const recentQueueTasks = statements.listRecentQueueTasks.all(20).map(formatQueueTaskRow);
   const recentCheckins = dedupeMeaningfulCheckins(statements.listRecentSelfCheckins.all(24), 8);
   const latestMirrorRow = statements.selectLatestMirror.get();
@@ -3544,6 +3547,25 @@ function formatDraftRow(row) {
   };
 }
 
+function dedupeLatestDrafts(drafts, limit = drafts.length) {
+  const latestByKey = new Map();
+
+  for (const draft of drafts) {
+    const key = [draft.eventId || '', draft.platform || '', draft.language || ''].join('::');
+    const existing = latestByKey.get(key);
+    const draftTime = Date.parse(draft.createdAt || 0);
+    const existingTime = existing ? Date.parse(existing.createdAt || 0) : 0;
+
+    if (!existing || draftTime >= existingTime) {
+      latestByKey.set(key, draft);
+    }
+  }
+
+  return [...latestByKey.values()]
+    .sort((left, right) => Date.parse(right.createdAt || 0) - Date.parse(left.createdAt || 0))
+    .slice(0, limit);
+}
+
 function formatQueueTaskRow(row) {
   const metadata = safeParseJsonObject(row.metadata, {});
   const result = safeParseJsonObject(row.result, {});
@@ -3674,9 +3696,12 @@ async function routeRequest(req, res, statements) {
     const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 24, 100);
     const eventId = readOptionalString(requestUrl.searchParams.get('eventId'), '');
     const platform = readOptionalString(requestUrl.searchParams.get('platform'), '').toLowerCase();
-    const drafts = statements.listRecentDrafts
-      .all(limit * 3)
-      .map(formatDraftRow)
+    const drafts = dedupeLatestDrafts(
+      statements.listRecentDrafts
+        .all(limit * 6)
+        .map(formatDraftRow),
+      limit * 3
+    )
       .filter((draft) => !eventId || draft.eventId === eventId)
       .filter((draft) => !platform || draft.platform === platform)
       .slice(0, limit);
