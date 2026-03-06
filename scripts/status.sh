@@ -47,7 +47,8 @@ if [[ -f "${QUEUE_FILE}" ]]; then
   blocked_count="$(grep -cE '^- \[!\] ' "${QUEUE_FILE}" || true)"
   # Keep queue accounting aligned with API parsing, which treats both [x] and [X] as done.
   done_count="$(grep -cE '^- \[[xX]\] ' "${QUEUE_FILE}" || true)"
-  current_task="$(grep -E '^- \[( |-|!)\] ' "${QUEUE_FILE}" | head -n 1 | sed -E 's/^- \[[^]]\] //' || true)"
+  # Treat only pending/in-progress items as actionable current work; blocked entries are reported separately.
+  current_task="$(grep -E '^- \[( |\-)\] ' "${QUEUE_FILE}" | head -n 1 | sed -E 's/^- \[[^]]\] //' || true)"
   [[ -z "${current_task}" ]] && current_task="none"
 else
   queue_notice="missing (${QUEUE_FILE})"

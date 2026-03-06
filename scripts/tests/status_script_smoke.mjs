@@ -17,6 +17,7 @@ const latestDigest = path.join(tempDir, 'LATEST.md');
 const missingQueue = path.join(tempDir, 'MISSING_QUEUE.md');
 const queueFile = path.join(tempDir, 'QUEUE.md');
 const queueNoBlockedFile = path.join(tempDir, 'QUEUE_NO_BLOCKED.md');
+const queueBlockedOnlyFile = path.join(tempDir, 'QUEUE_BLOCKED_ONLY.md');
 
 fs.mkdirSync(runDir, { recursive: true });
 fs.mkdirSync(emptyRunDir, { recursive: true });
@@ -27,6 +28,11 @@ fs.writeFileSync(
   'utf8',
 );
 fs.writeFileSync(queueNoBlockedFile, ['- [ ] Build workspace follow-up panel', '- [x] Done item'].join('\n'), 'utf8');
+fs.writeFileSync(
+  queueBlockedOnlyFile,
+  ['- [!] Live publish credential handoff', '- [!] Postgres migration handoff'].join('\n'),
+  'utf8',
+);
 fs.writeFileSync(
   path.join(runDir, 'sample.json'),
   JSON.stringify({
@@ -84,6 +90,17 @@ const noBlockedResult = spawnSync('bash', [script], {
   },
 });
 
+const blockedOnlyResult = spawnSync('bash', [script], {
+  cwd: root,
+  encoding: 'utf8',
+  env: {
+    ...process.env,
+    SOCIALOS_QUEUE_FILE: queueBlockedOnlyFile,
+    SOCIALOS_RUN_DIR: runDir,
+    SOCIALOS_LATEST_DIGEST_FILE: latestDigest,
+  },
+});
+
 const missingRunDirResult = spawnSync('bash', [script], {
   cwd: root,
   encoding: 'utf8',
@@ -113,6 +130,8 @@ try {
   assert(digestFallbackResult.stdout.includes('summary: unknown'), 'digest fallback should keep summary stable when digest has no What field');
   assert(noBlockedResult.status === 0, `status script with no blocked tasks should exit 0, got ${noBlockedResult.status}`);
   assert(noBlockedResult.stdout.includes('Blocked queue head:\nnone'), 'blocked queue head should print none when queue has no blocked items');
+  assert(blockedOnlyResult.status === 0, `status script with blocked-only queue should exit 0, got ${blockedOnlyResult.status}`);
+  assert(blockedOnlyResult.stdout.includes('current_task: none'), 'blocked-only queue should not report a current actionable task');
   assert(missingRunDirResult.status === 0, `status script with missing run dir should exit 0, got ${missingRunDirResult.status}`);
   assert(missingRunDirResult.stdout.includes('run_reports_dir: missing'), 'status should report missing run reports directory');
   console.log('status_script_smoke: PASS');

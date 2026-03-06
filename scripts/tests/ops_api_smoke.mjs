@@ -24,10 +24,10 @@ async function main() {
     const status = await getJson(api.baseUrl, '/ops/status');
     assert(typeof status.mode === 'string', 'ops/status should include mode');
     assert(status.queue && typeof status.queue.pending === 'number', 'ops/status should include queue summary');
-    if (status.queue.inProgress === 0 && status.queue.pending + status.queue.blocked > 0) {
+    if (status.queue.inProgress === 0 && status.queue.pending > 0) {
       assert(
         typeof status.queue.currentTask === 'string' && status.queue.currentTask.trim().length > 0,
-        'ops/status should surface currentTask when queue has actionable pending/blocked work',
+        'ops/status should surface currentTask when queue has actionable pending work',
       );
     }
 
