@@ -6,8 +6,9 @@ QUEUE_FILE="${REPO_ROOT}/QUEUE.md"
 PAUSE_FILE="${REPO_ROOT}/.foundry/PAUSED"
 MODE_FILE="${REPO_ROOT}/.foundry/PUBLISH_MODE"
 LATEST_FILE="${REPO_ROOT}/reports/LATEST.md"
+RUN_REPORT_DIR="${REPO_ROOT}/reports/runs"
 
-mkdir -p "${REPO_ROOT}/.foundry"
+mkdir -p "${REPO_ROOT}/.foundry" "${RUN_REPORT_DIR}"
 
 usage() {
   cat <<'EOF'
