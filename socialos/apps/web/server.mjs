@@ -1030,7 +1030,7 @@ async function renderQuickCapturePage(page) {
         <div class="panel-head">
           <div>
             <h2>Workspace Chat</h2>
-            <p class="panel-subtitle">Talk to the system like a message thread. It will surface contacts, event suggestions, self signals, and next actions in one place.</p>
+            <p class="panel-subtitle">Use one main thread for typing, voice, screenshots, and cards. Contacts and events stay behind the chat instead of taking over the page.</p>
           </div>
         </div>
         ${renderWorkspaceThreadSeed(captures)}
@@ -1041,23 +1041,28 @@ async function renderQuickCapturePage(page) {
           <input type="hidden" name="source" value="workspace-chat" />
           <input type="hidden" name="assetIds" value="" data-capture-asset-ids />
           <input type="file" data-workspace-file accept="image/*,audio/*" multiple hidden />
-          <button type="button" class="secondary-button workspace-icon-button" data-workspace-attach>Attach</button>
-          <textarea name="text" rows="2" placeholder="像聊天一样发一句：认识了谁、要跟进什么、想找哪个人、想把什么变成内容。"></textarea>
-          <select name="voiceLang" class="workspace-lang-select">
-            <option value="auto">Auto</option>
-            <option value="zh-CN">中文</option>
-            <option value="en-US">English</option>
-            <option value="ja-JP">日本語</option>
-            <option value="es-ES">Español</option>
-          </select>
-          <button type="button" class="secondary-button workspace-icon-button" data-audio-record-toggle>Mic</button>
-          <button type="submit">Send</button>
+          <button type="button" class="secondary-button workspace-icon-button" data-workspace-attach>+</button>
+          <textarea name="text" rows="2" data-workspace-input placeholder="像聊天一样发一句。回车发送，Shift+回车换行。"></textarea>
+          <div class="workspace-composer-controls">
+            <div class="audio-meter" data-audio-meter aria-hidden="true">
+              ${Array.from({ length: 14 }, (_, index) => `<span class="audio-meter-bar" data-audio-meter-bar="${index}"></span>`).join('')}
+            </div>
+            <select name="voiceLang" class="workspace-lang-select" aria-label="Voice language">
+              <option value="auto">Auto</option>
+              <option value="zh-CN">中文</option>
+              <option value="en-US">English</option>
+              <option value="ja-JP">日本語</option>
+              <option value="es-ES">Español</option>
+            </select>
+            <button type="button" class="secondary-button workspace-icon-button" data-audio-record-toggle>Mic</button>
+            <button type="submit">Send</button>
+          </div>
         </form>
         <div class="info-card compact-info" data-audio-status>
           <strong>Voice + multimodal</strong>
-          <p>点一次 Mic 开始说，点同一个按钮结束。优先用浏览器原生语音识别；如果配置了 OpenAI key，也会自动做服务端转写。</p>
+          <p>点一下 Mic 开始说，再点一下就发出去。优先用浏览器语音识别；如果配置了 OpenAI key，也会接上服务端转写。</p>
         </div>
-        <div class="form-result" data-form-result></div>
+        <div class="form-result" data-form-result hidden></div>
       </section>
       <aside class="workspace-side">
         ${renderPanel('Contacts Snapshot', renderPeopleCards(people), 'Chat 命中的联系人可以直接点开详情。')}
@@ -1715,6 +1720,10 @@ function renderClientScript() {
         recorder: null,
         recordChunks: [],
         recognition: null,
+        audioContext: null,
+        audioSource: null,
+        audioAnalyser: null,
+        meterFrame: 0,
       };
 
       function parseMaybeJson(text) {
@@ -1767,6 +1776,20 @@ function renderClientScript() {
       function renderResult(resultNode, payload) {
         if (!resultNode) return;
         resultNode.innerHTML = '<pre>' + escapeHtml(JSON.stringify(payload, null, 2)) + '</pre>';
+      }
+
+      function renderWorkspaceComposerResult(resultNode, message = '', ok = true) {
+        if (!resultNode) return;
+        if (!message) {
+          resultNode.innerHTML = '';
+          resultNode.hidden = true;
+          return;
+        }
+        resultNode.hidden = false;
+        resultNode.innerHTML =
+          '<div class="result-block' + (ok ? '' : ' result-block-warn') + '">' +
+            '<p>' + escapeHtml(message) + '</p>' +
+          '</div>';
       }
 
       function flashMessage(flash) {
@@ -1882,6 +1905,64 @@ function renderClientScript() {
         });
       }
 
+      function getAudioMeterBars() {
+        return Array.from(document.querySelectorAll('[data-audio-meter-bar]'));
+      }
+
+      function setAudioMeterLevel(level) {
+        const bars = getAudioMeterBars();
+        if (!bars.length) return;
+        bars.forEach((bar, index) => {
+          const position = index / Math.max(bars.length - 1, 1);
+          const strength = Math.max(0.2, Math.min(1, level * 2.1 - position * 0.72));
+          bar.style.transform = 'scaleY(' + strength.toFixed(3) + ')';
+          bar.classList.toggle('live', strength > 0.32);
+        });
+      }
+
+      function stopAudioMeter() {
+        if (captureState.meterFrame) {
+          cancelAnimationFrame(captureState.meterFrame);
+          captureState.meterFrame = 0;
+        }
+        if (captureState.audioSource) {
+          captureState.audioSource.disconnect();
+          captureState.audioSource = null;
+        }
+        if (captureState.audioContext) {
+          captureState.audioContext.close().catch(() => {});
+          captureState.audioContext = null;
+        }
+        captureState.audioAnalyser = null;
+        setAudioMeterLevel(0);
+      }
+
+      async function startAudioMeter(stream) {
+        stopAudioMeter();
+        const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextCtor) return;
+        captureState.audioContext = new AudioContextCtor();
+        captureState.audioSource = captureState.audioContext.createMediaStreamSource(stream);
+        captureState.audioAnalyser = captureState.audioContext.createAnalyser();
+        captureState.audioAnalyser.fftSize = 512;
+        captureState.audioSource.connect(captureState.audioAnalyser);
+        const sampleBuffer = new Float32Array(captureState.audioAnalyser.fftSize);
+
+        const updateMeter = () => {
+          if (!captureState.audioAnalyser) return;
+          captureState.audioAnalyser.getFloatTimeDomainData(sampleBuffer);
+          let sum = 0;
+          for (const sample of sampleBuffer) {
+            sum += sample * sample;
+          }
+          const rms = Math.sqrt(sum / sampleBuffer.length);
+          setAudioMeterLevel(Math.min(1, rms * 8));
+          captureState.meterFrame = requestAnimationFrame(updateMeter);
+        };
+
+        updateMeter();
+      }
+
       function getWorkspaceThread() {
         return document.querySelector('[data-workspace-thread]');
       }
@@ -1897,10 +1978,17 @@ function renderClientScript() {
         const assetSummary = Array.isArray(assets) && assets.length
           ? '<div class="chip-row">' + assets.map((asset) => '<span class="pill tone-soft">' + escapeHtml(asset.fileName || asset.assetId) + '</span>').join('') + '</div>'
           : '';
+        const fallbackText = Array.isArray(assets) && assets.length
+          ? assets.every((asset) => asset.kind === 'audio')
+            ? '[voice message]'
+            : assets.every((asset) => asset.kind === 'image')
+              ? '[image attachment]'
+              : '[attachment]'
+          : '[message]';
         appendWorkspaceHtml(
           '<article class="chat-bubble user">' +
             '<div class="stack-meta"><span>you</span><span>' + new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + '</span></div>' +
-            (text ? '<p>' + escapeHtml(text) + '</p>' : '<p>[voice/image only]</p>') +
+            (text ? '<p>' + escapeHtml(text) + '</p>' : '<p>' + escapeHtml(fallbackText) + '</p>') +
             assetSummary +
           '</article>'
         );
@@ -1917,21 +2005,29 @@ function renderClientScript() {
       }
 
       function renderWorkspaceAssistantTurn(payload) {
-        const people = Array.isArray(payload.relatedPeople) ? payload.relatedPeople : [];
-        const events = Array.isArray(payload.relatedEvents) ? payload.relatedEvents : [];
-        const lanes = Array.isArray(payload.agentLanes) ? payload.agentLanes : [];
+        const ui = payload.ui || {};
+        const people = Array.isArray(ui.people) ? ui.people : [];
+        const events = Array.isArray(ui.events) ? ui.events : [];
+        const lanes = Array.isArray(ui.coordination) ? ui.coordination : [];
         const draft = payload.captureDraft || {};
         const personDraft = draft.personDraft || {};
-        const selfDraft = draft.selfCheckinDraft || {};
         const eventSuggestion = payload.suggestedEvent || {};
-        const topThemes = Array.isArray(payload.latestMirror?.topThemes) ? payload.latestMirror.topThemes : [];
         const transcription = payload.transcription || {};
 
+        const focusCard = personDraft.name && payload.intent !== 'search'
+          ? '<section class="workspace-block"><h4>Contact draft</h4>' +
+              '<article class="stack-card compact-card">' +
+                '<div class="stack-meta"><strong>' + escapeHtml(personDraft.name) + '</strong><span>ready to save</span></div>' +
+                '<p>' + escapeHtml(personDraft.followUpSuggestion || draft.interactionDraft?.summary || 'Keep chatting if you want to refine this before saving.') + '</p>' +
+              '</article>' +
+            '</section>'
+          : '';
+
         const peopleBlock = people.length
-          ? '<section class="workspace-block"><h4>Memory matches</h4><div class="stack">' +
+          ? '<section class="workspace-block"><h4>' + escapeHtml(payload.intent === 'search' ? 'Best matches' : 'Likely contact') + '</h4><div class="stack">' +
               people.map((person) =>
                 '<article class="stack-card compact-card">' +
-                  '<div class="stack-meta"><strong>' + escapeHtml(person.name) + '</strong><span>score ' + escapeHtml(String(person.score || 0).slice(0, 5)) + '</span></div>' +
+                  '<div class="stack-meta"><strong>' + escapeHtml(person.name) + '</strong><span>' + escapeHtml(payload.intent === 'search' ? 'matched' : 'memory hit') + '</span></div>' +
                   '<p>' + escapeHtml(person.evidenceSnippet || person.notes || '') + '</p>' +
                   '<div class="inline-actions"><a class="mini-link" href="/people/' + encodeURIComponent(person.personId) + '">Open Contact</a></div>' +
                 '</article>'
@@ -1940,7 +2036,7 @@ function renderClientScript() {
           : '';
 
         const eventBlock = events.length
-          ? '<section class="workspace-block"><h4>Related events</h4><div class="stack">' +
+          ? '<section class="workspace-block"><h4>' + escapeHtml(payload.intent === 'search' ? 'Related logbook items' : 'Relevant event context') + '</h4><div class="stack">' +
               events.map((event) =>
                 '<article class="stack-card compact-card">' +
                   '<div class="stack-meta"><strong>' + escapeHtml(event.title) + '</strong><span>' + escapeHtml((event.payload && event.payload.languageStrategy) || 'n/a') + '</span></div>' +
@@ -1952,61 +2048,46 @@ function renderClientScript() {
           : '';
 
         const laneBlock = lanes.length
-          ? '<section class="workspace-block"><h4>Agent lanes</h4><div class="agent-inline-grid">' +
+          ? '<div class="agent-chip-row">' +
               lanes.map((lane) =>
-                '<article class="detail-card">' +
-                  '<div class="stack-meta"><strong>' + escapeHtml(lane.label) + '</strong><span>' + escapeHtml(lane.status) + '</span></div>' +
-                  '<p>' + escapeHtml(lane.summary || '') + '</p>' +
-                '</article>'
+                '<span class="agent-chip">' +
+                  '<strong>' + escapeHtml(lane.label.replace(' Agent', '')) + '</strong>' +
+                  '<span>' + escapeHtml(lane.status) + '</span>' +
+                '</span>'
               ).join('') +
-            '</div></section>'
-          : '';
-
-        const draftBlock = personDraft.name
-          ? '<section class="workspace-block"><h4>Drafted memory</h4>' +
-              '<p><strong>Person:</strong> ' + escapeHtml(personDraft.name) + '</p>' +
-              '<p><strong>Tags:</strong> ' + escapeHtml((personDraft.tags || []).join(', ') || 'none yet') + '</p>' +
-              '<p><strong>Next follow-up:</strong> ' + escapeHtml(personDraft.followUpSuggestion || 'n/a') + '</p>' +
-              '<p><strong>Self signal:</strong> energy ' + escapeHtml(String(selfDraft.energy ?? 0)) + ' · ' + escapeHtml((selfDraft.emotions || []).join(', ') || 'neutral') + '</p>' +
-            '</section>'
-          : '';
-
-        const mirrorBlock = topThemes.length
-          ? '<section class="workspace-block"><h4>Mirror context</h4><div class="chip-row">' +
-              topThemes.map((theme) => '<span class="pill tone-soft">' + escapeHtml((theme.theme || 'theme') + ' (' + theme.count + ')') + '</span>').join('') +
-            '</div></section>'
+            '</div>'
           : '';
 
         const transcriptionBlock = transcription.message
-          ? '<section class="workspace-block"><h4>Voice status</h4><p>' + escapeHtml(transcription.message) + '</p></section>'
+          ? '<div class="workspace-note">' + escapeHtml(transcription.message) + '</div>'
           : '';
 
-        const eventSuggestionBlock = eventSuggestion.title
+        const eventSuggestionBlock = ui.showEventSuggestion && eventSuggestion.title
           ? '<section class="workspace-block"><h4>Suggested event</h4>' +
-              '<p><strong>' + escapeHtml(eventSuggestion.title) + '</strong></p>' +
-              '<p>' + escapeHtml((eventSuggestion.payload && eventSuggestion.payload.summary) || '') + '</p>' +
-              '<small>language strategy: ' + escapeHtml(eventSuggestion.languageStrategy || 'platform-native') + '</small>' +
+              '<article class="stack-card compact-card">' +
+                '<div class="stack-meta"><strong>' + escapeHtml(eventSuggestion.title) + '</strong><span>' + escapeHtml(eventSuggestion.languageStrategy || 'platform-native') + '</span></div>' +
+                '<p>' + escapeHtml((eventSuggestion.payload && eventSuggestion.payload.summary) || '') + '</p>' +
+              '</article>' +
             '</section>'
           : '';
 
         const actions = '<div class="inline-actions action-strip">' +
-          (payload.intent !== 'search'
+          (ui.showMemoryAction
             ? '<button type="button" class="secondary-button" data-workspace-action="save-memory" data-response-id="' + escapeHtml(payload.responseId) + '">Save Memory</button>'
             : '') +
-          (eventSuggestion.title
+          (ui.showEventSuggestion && eventSuggestion.title
             ? '<button type="button" class="secondary-button" data-workspace-action="create-event" data-response-id="' + escapeHtml(payload.responseId) + '">Create Event</button>'
             : '') +
-          '</div>';
+        '</div>';
 
         return '<article class="chat-bubble system workspace-assistant">' +
           '<div class="stack-meta"><strong>SocialOS</strong><span>' + escapeHtml(payload.intent || 'mixed') + '</span></div>' +
           '<p>' + escapeHtml(payload.summary || '') + '</p>' +
           transcriptionBlock +
-          draftBlock +
+          focusCard +
           peopleBlock +
           eventBlock +
           eventSuggestionBlock +
-          mirrorBlock +
           laneBlock +
           actions +
         '</article>';
@@ -2028,41 +2109,25 @@ function renderClientScript() {
 
         const response = await apiRequest('/capture/assets', payload, 'POST');
         if (!response.ok) {
-          renderResult(resultNode, response.payload);
+          renderWorkspaceComposerResult(resultNode, response.payload?.error || 'Attachment upload failed.', false);
           return null;
         }
 
         if (response.payload.asset) {
           appendCaptureAsset(response.payload.asset);
-          appendWorkspaceSystemTurn(
-            'Asset uploaded',
-            '<p>' + escapeHtml(response.payload.asset.fileName || response.payload.asset.assetId) + ' is now attached to the chat. ' +
-              escapeHtml(response.payload.asset.extractedText || response.payload.asset.previewText || 'No extracted text yet.') + '</p>'
-          );
           if (statusNode) {
-            statusNode.innerHTML = '<strong>Attachment ready</strong><p>The file is attached to the current chat turn.</p>';
+            statusNode.innerHTML = '<strong>Attached</strong><p>' +
+              escapeHtml(response.payload.asset.fileName || response.payload.asset.assetId) +
+              ' is ready in the composer.</p>';
           }
+          renderWorkspaceComposerResult(resultNode, '');
 
           if (autoSend) {
             const textField = composer.elements.text;
             if (textField && !String(textField.value || '').trim()) {
               textField.value = response.payload.asset.extractedText || response.payload.asset.previewText || '';
             }
-            if (String(textField?.value || '').trim()) {
-              await handleWorkspaceChat(composer, composer.querySelector('button[type="submit"]'), { silentUserTurn: true });
-            } else {
-              const openAiReady = composer.dataset.openaiTranscriptionReady === 'true';
-              appendWorkspaceSystemTurn(
-                'Voice note needs transcription',
-                '<p>Your recording was attached, but there is no transcript yet. ' +
-                  escapeHtml(
-                    openAiReady
-                      ? 'The server did not return a transcript this time, so please type a short fallback summary or try again.'
-                      : 'Add OPENAI_API_KEY to .env or use a browser with built-in speech recognition if you want voice to behave like ChatGPT.'
-                  ) +
-                '</p>'
-              );
-            }
+            await handleWorkspaceChat(composer, composer.querySelector('button[type="submit"]'));
           }
         }
 
@@ -2075,7 +2140,7 @@ function renderClientScript() {
         const assets = [...captureState.assets];
 
         if (!text && !assets.length) {
-          renderResult(resultNode, { error: 'Type a message or attach a file first.' });
+          renderWorkspaceComposerResult(resultNode, 'Type a message or attach a file first.', false);
           return;
         }
 
@@ -2094,28 +2159,23 @@ function renderClientScript() {
             'POST'
           );
 
-          renderResult(resultNode, response.payload);
-
           if (response.ok) {
             captureState.workspaceResponses.set(response.payload.responseId, response.payload);
             appendWorkspaceHtml(renderWorkspaceAssistantTurn(response.payload));
             form.reset();
             captureState.assets = [];
             updateCaptureAssetInputs();
+            renderWorkspaceComposerResult(resultNode, '');
             if (document.querySelector('[data-audio-status]')) {
               document.querySelector('[data-audio-status]').innerHTML =
-                '<strong>Ready</strong><p>Send another message, voice note, screenshot, or business card whenever you want.</p>';
+                '<strong>Ready</strong><p>Keep typing, talking, or attaching files in the same thread.</p>';
             }
-            if (window.speechSynthesis && (response.payload.transcription?.transcribedAudioAssets || 0) > 0) {
-              const utterance = new SpeechSynthesisUtterance(String(response.payload.summary || ''));
-              const selectedLang = String(form.elements.voiceLang?.value || 'auto');
-              utterance.lang = selectedLang === 'auto' ? (navigator.language || 'en-US') : selectedLang;
-              window.speechSynthesis.cancel();
-              window.speechSynthesis.speak(utterance);
-            }
+            form.elements.text?.focus();
+          } else {
+            renderWorkspaceComposerResult(resultNode, response.payload?.error || 'Chat request failed.', false);
           }
         } catch (error) {
-          renderResult(resultNode, { error: error.message || String(error) });
+          renderWorkspaceComposerResult(resultNode, error.message || String(error), false);
         } finally {
           setButtonBusy(submitter, false);
         }
@@ -2397,6 +2457,17 @@ function renderClientScript() {
         submitApiForm(form, event.submitter || form.querySelector('button[type="submit"]'));
       });
 
+      document.addEventListener('keydown', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLTextAreaElement)) return;
+        if (!target.hasAttribute('data-workspace-input')) return;
+        if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
+        const form = target.closest('form[data-workspace-chat-form]');
+        if (!form) return;
+        event.preventDefault();
+        form.requestSubmit(form.querySelector('button[type="submit"]'));
+      });
+
       document.addEventListener('click', async (event) => {
         const copyButton = event.target.closest('[data-copy-text]');
         const removeAssetButton = event.target.closest('[data-remove-asset]');
@@ -2466,13 +2537,16 @@ function renderClientScript() {
           if (!captureState.recorder) {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             captureState.recordChunks = [];
+            await startAudioMeter(stream);
             captureState.recorder = new MediaRecorder(stream);
             captureState.recorder.ondataavailable = (recordEvent) => {
               if (recordEvent.data.size > 0) captureState.recordChunks.push(recordEvent.data);
             };
             captureState.recorder.start();
             recordToggle.dataset.originalLabel = recordToggle.textContent;
-            recordToggle.textContent = 'Stop';
+            recordToggle.textContent = 'Recording';
+            recordToggle.setAttribute('aria-pressed', 'true');
+            recordToggle.classList.add('is-recording');
 
             const textField = form?.elements?.text;
             if (SpeechRecognition && textField) {
@@ -2491,7 +2565,8 @@ function renderClientScript() {
               captureState.recognition.start();
             }
 
-            statusNode.innerHTML = '<strong>Recording</strong><p>Speak naturally, then tap the same Mic button again to finish and send.</p>';
+            renderWorkspaceComposerResult(form?.querySelector('[data-form-result]'), '');
+            statusNode.innerHTML = '<strong>Recording</strong><p>Speak naturally. Tap Mic again to send the voice turn.</p>';
             return;
           }
 
@@ -2501,10 +2576,12 @@ function renderClientScript() {
             statusNode.innerHTML = '<strong>Uploading voice note</strong><p>Adding this recording to the current chat turn.</p>';
             await uploadWorkspaceAsset(file, { autoSend: true });
             recordToggle.textContent = recordToggle.dataset.originalLabel || 'Mic';
-            statusNode.innerHTML = '<strong>Voice sent</strong><p>Your voice note has been attached and routed through the chat workflow.</p>';
+            recordToggle.setAttribute('aria-pressed', 'false');
+            recordToggle.classList.remove('is-recording');
           };
 
           captureState.recorder.stop();
+          stopAudioMeter();
           captureState.recorder.stream.getTracks().forEach((track) => track.stop());
           if (captureState.recognition) {
             captureState.recognition.stop();
