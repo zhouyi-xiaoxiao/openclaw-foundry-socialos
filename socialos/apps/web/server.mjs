@@ -1034,32 +1034,33 @@ async function renderQuickCapturePage(page) {
           </div>
         </div>
         ${renderWorkspaceThreadSeed(captures)}
-        <div class="workspace-asset-tray" data-workspace-assets>
-          ${assets.length ? assets.slice(0, 3).map((asset) => `<span class="asset-chip tone-soft">${escapeHtml(asset.fileName || asset.assetId)}</span>`).join('') : ''}
-        </div>
-        <form class="workspace-composer" data-workspace-chat-form data-openai-transcription-ready="${openAiReady ? 'true' : 'false'}">
-          <input type="hidden" name="source" value="workspace-chat" />
-          <input type="hidden" name="assetIds" value="" data-capture-asset-ids />
-          <input type="file" data-workspace-file accept="image/*,audio/*" multiple hidden />
-          <button type="button" class="secondary-button workspace-icon-button" data-workspace-attach>+</button>
-          <textarea name="text" rows="2" data-workspace-input placeholder="像聊天一样发一句。回车发送，Shift+回车换行。"></textarea>
-          <div class="workspace-composer-controls">
-            <div class="audio-meter" data-audio-meter aria-hidden="true">
-              ${Array.from({ length: 14 }, (_, index) => `<span class="audio-meter-bar" data-audio-meter-bar="${index}"></span>`).join('')}
-            </div>
-            <select name="voiceLang" class="workspace-lang-select" aria-label="Voice language">
-              <option value="zh-CN" selected>中文</option>
-              <option value="en-US">English</option>
-              <option value="ja-JP">日本語</option>
-              <option value="es-ES">Español</option>
-            </select>
-            <button type="button" class="secondary-button workspace-icon-button" data-audio-record-toggle>Mic</button>
-            <button type="submit">Send</button>
+        <div class="workspace-composer-shell">
+          <div class="workspace-asset-tray" data-workspace-assets>
+            ${assets.length ? assets.slice(0, 3).map((asset) => `<span class="asset-chip tone-soft">${escapeHtml(asset.fileName || asset.assetId)}</span>`).join('') : ''}
           </div>
-        </form>
-        <div class="info-card compact-info" data-audio-status>
-          <strong>Voice + multimodal</strong>
-          <p>点一下 Mic 开始说，再点一下就发出去。优先用浏览器语音识别；如果配置了 OpenAI key，也会接上服务端转写。</p>
+          <form class="workspace-composer" data-workspace-chat-form data-openai-transcription-ready="${openAiReady ? 'true' : 'false'}">
+            <input type="hidden" name="source" value="workspace-chat" />
+            <input type="hidden" name="assetIds" value="" data-capture-asset-ids />
+            <input type="file" data-workspace-file accept="image/*,audio/*" multiple hidden />
+            <button type="button" class="secondary-button workspace-icon-button workspace-attach-button" data-workspace-attach>+</button>
+            <textarea name="text" rows="2" data-workspace-input placeholder="Ask anything about people, follow-ups, events, or drafts."></textarea>
+            <div class="workspace-composer-controls">
+              <div class="audio-meter" data-audio-meter aria-hidden="true">
+                ${Array.from({ length: 14 }, (_, index) => `<span class="audio-meter-bar" data-audio-meter-bar="${index}"></span>`).join('')}
+              </div>
+              <select name="voiceLang" class="workspace-lang-select" aria-label="Voice language">
+                <option value="zh-CN" selected>中文</option>
+                <option value="en-US">English</option>
+                <option value="ja-JP">日本語</option>
+                <option value="es-ES">Español</option>
+              </select>
+              <button type="button" class="secondary-button workspace-icon-button" data-audio-record-toggle>Mic</button>
+              <button type="submit" class="workspace-send-button">↗</button>
+            </div>
+          </form>
+          <div class="workspace-composer-note" data-audio-status>
+            点一下 Mic 开始说，再点一下发出去。回车发送，Shift+回车换行。
+          </div>
         </div>
         <div class="form-result" data-form-result hidden></div>
       </section>
