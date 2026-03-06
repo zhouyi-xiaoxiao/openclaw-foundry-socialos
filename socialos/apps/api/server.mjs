@@ -3041,6 +3041,7 @@ async function buildWorkspaceModelAssist({
     '- Choose one primaryTarget and up to three secondaryTargets.',
     '- Choose up to three lightweight actions.',
     '- If the user is describing a newly met person, prioritize the contact draft instead of unrelated memory hits.',
+    '- If the user is trying to identify, recall, or search for an existing person or event, do not choose contactDraft unless they explicitly ask to create or update.',
     '- If the user is simply chatting, acknowledging, or continuing the conversation without asking for structure, choose primaryTarget none, no secondaryTargets, and no actions.',
     '- Do not sound like an internal system or a log.',
     'Valid primaryTarget/secondaryTargets values:',
@@ -3175,27 +3176,29 @@ function buildWorkspacePresentation({
   const suggestedEventCard = showEventSuggestion ? buildWorkspaceSuggestedEventCard(suggestedEvent) : null;
   const draftResultCard = buildWorkspaceDraftCard(relatedDrafts[0]);
   const mirrorCard = buildWorkspaceMirrorCard(latestMirror, intent === 'self');
+  const mode = normalizeWorkspacePresentationMode(modelAssist?.plan?.mode, fallbackMode);
+  const allowDraftCard = mode !== 'search';
+  const captureCard = allowDraftCard ? draftCard : null;
   const availableCards = {
-    contactDraft: draftCard,
+    contactDraft: captureCard,
     contact: personCard,
     event: eventCard,
     suggestedEvent: suggestedEventCard,
     draft: draftResultCard,
     mirror: mirrorCard,
   };
-  const mode = normalizeWorkspacePresentationMode(modelAssist?.plan?.mode, fallbackMode);
 
   let primaryCard = null;
   if (mode === 'capture') {
-    primaryCard = draftCard || personCard || suggestedEventCard || mirrorCard;
+    primaryCard = captureCard || personCard || suggestedEventCard || mirrorCard;
   } else if (mode === 'search') {
     primaryCard = personCard || eventCard || draftResultCard || mirrorCard;
   } else if (mode === 'campaign') {
-    primaryCard = suggestedEventCard || draftResultCard || eventCard || draftCard;
+    primaryCard = suggestedEventCard || draftResultCard || eventCard || captureCard;
   } else if (mode === 'self') {
-    primaryCard = mirrorCard || draftCard || personCard;
+    primaryCard = mirrorCard || captureCard || personCard;
   } else {
-    primaryCard = draftCard || personCard || suggestedEventCard || draftResultCard || mirrorCard;
+    primaryCard = captureCard || personCard || suggestedEventCard || draftResultCard || mirrorCard;
   }
 
   const modelPrimaryTarget = normalizeWorkspaceCardTarget(modelAssist?.plan?.primaryTarget);
@@ -3207,7 +3210,7 @@ function buildWorkspacePresentation({
 
   let secondaryCards = dedupePresentationCards(
     [
-      primaryCard === draftCard ? personCard : draftCard,
+      primaryCard === captureCard ? personCard : captureCard,
       primaryCard === personCard ? eventCard : personCard,
       primaryCard === eventCard ? draftResultCard : eventCard,
       primaryCard === suggestedEventCard ? mirrorCard : suggestedEventCard,

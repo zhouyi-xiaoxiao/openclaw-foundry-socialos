@@ -109,6 +109,10 @@ async function main() {
         (fuzzyWorkspace.presentation?.related?.people || []).length >= 1,
       'descriptive workspace recall should surface contact context'
     );
+    assert(
+      fuzzyWorkspace.presentation?.primaryCard?.title !== 'Unconfirmed contact',
+      'descriptive workspace recall should not fall back to a contact draft card'
+    );
 
     const casualWorkspace = await postJson(api.baseUrl, '/workspace/chat', {
       text: '好的，那我们先顺着聊就好。',
