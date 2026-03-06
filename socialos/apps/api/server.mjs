@@ -666,17 +666,17 @@ function inferScenePhrase(rawText, language) {
   const location = localizeLocationLabel(inferLocation(source), language);
   if (source.includes('hackathon')) {
     return language === 'zh'
-      ? `${location ? `${location} 的 ` : ''}黑客松现场`
+      ? `${location ? `${location}的` : ''}黑客松现场`
       : `${location ? `a hackathon in ${location}` : 'a hackathon'}`;
   }
   if (source.includes('meetup') || source.includes('builder meetup')) {
     return language === 'zh'
-      ? `${location ? `${location} 的 ` : ''}开发者聚会`
+      ? `${location ? `${location}的` : ''}开发者聚会`
       : `${location ? `a builder meetup in ${location}` : 'a builder meetup'}`;
   }
   if (source.includes('conference') || source.includes('summit')) {
     return language === 'zh'
-      ? `${location ? `${location} 的 ` : ''}活动交流`
+      ? `${location ? `${location}的` : ''}活动交流`
       : `${location ? `a conference conversation in ${location}` : 'a conference conversation'}`;
   }
   return language === 'zh' ? '最近的一次交流' : 'a recent conversation';
@@ -1099,15 +1099,15 @@ function buildPackageSections(platformRule, event, language, options) {
           : `What matters most if we unpack ${localizedContext.localizedTitle}?`;
       case 'xiaohongshu':
         return language === 'zh'
-          ? `${localizedContext.localizedTitle} 做完后，我最想提醒大家的 3 件事`
+          ? `做完「${localizedContext.localizedTitle}」后，我最想提醒大家的 3 件事`
           : `3 practical notes after shipping ${localizedContext.localizedTitle}`;
       case 'wechat_moments':
         return language === 'zh'
-          ? `关于${localizedContext.localizedTitle}的一个近况`
+          ? `关于「${localizedContext.localizedTitle}」的一个近况`
           : `A quick update on ${localizedContext.localizedTitle}`;
       case 'wechat_official':
         return language === 'zh'
-          ? `${localizedContext.localizedTitle}：这次推进里最值得复用的方法`
+          ? `「${localizedContext.localizedTitle}」：这次推进里最值得复用的方法`
           : `${localizedContext.localizedTitle}: the method worth reusing`;
       default:
         return language === 'zh'
@@ -1215,7 +1215,7 @@ function buildDraftContent(platformRule, event, language, options = {}) {
               '',
               sections.contextLead,
               '先给结论：如果一个 SocialOS 真的要能用，最重要的不是功能列表，而是录入、检索、生成和发布之间的数据连续性。',
-              `这次 ${sections.localizedTitle} 的关键背景是：${sections.detailLine}`,
+              `围绕「${sections.localizedTitle}」的关键背景是：${sections.detailLine}`,
               '我会重点展开 3 个部分：为什么这样设计、哪些地方卡住、现在怎么让它至少能稳定演示。',
               sections.cta,
               '',
