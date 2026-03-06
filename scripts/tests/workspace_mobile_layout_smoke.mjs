@@ -13,8 +13,8 @@ async function main() {
 
     assert(response.status === 200, `/quick-capture should return 200 (got ${response.status})`);
     assert(html.includes('data-mobile-context-sections'), 'workspace should expose a dedicated mobile context container');
-    assert(html.includes('.workspace-home-header'), 'workspace should include the unified home header styles');
-    assert(html.includes('.workspace-secondary-grid'), 'workspace should include secondary card grid styles');
+    assert(html.includes('.workspace-summary-strip'), 'workspace should include the unified summary strip styles');
+    assert(html.includes('data-workspace-rail-tabs'), 'workspace should render a tabbed context rail');
     assert(
       html.includes('@media (max-width: 1080px)') &&
         html.includes('grid-template-columns: 1fr;') &&

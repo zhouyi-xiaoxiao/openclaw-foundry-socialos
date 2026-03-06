@@ -251,10 +251,15 @@ async function main() {
     assert(Array.isArray(bootstrap.topActions), 'workspace bootstrap should expose top actions');
     assert(Array.isArray(bootstrap.recentContacts), 'workspace bootstrap should expose recent contacts');
     assert(Array.isArray(bootstrap.recentEvents), 'workspace bootstrap should expose recent events');
+    assert(typeof bootstrap.systemStatus?.summary === 'string', 'workspace bootstrap should expose system status');
     assert(Array.isArray(bootstrap.queuePreview), 'workspace bootstrap should expose queue preview');
     const previewForDraft = bootstrap.queuePreview.filter((task) => task.draftId === generated.drafts[0].draftId);
     assert(previewForDraft.length === 1, 'workspace queue preview should avoid duplicate queue rows');
     assert(typeof bootstrap.voiceReadiness?.summary === 'string', 'workspace bootstrap should expose voice readiness');
+
+    const eventDetail = await getJson(api.baseUrl, `/events/${encodeURIComponent(event.eventId)}`);
+    assert(eventDetail.event?.eventId === event.eventId, 'event detail endpoint should return the requested event');
+    assert(Array.isArray(eventDetail.relatedDrafts), 'event detail endpoint should expose related drafts');
 
     const ask = await getJson(
       api.baseUrl,

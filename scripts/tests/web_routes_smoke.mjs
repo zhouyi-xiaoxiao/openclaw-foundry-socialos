@@ -21,6 +21,7 @@ async function expectPage(baseUrl, page) {
   if (page.path === '/settings') {
     assert(html.includes('Structured Task Intake'), 'settings page should render structured task intake');
     assert(html.includes('Foundry Execution Surface'), 'settings page should render generic execution panel');
+    assert(html.includes('Ops Digest'), 'settings page should render dev digest content inside settings');
   }
 }
 
@@ -46,6 +47,18 @@ async function main() {
       `/ask redirect mismatch: ${ask.headers.get('location')}`
     );
 
+    const people = await fetch(`${web.baseUrl}/people`, { redirect: 'manual' });
+    assert(people.status === 302, `/people should redirect to workspace memory (got ${people.status})`);
+    assert(people.headers.get('location') === '/quick-capture?panel=people', `/people redirect mismatch: ${people.headers.get('location')}`);
+
+    const events = await fetch(`${web.baseUrl}/events`, { redirect: 'manual' });
+    assert(events.status === 302, `/events should redirect to workspace events (got ${events.status})`);
+    assert(events.headers.get('location') === '/quick-capture?panel=events', `/events redirect mismatch: ${events.headers.get('location')}`);
+
+    const digest = await fetch(`${web.baseUrl}/dev-digest`, { redirect: 'manual' });
+    assert(digest.status === 302, `/dev-digest should redirect to settings (got ${digest.status})`);
+    assert(digest.headers.get('location') === '/settings?panel=ops', `/dev-digest redirect mismatch: ${digest.headers.get('location')}`);
+
     for (const page of DASHBOARD_PAGES) {
       await expectPage(web.baseUrl, page);
     }
@@ -56,13 +69,19 @@ async function main() {
       (workspaceHtml.match(/<form[^>]+data-workspace-chat-form/gu) || []).length === 1,
       'unified workspace should render exactly one main chat form'
     );
+    assert(workspaceHtml.includes('data-workspace-rail-tabs'), 'workspace should render a tabbed context rail');
     assert(!workspaceHtml.includes('href="/cockpit"'), 'unified nav should not keep a separate cockpit link');
     assert(!workspaceHtml.includes('href="/ask"'), 'unified nav should not keep a separate ask link');
+    assert(!workspaceHtml.includes('href="/people"'), 'primary nav should not keep a separate contacts entry');
+    assert(!workspaceHtml.includes('href="/events"'), 'primary nav should not keep a separate logbook entry');
+    assert(!workspaceHtml.includes('href="/dev-digest"'), 'primary nav should not keep a separate dev digest entry');
 
-    const peopleDetail = await fetch(`${web.baseUrl}/people/demo-person`);
-    const peopleDetailHtml = await peopleDetail.text();
-    assert(peopleDetail.status === 200, `/people/:id should resolve through the People page (got ${peopleDetail.status})`);
-    assert(peopleDetailHtml.includes('<h1>Contacts</h1>'), '/people/:id should still render the Contacts page shell');
+    const peopleDetail = await fetch(`${web.baseUrl}/people/demo-person`, { redirect: 'manual' });
+    assert(peopleDetail.status === 302, `/people/:id should redirect into the unified workspace (got ${peopleDetail.status})`);
+    assert(
+      peopleDetail.headers.get('location') === '/quick-capture?panel=people&contactId=demo-person',
+      `/people/:id redirect mismatch: ${peopleDetail.headers.get('location')}`
+    );
 
     const missing = await fetch(`${web.baseUrl}/missing-route`, { redirect: 'manual' });
     assert(missing.status === 404, `missing route should return 404 (got ${missing.status})`);

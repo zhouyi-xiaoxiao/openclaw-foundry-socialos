@@ -563,7 +563,8 @@ function renderWorkspaceSummaryStrip(bootstrap = {}, requestUrl) {
     <section class="workspace-summary-strip">
       <div class="workspace-summary-copy">
         <p class="eyebrow">Workspace</p>
-        <h1>One place to remember, write, and follow through.</h1>
+        <h1>Workspace</h1>
+        <p class="workspace-home-title">One place to remember, write, and follow through.</p>
         <p>${escapeHtml(
           bootstrap.summaryText ||
             'Capture what just happened, recall the right person or event, and only then branch into drafts or follow-up.'
@@ -1871,9 +1872,16 @@ async function renderAskPage(page, requestUrl) {
 }
 
 async function renderQuickCapturePage(page, requestUrl) {
-  const [bootstrapRes, assetsRes] = await Promise.all([
+  const requestedPanel = resolveWorkspacePanel(requestUrl.searchParams.get('panel'));
+  const requestedContactId = readOptionalString(requestUrl.searchParams.get('contactId'), '');
+  const requestedEventId = readOptionalString(requestUrl.searchParams.get('eventId'), '');
+  const activePanel = requestedEventId ? 'events' : requestedContactId ? 'people' : requestedPanel;
+
+  const [bootstrapRes, assetsRes, contactDetailRes, eventDetailRes] = await Promise.all([
     fetchJsonSafe('/workspace/bootstrap'),
     fetchJsonSafe('/capture/assets?limit=8'),
+    requestedContactId ? fetchJsonSafe(`/people/${encodeURIComponent(requestedContactId)}`) : Promise.resolve(null),
+    requestedEventId ? fetchJsonSafe(`/events/${encodeURIComponent(requestedEventId)}`) : Promise.resolve(null),
   ]);
   const bootstrap = bootstrapRes.ok
     ? bootstrapRes.payload || {}
@@ -1888,24 +1896,31 @@ async function renderQuickCapturePage(page, requestUrl) {
         recentCheckins: [],
         recentCaptures: [],
         agentLaneSummary: [],
+        systemStatus: { publishMode: 'dry-run', loopbackOnly: true, foundryEnabled: false, summary: 'Workspace bootstrap unavailable.' },
         voiceReadiness: { openAiConfigured: false },
       };
   const assets = assetsRes.ok ? assetsRes.payload.assets || [] : [];
+  const contactDetail = contactDetailRes?.ok ? contactDetailRes.payload : null;
+  const eventDetail = eventDetailRes?.ok ? eventDetailRes.payload : null;
   const openAiReady = Boolean(bootstrap.voiceReadiness?.openAiConfigured);
   const autoQuery = readOptionalString(requestUrl.searchParams.get('q'), '');
   const prefill = readOptionalString(requestUrl.searchParams.get('prefill'), autoQuery);
+  const drawerHtml = activePanel === 'events'
+    ? renderWorkspaceEventDrawer(eventDetail, requestUrl)
+    : renderWorkspaceContactDrawer(contactDetail, requestUrl);
 
   return `
-    ${renderWorkspaceHomeHeader(bootstrap)}
+    ${renderWorkspaceSummaryStrip(bootstrap, requestUrl)}
     <div class="workspace-layout">
       <section class="panel workspace-main-panel">
         <div class="panel-head">
           <div>
             <h2>Workspace</h2>
-            <p class="panel-subtitle">Ask naturally, note who you met, or promote a thread into an event only when it is actually useful.</p>
+            <p class="panel-subtitle">Ask naturally, note who you met, and only open memory, events, or drafts when they actually help.</p>
           </div>
         </div>
         ${renderWorkspaceThreadSeed(bootstrap.recentCaptures || [])}
+        ${drawerHtml}
         <div class="workspace-composer-shell">
           <div class="workspace-asset-tray" data-workspace-assets>
             ${assets.length ? assets.slice(0, 3).map((asset) => `<span class="asset-chip tone-soft">${escapeHtml(asset.fileName || asset.assetId)}</span>`).join('') : ''}
@@ -1939,28 +1954,7 @@ async function renderQuickCapturePage(page, requestUrl) {
         </div>
         <div class="form-result" data-form-result hidden></div>
       </section>
-      <aside class="workspace-side" data-mobile-context-sections>
-        ${renderPanel('Recent Contacts', renderPeopleCards(bootstrap.recentContacts || []), 'Cleaner memory cards stay one click away from the main chat.')}
-        ${renderPanel('Recent Events', renderEventCards(bootstrap.recentEvents || []), 'Only the event signal that matters should survive into this rail.')}
-        ${renderPanel('Draft Shelf', renderAskDraftCards(bootstrap.recentDrafts || []), 'Recent packages stay short and readable so you can jump back in fast.')}
-        ${renderPanel('Queue Preview', renderWorkspaceQueuePreview(bootstrap.queuePreview || []), 'Manual publish steps stay visible without turning the page into an ops wall.')}
-        ${renderPanel(
-          'Latest Mirror Signal',
-          bootstrap.latestMirror
-            ? `
-                <div class="stack-card">
-                  <div class="stack-meta">
-                    ${renderPill(bootstrap.latestMirror.rangeLabel || 'mirror', 'accent')}
-                    <span>${escapeHtml(formatDateTime(bootstrap.latestMirror.createdAt))}</span>
-                  </div>
-                  <p>${escapeHtml(truncate(bootstrap.latestMirror.summaryText || bootstrap.latestMirror.content || '', 220))}</p>
-                </div>
-              `
-            : renderCheckinCards((bootstrap.recentCheckins || []).slice(0, 3)),
-          'Self signal is still part of the same workspace, not a separate tool.'
-        )}
-        ${renderPanel('Agent Lane Summary', renderAgentLaneSnapshot({ agents: bootstrap.agentLaneSummary || [] }), 'Agent coordination only shows up as support, not as a competing dashboard.')}
-      </aside>
+      ${renderWorkspaceRail(activePanel, bootstrap, requestUrl)}
     </div>
   `;
 }
@@ -2409,10 +2403,14 @@ async function renderDevDigestPage(page) {
 }
 
 async function renderSettingsPage(page) {
-  const [runtimeRes, clusterRes, tasksRes] = await Promise.all([
+  const [runtimeRes, clusterRes, tasksRes, statusRes, runsRes, blockedOpsRes, digestRes] = await Promise.all([
     fetchJsonSafe('/settings/runtime'),
     fetchJsonSafe('/ops/cluster'),
     fetchJsonSafe('/ops/tasks?limit=8'),
+    fetchJsonSafe('/ops/status'),
+    fetchJsonSafe('/ops/runs?limit=8'),
+    fetchJsonSafe('/ops/blocked'),
+    fetchJsonSafe('/dev-digest?limit=8'),
   ]);
   const runtime = runtimeRes.ok ? runtimeRes.payload : {};
   const cluster = clusterRes.ok ? clusterRes.payload.foundry : runtime.foundry;
@@ -2421,6 +2419,11 @@ async function renderSettingsPage(page) {
   const embeddings = runtime.embeddings || {};
   const tasks = tasksRes.ok ? tasksRes.payload.tasks || [] : [];
   const healthStatus = cluster?.llmTaskHealth?.status || 'unknown';
+  const status = statusRes.ok ? statusRes.payload : {};
+  const runs = runsRes.ok ? runsRes.payload.runs || [] : [];
+  const digestBlocked = blockedOpsRes.ok ? blockedOpsRes.payload.blockedTasks || [] : [];
+  const digests = digestRes.ok ? digestRes.payload.digests || [] : [];
+  const latestRun = status.latestRun || runs[0] || null;
 
   return `
     ${renderHero(
@@ -2582,6 +2585,60 @@ async function renderSettingsPage(page) {
     ${renderPanel('Foundry Cluster', renderClusterCards(cluster), 'Each lane has a role now visible in the product.')}
     ${renderCodexSummary(codex)}
     ${renderPanel('Blocked Surface', renderBlockedList(blocked), 'This is the remaining queue you still need to push through credentials or platform-specific decisions.')}
+    <div class="grid two-up">
+      ${renderPanel(
+        'Ops Digest',
+        latestRun
+          ? `
+              <div class="stack">
+                <article class="stack-card">
+                  <div class="stack-meta">
+                    <code>${escapeHtml(latestRun.runId || 'unknown')}</code>
+                    <span>${escapeHtml(latestRun.status || 'unknown')}</span>
+                  </div>
+                  <p>${escapeHtml(latestRun.summary || 'No latest run summary yet.')}</p>
+                  <small>${escapeHtml(latestRun.next || 'No next step recorded.')}</small>
+                </article>
+                <article class="stack-card compact-card">
+                  <div class="chip-row">
+                    ${renderPill(readOptionalString(status.mode, 'unknown'), 'soft')}
+                    ${renderPill(`blocked ${String(status.queue?.blocked ?? digestBlocked.length)}`, digestBlocked.length ? 'warn' : 'good')}
+                    ${renderPill(formatDuration(status.health?.latestRunDurationMs), 'soft')}
+                  </div>
+                  <p>${escapeHtml(readOptionalString(status.latestDigest, 'No digest snapshot yet.'))}</p>
+                </article>
+              </div>
+            `
+          : renderEmptyState('No ops digest snapshot yet.'),
+        'Dev Digest now lives under Settings instead of competing with the main product navigation.'
+      )}
+      ${renderPanel(
+        'Recent Runs + Digest Feed',
+        `
+          ${renderDigestRunList(runs.slice(0, 4))}
+          ${renderPanel(
+            'Digest feed',
+            digests.length
+              ? `<div class="stack">${digests
+                  .slice(0, 4)
+                  .map(
+                    (item) => `
+                      <article class="stack-card compact-card">
+                        <div class="stack-meta">
+                          <strong>${escapeHtml(item.what)}</strong>
+                          <span>${escapeHtml(formatDateTime(item.created_at || item.createdAt))}</span>
+                        </div>
+                        <p>${escapeHtml(item.why || '')}</p>
+                      </article>
+                    `
+                  )
+                  .join('')}</div>`
+              : renderEmptyState('No digest feed rows yet.')
+          )}
+        `,
+        'Keep deeper run history in Settings, not in the product shell.'
+      )}
+    </div>
   `;
 }
 
@@ -2650,6 +2707,38 @@ function renderClientScript() {
           .replaceAll('>', '&gt;')
           .replaceAll('"', '&quot;')
           .replaceAll("'", '&#39;');
+      }
+
+      function buildWorkspaceHrefClient(params = {}) {
+        const url = new URL('/quick-capture', window.location.origin);
+        for (const [key, rawValue] of Object.entries(params)) {
+          const value = String(rawValue || '').trim();
+          if (value) url.searchParams.set(key, value);
+        }
+        return url.pathname + url.search;
+      }
+
+      function normalizeWorkspaceHrefClient(href) {
+        const raw = String(href || '').trim();
+        if (!raw) return '/quick-capture';
+        if (raw.startsWith('/people/')) {
+          return buildWorkspaceHrefClient({ panel: 'people', contactId: decodeURIComponent(raw.replace(/^\/people\//u, '')) });
+        }
+        if (raw === '/people') return buildWorkspaceHrefClient({ panel: 'people' });
+        if (raw.startsWith('/events/')) {
+          return buildWorkspaceHrefClient({ panel: 'events', eventId: decodeURIComponent(raw.replace(/^\/events\//u, '')) });
+        }
+        if (raw === '/events') return buildWorkspaceHrefClient({ panel: 'events' });
+        if (raw.startsWith('/self-mirror')) return buildWorkspaceHrefClient({ panel: 'mirror' });
+        if (raw.startsWith('/ask')) {
+          try {
+            const parsed = new URL(raw, window.location.origin);
+            return buildWorkspaceHrefClient({ q: parsed.searchParams.get('q') || '' });
+          } catch {
+            return buildWorkspaceHrefClient();
+          }
+        }
+        return raw;
       }
 
       function formDataToJson(form) {
@@ -2997,7 +3086,7 @@ function renderClientScript() {
             ? '<ul class="compact-list workspace-card-details">' + detailLines.map((line) => '<li>' + escapeHtml(line) + '</li>').join('') + '</ul>'
             : '') +
           (card.href
-            ? '<div class="inline-actions"><a class="mini-link" href="' + escapeHtml(card.href) + '">Open</a></div>'
+            ? '<div class="inline-actions"><a class="mini-link" href="' + escapeHtml(normalizeWorkspaceHrefClient(card.href)) + '">Open</a></div>'
             : '') +
         '</section>';
       }
@@ -3010,7 +3099,7 @@ function renderClientScript() {
               return '<button type="button" class="secondary-button" data-workspace-action="' + escapeHtml(action.action) + '" data-response-id="' + escapeHtml(payload.responseId) + '">' + escapeHtml(action.label || 'Open') + '</button>';
             }
             if (action.kind === 'link' && action.href) {
-              return '<a class="mini-link action-link" href="' + escapeHtml(action.href) + '">' + escapeHtml(action.label || 'Open') + '</a>';
+              return '<a class="mini-link action-link" href="' + escapeHtml(normalizeWorkspaceHrefClient(action.href)) + '">' + escapeHtml(action.label || 'Open') + '</a>';
             }
             return '';
           }).filter(Boolean).join('') +
@@ -3221,7 +3310,7 @@ function renderClientScript() {
               'Event created',
               '<p>' + escapeHtml(response.payload.event.title) + ' is now in the logbook.</p>',
               '<div class="inline-actions action-strip">' +
-                '<a class="mini-link" href="/events">Open Logbook</a>' +
+                '<a class="mini-link" href="' + escapeHtml(buildWorkspaceHrefClient({ panel: 'events', eventId: response.payload.event.eventId })) + '">Open Event</a>' +
                 '<a class="mini-link" href="/drafts?eventId=' + encodeURIComponent(response.payload.event.eventId) + '">Open Drafts</a>' +
                 '<button type="button" class="secondary-button" data-workspace-action="generate-drafts" data-response-id="' + escapeHtml(responseId) + '" data-event-id="' + escapeHtml(response.payload.event.eventId) + '">Generate 7 Drafts</button>' +
               '</div>'
@@ -3372,7 +3461,7 @@ function renderClientScript() {
               'Contact saved',
               '<p>' + escapeHtml(response.payload.person?.name || 'The contact') + ' is now in Contacts with a cleaner memory record.</p>',
               '<div class="inline-actions">' +
-                '<a class="mini-link" href="/people/' + encodeURIComponent(response.payload.person.personId) + '">Open Contact</a>' +
+                '<a class="mini-link" href="' + escapeHtml(buildWorkspaceHrefClient({ panel: 'people', contactId: response.payload.person.personId })) + '">Open Contact</a>' +
                 (workspacePayload?.suggestedEvent?.title
                   ? '<button type="button" class="secondary-button" data-workspace-action="create-event" data-response-id="' + escapeHtml(responseId) + '">Create Event</button>'
                   : '') +
@@ -4125,6 +4214,54 @@ function renderLayout({ currentPath, title, body }) {
         gap: 20px;
         align-items: start;
       }
+      .workspace-summary-strip {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+      .workspace-summary-copy,
+      .workspace-summary-actions,
+      .workspace-context-rail,
+      .workspace-drawer {
+        border-radius: 28px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(12px);
+      }
+      .workspace-summary-copy,
+      .workspace-summary-actions {
+        padding: 24px;
+      }
+      .workspace-summary-copy h1 {
+        margin-bottom: 10px;
+        font-size: clamp(28px, 3.8vw, 44px);
+      }
+      .workspace-summary-actions {
+        display: grid;
+        gap: 14px;
+      }
+      .workspace-action-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .workspace-action-card {
+        padding: 14px;
+        border-radius: 20px;
+        border: 1px solid rgba(22, 33, 50, 0.08);
+        background: rgba(255, 255, 255, 0.58);
+      }
+      .workspace-status-cluster {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+        padding: 14px 16px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.56);
+        border: 1px solid rgba(22, 33, 50, 0.08);
+      }
       .workspace-home-header {
         display: grid;
         grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
@@ -4259,6 +4396,56 @@ function renderLayout({ currentPath, title, body }) {
       }
       .workspace-side .stack-card {
         padding: 14px;
+      }
+      .workspace-context-rail {
+        position: sticky;
+        top: 24px;
+        padding: 18px;
+        max-height: calc(100vh - 48px);
+        overflow: auto;
+      }
+      .workspace-rail-tabs {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .workspace-rail-tab {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 42px;
+        padding: 0 12px;
+        border-radius: 999px;
+        text-decoration: none;
+        color: var(--ink-soft);
+        border: 1px solid rgba(22, 33, 50, 0.08);
+        background: rgba(255, 255, 255, 0.54);
+      }
+      .workspace-rail-tab.active {
+        color: var(--ink);
+        background: rgba(21, 111, 106, 0.12);
+        border-color: rgba(21, 111, 106, 0.18);
+      }
+      .workspace-rail-head {
+        margin-bottom: 14px;
+      }
+      .workspace-rail-body {
+        display: grid;
+        gap: 12px;
+      }
+      .workspace-drawer {
+        padding: 22px;
+      }
+      .workspace-drawer-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        margin-bottom: 16px;
+      }
+      .workspace-drawer-grid {
+        margin-top: 18px;
       }
       .workspace-secondary-grid {
         display: grid;
@@ -4655,6 +4842,7 @@ function renderLayout({ currentPath, title, body }) {
           padding: 20px 16px 120px;
         }
         .hero,
+        .workspace-summary-strip,
         .workspace-home-header,
         .two-up,
         .three-up,
@@ -4683,6 +4871,17 @@ function renderLayout({ currentPath, title, body }) {
           max-height: none;
           overflow: visible;
           padding-right: 0;
+        }
+        .workspace-context-rail {
+          position: static;
+          max-height: none;
+          overflow: visible;
+        }
+        .workspace-rail-tabs {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .workspace-action-grid {
+          grid-template-columns: 1fr;
         }
         .workspace-secondary-grid {
           grid-template-columns: 1fr;
@@ -4766,14 +4965,49 @@ async function routeRequest(req, res) {
     return;
   }
 
+  if (pathname === '/people') {
+    sendRedirect(res, 302, buildWorkspaceStateHref(requestUrl, { panel: 'people', eventId: '' }));
+    return;
+  }
+
+  if (pathname === '/events') {
+    sendRedirect(res, 302, buildWorkspaceStateHref(requestUrl, { panel: 'events', contactId: '' }));
+    return;
+  }
+
+  const eventDetailMatch = pathname.match(/^\/events\/([^/]+)$/u);
+  if (eventDetailMatch) {
+    sendRedirect(
+      res,
+      302,
+      buildWorkspaceHref({
+        panel: 'events',
+        eventId: decodeURIComponent(eventDetailMatch[1]),
+        q: readOptionalString(requestUrl.searchParams.get('q'), ''),
+      })
+    );
+    return;
+  }
+
+  if (pathname === '/dev-digest') {
+    sendRedirect(res, 302, '/settings?panel=ops');
+    return;
+  }
+
   let page = PAGE_BY_PATH.get(pathname);
   if (!page) {
     const peopleDetailMatch = pathname.match(/^\/people\/([^/]+)$/u);
     if (peopleDetailMatch) {
-      page = PAGE_BY_PATH.get('/people');
-      if (page && !requestUrl.searchParams.get('personId')) {
-        requestUrl.searchParams.set('personId', decodeURIComponent(peopleDetailMatch[1]));
-      }
+      sendRedirect(
+        res,
+        302,
+        buildWorkspaceHref({
+          panel: 'people',
+          contactId: decodeURIComponent(peopleDetailMatch[1]),
+          q: readOptionalString(requestUrl.searchParams.get('q'), ''),
+        })
+      );
+      return;
     }
   }
 
