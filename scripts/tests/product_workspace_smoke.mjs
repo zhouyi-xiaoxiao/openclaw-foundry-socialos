@@ -261,6 +261,13 @@ async function main() {
       note: 'workspace smoke approval',
     });
     assert(approved.status === 'manual_step_needed', 'approved queue task should transition to manual step needed');
+    const failed = await postJson(api.baseUrl, '/publish/complete', {
+      taskId: queuedSecondDraft.taskId,
+      outcome: 'failed',
+      operator: 'product_workspace_smoke',
+      note: 'intentional failed path to verify queue coherence',
+    });
+    assert(failed.status === 'failed', 'manual completion should allow failed outcomes');
 
     const queueTasks = await getJson(api.baseUrl, '/queue/tasks?limit=10');
     assert(Array.isArray(queueTasks.queueTasks), 'queue/tasks should return queue task list');
@@ -289,13 +296,15 @@ async function main() {
     assert(typeof cockpit.summaryText === 'string' && cockpit.summaryText.length > 0, 'cockpit should expose an action summary');
     assert(Array.isArray(cockpit.actions), 'cockpit should expose action cards');
     assert(Array.isArray(cockpit.followUps), 'cockpit should expose follow-up candidates');
-    const queuedForSecondDraft = cockpit.queue.awaitingApproval.filter((task) => task.draftId === generated.drafts[1].draftId);
     assert(
-      queuedForSecondDraft.length === 1,
-      'cockpit queue summary should dedupe repeated queue rows for the same draft/platform'
+      Array.isArray(cockpit.queue.awaitingApproval) && cockpit.queue.awaitingApproval.length === 0,
+      'cockpit queue summary should collapse superseded queued rows after manual/failed outcomes are recorded'
     );
     const manualForDraft = cockpit.queue.manualSteps.filter((task) => task.draftId === generated.drafts[0].draftId);
     assert(manualForDraft.length === 1, 'cockpit queue summary should include approved tasks awaiting manual handoff');
+    const failedForSecondDraft = (cockpit.queue.failed || []).filter((task) => task.draftId === generated.drafts[1].draftId);
+    assert(failedForSecondDraft.length === 1, 'cockpit queue summary should expose failed tasks for retry review');
+    assert(cockpit.counts?.failed >= 1, 'cockpit counts should include failed queue tasks');
 
     const bootstrap = await getJson(api.baseUrl, '/workspace/bootstrap');
     assert(typeof bootstrap.summaryText === 'string' && bootstrap.summaryText.length > 0, 'workspace bootstrap should expose a summary');
@@ -309,6 +318,10 @@ async function main() {
     assert(
       bootstrap.queuePreview[0]?.status === 'manual_step_needed',
       'workspace queue preview should prioritize manual handoff items'
+    );
+    assert(
+      bootstrap.queuePreview.some((task) => task.taskId === queuedSecondDraft.taskId && task.status === 'failed'),
+      'workspace queue preview should include failed tasks when capacity allows'
     );
     assert(typeof bootstrap.voiceReadiness?.summary === 'string', 'workspace bootstrap should expose voice readiness');
     assert(Array.isArray(bootstrap.recentDrafts), 'workspace bootstrap should expose recent drafts');

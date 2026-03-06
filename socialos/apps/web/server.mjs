@@ -500,13 +500,14 @@ function renderWorkspaceHomeHeader(bootstrap = {}) {
 
 function renderWorkspaceQueuePreview(queueTasks) {
   if (!Array.isArray(queueTasks) || !queueTasks.length) return renderEmptyState('No queue items waiting right now.');
+  const toneForStatus = (status) => (status === 'manual_step_needed' || status === 'failed' ? 'warn' : 'soft');
   return `<div class="stack">${queueTasks
     .map(
       (task) => `
         <article class="stack-card">
           <div class="stack-meta">
             <strong>${escapeHtml(task.eventTitle || task.platformLabel || 'Queue item')}</strong>
-            ${renderPill(task.status || 'queued', task.status === 'manual_step_needed' ? 'warn' : 'soft')}
+            ${renderPill(task.status || 'queued', toneForStatus(task.status))}
           </div>
           <p>${escapeHtml(summarizeCardCopy(task.content || task.metadata?.publishPackage?.preview || '', 136, 'Draft package is ready for the next publish step.'))}</p>
           <div class="chip-row">

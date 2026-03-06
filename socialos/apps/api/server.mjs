@@ -3624,6 +3624,7 @@ function buildCockpitSummary(statements) {
   const queuedTasks = recentQueueTasks.filter((task) => task.status === 'queued').slice(0, 4);
   const manualSteps = recentQueueTasks.filter((task) => task.status === 'manual_step_needed').slice(0, 4);
   const postedTasks = recentQueueTasks.filter((task) => task.status === 'posted').slice(0, 4);
+  const failedTasks = recentQueueTasks.filter((task) => task.status === 'failed').slice(0, 4);
 
   const actions = [];
   if (followUps[0]) {
@@ -3648,6 +3649,14 @@ function buildCockpitSummary(statements) {
       href: '/queue',
       reason: 'There is a manual publish step ready to be completed and logged.',
       tone: 'accent',
+    });
+  }
+  if (failedTasks[0]) {
+    actions.push({
+      title: `Review failed ${failedTasks[0].platformLabel} publish`,
+      href: '/queue',
+      reason: 'A publish attempt failed and needs manual review before retrying.',
+      tone: 'warn',
     });
   }
   if (eventsNeedingDrafts[0]) {
@@ -3676,11 +3685,13 @@ function buildCockpitSummary(statements) {
       queued: queuedTasks.length,
       manualSteps: manualSteps.length,
       posted: postedTasks.length,
+      failed: failedTasks.length,
       checkins: recentCheckins.length,
     },
     summaryText: [
       followUps.length ? `${followUps.length} relationship follow-up${followUps.length > 1 ? 's' : ''} are warm right now.` : 'No follow-ups are staged yet.',
       queuedTasks.length ? `${queuedTasks.length} draft${queuedTasks.length > 1 ? 's' : ''} waiting in queue.` : 'No queued drafts are waiting.',
+      failedTasks.length ? `${failedTasks.length} publish task${failedTasks.length > 1 ? 's need' : ' needs'} retry attention.` : 'No failed publish tasks need attention.',
       eventsNeedingDrafts.length ? `${eventsNeedingDrafts.length} logbook item${eventsNeedingDrafts.length > 1 ? 's' : ''} still need draft packages.` : 'Recent events already have content coverage.',
     ].join(' '),
     actions: actions.slice(0, 5),
@@ -3691,6 +3702,7 @@ function buildCockpitSummary(statements) {
     queue: {
       awaitingApproval: queuedTasks,
       manualSteps,
+      failed: failedTasks,
       posted: postedTasks,
     },
     latestMirror,
@@ -3718,6 +3730,7 @@ function buildWorkspaceBootstrapPayload(statements) {
   const queuePreview = [
     ...cockpit.queue.manualSteps,
     ...cockpit.queue.awaitingApproval,
+    ...cockpit.queue.failed,
   ].slice(0, 3);
 
   return {
