@@ -142,6 +142,19 @@ async function main() {
     assert(runtime.foundry?.agents?.length >= 1, 'settings/runtime should include foundry cluster summary');
     assert(runtime.foundry?.llmTaskHealth, 'settings/runtime should expose llm-task health');
 
+    const cockpit = await getJson(api.baseUrl, '/cockpit/summary');
+    assert(typeof cockpit.summaryText === 'string' && cockpit.summaryText.length > 0, 'cockpit should expose an action summary');
+    assert(Array.isArray(cockpit.actions), 'cockpit should expose action cards');
+    assert(Array.isArray(cockpit.followUps), 'cockpit should expose follow-up candidates');
+
+    const ask = await getJson(
+      api.baseUrl,
+      `/ask/search?query=${encodeURIComponent('Who is the product workspace tester?')}`
+    );
+    assert(typeof ask.answer === 'string' && ask.answer.length > 0, 'ask/search should return an answer');
+    assert(Array.isArray(ask.people) && ask.people.some((entry) => entry.name === 'Product Workspace Tester'), 'ask/search should surface matched people');
+    assert(Array.isArray(ask.actions), 'ask/search should return suggested actions');
+
     const tasks = await getJson(api.baseUrl, '/ops/tasks?limit=10');
     assert(Array.isArray(tasks.tasks), 'ops/tasks should return a task list');
 

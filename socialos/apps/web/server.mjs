@@ -12,10 +12,22 @@ export const DEFAULT_API_BASE_URL = readOptionalString(
 
 const PAGE_DEFINITIONS = [
   {
+    id: 'cockpit',
+    title: 'Cockpit',
+    path: '/cockpit',
+    summary: 'Your relationship, content, and self operating system in one daily action surface.',
+  },
+  {
     id: 'quick-capture',
     title: 'Workspace',
     path: '/quick-capture',
     summary: 'One chat surface for capture, memory lookup, event suggestions, and multi-agent coordination.',
+  },
+  {
+    id: 'ask',
+    title: 'Ask',
+    path: '/ask',
+    summary: 'Natural-language recall across contacts, events, drafts, and your recent self mirror.',
   },
   {
     id: 'people',
@@ -784,6 +796,91 @@ function renderQueueCards(queueTasks, publishMode) {
     .join('')}</div>`;
 }
 
+function renderCockpitActionCards(actions) {
+  if (!Array.isArray(actions) || !actions.length) return renderEmptyState('No action stack yet.');
+  return `<div class="stack">${actions
+    .map(
+      (action) => `
+        <article class="stack-card">
+          <div class="stack-meta">
+            <strong>${escapeHtml(action.title || 'Next action')}</strong>
+            ${renderPill(action.tone === 'warn' ? 'priority' : action.tone === 'good' ? 'ready' : 'next', action.tone || 'soft')}
+          </div>
+          <p>${escapeHtml(action.reason || '')}</p>
+          <div class="inline-actions">
+            <a class="mini-link" href="${escapeHtml(action.href || '/quick-capture')}">Open</a>
+          </div>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
+function renderFollowUpCards(followUps) {
+  if (!Array.isArray(followUps) || !followUps.length) return renderEmptyState('No relationship follow-ups are staged yet.');
+  return `<div class="stack">${followUps
+    .map(
+      (item) => `
+        <article class="stack-card">
+          <div class="stack-meta">
+            <strong>${escapeHtml(item.name)}</strong>
+            ${renderPill(item.followUpState || 'warm', item.followUpState === 'due now' ? 'warn' : item.followUpState === 'up next' ? 'accent' : 'soft')}
+          </div>
+          <p>${escapeHtml(item.followUpMessage || item.evidenceSnippet || 'Keep the relationship warm.')}</p>
+          <div class="chip-row">
+            ${(Array.isArray(item.tags) && item.tags.length ? item.tags : ['no-tags']).map((tag) => renderPill(tag, 'soft')).join('')}
+          </div>
+          <small>Last interaction: ${escapeHtml(formatDateTime(item.lastInteractionAt || item.updatedAt))}</small>
+          <div class="inline-actions">
+            <a class="mini-link" href="/people/${encodeURIComponent(item.personId)}">Open Contact</a>
+          </div>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
+function renderAskActionCards(actions) {
+  if (!Array.isArray(actions) || !actions.length) return renderEmptyState('No suggested action yet.');
+  return `<div class="stack">${actions
+    .map(
+      (action) => `
+        <article class="stack-card">
+          <div class="stack-meta">
+            <strong>${escapeHtml(action.label || 'Open')}</strong>
+            <span>${escapeHtml(action.href || '/ask')}</span>
+          </div>
+          <p>${escapeHtml(action.reason || '')}</p>
+          <div class="inline-actions">
+            <a class="mini-link" href="${escapeHtml(action.href || '/ask')}">Open</a>
+          </div>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
+function renderAskDraftCards(drafts) {
+  if (!Array.isArray(drafts) || !drafts.length) return renderEmptyState('No draft matches yet.');
+  return `<div class="stack">${drafts
+    .map(
+      (draft) => `
+        <article class="stack-card">
+          <div class="stack-meta">
+            <strong>${escapeHtml(draft.platformLabel || draft.platform || 'Draft')}</strong>
+            <span>${escapeHtml(formatLanguageLabel(draft.language))}</span>
+          </div>
+          <p>${escapeHtml(truncate(draft.snippet || draft.content || '', 180))}</p>
+          <div class="inline-actions">
+            <a class="mini-link" href="/drafts?eventId=${encodeURIComponent(draft.eventId || '')}">Open Drafts</a>
+            <code>${escapeHtml(draft.eventTitle || draft.eventId || draft.draftId)}</code>
+          </div>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
 function renderMirrorBlock(mirrorPayload) {
   const latestMirror = mirrorPayload.latestMirror || null;
   const checkins = Array.isArray(mirrorPayload.checkins) ? mirrorPayload.checkins : [];
@@ -839,6 +936,64 @@ function renderMirrorBlock(mirrorPayload) {
           : renderEmptyState('No mirror generated yet.')
       )}
       ${renderPanel('Recent Check-ins', renderCheckinCards(checkins.slice(0, 8)))}
+    </div>
+  `;
+}
+
+function renderAskResultBlock(payload) {
+  if (!payload?.query) {
+    return `
+      <div class="stack">
+        <article class="stack-card">
+          <strong>Try asking things like:</strong>
+          <ul class="compact-list">
+            <li>Who was the growth person I met at the hackathon?</li>
+            <li>最近最适合联系谁来帮我扩散 demo？</li>
+            <li>What event already has draft material?</li>
+            <li>我最近最有能量的场景是什么？</li>
+          </ul>
+        </article>
+      </div>
+    `;
+  }
+
+  const mirror = payload.latestMirror || null;
+  const mirrorThemes = Array.isArray(mirror?.themes) ? mirror.themes : [];
+
+  return `
+    <div class="stack">
+      <article class="stack-card">
+        <div class="stack-meta">
+          <strong>Answer</strong>
+          ${renderPill(payload.intent || 'mixed', 'accent')}
+        </div>
+        <p>${escapeHtml(payload.answer || 'No answer yet.')}</p>
+        <div class="chip-row">
+          ${renderPill(payload.retrieval?.mode || 'keyword', 'soft')}
+          ${renderPill(payload.retrieval?.effectiveProvider || 'local', 'soft')}
+        </div>
+      </article>
+      ${
+        mirror
+          ? `
+            <article class="stack-card">
+              <div class="stack-meta">
+                <strong>Self Mirror Context</strong>
+                <span>${escapeHtml(formatDateTime(mirror.createdAt))}</span>
+              </div>
+              <p>${escapeHtml(truncate(mirror.summaryText || mirror.content || '', 200))}</p>
+              ${
+                mirrorThemes.length
+                  ? `<div class="chip-row">${mirrorThemes
+                      .slice(0, 4)
+                      .map((item) => renderPill(`${item.theme} (${item.count})`, 'soft'))
+                      .join('')}</div>`
+                  : ''
+              }
+            </article>
+          `
+          : ''
+      }
     </div>
   `;
 }
@@ -994,7 +1149,139 @@ function renderCodexSummary(codex) {
   return renderOperatingSplit(codex);
 }
 
-async function renderQuickCapturePage(page) {
+async function renderCockpitPage(page) {
+  const cockpitRes = await fetchJsonSafe('/cockpit/summary');
+  const cockpit = cockpitRes.ok
+    ? cockpitRes.payload
+    : {
+        counts: {},
+        summaryText: 'Cockpit data is unavailable right now.',
+        actions: [],
+        followUps: [],
+        recentPeople: [],
+        recentEvents: [],
+        queue: { awaitingApproval: [], manualSteps: [], posted: [] },
+        latestMirror: null,
+        recentCheckins: [],
+      };
+  const queuePreview = [
+    ...(cockpit.queue?.awaitingApproval || []),
+    ...(cockpit.queue?.manualSteps || []),
+  ].slice(0, 4);
+
+  return `
+    ${renderHero(
+      page,
+      [
+        renderMetric(String(cockpit.followUps?.length || 0), 'follow-ups'),
+        renderMetric(String(cockpit.queue?.awaitingApproval?.length || 0), 'queued drafts'),
+        renderMetric(String(cockpit.queue?.manualSteps?.length || 0), 'manual steps'),
+        renderMetric(String(cockpit.recentEvents?.length || 0), 'recent events'),
+      ].join(''),
+      `<div class="info-card"><strong>Today on deck</strong><p>${escapeHtml(cockpit.summaryText || 'No cockpit summary yet.')}</p></div>`
+    )}
+    <div class="grid two-up">
+      ${renderPanel(
+        'Quick Capture Launchpad',
+        `
+          <form class="query-form" method="GET" action="/quick-capture">
+            ${renderFormField(
+              'Start with a natural note',
+              '<textarea name="prefill" rows="5" placeholder="I met someone doing growth at the hackathon, I felt energized, and I should follow up next Tuesday."></textarea>',
+              'This opens the chat workspace with your note already loaded into the main composer.'
+            )}
+            <div class="inline-actions">
+              <button type="submit">Open Workspace</button>
+              <a class="mini-link" href="/ask">Ask Memory</a>
+            </div>
+          </form>
+        `,
+        'Home is now an action surface, not just a status wall.'
+      )}
+      ${renderPanel(
+        'Top Actions',
+        renderCockpitActionCards(cockpit.actions || []),
+        'These are the next best moves across relationships, content, and self review.'
+      )}
+    </div>
+    <div class="grid two-up">
+      ${renderPanel(
+        'People To Follow Up',
+        renderFollowUpCards(cockpit.followUps || []),
+        'These come from next follow-up dates, interaction recency, and existing contact evidence.'
+      )}
+      ${renderPanel(
+        'Queue Snapshot',
+        renderQueueCards(queuePreview, 'dry-run'),
+        'Draft approvals and manual publish steps stay visible from the cockpit.'
+      )}
+    </div>
+    <div class="grid two-up">
+      ${renderPanel('Recent Contacts', renderPeopleCards(cockpit.recentPeople || []))}
+      ${renderPanel('Event Logbook', renderEventCards(cockpit.recentEvents || []))}
+    </div>
+    ${renderMirrorBlock({
+      latestMirror: cockpit.latestMirror || null,
+      checkins: cockpit.recentCheckins || [],
+    })}
+  `;
+}
+
+async function renderAskPage(page, requestUrl) {
+  const query = readOptionalString(requestUrl.searchParams.get('q'), '');
+  const askRes = query
+    ? await fetchJsonSafe(`/ask/search?query=${encodeURIComponent(query)}`)
+    : { ok: true, payload: { query: '', people: [], events: [], drafts: [], actions: [], latestMirror: null } };
+  const payload = askRes.ok ? askRes.payload || {} : { query, answer: askRes.error || 'Ask is unavailable right now.' };
+
+  return `
+    ${renderHero(
+      page,
+      [
+        renderMetric(String((payload.people || []).length), 'people hits'),
+        renderMetric(String((payload.events || []).length), 'event hits'),
+        renderMetric(String((payload.drafts || []).length), 'draft hits'),
+        renderMetric(String((payload.contactsToReachOut || []).length), 'suggested contacts'),
+      ].join(''),
+      `<div class="info-card"><strong>Ask from memory</strong><p>Use natural language to recall people, events, content, and your recent self signals.</p></div>`
+    )}
+    <div class="grid two-up">
+      ${renderPanel(
+        'Ask SocialOS',
+        `
+          <form class="query-form" method="GET" action="/ask">
+            ${renderFormField(
+              'Question',
+              `<textarea name="q" rows="5" placeholder="Who should I follow up with about the demo launch?">${escapeHtml(query)}</textarea>`,
+              'You can ask about people, events, drafts, or your own recent energy patterns.'
+            )}
+            <div class="inline-actions">
+              <button type="submit">Search Memory</button>
+              <a class="mini-link" href="/ask">Reset</a>
+            </div>
+          </form>
+        `,
+        'This is the natural-language entrypoint over people memory, logbook, drafts, and mirror evidence.'
+      )}
+      ${renderPanel(
+        'Response',
+        renderAskResultBlock(payload),
+        query ? 'Answer first, then evidence and actions.' : 'Try one of the sample questions to see how the memory layer responds.'
+      )}
+    </div>
+    <div class="grid two-up">
+      ${renderPanel('Suggested Actions', renderAskActionCards(payload.actions || []))}
+      ${renderPanel('Suggested Contacts', renderFollowUpCards(payload.contactsToReachOut || []))}
+    </div>
+    <div class="grid two-up">
+      ${renderPanel('People Matches', renderPeopleCards(payload.people || [], true))}
+      ${renderPanel('Related Events', renderEventCards(payload.events || []))}
+    </div>
+    ${renderPanel('Draft Matches', renderAskDraftCards(payload.drafts || []), 'If content already exists around this topic, you can jump straight into the package library.')}
+  `;
+}
+
+async function renderQuickCapturePage(page, requestUrl) {
   const [capturesRes, mirrorRes, assetsRes, peopleRes, eventsRes, clusterRes, embeddingsRes] = await Promise.all([
     fetchJsonSafe('/captures?limit=8'),
     fetchJsonSafe('/self-mirror'),
@@ -1013,6 +1300,7 @@ async function renderQuickCapturePage(page) {
   const cluster = clusterRes.ok ? clusterRes.payload.foundry || {} : {};
   const embeddings = embeddingsRes.ok ? embeddingsRes.payload || {} : {};
   const openAiReady = Boolean(embeddings.openaiKeyPresent);
+  const prefill = readOptionalString(requestUrl.searchParams.get('prefill'), '');
 
   return `
     ${renderHero(
@@ -1044,7 +1332,7 @@ async function renderQuickCapturePage(page) {
             <input type="hidden" name="voiceLang" value="" />
             <input type="file" data-workspace-file accept="image/*,audio/*" multiple hidden />
             <button type="button" class="secondary-button workspace-icon-button workspace-attach-button" data-workspace-attach>+</button>
-            <textarea name="text" rows="2" data-workspace-input placeholder="Ask anything about people, follow-ups, events, or drafts."></textarea>
+            <textarea name="text" rows="2" data-workspace-input placeholder="Ask anything about people, follow-ups, events, or drafts.">${escapeHtml(prefill)}</textarea>
             <div class="workspace-composer-controls">
               <div class="audio-meter" data-audio-meter aria-hidden="true">
                 ${Array.from({ length: 14 }, (_, index) => `<span class="audio-meter-bar" data-audio-meter-bar="${index}"></span>`).join('')}
@@ -1687,8 +1975,12 @@ async function renderSettingsPage(page) {
 
 async function renderPageBody(page, requestUrl) {
   switch (page.id) {
+    case 'cockpit':
+      return renderCockpitPage(page);
     case 'quick-capture':
-      return renderQuickCapturePage(page);
+      return renderQuickCapturePage(page, requestUrl);
+    case 'ask':
+      return renderAskPage(page, requestUrl);
     case 'people':
       return renderPeoplePage(page, requestUrl);
     case 'events':
@@ -3446,7 +3738,7 @@ async function routeRequest(req, res) {
   }
 
   if (pathname === '/') {
-    sendRedirect(res, 302, '/quick-capture');
+    sendRedirect(res, 302, '/cockpit');
     return;
   }
 
@@ -3553,7 +3845,9 @@ Usage:
   node socialos/apps/web/server.mjs [--port <port>]
 
 Routes:
+  /cockpit
   /quick-capture
+  /ask
   /people
   /events
   /drafts

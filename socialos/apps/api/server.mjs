@@ -2077,6 +2077,415 @@ function buildWorkspaceChatPayload(statements, body = {}) {
   };
 }
 
+function toTimestamp(value) {
+  if (typeof value !== 'string' || !value.trim()) return 0;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function classifyFollowUpState(nextFollowUpAt, fallbackAt) {
+  const now = Date.now();
+  const dueTs = toTimestamp(nextFollowUpAt);
+  const warmTs = toTimestamp(fallbackAt);
+
+  if (dueTs) {
+    if (dueTs <= now) return 'due now';
+    if (dueTs <= now + 3 * 24 * 60 * 60 * 1000) return 'up next';
+    return 'scheduled';
+  }
+
+  if (warmTs >= now - 5 * 24 * 60 * 60 * 1000) return 'warm';
+  return 'revisit';
+}
+
+function compareFollowUpCandidates(left, right) {
+  const stateRank = {
+    'due now': 0,
+    'up next': 1,
+    warm: 2,
+    scheduled: 3,
+    revisit: 4,
+  };
+  const leftRank = stateRank[left.followUpState] ?? 9;
+  const rightRank = stateRank[right.followUpState] ?? 9;
+
+  if (leftRank !== rightRank) return leftRank - rightRank;
+
+  const leftTime = toTimestamp(left.nextFollowUpAt || left.lastInteractionAt || left.updatedAt);
+  const rightTime = toTimestamp(right.nextFollowUpAt || right.lastInteractionAt || right.updatedAt);
+  return rightTime - leftTime;
+}
+
+function buildFollowUpCandidates(statements, limit = 6) {
+  const people = statements.listRecentPeople.all(Math.max(limit * 3, 12)).map(formatPersonRow);
+
+  return people
+    .map((person) => {
+      const detail = buildPeopleDetailPayload(statements, person.personId);
+      const lastInteraction = detail?.interactions?.[0] || null;
+      const evidenceSnippet =
+        detail?.evidence?.[0]?.snippet || lastInteraction?.summary || person.notes || '';
+
+      return {
+        personId: person.personId,
+        name: person.name,
+        tags: person.tags,
+        updatedAt: person.updatedAt,
+        nextFollowUpAt: person.nextFollowUpAt,
+        lastInteractionAt: lastInteraction?.happenedAt || null,
+        followUpState: classifyFollowUpState(person.nextFollowUpAt, lastInteraction?.happenedAt || person.updatedAt),
+        followUpMessage: detail?.suggestion?.followUpMessage || buildFollowUpMessage(person, detail?.interactions || []),
+        evidenceSnippet: truncateText(evidenceSnippet, 180),
+      };
+    })
+    .sort(compareFollowUpCandidates)
+    .slice(0, limit);
+}
+
+function searchDraftMatches(statements, query, limit = 4) {
+  const normalizedQuery = cleanText(query).toLowerCase();
+  if (!normalizedQuery) return [];
+  const terms = normalizedQuery.split(/\s+/u).filter(Boolean);
+
+  return statements.listRecentDrafts
+    .all(60)
+    .map(formatDraftRow)
+    .map((draft) => {
+      const haystack = cleanText(
+        [
+          draft.eventTitle,
+          draft.platformLabel,
+          draft.platform,
+          draft.language,
+          draft.content,
+          draft.publishPackage?.hook,
+          draft.publishPackage?.preview,
+          Array.isArray(draft.publishPackage?.hashtags) ? draft.publishPackage.hashtags.join(' ') : '',
+        ]
+          .filter(Boolean)
+          .join(' ')
+      ).toLowerCase();
+      const score = computeKeywordScore(terms, haystack);
+      return {
+        ...draft,
+        score,
+        snippet: truncateText(draft.publishPackage?.preview || draft.content || '', 180),
+      };
+    })
+    .filter((draft) => draft.score > 0)
+    .sort((left, right) => {
+      if (left.score !== right.score) return right.score - left.score;
+      return right.createdAt.localeCompare(left.createdAt);
+    })
+    .slice(0, limit);
+}
+
+function inferAskIntent(query) {
+  const source = cleanText(query).toLowerCase();
+  if (!source) return 'mixed';
+  if (/(能量|自我|主题|最近.*状态|self|mirror|energy|theme|who am i)/u.test(source)) return 'self';
+  if (/(发帖|草稿|发布|campaign|draft|event|活动|content|post|demo|launch|扩散|distribution)/u.test(source)) return 'campaign';
+  if (/(谁|哪个人|哪位|who|contact|person|认识|聊到|investor|founder|增长|designer|联系谁)/u.test(source)) return 'people';
+  return 'mixed';
+}
+
+function scoreAskContactCandidate(candidate, query) {
+  const terms = cleanText(query).toLowerCase().split(/\s+/u).filter(Boolean);
+  const haystack = cleanText(
+    [
+      candidate.name,
+      Array.isArray(candidate.tags) ? candidate.tags.join(' ') : '',
+      candidate.followUpMessage,
+      candidate.evidenceSnippet,
+    ]
+      .filter(Boolean)
+      .join(' ')
+  ).toLowerCase();
+
+  let score = computeKeywordScore(terms, haystack);
+  if (candidate.followUpState === 'due now') score += 0.35;
+  if (candidate.followUpState === 'up next') score += 0.22;
+  if (/(demo|launch|spread|distribution|content|增长|扩散|发帖|合作)/u.test(query) && /(growth|content|launch|distribution|增长|内容|合作|demo)/u.test(haystack)) {
+    score += 0.35;
+  }
+  return score;
+}
+
+function buildAskActions({ intent, people, events, drafts, followUps, latestMirror }) {
+  const actions = [];
+
+  if (people[0]?.personId) {
+    actions.push({
+      label: `Open ${people[0].name}`,
+      href: `/people/${encodeURIComponent(people[0].personId)}`,
+      reason: 'Best memory match from this query.',
+    });
+  }
+
+  if (events[0]?.eventId) {
+    actions.push({
+      label: 'Open related event',
+      href: `/drafts?eventId=${encodeURIComponent(events[0].eventId)}`,
+      reason: 'This logbook item is closest to your query.',
+    });
+  }
+
+  if (drafts[0]?.eventId) {
+    actions.push({
+      label: `Review ${drafts[0].platformLabel} draft`,
+      href: `/drafts?eventId=${encodeURIComponent(drafts[0].eventId)}`,
+      reason: 'There is already content material connected to this topic.',
+    });
+  }
+
+  if ((intent === 'self' || !actions.length) && latestMirror?.mirrorId) {
+    actions.push({
+      label: 'Open Self Mirror',
+      href: '/self-mirror',
+      reason: 'Use the mirror evidence to inspect the current pattern.',
+    });
+  }
+
+  if (!actions.length && followUps[0]?.personId) {
+    actions.push({
+      label: `Follow up with ${followUps[0].name}`,
+      href: `/people/${encodeURIComponent(followUps[0].personId)}`,
+      reason: 'This is the warmest relationship action in the current workspace.',
+    });
+  }
+
+  return actions.slice(0, 4);
+}
+
+function buildAskAnswer({
+  query,
+  intent,
+  people,
+  events,
+  drafts,
+  followUps,
+  latestMirror,
+  checkins,
+}) {
+  const topPeople = people.slice(0, 3).map((person) => person.name);
+  const topEvents = events.slice(0, 2).map((event) => event.title);
+  const topDrafts = drafts.slice(0, 2).map((draft) => `${draft.platformLabel} draft`);
+
+  if (intent === 'self') {
+    if (!latestMirror) {
+      return 'I do not have a recent self mirror yet. Generate one after a few more captures or check-ins so this answer can point to evidence instead of guessing.';
+    }
+    const themes = Array.isArray(latestMirror.themes)
+      ? latestMirror.themes.slice(0, 3).map((item) => item.theme).filter(Boolean)
+      : [];
+    return [
+      `Your strongest current self signal is: ${latestMirror.summaryText || 'still forming'}.`,
+      themes.length ? `Themes showing up most often: ${themes.join(', ')}.` : '',
+      checkins[0]?.reflection ? `Most recent check-in evidence: ${truncateText(checkins[0].reflection, 120)}.` : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  if (/(联系谁|reach out|follow up|demo|launch|扩散|spread)/u.test(query) && followUps.length) {
+    return [
+      `Best people to move on next: ${followUps.slice(0, 3).map((person) => person.name).join(', ')}.`,
+      followUps[0]?.followUpMessage ? `Start with: ${followUps[0].followUpMessage}` : '',
+      topEvents.length ? `Relevant event context: ${topEvents.join(' / ')}.` : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  if (intent === 'campaign') {
+    return [
+      topEvents.length ? `Closest event context: ${topEvents.join(' / ')}.` : 'I do not see a strong event match yet.',
+      topDrafts.length ? `Draft material already exists in: ${topDrafts.join(', ')}.` : 'No draft package exists yet for this topic.',
+      topPeople.length ? `People memory connected to this theme: ${topPeople.join(', ')}.` : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  if (people.length) {
+    return [
+      `Strongest people memory match: ${people[0].name}.`,
+      people[0].evidenceSnippet ? `Why it matched: ${people[0].evidenceSnippet}` : '',
+      followUps[0]?.followUpMessage ? `Suggested next step: ${followUps[0].followUpMessage}` : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  if (events.length) {
+    return [
+      `I did not find a strong person match, but this event is close: ${events[0].title}.`,
+      events[0].snippet ? `Context: ${events[0].snippet}` : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  return 'I searched people, events, drafts, and your recent self signals, but I do not have a strong match yet. Add one more clue like a name, company, topic, platform, or time window and I can narrow it down.';
+}
+
+function buildAskSearchPayload(statements, query) {
+  const cleanedQuery = cleanText(query);
+  const intent = inferAskIntent(cleanedQuery);
+  const people = searchPeopleMatches(statements, cleanedQuery, 5);
+  const events = searchEventMatches(statements, cleanedQuery, 4);
+  const drafts = searchDraftMatches(statements, cleanedQuery, 4);
+  const latestMirrorRow = statements.selectLatestMirror.get();
+  const latestMirror = latestMirrorRow
+    ? formatMirrorPayload(latestMirrorRow, statements.listMirrorEvidenceByMirrorId.all(latestMirrorRow.id))
+    : null;
+  const checkins = statements.listRecentSelfCheckins.all(6).map((row) => ({
+    checkinId: row.id,
+    energy: row.energy,
+    emotions: parseJsonStringArray(row.emotions),
+    reflection: row.reflection,
+    createdAt: row.created_at,
+  }));
+  const followUps = buildFollowUpCandidates(statements, 6)
+    .map((candidate) => ({
+      ...candidate,
+      score: scoreAskContactCandidate(candidate, cleanedQuery),
+    }))
+    .filter((candidate) => candidate.score > 0 || !cleanedQuery)
+    .sort((left, right) => right.score - left.score || compareFollowUpCandidates(left, right))
+    .slice(0, 4);
+
+  return {
+    query: cleanedQuery,
+    intent,
+    answer: buildAskAnswer({
+      query: cleanedQuery,
+      intent,
+      people,
+      events,
+      drafts,
+      followUps,
+      latestMirror,
+      checkins,
+    }),
+    retrieval: {
+      mode: resolveEmbeddingsSettings().retrievalMode,
+      effectiveProvider: resolveEmbeddingsSettings().effectiveProvider,
+      semanticBoostEnabled: resolveEmbeddingsSettings().semanticBoostEnabled,
+    },
+    people,
+    events,
+    drafts,
+    contactsToReachOut: followUps,
+    latestMirror,
+    recentCheckins: checkins,
+    actions: buildAskActions({
+      intent,
+      people,
+      events,
+      drafts,
+      followUps,
+      latestMirror,
+    }),
+  };
+}
+
+function buildCockpitSummary(statements) {
+  const recentPeople = statements.listRecentPeople.all(8).map(formatPersonRow);
+  const recentEvents = statements.listRecentEvents.all(8).map(formatEventRow);
+  const recentDrafts = statements.listRecentDrafts.all(20).map(formatDraftRow);
+  const recentQueueTasks = statements.listRecentQueueTasks.all(20).map(formatQueueTaskRow);
+  const recentCheckins = statements.listRecentSelfCheckins.all(8).map((row) => ({
+    checkinId: row.id,
+    energy: row.energy,
+    emotions: parseJsonStringArray(row.emotions),
+    reflection: row.reflection,
+    createdAt: row.created_at,
+  }));
+  const latestMirrorRow = statements.selectLatestMirror.get();
+  const latestMirror = latestMirrorRow
+    ? formatMirrorPayload(latestMirrorRow, statements.listMirrorEvidenceByMirrorId.all(latestMirrorRow.id))
+    : null;
+  const followUps = buildFollowUpCandidates(statements, 5);
+  const draftEventIds = new Set(recentDrafts.map((draft) => draft.eventId).filter(Boolean));
+  const eventsNeedingDrafts = recentEvents.filter((event) => !draftEventIds.has(event.eventId)).slice(0, 4);
+  const queuedTasks = recentQueueTasks.filter((task) => task.status === 'queued').slice(0, 4);
+  const manualSteps = recentQueueTasks.filter((task) => task.status === 'manual_step_needed').slice(0, 4);
+  const postedTasks = recentQueueTasks.filter((task) => task.status === 'posted').slice(0, 4);
+
+  const actions = [];
+  if (followUps[0]) {
+    actions.push({
+      title: `Follow up with ${followUps[0].name}`,
+      href: `/people/${encodeURIComponent(followUps[0].personId)}`,
+      reason: followUps[0].followUpMessage,
+      tone: followUps[0].followUpState === 'due now' ? 'warn' : 'accent',
+    });
+  }
+  if (queuedTasks[0]) {
+    actions.push({
+      title: `Approve ${queuedTasks[0].platformLabel}`,
+      href: '/queue',
+      reason: 'A draft is already queued and waiting for the next publish decision.',
+      tone: 'warn',
+    });
+  }
+  if (manualSteps[0]) {
+    actions.push({
+      title: `Record ${manualSteps[0].platformLabel} outcome`,
+      href: '/queue',
+      reason: 'There is a manual publish step ready to be completed and logged.',
+      tone: 'accent',
+    });
+  }
+  if (eventsNeedingDrafts[0]) {
+    actions.push({
+      title: `Generate drafts for ${eventsNeedingDrafts[0].title}`,
+      href: `/drafts?eventId=${encodeURIComponent(eventsNeedingDrafts[0].eventId)}`,
+      reason: 'This event exists in the logbook but is not yet connected to a platform package.',
+      tone: 'soft',
+    });
+  }
+  if (latestMirror?.mirrorId) {
+    actions.push({
+      title: 'Review this week’s mirror',
+      href: '/self-mirror',
+      reason: truncateText(latestMirror.summaryText || latestMirror.content || '', 140),
+      tone: 'good',
+    });
+  }
+
+  return {
+    generatedAt: nowIso(),
+    counts: {
+      contacts: recentPeople.length,
+      events: recentEvents.length,
+      drafts: recentDrafts.length,
+      queued: queuedTasks.length,
+      manualSteps: manualSteps.length,
+      posted: postedTasks.length,
+      checkins: recentCheckins.length,
+    },
+    summaryText: [
+      followUps.length ? `${followUps.length} relationship follow-up${followUps.length > 1 ? 's' : ''} are warm right now.` : 'No follow-ups are staged yet.',
+      queuedTasks.length ? `${queuedTasks.length} draft${queuedTasks.length > 1 ? 's' : ''} waiting in queue.` : 'No queued drafts are waiting.',
+      eventsNeedingDrafts.length ? `${eventsNeedingDrafts.length} logbook item${eventsNeedingDrafts.length > 1 ? 's' : ''} still need draft packages.` : 'Recent events already have content coverage.',
+    ].join(' '),
+    actions: actions.slice(0, 5),
+    followUps,
+    recentPeople: recentPeople.slice(0, 4),
+    recentEvents: recentEvents.slice(0, 4),
+    eventsNeedingDrafts,
+    queue: {
+      awaitingApproval: queuedTasks,
+      manualSteps,
+      posted: postedTasks,
+    },
+    latestMirror,
+    recentCheckins,
+  };
+}
+
 function buildPeopleDetailPayload(statements, personId) {
   const personRow = statements.selectPersonById.get(personId);
   if (!personRow) return null;
@@ -2927,6 +3336,17 @@ async function routeRequest(req, res, statements) {
     const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 12, 50);
     const assets = statements.listRecentCaptureAssets.all(limit).map(formatCaptureAssetRow);
     sendJson(res, 200, { limit, count: assets.length, assets });
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/cockpit/summary') {
+    sendJson(res, 200, buildCockpitSummary(statements));
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/ask/search') {
+    const query = readOptionalString(requestUrl.searchParams.get('query'), '');
+    sendJson(res, 200, buildAskSearchPayload(statements, query));
     return;
   }
 

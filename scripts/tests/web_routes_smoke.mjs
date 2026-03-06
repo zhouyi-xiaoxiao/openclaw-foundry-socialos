@@ -29,9 +29,9 @@ async function main() {
 
   try {
     const root = await fetch(`${web.baseUrl}/`, { redirect: 'manual' });
-    assert(root.status === 302, `root should redirect to /quick-capture (got ${root.status})`);
+    assert(root.status === 302, `root should redirect to /cockpit (got ${root.status})`);
     assert(
-      root.headers.get('location') === '/quick-capture',
+      root.headers.get('location') === '/cockpit',
       `root redirect location mismatch: ${root.headers.get('location')}`
     );
 
