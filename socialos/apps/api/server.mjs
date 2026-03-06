@@ -3115,6 +3115,19 @@ function dedupeMeaningfulCheckins(rows, limit = 8) {
     if (isNoiseCheckinRow(row)) continue;
     if (!isLikelySelfReflection(row)) continue;
     const normalized = normalizeCheckinRow(row);
+    const normalizedEmotions = normalized.emotions.map((item) => cleanText(item).toLowerCase()).filter(Boolean);
+    const hasSelfCue =
+      normalized.energy !== 0 ||
+      normalizedEmotions.some((emotion) => !['neutral', 'social', 'general'].includes(emotion)) ||
+      /(我觉得|我当时|我有点|我很|我想|让我|心里|情绪|能量|压力|兴奋|开心|疲惫|累|焦虑|紧张|放松|恢复|耗电|充电|很棒|还不错|有点空|脑子很亮)/iu.test(
+        normalized.reflection
+      );
+    const looksLikeContactOrProductLog =
+      /[?？]/u.test(normalized.reflection) ||
+      /(联系人|认识了|遇到了|见到了|微信是|小红书|linkedin|wechat|event|草稿|draft|模型|大模型)/iu.test(
+        normalized.reflection
+      );
+    if (looksLikeContactOrProductLog && !hasSelfCue) continue;
     const signature = [
       normalized.energy,
       normalized.emotions.join('|'),
