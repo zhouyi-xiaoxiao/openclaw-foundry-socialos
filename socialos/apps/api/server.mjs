@@ -227,6 +227,26 @@ const PLATFORM_PRODUCT_CAPABILITIES = Object.freeze({
   }),
 });
 
+const PLATFORM_NATIVE_LANGUAGES = Object.freeze({
+  instagram: 'en',
+  x: 'en',
+  linkedin: 'en',
+  zhihu: 'zh',
+  xiaohongshu: 'zh',
+  wechat_moments: 'zh',
+  wechat_official: 'zh',
+});
+
+const PLATFORM_ENTRY_URLS = Object.freeze({
+  instagram: 'https://www.instagram.com/',
+  x: 'https://x.com/compose/post',
+  linkedin: 'https://www.linkedin.com/feed/',
+  zhihu: 'https://zhuanlan.zhihu.com/write',
+  xiaohongshu: 'https://creator.xiaohongshu.com/publish/publish',
+  wechat_moments: 'https://weixin.qq.com/',
+  wechat_official: 'https://mp.weixin.qq.com/',
+});
+
 const FOUNDRY_AGENT_RESPONSIBILITIES = Object.freeze({
   forge_orchestrator: Object.freeze({
     title: 'Orchestrator',
@@ -408,26 +428,44 @@ function summarizeEventPayload(payload) {
   return parts.join(' | ');
 }
 
-function normalizeDraftLanguages(value) {
+function getPlatformNativeLanguage(platformId) {
+  return PLATFORM_NATIVE_LANGUAGES[platformId] || 'en';
+}
+
+function resolveDraftLanguagesForPlatform(platformId, value) {
   const requested = normalizeStringList(value);
+  const nativeLanguage = getPlatformNativeLanguage(platformId);
   const out = [];
+
+  if (!requested.length) {
+    return [nativeLanguage];
+  }
 
   for (const item of requested) {
     const normalized = item.toLowerCase();
-    if (normalized === 'bilingual' || normalized === 'both') {
-      out.push('en', 'zh');
+    if (
+      normalized === 'platform-native' ||
+      normalized === 'native' ||
+      normalized === 'auto' ||
+      normalized === 'platform_native'
+    ) {
+      out.push(nativeLanguage);
       continue;
     }
-    if (normalized === 'zh' || normalized === 'zh-cn' || normalized === 'cn') {
+    if (normalized === 'bilingual' || normalized === 'both') {
+      out.push(nativeLanguage, nativeLanguage === 'zh' ? 'en' : 'zh');
+      continue;
+    }
+    if (normalized === 'zh' || normalized === 'zh-cn' || normalized === 'cn' || normalized === 'chinese') {
       out.push('zh');
       continue;
     }
-    if (normalized === 'en' || normalized === 'en-us') {
+    if (normalized === 'en' || normalized === 'en-us' || normalized === 'english') {
       out.push('en');
     }
   }
 
-  return [...new Set(out.length ? out : ['en'])];
+  return [...new Set(out.length ? out : [nativeLanguage])];
 }
 
 function normalizePlatformList(value) {
@@ -464,6 +502,87 @@ function buildHashtags(platformRule, language, tone) {
   }
 
   return base.slice(0, platformRule.maxHashtags);
+}
+
+function buildNativeTone(platformRule, language, options = {}) {
+  const requestedTone = readOptionalString(options.tone, '');
+  if (requestedTone) return requestedTone;
+
+  if (platformRule.id === 'linkedin') {
+    return language === 'zh' ? '专业、克制、清晰' : 'clear, operator-first, professional';
+  }
+  if (platformRule.id === 'x') {
+    return language === 'zh' ? '直接、有判断' : 'sharp, concise, conviction-led';
+  }
+  if (platformRule.id === 'instagram') {
+    return language === 'zh' ? '轻松、真诚、有画面感' : 'warm, visual, behind-the-scenes';
+  }
+  if (platformRule.id === 'wechat_moments') {
+    return language === 'zh' ? '像近况更新一样自然' : 'casual and close to a friend update';
+  }
+  if (platformRule.id === 'wechat_official') {
+    return language === 'zh' ? '完整、可复用、带结构' : 'structured, reusable, editorial';
+  }
+  if (platformRule.id === 'xiaohongshu') {
+    return language === 'zh' ? '经验分享、结论先行、真诚' : 'advice-led, practical, clear';
+  }
+  if (platformRule.id === 'zhihu') {
+    return language === 'zh' ? '解释充分、逻辑清楚' : 'explanatory and thoughtful';
+  }
+  return language === 'zh' ? '清晰' : 'clear';
+}
+
+function buildNativeAngle(platformRule, language, options = {}) {
+  const requestedAngle = readOptionalString(options.angle, '');
+  if (requestedAngle) return requestedAngle;
+
+  if (platformRule.id === 'x' || platformRule.id === 'linkedin') {
+    return language === 'zh' ? '阶段性进展' : 'operator update';
+  }
+  if (platformRule.id === 'instagram') {
+    return language === 'zh' ? '现场感与过程感' : 'behind-the-scenes progress';
+  }
+  if (platformRule.id === 'zhihu') {
+    return language === 'zh' ? '拆解思路' : 'explainer';
+  }
+  if (platformRule.id === 'xiaohongshu') {
+    return language === 'zh' ? '经验总结' : 'practical notes';
+  }
+  if (platformRule.id === 'wechat_moments') {
+    return language === 'zh' ? '近况记录' : 'personal update';
+  }
+  if (platformRule.id === 'wechat_official') {
+    return language === 'zh' ? '系统复盘' : 'editorial recap';
+  }
+  return language === 'zh' ? '进展更新' : 'progress update';
+}
+
+function buildNativeAudience(platformRule, language, options = {}) {
+  const requestedAudience = readOptionalString(options.audience, '');
+  if (requestedAudience) return requestedAudience;
+
+  if (platformRule.id === 'linkedin') {
+    return language === 'zh' ? '合作伙伴和职业圈子' : 'peers, collaborators, and future partners';
+  }
+  if (platformRule.id === 'x') {
+    return language === 'zh' ? '关注产品和 AI 的朋友' : 'builders shipping product and AI workflows';
+  }
+  if (platformRule.id === 'instagram') {
+    return language === 'zh' ? '愿意看真实过程的人' : 'people who follow the visual making process';
+  }
+  if (platformRule.id === 'zhihu') {
+    return language === 'zh' ? '想看完整拆解的人' : 'readers who want the full breakdown';
+  }
+  if (platformRule.id === 'xiaohongshu') {
+    return language === 'zh' ? '想少走弯路的人' : 'people looking for practical shortcuts';
+  }
+  if (platformRule.id === 'wechat_moments') {
+    return language === 'zh' ? '熟人朋友' : 'people already close to the work';
+  }
+  if (platformRule.id === 'wechat_official') {
+    return language === 'zh' ? '愿意收藏和复用方法的人' : 'readers who will save and reuse the method';
+  }
+  return language === 'zh' ? '熟悉你的人脉圈' : 'people following your work';
 }
 
 function buildPublishSteps(platformId, capability, language) {
@@ -508,18 +627,36 @@ function buildPublishSteps(platformId, capability, language) {
 function buildPackageSections(platformRule, event, language, options) {
   const eventPayload = safeParseJsonObject(event.payload, {});
   const detailText = summarizeEventPayload(eventPayload);
-  const tone = readOptionalString(options.tone, language === 'zh' ? '清晰' : 'clear');
-  const angle = readOptionalString(options.angle, language === 'zh' ? '进展更新' : 'progress update');
-  const audience = readOptionalString(options.audience, language === 'zh' ? '熟悉你的人脉圈' : 'people following your work');
+  const tone = buildNativeTone(platformRule, language, options);
+  const angle = buildNativeAngle(platformRule, language, options);
+  const audience = buildNativeAudience(platformRule, language, options);
   const cta = readOptionalString(
     options.cta,
     language === 'zh' ? '如果你也在做类似方向，欢迎交流。' : 'If you are working on something similar, reply and compare notes.'
   );
 
-  const headline =
-    language === 'zh'
-      ? `${formatPlatformLabel(platformRule.id)}更新：${event.title}`
-      : `${formatPlatformLabel(platformRule.id)} update: ${event.title}`;
+  const headline = (() => {
+    switch (platformRule.id) {
+      case 'x':
+        return language === 'zh' ? `${event.title}，这次我只想说 1 个判断。` : `${event.title}: one operator takeaway after shipping this.`;
+      case 'linkedin':
+        return language === 'zh' ? `${event.title}：一次更像系统升级的推进` : `${event.title}: an operational upgrade, not just a feature update`;
+      case 'instagram':
+        return language === 'zh' ? `${event.title}，用几张图讲清楚这次推进` : `${event.title}, told like a visual build log`;
+      case 'zhihu':
+        return language === 'zh' ? `如果把“${event.title}”讲透，最值得说的是哪几件事？` : `What matters most if we unpack ${event.title}?`;
+      case 'xiaohongshu':
+        return language === 'zh' ? `${event.title} 做完后，我最想提醒大家的 3 件事` : `3 practical notes after shipping ${event.title}`;
+      case 'wechat_moments':
+        return language === 'zh' ? `关于 ${event.title} 的一个近况` : `A quick update on ${event.title}`;
+      case 'wechat_official':
+        return language === 'zh' ? `${event.title}：这次推进里最值得复用的方法` : `${event.title}: the method worth reusing`;
+      default:
+        return language === 'zh'
+          ? `${formatPlatformLabel(platformRule.id)}更新：${event.title}`
+          : `${formatPlatformLabel(platformRule.id)} update: ${event.title}`;
+    }
+  })();
   const bodyLead =
     language === 'zh'
       ? `这次我想用“${angle}”的角度，面向${audience}分享这次进展。`
@@ -549,17 +686,170 @@ function buildPackageSections(platformRule, event, language, options) {
 function buildDraftContent(platformRule, event, language, options = {}) {
   const sections = buildPackageSections(platformRule, event, language, options);
   const hashtags = buildHashtags(platformRule, language, readOptionalString(options.tone, ''));
-  const lines = [
-    sections.headline,
-    '',
-    sections.bodyLead,
-    sections.detailLine,
-    sections.closing,
-    '',
-    sections.cta,
-    '',
-    hashtags.join(' '),
-  ];
+  const lines = (() => {
+    switch (platformRule.id) {
+      case 'x':
+        return language === 'zh'
+          ? [
+              sections.headline,
+              `${sections.detailLine}`,
+              '我现在更在意的不是“多做一个页面”，而是让整条 SocialOS 流程真的能跑起来。',
+              sections.cta,
+              hashtags.slice(0, 4).join(' '),
+            ]
+          : [
+              sections.headline,
+              sections.detailLine,
+              'What matters now is not another screen. It is whether the whole SocialOS loop actually operates end to end.',
+              sections.cta,
+              hashtags.slice(0, 4).join(' '),
+            ];
+      case 'linkedin':
+        return language === 'zh'
+          ? [
+              sections.headline,
+              '',
+              '这轮不是 UI 打磨而已，而是把 Quick Capture、People、Drafts、Queue 和 Self Mirror 真正串起来。',
+              `Context: ${sections.detailLine}`,
+              `Why it matters: 这能把“内容写作”变成“持续运营流程”。`,
+              `What next: ${sections.cta}`,
+              '',
+              hashtags.slice(0, 5).join(' '),
+            ]
+          : [
+              sections.headline,
+              '',
+              'This was not just a UI refresh. The goal was to make Quick Capture, People, Drafts, Queue, and Self Mirror operate as one workflow.',
+              `Context: ${sections.detailLine}`,
+              'Why it matters: this turns content writing into an operating loop instead of a pile of drafts.',
+              `What next: ${sections.cta}`,
+              '',
+              hashtags.slice(0, 5).join(' '),
+            ];
+      case 'instagram':
+        return language === 'zh'
+          ? [
+              sections.headline,
+              '',
+              '这次我最想保留下来的，是从一个想法到真正能演示的工作台过程。',
+              sections.detailLine,
+              '如果你也喜欢看“怎么一步一步做出来”的过程，这组图会比较有代入感。',
+              sections.cta,
+              '',
+              hashtags.join(' '),
+            ]
+          : [
+              sections.headline,
+              '',
+              'The part I wanted to keep was the shift from a rough idea to something you can actually demo as a working workspace.',
+              sections.detailLine,
+              'If you like seeing how something gets built step by step, this package leans into that.',
+              sections.cta,
+              '',
+              hashtags.join(' '),
+            ];
+      case 'zhihu':
+        return language === 'zh'
+          ? [
+              sections.headline,
+              '',
+              '先给结论：如果一个 SocialOS 真的要能用，最重要的不是功能列表，而是录入、检索、生成和发布之间的数据连续性。',
+              `这次 ${event.title} 的关键背景是：${sections.detailLine}`,
+              '我会重点展开 3 个部分：为什么这样设计、哪些地方卡住、现在怎么让它至少能稳定演示。',
+              sections.cta,
+              '',
+              hashtags.slice(0, 6).join(' '),
+            ]
+          : [
+              sections.headline,
+              '',
+              'The short answer: a usable SocialOS depends less on feature count and more on continuity between capture, retrieval, generation, and publishing.',
+              `Context: ${sections.detailLine}`,
+              'I would unpack the design logic, the real bottlenecks, and how to make the system demo reliably.',
+              sections.cta,
+              '',
+              hashtags.slice(0, 6).join(' '),
+            ];
+      case 'xiaohongshu':
+        return language === 'zh'
+          ? [
+              sections.headline,
+              '',
+              '先说结论：这次最有用的不是“多写几篇内容”，而是把整个内容动作做成了能复用的流程。',
+              '1. 录入必须足够轻，不然根本没人会用',
+              '2. 每个平台都要有自己的语气和结构，不能一稿平推',
+              '3. 最后一定要给到能直接复制粘贴的发布包',
+              sections.cta,
+              '',
+              hashtags.join(' '),
+            ]
+          : [
+              sections.headline,
+              '',
+              'Short version: the win was not more content, it was turning the whole motion into a reusable workflow.',
+              '1. Capture has to feel light or people stop using it',
+              '2. Each platform needs its own voice and structure',
+              '3. The last mile has to be a copy-ready publish package',
+              sections.cta,
+              '',
+              hashtags.join(' '),
+            ];
+      case 'wechat_moments':
+        return language === 'zh'
+          ? [
+              sections.headline,
+              sections.detailLine,
+              '这次终于不只是“有个界面”，而是真的把流程跑顺了一些。',
+              sections.cta,
+            ]
+          : [
+              sections.headline,
+              sections.detailLine,
+              'This finally feels less like a mockup and more like a loop that can actually run.',
+              sections.cta,
+            ];
+      case 'wechat_official':
+        return language === 'zh'
+          ? [
+              sections.headline,
+              '',
+              '导语',
+              `${sections.bodyLead} ${sections.detailLine}`,
+              '',
+              '正文结构',
+              '一、为什么这次不再只是做页面',
+              '二、平台内容为什么必须拆成不同语言和不同风格',
+              '三、为什么最后一公里一定要变成可复制的发布动作',
+              '',
+              `结尾：${sections.cta}`,
+            ]
+          : [
+              sections.headline,
+              '',
+              'Lead',
+              `${sections.bodyLead} ${sections.detailLine}`,
+              '',
+              'Body structure',
+              '1. Why this can no longer be treated as a UI-only project',
+              '2. Why platform-native language and tone matter',
+              '3. Why the last mile must turn into copy-ready publishing actions',
+              '',
+              `Closing: ${sections.cta}`,
+            ];
+      default:
+        return [
+          sections.headline,
+          '',
+          sections.bodyLead,
+          sections.detailLine,
+          sections.closing,
+          '',
+          sections.cta,
+          '',
+          hashtags.join(' '),
+        ];
+    }
+  })();
 
   return truncateText(lines.join('\n'), platformRule.maxLength);
 }
@@ -703,6 +993,7 @@ function buildPublishPackage(platformRule, event, language, content, options = {
     supportLevel: capability.supportLevel,
     lane: capability.lane,
     entryTarget: capability.entryTarget,
+    entryUrl: PLATFORM_ENTRY_URLS[platformRule.id] || '',
     liveEligible: capability.liveEligible,
     blockedBy: capability.blockedBy,
     title: sections.headline,
@@ -2738,11 +3029,12 @@ async function routeRequest(req, res, statements) {
     if (!event) throw new HttpError(404, 'eventId not found');
 
     const platforms = normalizePlatformList(body.platforms);
-    const languages = normalizeDraftLanguages(body.languages || body.language);
+    const languageStrategy = body.languages || body.language || body.languageStrategy || 'platform-native';
     const generatedDrafts = [];
 
     for (const platformId of platforms) {
       const platformRule = resolvePlatformRule(platformId);
+      const languages = resolveDraftLanguagesForPlatform(platformRule.id, languageStrategy);
       for (const language of languages) {
         const content = buildDraftContent(platformRule, event, language, body);
         const capability = getPlatformCapability(platformRule.id);
@@ -2759,7 +3051,7 @@ async function routeRequest(req, res, statements) {
             tone: readOptionalString(body.tone, ''),
             angle: readOptionalString(body.angle, ''),
             audience: readOptionalString(body.audience, ''),
-            languageStrategy: readOptionalString(body.languageStrategy, ''),
+            languageStrategy: Array.isArray(languageStrategy) ? languageStrategy.join(',') : readOptionalString(languageStrategy, ''),
             links: normalizeStringList(body.links),
             assets: normalizeStringList(body.assets),
           },
@@ -3024,7 +3316,7 @@ async function routeRequest(req, res, statements) {
       if (!event) throw new HttpError(404, 'eventId not found');
       platformRule = resolvePlatformRule(body.platform);
       platform = platformRule.id;
-      language = readOptionalString(body.language, 'en');
+      language = readOptionalString(body.language, getPlatformNativeLanguage(platformRule.id));
       content = readOptionalString(body.content, event.title);
     }
 

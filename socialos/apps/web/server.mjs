@@ -488,6 +488,62 @@ function renderPackageHighlights(publishPackage) {
   `;
 }
 
+function formatLanguageLabel(language) {
+  switch (String(language || '').toLowerCase()) {
+    case 'zh':
+      return '中文';
+    case 'en':
+      return 'English';
+    default:
+      return String(language || 'n/a');
+  }
+}
+
+function buildClipboardText(draft, publishPackage, mode = 'body') {
+  const hashtags = Array.isArray(publishPackage.hashtags) ? publishPackage.hashtags.join(' ') : '';
+  const sections = [];
+
+  if (mode === 'bundle') {
+    sections.push(`${draft.platformLabel} Publish Package`);
+    if (publishPackage.title) sections.push(`Title\n${publishPackage.title}`);
+    if (publishPackage.hook) sections.push(`Hook\n${publishPackage.hook}`);
+    if (publishPackage.preview || draft.content) sections.push(`Body\n${publishPackage.preview || draft.content}`);
+    if (hashtags) sections.push(`Tags\n${hashtags}`);
+    if (Array.isArray(publishPackage.assetChecklist) && publishPackage.assetChecklist.length) {
+      sections.push(`Assets\n${publishPackage.assetChecklist.join('\n')}`);
+    }
+    if (Array.isArray(publishPackage.steps) && publishPackage.steps.length) {
+      sections.push(`Publish Steps\n${publishPackage.steps.join('\n')}`);
+    }
+    return sections.filter(Boolean).join('\n\n');
+  }
+
+  if (publishPackage.title && draft.platform === 'wechat_official') {
+    sections.push(publishPackage.title);
+  }
+  sections.push(publishPackage.preview || draft.content || '');
+  if (hashtags) sections.push(hashtags);
+  return sections.filter(Boolean).join('\n\n');
+}
+
+function renderPublishActions(draft, publishPackage) {
+  const entryUrl = readOptionalString(publishPackage.entryUrl, '');
+  const copyBody = buildClipboardText(draft, publishPackage, 'body');
+  const copyBundle = buildClipboardText(draft, publishPackage, 'bundle');
+
+  return `
+    <div class="inline-actions action-strip">
+      <button type="button" class="secondary-button" data-copy-text="${escapeHtml(copyBody)}">Copy Post</button>
+      <button type="button" class="secondary-button" data-copy-text="${escapeHtml(copyBundle)}">Copy Package</button>
+      ${
+        entryUrl
+          ? `<a class="mini-link action-link" href="${escapeHtml(entryUrl)}" target="_blank" rel="noreferrer">Open Platform</a>`
+          : ''
+      }
+    </div>
+  `;
+}
+
 function renderDraftCards(drafts) {
   if (!drafts.length) return renderEmptyState('No drafts generated yet.');
   return `<div class="draft-grid">${drafts
@@ -501,13 +557,14 @@ function renderDraftCards(drafts) {
           <div class="draft-head">
             <div>
               <p class="card-kicker">${escapeHtml(draft.eventTitle || draft.eventId || 'untitled event')}</p>
-              <h3>${escapeHtml(draft.platformLabel)} · ${escapeHtml(draft.language)}</h3>
+              <h3>${escapeHtml(draft.platformLabel)} · ${escapeHtml(formatLanguageLabel(draft.language))}</h3>
             </div>
             <div class="chip-row">
               ${renderPill(capability.supportLevel || 'L0 Draft', capability.liveEligible ? 'accent' : 'soft')}
               ${renderPill(draft.platform, 'neutral')}
             </div>
           </div>
+          ${renderPublishActions(draft, publishPackage)}
           <pre>${escapeHtml(draft.content)}</pre>
           <div class="package-meta">
             <p><strong>Entry:</strong> ${escapeHtml(publishPackage.entryTarget || capability.entryTarget || 'manual')}</p>
@@ -579,6 +636,7 @@ function renderQueueCards(queueTasks, publishMode) {
       const execution = safeJson(result.execution, {});
       const manualCompletion = safeJson(result.manualCompletion, {});
       const liveFallbackReason = safeJson(execution.liveFallbackReason, {});
+      const publishPackage = safeJson(task.metadata?.publishPackage, {});
       const queued = task.status === 'queued';
       const needsManual = task.status === 'manual_step_needed';
       return `
@@ -591,7 +649,9 @@ function renderQueueCards(queueTasks, publishMode) {
             ${renderPill(task.status, queued ? 'warn' : 'good')}
             ${renderPill(task.mode, task.mode === 'live' ? 'accent' : 'soft')}
             ${renderPill(task.capability?.supportLevel || 'L0 Draft', 'neutral')}
+            ${renderPill(formatLanguageLabel(task.language), 'soft')}
           </div>
+          ${renderPublishActions(task, publishPackage)}
           <p>${escapeHtml(truncate(task.content, 220))}</p>
           <small>draft ${escapeHtml(task.draftId)} · current workspace publish mode ${escapeHtml(publishMode)}</small>
           ${
