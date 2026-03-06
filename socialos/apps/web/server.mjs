@@ -1433,7 +1433,10 @@ function renderCodexSummary(codex) {
 }
 
 async function renderCockpitPage(page) {
-  const cockpitRes = await fetchJsonSafe('/cockpit/summary');
+  const [cockpitRes, runtimeRes] = await Promise.all([
+    fetchJsonSafe('/cockpit/summary'),
+    fetchJsonSafe('/settings/runtime'),
+  ]);
   const cockpit = cockpitRes.ok
     ? cockpitRes.payload
     : {
@@ -1447,6 +1450,7 @@ async function renderCockpitPage(page) {
         latestMirror: null,
         recentCheckins: [],
       };
+  const publishMode = runtimeRes.ok ? readOptionalString(runtimeRes.payload?.publishMode, 'dry-run') : 'dry-run';
   const queuePreview = [
     ...(cockpit.queue?.awaitingApproval || []),
     ...(cockpit.queue?.manualSteps || []),
@@ -1495,7 +1499,7 @@ async function renderCockpitPage(page) {
       )}
       ${renderPanel(
         'Queue Snapshot',
-        renderQueueCards(queuePreview, 'dry-run'),
+        renderQueueCards(queuePreview, publishMode),
         'Draft approvals and manual publish steps stay visible from the cockpit.'
       )}
     </div>
