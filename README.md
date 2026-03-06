@@ -3,10 +3,12 @@
 ## Project Overview
 SocialOS is a local-first social operating system for turning messy relationship notes and campaign ideas into something a solo builder can actually run. The product flow is:
 
-`Quick Capture -> People -> Events/Campaigns -> Drafts -> Queue/Publish -> Self Mirror`
+`Cockpit -> Workspace -> Ask -> People -> Events/Campaigns -> Drafts -> Queue/Publish -> Self Mirror`
 
 What the current stable P1 build already does:
+- `Cockpit` is the new home surface: follow-up queue, draft approvals, self mirror summary, and a large jump-off capture box all live in one place.
 - `Quick Capture` is now a chat-like composer instead of a control-panel wall. You can type one message, record a voice note, or upload a business card image.
+- `Ask` is the natural-language memory front door for people, events, draft packages, and self signals.
 - Audio intake is optional-OpenAI powered when `OPENAI_API_KEY` is present, and still usable with manual transcript fallback when it is not.
 - `People` supports search, detail view, linked identities, evidence-backed timeline, and follow-up suggestions.
 - `Drafts` generates platform-native packages: English-first for `X / LinkedIn / Instagram`, Chinese-first for `知乎 / 小红书 / 微信朋友圈 / 微信公众号`.
@@ -42,10 +44,11 @@ Local URLs after boot:
 System design, at a glance:
 1. User captures a note, voice memo, or business card.
 2. API parses it into structured `Person / Identity / Interaction / SelfCheckin` data.
-3. Events feed the 7-platform draft generator.
-4. Drafts are validated, edited, and handed into assisted publishing.
-5. Queue writes audit logs and manual publish outcomes.
-6. Self Mirror reads recent evidence and produces weekly synthesis.
+3. Cockpit + Ask surface the next relationship/content/self actions from that memory layer.
+4. Events feed the 7-platform draft generator.
+5. Drafts are validated, edited, and handed into assisted publishing.
+6. Queue writes audit logs and manual publish outcomes.
+7. Self Mirror reads recent evidence and produces weekly synthesis.
 
 ## OpenClaw / Runtime Integration
 This project is built around an OpenClaw-powered workflow:
@@ -76,17 +79,20 @@ When the queue has no pending product tasks, devloop auto-switches to `AUTO-OPT-
 - Do **not** widen `gateway.bind` / `gateway.tailscale` / `gateway.auth` exposure in demo setup.
 
 ## Product Workflow
-1. Open `http://127.0.0.1:4173/quick-capture` and parse a note or upload a business card/audio memo.
-2. Commit the structured draft into Person / Identity / Interaction / SelfCheckin / Audit.
-3. Use `People` to inspect evidence and log follow-up context.
-4. Create an `Event`, then generate 7-platform drafts from `Drafts` using platform-native language by default.
-5. Validate/edit drafts, queue them, and record manual publish outcomes in `Queue`.
-6. Generate and inspect weekly evidence-backed synthesis in `Self Mirror`.
+1. Open `http://127.0.0.1:4173/cockpit` to see follow-ups, queue state, and the next recommended actions.
+2. Jump into `Workspace` to parse a note or upload a business card/audio memo.
+3. Commit the structured draft into Person / Identity / Interaction / SelfCheckin / Audit.
+4. Use `Ask` or `People` to inspect evidence and recall follow-up context naturally.
+5. Create an `Event`, then generate 7-platform drafts from `Drafts` using platform-native language by default.
+6. Validate/edit drafts, queue them, and record manual publish outcomes in `Queue`.
+7. Generate and inspect weekly evidence-backed synthesis in `Self Mirror`.
 
 ## Key Endpoints
 - `POST /capture/parse`
 - `POST /capture/commit`
 - `POST /capture/assets`
+- `GET /cockpit/summary`
+- `GET /ask/search`
 - `GET /people/:id`
 - `PATCH /drafts/:id`
 - `POST /drafts/:id/validate`
