@@ -57,7 +57,7 @@ function parseDemoStatus(output) {
   };
 }
 
-function parseFoundryStatus(output) {
+export function parseFoundryStatus(output) {
   const queueMatch = output.match(/pending=(\d+) in_progress=(\d+) blocked=(\d+) done=(\d+)/);
   const runIdMatch = output.match(/run_id: (.+)/);
   const runStatusMatch = output.match(/status: (.+)/);
@@ -66,7 +66,9 @@ function parseFoundryStatus(output) {
   const lockMatch = output.match(/lock: (.+)/);
   const currentTaskMatch = output.match(/current_task: (.+)/);
   const failureMatch = output.match(/Consecutive failures: (\d+)/);
-  const blockedHeadMatch = output.match(/Blocked queue head:\n([\s\S]*?)\nLatest digest:/);
+  const blockedHeadMatch = output.match(
+    /Blocked queue head:\n([\s\S]*?)(?:\nLatest digest:|\nrun_reports_dir:|\nLatest run:|\n== |$)/
+  );
   const digestMatch = output.match(/Latest digest:\n([\s\S]*)$/);
 
   const blockedHead = blockedHeadMatch
@@ -322,4 +324,6 @@ function main() {
   }
 }
 
-main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main();
+}
