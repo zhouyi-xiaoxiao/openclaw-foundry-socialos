@@ -1125,7 +1125,7 @@ function buildPlatformPackageAdditions(platformRule, event, language, sections) 
         ? {
             coverHooks: [
               `${sections.headline}：先给结果感`,
-              `把“${event.title}”做成第一屏结论`,
+              `把“${sections.localizedTitle}”做成第一屏结论`,
               '用一句反差感标题把人停住',
             ],
             visualStoryboard: [
@@ -1135,12 +1135,12 @@ function buildPlatformPackageAdditions(platformRule, event, language, sections) 
               '第 4 张：下一步 CTA 或评论引导',
             ],
             assetChecklist: ['封面图 1 张', '过程图/截图 2-3 张', '首评文案 1 条'],
-            firstComment: `如果你也在推进类似动作，回复“${event.title}”我把版本思路整理给你。`,
+            firstComment: `如果你也在推进类似动作，回复“${sections.localizedTitle}”我把版本思路整理给你。`,
           }
         : {
             coverHooks: [
               `${sections.headline} with the result up front`,
-              `Open with the clearest proof from ${event.title}`,
+              `Open with the clearest proof from ${sections.localizedTitle}`,
               'Use one contrast-led line to stop the scroll',
             ],
             visualStoryboard: [
@@ -1150,15 +1150,15 @@ function buildPlatformPackageAdditions(platformRule, event, language, sections) 
               'Slide 4: CTA / comment prompt',
             ],
             assetChecklist: ['1 cover visual', '2-3 support images/screenshots', '1 first-comment prompt'],
-            firstComment: `Reply with "${event.title}" if you want the operator notes behind this post.`,
+            firstComment: `Reply with "${sections.localizedTitle}" if you want the operator notes behind this post.`,
           };
     case 'xiaohongshu':
       return language === 'zh'
         ? {
             coverHooks: [
-              `关于“${event.title}”，我只想先说这 1 件事`,
-              `${event.title} 之后，我最想提醒大家的 3 个点`,
-              `如果你也在做 ${event.title}，这篇可以少走弯路`,
+              `关于“${sections.localizedTitle}”，我只想先说这 1 件事`,
+              `${sections.localizedTitle} 之后，我最想提醒大家的 3 个点`,
+              `如果你也在做 ${sections.localizedTitle}，这篇可以少走弯路`,
             ],
             visualStoryboard: [
               '封面：一句结论 + 强信息差',
@@ -1171,8 +1171,8 @@ function buildPlatformPackageAdditions(platformRule, event, language, sections) 
           }
         : {
             coverHooks: [
-              `One thing I would say first about ${event.title}`,
-              `Three takeaways after shipping ${event.title}`,
+              `One thing I would say first about ${sections.localizedTitle}`,
+              `Three takeaways after shipping ${sections.localizedTitle}`,
               `If you are building something similar, this can save a detour`,
             ],
             visualStoryboard: [
@@ -1189,8 +1189,8 @@ function buildPlatformPackageAdditions(platformRule, event, language, sections) 
         ? {
             captionVariants: [
               `${sections.headline}。今天最深的感受是：${sections.detailLine}`,
-              `刚处理完“${event.title}”，比结果更重要的是过程里的判断。`,
-              `关于 ${event.title}，这次我最想记住的一句是：${sections.bodyLead}`,
+              `刚处理完“${sections.localizedTitle}”，比结果更重要的是过程里的判断。`,
+              `关于${sections.localizedTitle}，这次我最想记住的一句是：${sections.bodyLead}`,
             ],
             visualStoryboard: ['首图：结果或现场', '第二张：细节/过程', '第三张：补充说明或截图'],
             assetChecklist: ['手机可读短文案 2-3 版', '图片 3 张以内', '评论区跟进句 1 条'],
@@ -1198,8 +1198,8 @@ function buildPlatformPackageAdditions(platformRule, event, language, sections) 
         : {
             captionVariants: [
               `${sections.headline}. What stayed with me most: ${sections.detailLine}`,
-              `Just wrapped ${event.title}; the judgment calls mattered as much as the result.`,
-              `The one line I want to remember from ${event.title}: ${sections.bodyLead}`,
+              `Just wrapped ${sections.localizedTitle}; the judgment calls mattered as much as the result.`,
+              `The one line I want to remember from ${sections.localizedTitle}: ${sections.bodyLead}`,
             ],
             visualStoryboard: ['Photo 1: result or scene', 'Photo 2: supporting detail', 'Photo 3: screenshot / proof'],
             assetChecklist: ['2-3 short caption options', 'up to 3 mobile-friendly images', '1 follow-up comment line'],
@@ -1209,11 +1209,14 @@ function buildPlatformPackageAdditions(platformRule, event, language, sections) 
         ? {
             articleOutline: ['开头：为什么现在写这篇', '中段：3 个关键观察', '结尾：下一步行动与邀请'],
             sectionBullets: [
-              `先讲清楚 ${event.title} 的背景与目标`,
+              `先讲清楚 ${sections.localizedTitle} 的背景与目标`,
               '拆出 3 个可以直接复用的动作',
               '收束到一个明确的行动邀请',
             ],
-            coverHooks: [`${event.title}：一次值得展开写的推进`, `如果把 ${event.title} 讲透，最重要的是这 3 点`],
+            coverHooks: [
+              `${sections.localizedTitle}：一次值得展开写的推进`,
+              `如果把 ${sections.localizedTitle} 讲透，最重要的是这 3 点`,
+            ],
             leadParagraph: `${sections.bodyLead} 这不是一条快讯，而是一段值得拆开的过程。`,
           }
         : {
@@ -1223,13 +1226,13 @@ function buildPlatformPackageAdditions(platformRule, event, language, sections) 
               'Closing: next move and invitation',
             ],
             sectionBullets: [
-              `Frame the context and goal behind ${event.title}`,
+              `Frame the context and goal behind ${sections.localizedTitle}`,
               'Break out three reusable moves or observations',
               'Close with a single concrete invitation',
             ],
             coverHooks: [
-              `${event.title}: the operator story worth unpacking`,
-              `If we unpack ${event.title}, these are the three points that matter`,
+              `${sections.localizedTitle}: the operator story worth unpacking`,
+              `If we unpack ${sections.localizedTitle}, these are the three points that matter`,
             ],
             leadParagraph: `${sections.bodyLead} This deserves more than a short post, so the package opens as a narrative.`,
           };
@@ -1245,11 +1248,11 @@ function buildPublishPackage(platformRule, event, language, content, options = {
   const imageIdeas =
     language === 'zh'
       ? [
-          `一张能体现“${event.title}”现场感或结果感的主图`,
+          `一张能体现“${sections.localizedTitle}”现场感或结果感的主图`,
           '一张细节图或过程图，帮助解释背景',
         ]
       : [
-          `A lead image that makes ${event.title} feel tangible`,
+          `A lead image that makes ${sections.localizedTitle} feel tangible`,
           'A supporting detail shot or screenshot for context',
         ];
 
@@ -2291,9 +2294,7 @@ function buildWorkspaceChatPayload(statements, body = {}) {
       recommendedDraftRequest: {
       platforms: [...SUPPORTED_QUEUE_PLATFORMS],
       languages: ['platform-native'],
-      cta:
-        captureDraft.personDraft?.followUpSuggestion ||
-        'Reply if you want the workflow or operator notes behind this.',
+      cta: '',
     },
     transcription,
     agentLanes: buildWorkspaceAgentLanes({
