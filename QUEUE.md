@@ -50,7 +50,7 @@ Legend:
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
-- [-] AUTOFIX-AUTOFIX_AUTO_OPT_TEST_DEBT_015144-015214 Coder stage failed for AUTOFIX-AUTO_OPT_TEST_DEBT-015144
+- [x] AUTOFIX-AUTOFIX_AUTO_OPT_TEST_DEBT_015144-015214 Coder stage failed for AUTOFIX-AUTO_OPT_TEST_DEBT-015144
   - Done When:
     - blocker root cause is fixed
     - related tests and reviewer checks pass
