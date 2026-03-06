@@ -1,6 +1,6 @@
-Run: 20260306_005541_NO_TASK
-What: Devloop paused
-Why: Paused via .foundry/PAUSED
+Run: 20260306_005613_NO_TASK
+What: SKIPPED_LOCKED
+Why: active lock owner exists
 Risk: low
-Verify: /Users/zhouyixiaoxiao/openclaw-foundry-socialos/.foundry/PAUSED
-Next: remove pause flag to resume
+Verify: /Users/zhouyixiaoxiao/openclaw-foundry-socialos/.locks/devloop.lock/meta.env
+Next: retry next cron run

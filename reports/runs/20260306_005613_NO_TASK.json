@@ -1,0 +1,29 @@
+{
+  "runId": "20260306_005613_NO_TASK",
+  "taskId": "NO_TASK",
+  "taskText": "",
+  "status": "skipped_locked",
+  "summary": "SKIPPED_LOCKED",
+  "why": "active lock owner exists",
+  "risk": "low",
+  "verify": "/Users/zhouyixiaoxiao/openclaw-foundry-socialos/.locks/devloop.lock/meta.env",
+  "next": "retry next cron run",
+  "startedAt": "2026-03-06T00:56:13Z",
+  "finishedAt": "2026-03-06T00:56:13Z",
+  "durationMs": 0,
+  "stages": {
+    "plan": "pending",
+    "coder": "pending",
+    "tester": "pending",
+    "reviewer": "pending",
+    "gitSync": "pending",
+    "push": "pending"
+  },
+  "lock": {
+    "status": "busy",
+    "staleRecovered": "false",
+    "ownerPid": "23630",
+    "ownerAlive": "true",
+    "ownerHeartbeatAgeSec": "1"
+  }
+}
