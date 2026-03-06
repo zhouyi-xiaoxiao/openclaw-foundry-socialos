@@ -821,6 +821,10 @@ function renderDraftCards(drafts) {
       const steps = Array.isArray(publishPackage.steps) ? publishPackage.steps : [];
       const hashtags = Array.isArray(publishPackage.hashtags) ? publishPackage.hashtags : [];
       const previewBody = buildDraftPreviewBody(draft, publishPackage) || draft.content;
+      const draftContextTitle = readOptionalString(
+        publishPackage.localizedTitle || draft.eventTitle || draft.eventId || 'untitled event',
+        'untitled event'
+      );
       const hasIssues = validation && Object.keys(validation).length && validation.ok === false;
       const supportLabel = publishPackage.supportLevel || capability.supportLevel || 'L0 Draft';
       const entryLabel = publishPackage.entryTarget || capability.entryTarget || 'manual';
@@ -829,7 +833,7 @@ function renderDraftCards(drafts) {
         <article class="draft-card">
           <div class="draft-head">
             <div>
-              <p class="card-kicker">${escapeHtml(draft.eventTitle || draft.eventId || 'untitled event')}</p>
+              <p class="card-kicker">${escapeHtml(draftContextTitle)}</p>
               <h3>${escapeHtml(draft.platformLabel)} · ${escapeHtml(formatLanguageLabel(draft.language))}</h3>
               <p class="draft-subtitle">${escapeHtml(
                 isChineseDraftLanguage(draft.language)

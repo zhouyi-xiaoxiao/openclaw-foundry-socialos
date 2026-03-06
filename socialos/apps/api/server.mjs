@@ -653,12 +653,12 @@ function inferScenePhrase(rawText, language) {
   const location = inferLocation(source);
   if (source.includes('hackathon')) {
     return language === 'zh'
-      ? `${location ? `${location} 的 ` : ''}hackathon`
+      ? `${location ? `${location} 的 ` : ''}黑客松现场`
       : `${location ? `a hackathon in ${location}` : 'a hackathon'}`;
   }
   if (source.includes('meetup') || source.includes('builder meetup')) {
     return language === 'zh'
-      ? `${location ? `${location} 的 ` : ''}builder meetup`
+      ? `${location ? `${location} 的 ` : ''}开发者聚会`
       : `${location ? `a builder meetup in ${location}` : 'a builder meetup'}`;
   }
   if (source.includes('conference') || source.includes('summit')) {
@@ -710,9 +710,9 @@ function inferTopicPhrase(rawText, language) {
 
   if (source.includes('socialos')) push('SocialOS', 'SocialOS');
   if (source.includes('agent workflow') || source.includes('agent') || source.includes('agents')) {
-    push('agent workflow', 'agent workflows');
+    push('多智能体工作流', 'agent workflows');
   }
-  if (source.includes('demo')) push('demo 扩散', 'demo distribution');
+  if (source.includes('demo')) push('演示扩散', 'demo distribution');
   if (source.includes('content')) push('内容策略', 'content strategy');
   if (source.includes('community') || source.includes('社区')) push('社区运营', 'community building');
   if (source.includes('growth') || source.includes('增长')) push('增长动作', 'growth loops');
@@ -1105,7 +1105,7 @@ function buildPackageSections(platformRule, event, language, options) {
   const bodyLead =
     language === 'zh'
       ? `这次我想用“${angle}”的角度，面向${audience}分享这次进展。`
-      : `Sharing this for ${audience}, through a ${angle} lens.`;
+      : `Sharing this for ${audience}, framed as ${angle}.`;
   const detailLine = localizedContext.detailLine;
   const contextLead = localizedContext.contextLead;
   const closing =
@@ -1453,6 +1453,7 @@ function buildPublishPackage(platformRule, event, language, content, options = {
     entryUrl: PLATFORM_ENTRY_URLS[platformRule.id] || '',
     liveEligible: capability.liveEligible,
     blockedBy: capability.blockedBy,
+    localizedTitle: sections.localizedTitle,
     title: sections.headline,
     hook: sections.bodyLead,
     body: sections.detailLine,
