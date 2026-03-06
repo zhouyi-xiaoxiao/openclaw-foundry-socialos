@@ -1759,7 +1759,7 @@ function parseQueueSummary(queueMarkdown) {
   };
 
   for (const line of lines) {
-    const taskMatch = line.match(/^- \[([ x!\-])\] (.+)$/u);
+    const taskMatch = line.match(/^- \[([ xX!\-])\] (.+)$/u);
     if (!taskMatch) continue;
     const marker = taskMatch[1];
     const taskText = taskMatch[2].trim();
@@ -1770,7 +1770,7 @@ function parseQueueSummary(queueMarkdown) {
       if (!summary.currentTask) summary.currentTask = taskText;
     }
     if (marker === '!') summary.blocked += 1;
-    if (marker === 'x') summary.done += 1;
+    if (marker === 'x' || marker === 'X') summary.done += 1;
   }
 
   return summary;
