@@ -3225,6 +3225,7 @@ function buildWorkspaceBootstrapPayload(statements) {
   const embeddings = resolveEmbeddingsSettings();
   const drafts = dedupeLatestDrafts(statements.listRecentDrafts.all(30).map(formatDraftRow), 12).slice(0, 4);
   const captures = statements.listRecentCaptures.all(8).map(formatCaptureRow);
+  const publishMode = readMode();
 
   return {
     generatedAt: nowIso(),
@@ -3243,6 +3244,18 @@ function buildWorkspaceBootstrapPayload(statements) {
     agentLaneSummary: Array.isArray(cluster.agents) ? cluster.agents.slice(0, 4) : [],
     foundry: cluster,
     codex,
+    systemStatus: {
+      publishMode,
+      localFirst: true,
+      loopbackOnly: true,
+      foundryEnabled: Boolean(cluster.enabled),
+      llmTaskHealth: cluster.llmTaskHealth?.status || 'unknown',
+      summary: [
+        publishMode === 'dry-run' ? 'Dry-run publish' : 'Live publish',
+        'loopback only',
+        cluster.enabled ? 'Foundry ready' : 'Foundry unavailable',
+      ].join(' · '),
+    },
     voiceReadiness: {
       openAiConfigured: Boolean(readOptionalString(process.env.OPENAI_API_KEY, '')),
       effectiveEmbeddingsProvider: embeddings.effectiveProvider,
@@ -3250,6 +3263,39 @@ function buildWorkspaceBootstrapPayload(statements) {
         ? 'Server-side OpenAI transcription is configured for voice uploads.'
         : 'Voice uploads still depend on browser speech recognition unless OPENAI_API_KEY is configured.',
     },
+  };
+}
+
+function buildEventDetailPayload(statements, eventId) {
+  const eventRow = statements.selectEventDetailById.get(eventId);
+  if (!eventRow) return null;
+
+  const event = formatEventRow(eventRow);
+  const payload = safeParseJsonObject(eventRow.payload, {});
+  const relatedDrafts = dedupeLatestDrafts(
+    statements.listDraftsByEventId.all(eventId).map(formatDraftRow),
+    12
+  );
+
+  return {
+    event,
+    summaryText: truncateText(
+      readOptionalString(
+        payload?.details?.summary ||
+          payload?.details?.combinedText ||
+          payload?.summary ||
+          summarizeEventPayload(payload),
+        ''
+      ),
+      240
+    ),
+    audience: readOptionalString(payload.audience, ''),
+    languageStrategy: readOptionalString(payload.languageStrategy, ''),
+    tone: readOptionalString(payload.tone, ''),
+    links: normalizeStringList(payload.links),
+    assets: normalizeStringList(payload.assets),
+    details: payload.details || {},
+    relatedDrafts,
   };
 }
 
@@ -4105,6 +4151,21 @@ function buildStatements(db) {
       ORDER BY draft.created_at DESC
       LIMIT ?
     `),
+    listDraftsByEventId: db.prepare(`
+      SELECT
+        draft.id,
+        draft.event_id,
+        draft.platform,
+        draft.language,
+        draft.content,
+        draft.metadata,
+        draft.created_at,
+        event.title AS event_title
+      FROM PostDraft AS draft
+      LEFT JOIN Event AS event ON event.id = draft.event_id
+      WHERE draft.event_id = ?
+      ORDER BY draft.created_at DESC
+    `),
 
     insertQueueTask: db.prepare(
       'INSERT INTO PublishTask(id, draft_id, platform, mode, status, result, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)'
@@ -4422,6 +4483,15 @@ async function routeRequest(req, res, statements) {
     const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 12, 50);
     const events = statements.listRecentEvents.all(limit).map(formatEventRow);
     sendJson(res, 200, { limit, count: events.length, events });
+    return;
+  }
+
+  const eventDetailMatch = pathname.match(/^\/events\/([^/]+)$/u);
+  if (method === 'GET' && eventDetailMatch) {
+    const eventId = decodeURIComponent(eventDetailMatch[1]);
+    const payload = buildEventDetailPayload(statements, eventId);
+    if (!payload) throw new HttpError(404, 'eventId not found');
+    sendJson(res, 200, payload);
     return;
   }
 
