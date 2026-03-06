@@ -4845,6 +4845,7 @@ async function routeRequest(req, res, statements) {
     const body = await readJsonBody(req);
     const draftIdInput =
       typeof body.draftId === 'string' && body.draftId.trim() ? body.draftId.trim() : null;
+    const queueMetadata = buildQueueMetadata(body);
 
     let eventId = null;
     let platformRule;
@@ -4863,17 +4864,27 @@ async function routeRequest(req, res, statements) {
       content = existingDraft.content;
 
       const existingMetadata = safeParseJsonObject(existingDraft.metadata, {});
-      if (!existingMetadata.validation) {
+      const existingHighFrequency = readOptionalBoolean(existingMetadata.highFrequency, false);
+      const existingNoDeliver = readOptionalBoolean(existingMetadata.noDeliver, false);
+      const nextDraftMetadata = {
+        ...existingMetadata,
+        highFrequency: existingHighFrequency || queueMetadata.highFrequency,
+        noDeliver: existingNoDeliver || queueMetadata.noDeliver,
+      };
+      if (!nextDraftMetadata.validation) {
         const validation = buildDraftValidation(
           platformRule,
           content,
           validateQueueContentCompliance(platformRule, content).issues
         );
-        statements.updateDraftContentMetadata.run(
-          content,
-          JSON.stringify({ ...existingMetadata, validation }),
-          draftIdInput
-        );
+        nextDraftMetadata.validation = validation;
+      }
+      if (
+        !existingMetadata.validation ||
+        nextDraftMetadata.highFrequency !== existingHighFrequency ||
+        nextDraftMetadata.noDeliver !== existingNoDeliver
+      ) {
+        statements.updateDraftContentMetadata.run(content, JSON.stringify(nextDraftMetadata), draftIdInput);
       }
     } else {
       eventId = requireString(body.eventId, 'eventId');
@@ -4897,7 +4908,6 @@ async function routeRequest(req, res, statements) {
       return;
     }
 
-    const queueMetadata = buildQueueMetadata(body);
     const createdAt = nowIso();
 
     if (!draftIdInput) {

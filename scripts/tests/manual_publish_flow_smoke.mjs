@@ -74,11 +74,41 @@ async function main() {
     });
     assert(failed.status === 'failed', 'manual completion should support failed outcome');
 
+    const queuedHighFrequency = await requestJson(api.baseUrl, '/publish/queue', {
+      method: 'POST',
+      body: {
+        draftId: drafts.drafts[0].draftId,
+        mode: 'live',
+        highFrequency: true,
+      },
+    });
+    assert(queuedHighFrequency.delivery?.highFrequency === true, 'queue should echo high-frequency delivery flag');
+    assert(queuedHighFrequency.delivery?.noDeliver === true, 'high-frequency queue should default no-deliver');
+
+    const approvedHighFrequency = await requestJson(api.baseUrl, '/publish/approve', {
+      method: 'POST',
+      body: { taskId: queuedHighFrequency.taskId, approvedBy: 'manual_publish_flow_smoke' },
+    });
+    assert(
+      approvedHighFrequency.delivery?.highFrequency === true,
+      'approve should retain high-frequency hint for existing draft queue tasks'
+    );
+    assert(
+      approvedHighFrequency.delivery?.noDeliver === true,
+      'approve should keep no-deliver sticky when queued as high-frequency'
+    );
+    assert(
+      approvedHighFrequency.mode === 'dry-run',
+      'approve should still enforce dry-run mode without live gates'
+    );
+
     const tasks = await requestJson(api.baseUrl, '/queue/tasks?limit=10');
     const first = tasks.queueTasks.find((item) => item.taskId === queued.taskId);
     const second = tasks.queueTasks.find((item) => item.taskId === queuedSecond.taskId);
+    const third = tasks.queueTasks.find((item) => item.taskId === queuedHighFrequency.taskId);
     assert(first?.status === 'posted', 'queue/tasks should expose posted status');
     assert(second?.status === 'failed', 'queue/tasks should expose failed status');
+    assert(third?.status === 'manual_step_needed', 'queue/tasks should expose high-frequency approval status');
 
     console.log('manual_publish_flow_smoke: PASS');
   } finally {
