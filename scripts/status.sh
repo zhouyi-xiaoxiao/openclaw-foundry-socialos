@@ -29,7 +29,8 @@ fi
 pending_count="$(grep -cE '^- \[ \] ' "${QUEUE_FILE}" || true)"
 in_progress_count="$(grep -cE '^- \[-\] ' "${QUEUE_FILE}" || true)"
 blocked_count="$(grep -cE '^- \[!\] ' "${QUEUE_FILE}" || true)"
-done_count="$(grep -cE '^- \[x\] ' "${QUEUE_FILE}" || true)"
+# Keep queue accounting aligned with API parsing, which treats both [x] and [X] as done.
+done_count="$(grep -cE '^- \[[xX]\] ' "${QUEUE_FILE}" || true)"
 current_task="$(grep -nE '^- \[( |-|!)\] ' "${QUEUE_FILE}" | head -n 1 || true)"
 
 latest_json="$(node - "${RUN_DIR}" <<'NODE'
