@@ -29,15 +29,35 @@ async function main() {
 
   try {
     const root = await fetch(`${web.baseUrl}/`, { redirect: 'manual' });
-    assert(root.status === 302, `root should redirect to /cockpit (got ${root.status})`);
+    assert(root.status === 302, `root should redirect to /quick-capture (got ${root.status})`);
     assert(
-      root.headers.get('location') === '/cockpit',
+      root.headers.get('location') === '/quick-capture',
       `root redirect location mismatch: ${root.headers.get('location')}`
+    );
+
+    const cockpit = await fetch(`${web.baseUrl}/cockpit`, { redirect: 'manual' });
+    assert(cockpit.status === 302, `/cockpit should redirect to the unified workspace (got ${cockpit.status})`);
+    assert(cockpit.headers.get('location') === '/quick-capture', `/cockpit redirect mismatch: ${cockpit.headers.get('location')}`);
+
+    const ask = await fetch(`${web.baseUrl}/ask?q=who%20is%20alex`, { redirect: 'manual' });
+    assert(ask.status === 302, `/ask should redirect to the unified workspace (got ${ask.status})`);
+    assert(
+      ask.headers.get('location') === '/quick-capture?q=who+is+alex',
+      `/ask redirect mismatch: ${ask.headers.get('location')}`
     );
 
     for (const page of DASHBOARD_PAGES) {
       await expectPage(web.baseUrl, page);
     }
+
+    const workspace = await fetch(`${web.baseUrl}/quick-capture`);
+    const workspaceHtml = await workspace.text();
+    assert(
+      (workspaceHtml.match(/<form[^>]+data-workspace-chat-form/gu) || []).length === 1,
+      'unified workspace should render exactly one main chat form'
+    );
+    assert(!workspaceHtml.includes('href="/cockpit"'), 'unified nav should not keep a separate cockpit link');
+    assert(!workspaceHtml.includes('href="/ask"'), 'unified nav should not keep a separate ask link');
 
     const peopleDetail = await fetch(`${web.baseUrl}/people/demo-person`);
     const peopleDetailHtml = await peopleDetail.text();

@@ -2118,8 +2118,8 @@ function inferWorkspaceIntent(text, assets = []) {
   if (!source && assets.length) return 'capture';
   if (/(能量|情绪|状态|self|mirror|最近.*状态|我最近|最近的我|who am i|energy|theme)/u.test(source)) return 'self';
   if (/(找|搜索|search|who|哪个人|哪位|回忆|记得)/u.test(source)) return 'search';
-  if (/(event|campaign|draft|内容|发布|平台|活动|战役)/u.test(source)) return 'campaign';
   if (/(认识|聊了|met|talked to|voice note|名片|business card)/u.test(source)) return 'capture';
+  if (/(event|campaign|draft|内容|发布|平台|活动|战役)/u.test(source)) return 'campaign';
   return 'mixed';
 }
 

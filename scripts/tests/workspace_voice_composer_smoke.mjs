@@ -17,7 +17,7 @@ async function main() {
       'workspace composer should render a transcript preview area'
     );
     assert(
-      html.includes('draft the transcript into the composer so you can edit it before sending'),
+      html.includes('we draft the transcript into the composer so you can edit it before sending'),
       'workspace composer note should explain manual send after transcription'
     );
     assert(
@@ -39,6 +39,10 @@ async function main() {
     assert(
       !html.includes('send automatically'),
       'workspace copy should not promise automatic send after transcription'
+    );
+    assert(
+      (html.match(/<form[^>]+data-workspace-chat-form/gu) || []).length === 1,
+      'workspace should only render one primary chat composer'
     );
 
     console.log('workspace_voice_composer_smoke: PASS');

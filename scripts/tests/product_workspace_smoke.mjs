@@ -56,6 +56,24 @@ async function main() {
     assert(typeof workspace.responseId === 'string', 'workspace chat should return a response id');
     assert(Array.isArray(workspace.agentLanes) && workspace.agentLanes.length >= 4, 'workspace chat should expose agent lanes');
     assert(workspace.suggestedEvent?.title, 'workspace chat should return an event suggestion');
+    assert(typeof workspace.presentation?.mode === 'string', 'workspace chat should expose presentation mode');
+    assert(typeof workspace.presentation?.answer === 'string', 'workspace chat should expose presentation answer');
+    assert(workspace.presentation?.primaryCard?.type === 'contact', 'capture-like workspace input should foreground a contact card');
+    assert(Array.isArray(workspace.presentation?.actions), 'workspace chat should expose lightweight actions');
+
+    const searchWorkspace = await postJson(api.baseUrl, '/workspace/chat', {
+      text: 'Who is the product workspace tester?',
+      source: 'product_workspace_smoke',
+    });
+    assert(searchWorkspace.presentation?.mode === 'search', 'search-like workspace input should switch to search mode');
+    assert(
+      ['contact', 'event', 'draft', 'mirror', 'mixed'].includes(searchWorkspace.presentation?.primaryCard?.type),
+      'search-like workspace input should expose a primary presentation card'
+    );
+    assert(
+      (searchWorkspace.presentation?.secondaryCards || []).length <= 3,
+      'workspace presentation should cap secondary cards'
+    );
 
     const capture = await postJson(api.baseUrl, '/capture', {
       text: 'Product workspace smoke capture for event and drafts',
@@ -146,6 +164,14 @@ async function main() {
     assert(typeof cockpit.summaryText === 'string' && cockpit.summaryText.length > 0, 'cockpit should expose an action summary');
     assert(Array.isArray(cockpit.actions), 'cockpit should expose action cards');
     assert(Array.isArray(cockpit.followUps), 'cockpit should expose follow-up candidates');
+
+    const bootstrap = await getJson(api.baseUrl, '/workspace/bootstrap');
+    assert(typeof bootstrap.summaryText === 'string' && bootstrap.summaryText.length > 0, 'workspace bootstrap should expose a summary');
+    assert(Array.isArray(bootstrap.topActions), 'workspace bootstrap should expose top actions');
+    assert(Array.isArray(bootstrap.recentContacts), 'workspace bootstrap should expose recent contacts');
+    assert(Array.isArray(bootstrap.recentEvents), 'workspace bootstrap should expose recent events');
+    assert(Array.isArray(bootstrap.queuePreview), 'workspace bootstrap should expose queue preview');
+    assert(typeof bootstrap.voiceReadiness?.summary === 'string', 'workspace bootstrap should expose voice readiness');
 
     const ask = await getJson(
       api.baseUrl,

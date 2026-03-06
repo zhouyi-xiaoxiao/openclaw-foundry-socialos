@@ -332,7 +332,8 @@ function renderWorkspaceHomeHeader(bootstrap = {}) {
     <section class="workspace-home-header">
       <div class="workspace-home-summary">
         <p class="eyebrow">Unified Workspace</p>
-        <h1>One place to think, remember, and act</h1>
+        <h1>Workspace</h1>
+        <p class="workspace-home-title">One place to think, remember, and act.</p>
         <p>${escapeHtml(
           bootstrap.summaryText ||
             'Capture what just happened, recall the right person or event, and only then branch into drafts or follow-up.'
@@ -1359,51 +1360,46 @@ async function renderAskPage(page, requestUrl) {
 }
 
 async function renderQuickCapturePage(page, requestUrl) {
-  const [capturesRes, mirrorRes, assetsRes, peopleRes, eventsRes, clusterRes, embeddingsRes] = await Promise.all([
-    fetchJsonSafe('/captures?limit=8'),
-    fetchJsonSafe('/self-mirror'),
+  const [bootstrapRes, assetsRes] = await Promise.all([
+    fetchJsonSafe('/workspace/bootstrap'),
     fetchJsonSafe('/capture/assets?limit=8'),
-    fetchJsonSafe('/people?limit=4'),
-    fetchJsonSafe('/events?limit=6'),
-    fetchJsonSafe('/ops/cluster'),
-    fetchJsonSafe('/settings/embeddings'),
   ]);
-  const captures = capturesRes.ok ? capturesRes.payload.captures || [] : [];
-  const mirrorPayload = mirrorRes.ok ? mirrorRes.payload : {};
-  const checkins = mirrorRes.ok ? mirrorRes.payload.checkins || [] : [];
+  const bootstrap = bootstrapRes.ok
+    ? bootstrapRes.payload || {}
+    : {
+        summaryText: 'Workspace bootstrap is unavailable right now.',
+        topActions: [],
+        recentContacts: [],
+        recentEvents: [],
+        recentDrafts: [],
+        queuePreview: [],
+        latestMirror: null,
+        recentCheckins: [],
+        recentCaptures: [],
+        agentLaneSummary: [],
+        voiceReadiness: { openAiConfigured: false },
+      };
   const assets = assetsRes.ok ? assetsRes.payload.assets || [] : [];
-  const people = peopleRes.ok ? peopleRes.payload.people || [] : [];
-  const events = eventsRes.ok ? eventsRes.payload.events || [] : [];
-  const cluster = clusterRes.ok ? clusterRes.payload.foundry || {} : {};
-  const embeddings = embeddingsRes.ok ? embeddingsRes.payload || {} : {};
-  const openAiReady = Boolean(embeddings.openaiKeyPresent);
-  const prefill = readOptionalString(requestUrl.searchParams.get('prefill'), '');
+  const openAiReady = Boolean(bootstrap.voiceReadiness?.openAiConfigured);
+  const autoQuery = readOptionalString(requestUrl.searchParams.get('q'), '');
+  const prefill = readOptionalString(requestUrl.searchParams.get('prefill'), autoQuery);
 
   return `
-    ${renderHero(
-      page,
-      [
-        renderMetric(String(filterMeaningfulCaptures(captures, 99).length), 'usable captures'),
-        renderMetric(String(people.length), 'contacts loaded'),
-        renderMetric(String(events.length), 'logbook items'),
-        renderMetric(String((cluster.agents || []).length), 'agent lanes'),
-      ].join(''),
-      `<div class="info-card"><strong>Chat-first mode</strong><p>The main demo path now starts here. Contacts and logbook stay as supporting surfaces behind the chat.</p></div>`
-    )}
+    ${renderWorkspaceHomeHeader(bootstrap)}
     <div class="workspace-layout">
       <section class="panel workspace-main-panel">
         <div class="panel-head">
           <div>
-            <h2>Workspace Chat</h2>
-            <p class="panel-subtitle">Use one main thread for typing, voice, screenshots, and cards. Contacts and events stay behind the chat instead of taking over the page.</p>
+            <h2>Workspace</h2>
+            <p class="panel-subtitle">Ask naturally, note who you met, or promote a thread into an event only when it is actually useful.</p>
           </div>
         </div>
-        ${renderWorkspaceThreadSeed(captures)}
+        ${renderWorkspaceThreadSeed(bootstrap.recentCaptures || [])}
         <div class="workspace-composer-shell">
           <div class="workspace-asset-tray" data-workspace-assets>
             ${assets.length ? assets.slice(0, 3).map((asset) => `<span class="asset-chip tone-soft">${escapeHtml(asset.fileName || asset.assetId)}</span>`).join('') : ''}
           </div>
-          <form class="workspace-composer" data-workspace-chat-form data-openai-transcription-ready="${openAiReady ? 'true' : 'false'}">
+          <form class="workspace-composer" data-workspace-chat-form data-openai-transcription-ready="${openAiReady ? 'true' : 'false'}" data-initial-query="${escapeHtml(autoQuery)}">
             <input type="hidden" name="source" value="workspace-chat" />
             <input type="hidden" name="assetIds" value="" data-capture-asset-ids />
             <input type="hidden" name="voiceLang" value="" />
@@ -1427,30 +1423,32 @@ async function renderQuickCapturePage(page, requestUrl) {
           </form>
           <div class="workspace-transcript-preview" data-transcript-preview hidden></div>
           <div class="workspace-composer-note" data-audio-status>
-            Tap the mic to record. When you stop, we draft the transcript into the composer so you can edit it before sending. Press Enter to send text.
+            Ask anything, drop a screenshot, or record a voice note. When voice stops, we draft the transcript into the composer so you can edit it before sending.
           </div>
         </div>
         <div class="form-result" data-form-result hidden></div>
       </section>
-      <aside class="workspace-side">
-        ${renderPanel('Contacts Snapshot', renderPeopleCards(people), 'Chat 命中的联系人可以直接点开详情。')}
-        ${renderPanel('Event Logbook', renderEventCards(events), '聊天里提到的事情，可以一键落成 event。')}
-        ${renderPanel('Agent Coordination', renderAgentLaneSnapshot(cluster), '主界面展示的是协作结果，底层仍由多条 lane 分工。')}
+      <aside class="workspace-side" data-mobile-context-sections>
+        ${renderPanel('Recent Contacts', renderPeopleCards(bootstrap.recentContacts || []), 'People memory stays behind the main conversation and is ready when needed.')}
+        ${renderPanel('Recent Events', renderEventCards(bootstrap.recentEvents || []), 'Turn a chat turn into an event only when it deserves campaign treatment.')}
+        ${renderPanel('Draft Shelf', renderAskDraftCards(bootstrap.recentDrafts || []), 'If content already exists, you can jump straight into the package library.')}
+        ${renderPanel('Queue Preview', renderWorkspaceQueuePreview(bootstrap.queuePreview || []), 'Keep manual steps and approvals visible without leaving home.')}
         ${renderPanel(
           'Latest Mirror Signal',
-          mirrorPayload.latestMirror
+          bootstrap.latestMirror
             ? `
                 <div class="stack-card">
                   <div class="stack-meta">
-                    ${renderPill(mirrorPayload.latestMirror.rangeLabel || 'mirror', 'accent')}
-                    <span>${escapeHtml(formatDateTime(mirrorPayload.latestMirror.createdAt))}</span>
+                    ${renderPill(bootstrap.latestMirror.rangeLabel || 'mirror', 'accent')}
+                    <span>${escapeHtml(formatDateTime(bootstrap.latestMirror.createdAt))}</span>
                   </div>
-                  <p>${escapeHtml(truncate(mirrorPayload.latestMirror.summaryText || mirrorPayload.latestMirror.content || '', 220))}</p>
+                  <p>${escapeHtml(truncate(bootstrap.latestMirror.summaryText || bootstrap.latestMirror.content || '', 220))}</p>
                 </div>
               `
-            : renderCheckinCards(checkins.slice(0, 3)),
-          'Self signal still feeds the same chat-first workspace.'
+            : renderCheckinCards((bootstrap.recentCheckins || []).slice(0, 3)),
+          'Self signal is still part of the same workspace, not a separate tool.'
         )}
+        ${renderPanel('Agent Lane Summary', renderAgentLaneSnapshot({ agents: bootstrap.agentLaneSummary || [] }), 'Agent coordination only shows up as support, not as a competing dashboard.')}
       </aside>
     </div>
   `;
@@ -2415,48 +2413,49 @@ function renderClientScript() {
         );
       }
 
+      function renderWorkspacePresentationCard(card, compact = false) {
+        if (!card || !card.title) return '';
+        const badges = Array.isArray(card.badges) ? card.badges.filter(Boolean) : [];
+        const detailLines = Array.isArray(card.detailLines) ? card.detailLines.filter(Boolean) : [];
+        return '<section class="stack-card ' + (compact ? 'compact-card workspace-presentation-card compact' : 'workspace-presentation-card') + '">' +
+          (card.kicker ? '<p class="card-kicker">' + escapeHtml(card.kicker) + '</p>' : '') +
+          '<div class="stack-meta"><strong>' + escapeHtml(card.title) + '</strong>' +
+            (card.subtitle ? '<span>' + escapeHtml(card.subtitle) + '</span>' : '') +
+          '</div>' +
+          (card.body ? '<p>' + escapeHtml(card.body) + '</p>' : '') +
+          (badges.length
+            ? '<div class="chip-row">' + badges.map((badge) => '<span class="pill tone-soft">' + escapeHtml(badge) + '</span>').join('') + '</div>'
+            : '') +
+          (detailLines.length
+            ? '<ul class="compact-list workspace-card-details">' + detailLines.map((line) => '<li>' + escapeHtml(line) + '</li>').join('') + '</ul>'
+            : '') +
+          (card.href
+            ? '<div class="inline-actions"><a class="mini-link" href="' + escapeHtml(card.href) + '">Open</a></div>'
+            : '') +
+        '</section>';
+      }
+
+      function renderWorkspaceActionStrip(actions, payload) {
+        if (!Array.isArray(actions) || !actions.length) return '';
+        return '<div class="inline-actions action-strip">' +
+          actions.map((action) => {
+            if (action.kind === 'mutation' && action.action) {
+              return '<button type="button" class="secondary-button" data-workspace-action="' + escapeHtml(action.action) + '" data-response-id="' + escapeHtml(payload.responseId) + '">' + escapeHtml(action.label || 'Open') + '</button>';
+            }
+            if (action.kind === 'link' && action.href) {
+              return '<a class="mini-link action-link" href="' + escapeHtml(action.href) + '">' + escapeHtml(action.label || 'Open') + '</a>';
+            }
+            return '';
+          }).filter(Boolean).join('') +
+        '</div>';
+      }
+
       function renderWorkspaceAssistantTurn(payload) {
-        const ui = payload.ui || {};
-        const people = Array.isArray(ui.people) ? ui.people : [];
-        const events = Array.isArray(ui.events) ? ui.events : [];
-        const lanes = Array.isArray(ui.coordination) ? ui.coordination : [];
-        const draft = payload.captureDraft || {};
-        const personDraft = draft.personDraft || {};
-        const eventSuggestion = payload.suggestedEvent || {};
+        const presentation = payload.presentation || {};
+        const primaryCard = presentation.primaryCard || null;
+        const secondaryCards = Array.isArray(presentation.secondaryCards) ? presentation.secondaryCards : [];
+        const lanes = Array.isArray(payload.agentLanes) ? payload.agentLanes.filter((lane) => lane.status && lane.status !== 'idle') : [];
         const transcription = payload.transcription || {};
-
-        const focusCard = personDraft.name && payload.intent !== 'search'
-          ? '<section class="workspace-block"><h4>Contact draft</h4>' +
-              '<article class="stack-card compact-card">' +
-                '<div class="stack-meta"><strong>' + escapeHtml(personDraft.name) + '</strong><span>ready to save</span></div>' +
-                '<p>' + escapeHtml(personDraft.followUpSuggestion || draft.interactionDraft?.summary || 'Keep chatting if you want to refine this before saving.') + '</p>' +
-              '</article>' +
-            '</section>'
-          : '';
-
-        const peopleBlock = people.length
-          ? '<section class="workspace-block"><h4>' + escapeHtml(payload.intent === 'search' ? 'Best matches' : 'Likely contact') + '</h4><div class="stack">' +
-              people.map((person) =>
-                '<article class="stack-card compact-card">' +
-                  '<div class="stack-meta"><strong>' + escapeHtml(person.name) + '</strong><span>' + escapeHtml(payload.intent === 'search' ? 'matched' : 'memory hit') + '</span></div>' +
-                  '<p>' + escapeHtml(person.evidenceSnippet || person.notes || '') + '</p>' +
-                  '<div class="inline-actions"><a class="mini-link" href="/people/' + encodeURIComponent(person.personId) + '">Open Contact</a></div>' +
-                '</article>'
-              ).join('') +
-            '</div></section>'
-          : '';
-
-        const eventBlock = events.length
-          ? '<section class="workspace-block"><h4>' + escapeHtml(payload.intent === 'search' ? 'Related logbook items' : 'Relevant event context') + '</h4><div class="stack">' +
-              events.map((event) =>
-                '<article class="stack-card compact-card">' +
-                  '<div class="stack-meta"><strong>' + escapeHtml(event.title) + '</strong><span>' + escapeHtml((event.payload && event.payload.languageStrategy) || 'n/a') + '</span></div>' +
-                  '<p>' + escapeHtml(event.snippet || '') + '</p>' +
-                  '<div class="inline-actions"><a class="mini-link" href="/drafts?eventId=' + encodeURIComponent(event.eventId) + '">Open Drafts</a></div>' +
-                '</article>'
-              ).join('') +
-            '</div></section>'
-          : '';
 
         const laneBlock = lanes.length
           ? '<div class="agent-chip-row">' +
@@ -2472,33 +2471,24 @@ function renderClientScript() {
         const transcriptionBlock = transcription.message
           ? '<div class="workspace-note">' + escapeHtml(transcription.message) + '</div>'
           : '';
-
-        const eventSuggestionBlock = ui.showEventSuggestion && eventSuggestion.title
-          ? '<section class="workspace-block"><h4>Suggested event</h4>' +
-              '<article class="stack-card compact-card">' +
-                '<div class="stack-meta"><strong>' + escapeHtml(eventSuggestion.title) + '</strong><span>' + escapeHtml(eventSuggestion.languageStrategy || 'platform-native') + '</span></div>' +
-                '<p>' + escapeHtml((eventSuggestion.payload && eventSuggestion.payload.summary) || '') + '</p>' +
-              '</article>' +
+        const primaryBlock = primaryCard
+          ? '<section class="workspace-block"><h4>Main result</h4>' +
+              renderWorkspacePresentationCard(primaryCard) +
             '</section>'
           : '';
-
-        const actions = '<div class="inline-actions action-strip">' +
-          (ui.showMemoryAction
-            ? '<button type="button" class="secondary-button" data-workspace-action="save-memory" data-response-id="' + escapeHtml(payload.responseId) + '">Save Memory</button>'
-            : '') +
-          (ui.showEventSuggestion && eventSuggestion.title
-            ? '<button type="button" class="secondary-button" data-workspace-action="create-event" data-response-id="' + escapeHtml(payload.responseId) + '">Create Event</button>'
-            : '') +
-        '</div>';
+        const secondaryBlock = secondaryCards.length
+          ? '<section class="workspace-block"><h4>Related context</h4><div class="workspace-secondary-grid">' +
+              secondaryCards.map((card) => renderWorkspacePresentationCard(card, true)).join('') +
+            '</div></section>'
+          : '';
+        const actions = renderWorkspaceActionStrip(presentation.actions || [], payload);
 
         return '<article class="chat-bubble system workspace-assistant">' +
-          '<div class="stack-meta"><strong>SocialOS</strong><span>' + escapeHtml(payload.intent || 'mixed') + '</span></div>' +
-          '<p>' + escapeHtml(payload.summary || '') + '</p>' +
+          '<div class="stack-meta"><strong>SocialOS</strong><span>' + escapeHtml(presentation.mode || payload.intent || 'mixed') + '</span></div>' +
+          '<p>' + escapeHtml(presentation.answer || payload.summary || '') + '</p>' +
           transcriptionBlock +
-          focusCard +
-          peopleBlock +
-          eventBlock +
-          eventSuggestionBlock +
+          primaryBlock +
+          secondaryBlock +
           laneBlock +
           actions +
         '</article>';
@@ -3081,8 +3071,21 @@ function renderClientScript() {
         input.value = '';
       });
 
+      function maybeRunInitialWorkspaceQuery() {
+        const form = document.querySelector('[data-workspace-chat-form]');
+        if (!(form instanceof HTMLFormElement)) return;
+        const initialQuery = String(form.dataset.initialQuery || '').trim();
+        if (!initialQuery || form.dataset.initialQueryConsumed === 'true') return;
+        form.dataset.initialQueryConsumed = 'true';
+        if (form.elements.text) {
+          form.elements.text.value = initialQuery;
+        }
+        handleWorkspaceChat(form, form.querySelector('button[type="submit"]'));
+      }
+
       consumeFlash();
       renderWorkspaceAssets();
+      maybeRunInitialWorkspaceQuery();
     </script>
   `;
 }
@@ -3102,8 +3105,8 @@ function renderLayout({ currentPath, title, body }) {
         --panel: rgba(255, 250, 242, 0.84);
         --panel-strong: rgba(255, 247, 236, 0.94);
         --line: rgba(22, 33, 50, 0.12);
-        --nav-bg: rgba(16, 26, 44, 0.9);
-        --nav-ink: #eef5ff;
+        --nav-bg: rgba(255, 251, 244, 0.88);
+        --nav-ink: #162132;
         --accent: #156f6a;
         --accent-soft: #daf4f1;
         --warn: #b55d34;
@@ -3136,16 +3139,20 @@ function renderLayout({ currentPath, title, body }) {
         min-height: 100vh;
         padding: 28px 20px;
         color: var(--nav-ink);
-        background:
-          linear-gradient(180deg, rgba(13, 24, 39, 0.98), rgba(18, 34, 56, 0.92));
-        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        background: var(--nav-bg);
+        backdrop-filter: blur(18px);
+        border-right: 1px solid rgba(22, 33, 50, 0.08);
+      }
+      .nav-links {
+        display: grid;
+        gap: 6px;
       }
       .brand {
         margin: 0 0 18px;
         font-size: 11px;
         letter-spacing: 0.18em;
         text-transform: uppercase;
-        opacity: 0.7;
+        opacity: 0.6;
       }
       .brand-title {
         margin: 0 0 24px;
@@ -3164,23 +3171,23 @@ function renderLayout({ currentPath, title, body }) {
       }
       .nav-link:hover {
         transform: translateX(2px);
-        background: rgba(255, 255, 255, 0.07);
-        border-color: rgba(255, 255, 255, 0.08);
+        background: rgba(21, 111, 106, 0.06);
+        border-color: rgba(21, 111, 106, 0.1);
       }
       .nav-link.active {
-        background: rgba(255, 255, 255, 0.14);
-        border-color: rgba(255, 255, 255, 0.18);
+        background: rgba(21, 111, 106, 0.1);
+        border-color: rgba(21, 111, 106, 0.14);
       }
       .nav-footer {
         margin-top: 28px;
         padding-top: 18px;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        border-top: 1px solid rgba(22, 33, 50, 0.08);
         font-size: 13px;
         line-height: 1.5;
-        opacity: 0.78;
+        opacity: 0.74;
       }
       main {
-        padding: 32px;
+        padding: 32px 32px 120px;
       }
       .flash {
         display: flex;
@@ -3454,6 +3461,37 @@ function renderLayout({ currentPath, title, body }) {
         gap: 20px;
         align-items: start;
       }
+      .workspace-home-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+      .workspace-home-summary,
+      .workspace-home-actions {
+        border-radius: 28px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(12px);
+        padding: 24px;
+      }
+      .workspace-home-summary {
+        display: grid;
+        gap: 14px;
+      }
+      .workspace-home-title {
+        margin-top: -8px;
+        color: var(--ink);
+        font-size: 18px;
+      }
+      .workspace-home-actions {
+        display: grid;
+        gap: 14px;
+      }
+      .workspace-home-actions h3 {
+        font-size: 20px;
+      }
       .workspace-main-panel {
         display: grid;
         gap: 16px;
@@ -3543,6 +3581,21 @@ function renderLayout({ currentPath, title, body }) {
       .workspace-side {
         display: grid;
         gap: 20px;
+      }
+      .workspace-secondary-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .workspace-presentation-card {
+        display: grid;
+        gap: 10px;
+      }
+      .workspace-presentation-card.compact {
+        height: 100%;
+      }
+      .workspace-card-details {
+        margin-top: -2px;
       }
       .workspace-asset-tray {
         display: flex;
@@ -3819,9 +3872,28 @@ function renderLayout({ currentPath, title, body }) {
         }
         nav {
           min-height: auto;
-          position: static;
+          position: sticky;
+          z-index: 20;
+          padding: 16px;
+          border-right: 0;
+          border-bottom: 1px solid rgba(22, 33, 50, 0.08);
+        }
+        .nav-links {
+          display: flex;
+          gap: 8px;
+          overflow-x: auto;
+          padding-bottom: 4px;
+        }
+        .nav-link {
+          white-space: nowrap;
+          flex: 0 0 auto;
+          margin-bottom: 0;
+        }
+        main {
+          padding: 20px 16px 120px;
         }
         .hero,
+        .workspace-home-header,
         .two-up,
         .three-up,
         .workspace-layout,
@@ -3831,14 +3903,21 @@ function renderLayout({ currentPath, title, body }) {
           grid-template-columns: 1fr;
         }
         .workspace-composer {
-          grid-template-columns: 1fr;
+          grid-template-columns: auto minmax(0, 1fr) auto;
         }
         .workspace-composer-controls {
-          grid-auto-flow: row;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-auto-flow: column;
+          grid-template-columns: none;
         }
         .workspace-composer-shell {
           bottom: 10px;
+        }
+        .workspace-thread {
+          min-height: 320px;
+          max-height: none;
+        }
+        .workspace-secondary-grid {
+          grid-template-columns: 1fr;
         }
         .composer-row {
           grid-template-columns: 1fr;
@@ -3854,7 +3933,9 @@ function renderLayout({ currentPath, title, body }) {
       <nav>
         <p class="brand">Local-first social operating system</p>
         <h2 class="brand-title">SocialOS</h2>
-        ${renderNavigation(currentPath)}
+        <div class="nav-links">
+          ${renderNavigation(currentPath)}
+        </div>
         <div class="nav-footer">
           <p>Foundry now keeps the loop warm.</p>
           <p>Codex can work across UI, API, tests, and orchestration.</p>
@@ -3897,7 +3978,23 @@ async function routeRequest(req, res) {
   }
 
   if (pathname === '/') {
-    sendRedirect(res, 302, '/cockpit');
+    sendRedirect(res, 302, '/quick-capture');
+    return;
+  }
+
+  if (pathname === '/cockpit') {
+    const target = new URL('/quick-capture', 'http://localhost');
+    const prefill = readOptionalString(requestUrl.searchParams.get('prefill'), '');
+    if (prefill) target.searchParams.set('prefill', prefill);
+    sendRedirect(res, 302, `${target.pathname}${target.search}`);
+    return;
+  }
+
+  if (pathname === '/ask') {
+    const target = new URL('/quick-capture', 'http://localhost');
+    const query = readOptionalString(requestUrl.searchParams.get('q'), '');
+    if (query) target.searchParams.set('q', query);
+    sendRedirect(res, 302, `${target.pathname}${target.search}`);
     return;
   }
 
