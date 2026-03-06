@@ -648,9 +648,22 @@ function inferLocation(rawText) {
   return '';
 }
 
+function localizeLocationLabel(location, language) {
+  if (language !== 'zh') return location;
+  const locationMap = new Map([
+    ['London', '伦敦'],
+    ['Singapore', '新加坡'],
+    ['New York', '纽约'],
+    ['San Francisco', '旧金山'],
+    ['Shanghai', '上海'],
+    ['Beijing', '北京'],
+  ]);
+  return locationMap.get(location) || location;
+}
+
 function inferScenePhrase(rawText, language) {
   const source = cleanText(rawText).toLowerCase();
-  const location = inferLocation(source);
+  const location = localizeLocationLabel(inferLocation(source), language);
   if (source.includes('hackathon')) {
     return language === 'zh'
       ? `${location ? `${location} 的 ` : ''}黑客松现场`
