@@ -27,13 +27,14 @@ for (const ref of [
   'socialos/openclaw/runtime.openclaw.json5',
   'foundry/openclaw.foundry.json5',
   'bash scripts/demo.sh',
+  'bash scripts/overnight_supervisor.sh',
   'bash scripts/test.sh',
 ]) {
   assert(agentDoc.includes(ref), `AGENTS.md must reference ${ref}`);
 }
 
 const playbook = read('socialos/docs/AGENT_PLAYBOOK.md');
-for (const cmd of ['bash scripts/demo.sh', 'bash scripts/demo_status.sh', 'bash scripts/test.sh']) {
+for (const cmd of ['bash scripts/demo.sh', 'bash scripts/demo_status.sh', 'bash scripts/overnight_supervisor.sh', 'bash scripts/test.sh']) {
   assert(playbook.includes(cmd), `AGENT_PLAYBOOK must include ${cmd}`);
 }
 
@@ -67,6 +68,7 @@ for (const relPath of [
   'socialos/docs/evidence/sample-run-report.json',
   'socialos/docs/evidence/sample-digest.md',
   'scripts/demo_status.sh',
+  'scripts/overnight_supervisor.sh',
   'scripts/stop_demo.sh',
 ]) {
   assert(exists(relPath), `${relPath} must exist`);

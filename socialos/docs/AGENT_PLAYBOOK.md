@@ -22,7 +22,14 @@ If you are making a product/runtime change, also inspect:
 ```bash
 bash scripts/foundry_dispatch.sh STATUS
 bash scripts/status.sh
+bash scripts/overnight_supervisor.sh
 ```
+
+The overnight supervisor is the safe outer-loop guard:
+- it checks demo health
+- it checks Foundry status
+- it leaves a local morning-review summary in `reports/overnight/`
+- it stops mutating when safety defaults are no longer satisfied
 
 ## 3. Add a product task
 Preferred path:
@@ -67,4 +74,9 @@ bash scripts/test.sh
 If automation was paused:
 ```bash
 bash scripts/foundry_dispatch.sh RESUME_DEVLOOP
+```
+
+If unattended work is expected, leave an up-to-date supervisor summary:
+```bash
+bash scripts/overnight_supervisor.sh
 ```

@@ -39,6 +39,7 @@ Canonical public lifecycle:
 ```bash
 bash scripts/demo.sh
 bash scripts/demo_status.sh
+bash scripts/overnight_supervisor.sh
 bash scripts/test.sh
 bash scripts/stop_demo.sh
 ```
@@ -136,6 +137,7 @@ Included evidence:
 bash scripts/demo.sh
 bash scripts/demo_status.sh
 bash scripts/stop_demo.sh
+bash scripts/overnight_supervisor.sh
 bash scripts/test.sh
 bash scripts/status.sh
 bash scripts/foundry_dispatch.sh STATUS
@@ -143,6 +145,21 @@ bash scripts/foundry_dispatch.sh RUN_DEVLOOP_ONCE
 bash scripts/foundry_dispatch.sh PAUSE_DEVLOOP
 bash scripts/foundry_dispatch.sh RESUME_DEVLOOP
 ```
+
+## Overnight Iteration Guard
+For unattended iteration, use:
+
+```bash
+bash scripts/overnight_supervisor.sh
+```
+
+It does not mutate product state by itself. It is the outer-loop guard that:
+- checks demo health
+- checks Foundry status
+- confirms `dry-run` publish posture
+- restarts local demo services if they dropped
+- writes a concise morning-review summary into `reports/overnight/`
+- exits in stop mode when the repo becomes unstable or unsafe for unattended edits
 
 ## Repo Hygiene
 - volatile local state stays out of Git

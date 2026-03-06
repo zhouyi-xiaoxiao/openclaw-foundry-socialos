@@ -166,6 +166,11 @@
       "purpose": "report local demo service health"
     },
     {
+      "path": "scripts/overnight_supervisor.sh",
+      "command": "bash scripts/overnight_supervisor.sh",
+      "purpose": "run the unattended outer-loop guard and write a morning-review summary"
+    },
+    {
       "path": "scripts/stop_demo.sh",
       "command": "bash scripts/stop_demo.sh",
       "purpose": "stop local demo services"

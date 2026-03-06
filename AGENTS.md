@@ -92,4 +92,16 @@ Authoritative file:
 - `bash scripts/demo.sh`
 - `bash scripts/demo_status.sh`
 - `bash scripts/stop_demo.sh`
+- `bash scripts/overnight_supervisor.sh`
 - `bash scripts/test.sh`
+
+## Overnight Supervisor
+- `bash scripts/overnight_supervisor.sh` is the safe outer-loop guard for unattended iteration.
+- It always begins with:
+  - `bash scripts/demo_status.sh`
+  - `bash scripts/foundry_dispatch.sh STATUS`
+- It writes a concise local morning-review summary to:
+  - `reports/overnight/latest.md`
+  - `reports/overnight/latest.json`
+- If the demo is unhealthy it attempts a local restart.
+- If publish mode is not `dry-run` or Foundry has 2+ consecutive failures, it switches to stop/stabilize mode and leaves a status summary instead of guessing.
