@@ -87,10 +87,11 @@ async function serviceStatus(service) {
   const pid = readPid(service.pidFile);
   const pidAlive = isPidAlive(pid);
   const healthy = await checkHealth(service.healthUrl);
+  const alive = pid ? pidAlive : healthy;
   return {
     ...service,
     pid,
-    pidAlive,
+    pidAlive: alive,
     healthy,
   };
 }
