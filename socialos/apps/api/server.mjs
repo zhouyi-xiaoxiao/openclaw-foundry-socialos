@@ -3045,6 +3045,41 @@ function buildCockpitSummary(statements) {
   };
 }
 
+function buildWorkspaceBootstrapPayload(statements) {
+  const cockpit = buildCockpitSummary(statements);
+  const cluster = buildFoundryClusterSummary();
+  const codex = buildCodexLayerSummary();
+  const embeddings = resolveEmbeddingsSettings();
+  const drafts = dedupeLatestDrafts(statements.listRecentDrafts.all(30).map(formatDraftRow), 12).slice(0, 4);
+  const captures = statements.listRecentCaptures.all(8).map(formatCaptureRow);
+
+  return {
+    generatedAt: nowIso(),
+    summaryText: cockpit.summaryText,
+    topActions: cockpit.actions.slice(0, 4),
+    recentContacts: cockpit.recentPeople.slice(0, 4),
+    recentEvents: cockpit.recentEvents.slice(0, 4),
+    recentDrafts: drafts,
+    queuePreview: [
+      ...cockpit.queue.awaitingApproval,
+      ...cockpit.queue.manualSteps,
+    ].slice(0, 4),
+    latestMirror: cockpit.latestMirror,
+    recentCheckins: cockpit.recentCheckins.slice(0, 4),
+    recentCaptures: captures,
+    agentLaneSummary: Array.isArray(cluster.agents) ? cluster.agents.slice(0, 4) : [],
+    foundry: cluster,
+    codex,
+    voiceReadiness: {
+      openAiConfigured: Boolean(readOptionalString(process.env.OPENAI_API_KEY, '')),
+      effectiveEmbeddingsProvider: embeddings.effectiveProvider,
+      summary: readOptionalString(process.env.OPENAI_API_KEY, '')
+        ? 'Server-side OpenAI transcription is configured for voice uploads.'
+        : 'Voice uploads still depend on browser speech recognition unless OPENAI_API_KEY is configured.',
+    },
+  };
+}
+
 function buildPeopleDetailPayload(statements, personId) {
   const personRow = statements.selectPersonById.get(personId);
   if (!personRow) return null;
@@ -3925,6 +3960,11 @@ async function routeRequest(req, res, statements) {
   if (method === 'GET' && pathname === '/ask/search') {
     const query = readOptionalString(requestUrl.searchParams.get('query'), '');
     sendJson(res, 200, buildAskSearchPayload(statements, query));
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/workspace/bootstrap') {
+    sendJson(res, 200, buildWorkspaceBootstrapPayload(statements));
     return;
   }
 

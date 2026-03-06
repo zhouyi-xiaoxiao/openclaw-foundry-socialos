@@ -325,6 +325,53 @@ function renderWorkspaceThreadSeed(captures) {
   `;
 }
 
+function renderWorkspaceHomeHeader(bootstrap = {}) {
+  const topActions = Array.isArray(bootstrap.topActions) ? bootstrap.topActions : [];
+  const voiceReadiness = safeJson(bootstrap.voiceReadiness, {});
+  return `
+    <section class="workspace-home-header">
+      <div class="workspace-home-summary">
+        <p class="eyebrow">Unified Workspace</p>
+        <h1>One place to think, remember, and act</h1>
+        <p>${escapeHtml(
+          bootstrap.summaryText ||
+            'Capture what just happened, recall the right person or event, and only then branch into drafts or follow-up.'
+        )}</p>
+        <div class="chip-row">
+          ${renderPill(voiceReadiness.openAiConfigured ? 'voice ready' : 'browser voice', voiceReadiness.openAiConfigured ? 'good' : 'soft')}
+          ${renderPill(`${(bootstrap.recentContacts || []).length} contacts`, 'soft')}
+          ${renderPill(`${(bootstrap.recentEvents || []).length} events`, 'soft')}
+          ${renderPill(`${(bootstrap.queuePreview || []).length} queue items`, 'soft')}
+        </div>
+      </div>
+      <div class="workspace-home-actions">
+        <h3>Today on deck</h3>
+        ${topActions.length ? renderCockpitActionCards(topActions) : renderEmptyState('No action stack yet. Start by sending one chat turn.')}
+      </div>
+    </section>
+  `;
+}
+
+function renderWorkspaceQueuePreview(queueTasks) {
+  if (!Array.isArray(queueTasks) || !queueTasks.length) return renderEmptyState('No queue items waiting right now.');
+  return `<div class="stack">${queueTasks
+    .map(
+      (task) => `
+        <article class="stack-card">
+          <div class="stack-meta">
+            <strong>${escapeHtml(task.eventTitle || task.platformLabel || 'Queue item')}</strong>
+            ${renderPill(task.status || 'queued', task.status === 'manual_step_needed' ? 'warn' : 'soft')}
+          </div>
+          <p>${escapeHtml(truncate(task.content || '', 140))}</p>
+          <div class="inline-actions">
+            <a class="mini-link" href="/queue">Open Queue</a>
+          </div>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
 function renderCaptureFeed(captures) {
   const meaningfulCaptures = filterMeaningfulCaptures(captures, 4);
   if (!meaningfulCaptures.length) return renderEmptyState('No demo-ready captures yet.');
