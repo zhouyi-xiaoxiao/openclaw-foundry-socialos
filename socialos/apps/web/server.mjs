@@ -886,93 +886,80 @@ function renderCodexSummary(codex) {
 }
 
 async function renderQuickCapturePage(page) {
-  const [capturesRes, mirrorRes, assetsRes] = await Promise.all([
+  const [capturesRes, mirrorRes, assetsRes, peopleRes] = await Promise.all([
     fetchJsonSafe('/captures?limit=8'),
     fetchJsonSafe('/self-mirror'),
     fetchJsonSafe('/capture/assets?limit=8'),
+    fetchJsonSafe('/people?limit=4'),
   ]);
   const captures = capturesRes.ok ? capturesRes.payload.captures || [] : [];
   const checkins = mirrorRes.ok ? mirrorRes.payload.checkins || [] : [];
   const assets = assetsRes.ok ? assetsRes.payload.assets || [] : [];
+  const people = peopleRes.ok ? peopleRes.payload.people || [] : [];
 
   return `
     ${renderHero(
       page,
       [
-        renderMetric(String(captures.length), 'recent captures'),
+        renderMetric(String(filterMeaningfulCaptures(captures, 99).length), 'usable captures'),
         renderMetric(String(checkins.length), 'recent check-ins'),
-        renderMetric(String(assets.length), 'capture assets'),
+        renderMetric(String(people.length), 'people cards'),
       ].join('')
     )}
-    <div class="grid two-up">
-      ${renderPanel(
-        'Capture Parse Workspace',
-        `
-          <form class="capture-form" data-capture-parse="true">
-            ${renderFormField(
-              'What happened?',
-              '<textarea name="text" rows="8" placeholder="Met someone interesting, shipped something, felt stretched, noticed a pattern..."></textarea>',
-              'Step 1 parses a Person Card + Self Check-in draft before anything is committed.'
-            )}
-            ${renderFormField(
-              'Source',
-              '<input name="source" type="text" value="dashboard" />'
-            )}
-            ${renderFormField(
-              'Asset IDs',
-              '<input name="assetIds" type="text" placeholder="asset_xxx, asset_yyy" data-capture-asset-ids />',
-              'Upload audio/business-card assets below and we will fill this automatically.'
-            )}
-            <div class="inline-actions">
-              <button type="submit">Parse Capture</button>
-            </div>
-            <div class="form-result" data-form-result></div>
-          </form>
-        `,
-        'This is the new two-stage quick capture flow.'
-      )}
-      ${renderPanel(
-        'Multimodal Intake',
-        `
-          <div class="control-stack">
-            <form class="asset-upload-form" data-asset-upload="image">
-              ${renderFormField(
-                'Business Card / Image',
-                '<input name="file" type="file" accept="image/*" />',
-                'Images run through local OCR first; if OCR misses, you can still edit before commit.'
-              )}
-              <div class="inline-actions">
-                <button type="submit">Upload + OCR</button>
-              </div>
-              <div class="form-result" data-form-result></div>
-            </form>
-            <form class="asset-upload-form" data-asset-upload="audio">
-              ${renderFormField(
-                'Audio Note',
-                '<input name="file" type="file" accept="audio/*" />',
-                'Attach an audio memo. Add transcript manually if browser speech support is unavailable.'
-              )}
-              ${renderFormField(
-                'Transcript',
-                '<textarea name="transcript" rows="3" placeholder="Paste or dictate transcript here if needed."></textarea>',
-                'P1 defaults to local/browser-first transcription with manual fallback.'
-              )}
-              <div class="inline-actions">
-                <button type="submit">Upload Audio</button>
-                <button type="button" data-audio-record-start>Start Record</button>
-                <button type="button" data-audio-record-stop disabled>Stop</button>
-              </div>
-              <div class="form-result" data-form-result></div>
-            </form>
-            <div class="info-card" data-audio-status>
-              <strong>Browser audio tools</strong>
-              <p>MediaRecorder and browser speech recognition are optional. If unsupported, upload a file and edit the transcript manually.</p>
+    ${renderPanel(
+      'Chat Composer',
+      `
+        ${renderChatComposerIntro()}
+        <form class="capture-form chat-composer-form" data-capture-parse="true">
+          <input type="hidden" name="source" value="chat-composer" />
+          <input type="hidden" name="assetIds" value="" data-capture-asset-ids />
+          <div class="composer-row">
+            <textarea name="text" rows="3" placeholder="像发微信一样写一句：今天认识了谁、聊了什么、你现在什么状态。"></textarea>
+            <div class="composer-actions">
+              <button type="button" class="secondary-button" data-audio-record-start>Voice</button>
+              <button type="button" class="secondary-button" data-audio-record-stop disabled>Stop</button>
+              <button type="submit">Send</button>
             </div>
           </div>
-        `,
-        'Voice notes and business cards both route back into capture parse → commit.'
-      )}
-    </div>
+          <div class="info-card compact-info" data-audio-status>
+            <strong>Voice mode</strong>
+            <p>浏览器支持时可直接录音。若配置了 OPENAI_API_KEY，音频会自动转写；否则也可以手动补 transcript。</p>
+          </div>
+          <div class="form-result" data-form-result></div>
+        </form>
+        <details class="details-shell">
+          <summary>More ways to capture</summary>
+          <div class="grid two-up">
+            ${renderPanel(
+              'Upload a Business Card',
+              `
+                <form class="asset-upload-form compact-form" data-asset-upload="image">
+                  ${renderFormField('Image', '<input name="file" type="file" accept="image/*" />', 'Use this when you only have a card or screenshot.')}
+                  <div class="inline-actions">
+                    <button type="submit">Scan Card</button>
+                  </div>
+                  <div class="form-result" data-form-result></div>
+                </form>
+              `
+            )}
+            ${renderPanel(
+              'Upload Audio Manually',
+              `
+                <form class="asset-upload-form compact-form" data-asset-upload="audio">
+                  ${renderFormField('Audio file', '<input name="file" type="file" accept="audio/*" />', 'Works even if browser recording is unavailable.')}
+                  ${renderFormField('Transcript (optional)', '<textarea name="transcript" rows="3" placeholder="Paste transcript here if you already have one."></textarea>')}
+                  <div class="inline-actions">
+                    <button type="submit">Add Audio</button>
+                  </div>
+                  <div class="form-result" data-form-result></div>
+                </form>
+              `
+            )}
+          </div>
+        </details>
+      `,
+      'One message in, structured draft out.'
+    )}
     <section class="panel" data-capture-commit-panel hidden>
       <div class="panel-head">
         <div>
@@ -1012,10 +999,13 @@ async function renderQuickCapturePage(page) {
       </form>
     </section>
     <div class="grid two-up">
-      ${renderPanel('Recent Capture Assets', renderCaptureAssetCards(assets))}
+      ${renderPanel('Recent Conversation Feed', renderCaptureFeed(captures), 'Filtered to keep demo-noise out of the way.')}
+      ${renderPanel('People To Follow Up', renderPeopleCards(people), 'Use this page like a lightweight relationship inbox.')}
+    </div>
+    <div class="grid two-up">
+      ${renderPanel('Voice / Card Assets', renderCaptureAssetCards(assets))}
       ${renderPanel('Fresh Energy Signal', renderCheckinCards(checkins.slice(0, 4)), 'Latest mirror inputs')}
     </div>
-    ${renderPanel('Recent Captures', renderCaptureCards(captures))}
   `;
 }
 
@@ -2347,6 +2337,12 @@ function renderLayout({ currentPath, title, body }) {
         background: linear-gradient(135deg, #135d6a, #2e8076);
         box-shadow: 0 10px 24px rgba(21, 111, 106, 0.18);
       }
+      .secondary-button {
+        color: var(--ink);
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(22, 33, 50, 0.12);
+        box-shadow: none;
+      }
       button:hover {
         filter: brightness(1.03);
       }
@@ -2402,6 +2398,45 @@ function renderLayout({ currentPath, title, body }) {
       .control-stack {
         display: grid;
         gap: 14px;
+      }
+      .chat-shell {
+        display: grid;
+        gap: 12px;
+      }
+      .chat-bubble {
+        max-width: min(680px, 100%);
+        padding: 16px 18px;
+        border-radius: 22px;
+        border: 1px solid rgba(22, 33, 50, 0.08);
+        background: rgba(255, 255, 255, 0.78);
+      }
+      .chat-bubble.user {
+        justify-self: end;
+        background: linear-gradient(135deg, rgba(21, 111, 106, 0.1), rgba(21, 111, 106, 0.2));
+      }
+      .chat-bubble.system {
+        justify-self: start;
+      }
+      .chat-bubble.ghost {
+        opacity: 0.72;
+      }
+      .chat-composer-form textarea {
+        min-height: 96px;
+        padding: 18px 20px;
+        border-radius: 24px;
+      }
+      .composer-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 14px;
+        align-items: end;
+      }
+      .composer-actions {
+        display: grid;
+        gap: 10px;
+      }
+      .compact-info {
+        margin-top: 14px;
       }
       .stack-card,
       .draft-card,
@@ -2529,6 +2564,12 @@ function renderLayout({ currentPath, title, body }) {
         .cluster-grid,
         .compact-grid {
           grid-template-columns: 1fr;
+        }
+        .composer-row {
+          grid-template-columns: 1fr;
+        }
+        .composer-actions {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
         }
       }
     </style>

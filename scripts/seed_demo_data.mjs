@@ -107,8 +107,8 @@ function main() {
   );
 
   const checkins = [
-    ['checkin_demo_1', 1, ['energized', 'social'], 'shipping progress', 'Small daily wins compound when the conversations are strong.', nowIso(-240)],
-    ['checkin_demo_2', -1, ['stretched'], 'follow-up pressure', 'Need a recovery block after back-to-back meetings.', nowIso(-60)],
+    ['checkin_demo_1', 1, ['energized', 'social'], 'hackathon debrief', '今天见完几个做产品的人，脑子很亮，想把 follow-up 快点接起来。', nowIso(-240)],
+    ['checkin_demo_2', -1, ['stretched'], 'back-to-back meetings', '下午连续聊天以后有点空，需要留一个恢复时间，不然晚上写东西会散。', nowIso(-60)],
   ];
 
   for (const [id, energy, emotions, trigger, reflection, createdAt] of checkins) {
@@ -142,9 +142,9 @@ function main() {
   );
 
   const platforms = [
-    'instagram',
-    'x',
-    'linkedin',
+      'instagram',
+      'x',
+      'linkedin',
     'zhihu',
     'xiaohongshu',
     'wechat_moments',
@@ -164,14 +164,26 @@ function main() {
         eventId,
         platform,
         platform === 'zhihu' || platform.startsWith('wechat') || platform === 'xiaohongshu' ? 'zh' : 'en',
-        `${platform.toUpperCase()} demo draft for SocialOS operator update.`,
+        platform === 'instagram'
+          ? 'Spent tonight turning scattered notes into a SocialOS workspace that remembers people and keeps follow-ups alive.'
+          : platform === 'x'
+            ? 'SocialOS now turns one real-world interaction into people memory, drafts, and a weekly mirror. Still local-first, still dry-run by default.'
+            : platform === 'linkedin'
+              ? 'Built a local-first SocialOS flow that starts from one conversation and ends in reusable relationship memory, campaign drafts, and a structured weekly mirror.'
+              : platform === 'zhihu'
+                ? '这次我把 SocialOS 从“能跑”推进成了“可演示的产品工作台”：一次输入，能落到人脉记忆、内容草稿和每周自我镜像。'
+                : platform === 'xiaohongshu'
+                  ? '最近把一个“认识新朋友就记住”的工具做顺了：像发消息一样记一条，后面自动帮我整理成联系人卡和内容灵感。'
+                  : platform === 'wechat_moments'
+                    ? '这两天把自己的 SocialOS 做顺了一点：聊天、跟进、发内容、做复盘，终于能串起来了。'
+                    : '这不是又一个内容工具，而是把“认识人、记住人、持续跟进、形成输出”串成一个系统的工作台。',
         JSON.stringify({
           capability: {
             supportLevel: platform === 'wechat_official' ? 'L1.5 Rich Article Package' : platform === 'x' || platform === 'linkedin' ? 'L2 Auto Publish (credentials gated)' : 'L1 Assisted',
             entryTarget: `${platform} publish surface`,
           },
           publishPackage: {
-            title: `${platform} launch package`,
+            title: platform === 'wechat_official' ? '把一次认识新朋友，变成一个可持续的 SocialOS' : `${platform} demo package`,
             body: `A reusable ${platform} package for the demo event.`,
             hashtags: ['#SocialOS', '#OpenClaw'],
             cta: 'Reply if you want to compare notes.',

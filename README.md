@@ -19,6 +19,7 @@ bash scripts/demo.sh
 
 ## What Is Implemented Now (stable P1)
 - `Quick Capture`: two-stage parse -> commit flow, plus audio note / business card asset intake.
+- `Quick Capture`: chat-like composer, simple voice-note flow, optional OpenAI transcription when `OPENAI_API_KEY` is present.
 - `People`: search, detail view, identities, timeline, evidence, follow-up suggestion.
 - `Events & Campaigns`: structured event form with audience/language/tone/links/assets.
 - `Drafts`: 7-platform draft generation, plain-text editing, validation, queue handoff.

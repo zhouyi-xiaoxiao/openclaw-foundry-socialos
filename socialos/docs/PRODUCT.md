@@ -12,10 +12,11 @@ SocialOS = people memory + 7-platform campaign workbench + self mirror, all runn
 ## Current stable P1 capabilities
 ### 1. Quick Capture
 - 文本输入是主路径，支持两段式 `parse -> commit`。
+- UI 入口优先做成聊天框式 composer，而不是复杂后台表单。
 - 输出结构化 `Person Draft + Self Check-in Draft + Interaction Draft`。
 - 支持图片/名片和音频作为 capture asset：
   - 图片默认走本地 OCR，失败时回退人工确认。
-  - 音频默认浏览器/手动 transcript，失败时回退人工编辑。
+  - 音频默认优先使用浏览器录音；若配置 `OPENAI_API_KEY`，可自动走 OpenAI transcription；失败时回退人工编辑。
 - Commit 后必须落到：
   - `Person`
   - `Identity`
