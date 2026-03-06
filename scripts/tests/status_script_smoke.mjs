@@ -15,6 +15,7 @@ const emptyRunDir = path.join(tempDir, 'runs-empty');
 const latestDigest = path.join(tempDir, 'LATEST.md');
 const missingQueue = path.join(tempDir, 'MISSING_QUEUE.md');
 const queueFile = path.join(tempDir, 'QUEUE.md');
+const queueNoBlockedFile = path.join(tempDir, 'QUEUE_NO_BLOCKED.md');
 
 fs.mkdirSync(runDir, { recursive: true });
 fs.mkdirSync(emptyRunDir, { recursive: true });
@@ -24,6 +25,7 @@ fs.writeFileSync(
   ['- [ ] Build workspace follow-up panel', '- [!] Live publish credential handoff', '- [!] Postgres migration handoff'].join('\n'),
   'utf8',
 );
+fs.writeFileSync(queueNoBlockedFile, ['- [ ] Build workspace follow-up panel', '- [x] Done item'].join('\n'), 'utf8');
 fs.writeFileSync(
   path.join(runDir, 'sample.json'),
   JSON.stringify({
@@ -70,6 +72,17 @@ const digestFallbackResult = spawnSync('bash', [script], {
   },
 });
 
+const noBlockedResult = spawnSync('bash', [script], {
+  cwd: root,
+  encoding: 'utf8',
+  env: {
+    ...process.env,
+    SOCIALOS_QUEUE_FILE: queueNoBlockedFile,
+    SOCIALOS_RUN_DIR: runDir,
+    SOCIALOS_LATEST_DIGEST_FILE: latestDigest,
+  },
+});
+
 try {
   assert(result.status === 0, `status script should exit 0, got ${result.status}`);
   assert(result.stdout.includes('== Foundry Status =='), 'status output header missing');
@@ -85,6 +98,8 @@ try {
   assert(digestFallbackResult.stdout.includes('run_id: unknown'), 'digest fallback should render unknown run id when missing');
   assert(digestFallbackResult.stdout.includes('status: unknown (digest-only)'), 'digest fallback should label status as digest-only');
   assert(digestFallbackResult.stdout.includes('summary: unknown'), 'digest fallback should keep summary stable when digest has no What field');
+  assert(noBlockedResult.status === 0, `status script with no blocked tasks should exit 0, got ${noBlockedResult.status}`);
+  assert(noBlockedResult.stdout.includes('Blocked queue head:\nnone'), 'blocked queue head should print none when queue has no blocked items');
   console.log('status_script_smoke: PASS');
 } finally {
   fs.rmSync(tempDir, { recursive: true, force: true });

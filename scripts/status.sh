@@ -165,7 +165,12 @@ fi
 echo
 echo "Blocked queue head:"
 if [[ -f "${QUEUE_FILE}" ]]; then
-  grep -E '^- \[!\] ' "${QUEUE_FILE}" | head -n 5 | sed -E 's/^- \[!\] //' || true
+  blocked_head="$(grep -E '^- \[!\] ' "${QUEUE_FILE}" | head -n 5 | sed -E 's/^- \[!\] //' || true)"
+  if [[ -n "${blocked_head}" ]]; then
+    printf '%s\n' "${blocked_head}"
+  else
+    echo "none"
+  fi
 else
   echo "none (queue file missing)"
 fi
