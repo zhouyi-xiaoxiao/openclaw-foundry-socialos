@@ -2137,7 +2137,19 @@ function renderClientScript() {
             if (textField && !String(textField.value || '').trim()) {
               textField.value = response.payload.asset.extractedText || response.payload.asset.previewText || '';
             }
-            await handleWorkspaceChat(composer, composer.querySelector('button[type="submit"]'));
+            const transcribedText = String(textField?.value || '').trim();
+            if (transcribedText) {
+              await handleWorkspaceChat(composer, composer.querySelector('button[type="submit"]'));
+            } else {
+              if (statusNode) {
+                statusNode.innerHTML = '<strong>Transcription needed</strong><p>I saved the recording, but I do not have text for it yet. Enable browser speech recognition or add OPENAI_API_KEY to finish one-tap voice send.</p>';
+              }
+              renderWorkspaceComposerResult(
+                resultNode,
+                'Voice is now set to transcribe first. This recording was kept, but it was not auto-sent because no transcript was available.',
+                false
+              );
+            }
           }
         }
 
@@ -3036,9 +3048,9 @@ function renderLayout({ currentPath, title, body }) {
         z-index: 5;
         padding: 14px 16px 12px;
         border-radius: 30px;
-        background: rgba(20, 27, 38, 0.92);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: 0 24px 54px rgba(15, 21, 31, 0.26);
+        background: rgba(255, 250, 242, 0.96);
+        border: 1px solid rgba(22, 33, 50, 0.1);
+        box-shadow: 0 24px 54px rgba(18, 33, 49, 0.12);
         backdrop-filter: blur(20px);
       }
       .workspace-composer {
@@ -3054,12 +3066,12 @@ function renderLayout({ currentPath, title, body }) {
         border: 0;
         border-radius: 0;
         background: transparent;
-        color: #f5f7fb;
+        color: var(--ink);
         box-shadow: none;
         resize: none;
       }
       .workspace-composer textarea::placeholder {
-        color: rgba(245, 247, 251, 0.58);
+        color: rgba(78, 93, 115, 0.72);
       }
       .workspace-composer textarea:focus {
         outline: none;
@@ -3079,20 +3091,21 @@ function renderLayout({ currentPath, title, body }) {
         box-shadow: none;
       }
       .workspace-composer-shell .workspace-icon-button {
-        background: rgba(255, 255, 255, 0.08);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: #f5f7fb;
+        background: rgba(22, 33, 50, 0.06);
+        border-color: rgba(22, 33, 50, 0.1);
+        color: var(--ink);
       }
       .workspace-attach-button {
         font-size: 24px;
         line-height: 1;
       }
-      .workspace-lang-select {
-        min-width: 102px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.08);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: #f5f7fb;
+      .workspace-mic-button {
+        padding: 0;
+      }
+      .button-icon {
+        width: 18px;
+        height: 18px;
+        display: block;
       }
       .workspace-send-button {
         min-width: 46px;
@@ -3100,8 +3113,8 @@ function renderLayout({ currentPath, title, body }) {
         padding: 0;
         border-radius: 999px;
         border: 0;
-        background: #f5f7fb;
-        color: #162132;
+        background: var(--ink);
+        color: #fffdf9;
         font-size: 22px;
         box-shadow: none;
       }
@@ -3127,9 +3140,9 @@ function renderLayout({ currentPath, title, body }) {
         font-size: 13px;
       }
       .workspace-composer-shell .asset-chip {
-        background: rgba(255, 255, 255, 0.08);
-        border-color: rgba(255, 255, 255, 0.12);
-        color: rgba(245, 247, 251, 0.9);
+        background: rgba(22, 33, 50, 0.05);
+        border-color: rgba(22, 33, 50, 0.1);
+        color: var(--ink-soft);
       }
       .asset-remove {
         min-width: 28px;
@@ -3198,22 +3211,22 @@ function renderLayout({ currentPath, title, body }) {
         width: 4px;
         height: 100%;
         border-radius: 999px;
-        background: rgba(255, 255, 255, 0.16);
+        background: rgba(22, 33, 50, 0.14);
         transform-origin: center bottom;
         transform: scaleY(0.2);
         transition: transform 120ms ease, background 120ms ease;
       }
       .audio-meter-bar.live {
-        background: rgba(110, 203, 195, 0.92);
+        background: rgba(21, 111, 106, 0.78);
       }
       .workspace-icon-button.is-recording {
-        background: rgba(181, 93, 52, 0.18);
-        color: #ffd8ca;
-        border-color: rgba(255, 194, 170, 0.26);
+        background: rgba(181, 93, 52, 0.12);
+        color: var(--warn);
+        border-color: rgba(181, 93, 52, 0.18);
       }
       .workspace-composer-note {
         margin-top: 10px;
-        color: rgba(245, 247, 251, 0.7);
+        color: var(--ink-soft);
         font-size: 13px;
       }
       .result-block-warn {
