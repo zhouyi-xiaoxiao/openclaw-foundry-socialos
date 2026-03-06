@@ -3028,6 +3028,17 @@ function renderLayout({ currentPath, title, body }) {
         overflow: auto;
         padding-right: 6px;
       }
+      .workspace-composer-shell {
+        position: sticky;
+        bottom: 18px;
+        z-index: 5;
+        padding: 14px 16px 12px;
+        border-radius: 30px;
+        background: rgba(20, 27, 38, 0.92);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 24px 54px rgba(15, 21, 31, 0.26);
+        backdrop-filter: blur(20px);
+      }
       .workspace-composer {
         display: grid;
         grid-template-columns: auto minmax(0, 1fr) auto;
@@ -3035,9 +3046,22 @@ function renderLayout({ currentPath, title, body }) {
         align-items: end;
       }
       .workspace-composer textarea {
-        min-height: 72px;
-        padding: 16px 18px;
-        border-radius: 24px;
+        min-height: 64px;
+        max-height: 180px;
+        padding: 14px 0 10px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: #f5f7fb;
+        box-shadow: none;
+        resize: none;
+      }
+      .workspace-composer textarea::placeholder {
+        color: rgba(245, 247, 251, 0.58);
+      }
+      .workspace-composer textarea:focus {
+        outline: none;
+        box-shadow: none;
       }
       .workspace-composer-controls {
         display: grid;
@@ -3047,9 +3071,37 @@ function renderLayout({ currentPath, title, body }) {
       }
       .workspace-icon-button {
         min-width: 58px;
+        min-height: 46px;
+        padding: 0 14px;
+        border-radius: 999px;
+        box-shadow: none;
+      }
+      .workspace-composer-shell .workspace-icon-button {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #f5f7fb;
+      }
+      .workspace-attach-button {
+        font-size: 24px;
+        line-height: 1;
       }
       .workspace-lang-select {
         min-width: 102px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #f5f7fb;
+      }
+      .workspace-send-button {
+        min-width: 46px;
+        min-height: 46px;
+        padding: 0;
+        border-radius: 999px;
+        border: 0;
+        background: #f5f7fb;
+        color: #162132;
+        font-size: 22px;
+        box-shadow: none;
       }
       .workspace-side {
         display: grid;
@@ -3059,6 +3111,7 @@ function renderLayout({ currentPath, title, body }) {
         display: flex;
         gap: 10px;
         flex-wrap: wrap;
+        margin-bottom: 10px;
       }
       .asset-chip {
         display: inline-flex;
@@ -3070,6 +3123,11 @@ function renderLayout({ currentPath, title, body }) {
         background: rgba(255, 255, 255, 0.78);
         color: var(--ink-soft);
         font-size: 13px;
+      }
+      .workspace-composer-shell .asset-chip {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.12);
+        color: rgba(245, 247, 251, 0.9);
       }
       .asset-remove {
         min-width: 28px;
