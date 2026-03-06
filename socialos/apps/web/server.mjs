@@ -463,7 +463,7 @@ function renderWorkspaceThreadSeed(captures) {
               .join('')
           : `
             <article class="chat-bubble system ghost">
-              <p>Start with one natural message. We can turn it into a contact, an event, a draft thread, or a mirror reflection when it helps.</p>
+              <p>Start with one natural message. We will only branch into contacts, events, drafts, or mirror when that next step is actually useful.</p>
             </article>
           `
       }
@@ -580,19 +580,18 @@ function renderWorkspaceSummaryStrip(bootstrap = {}, requestUrl) {
       <div class="workspace-summary-copy">
         <p class="eyebrow">Workspace</p>
         <h1>Workspace</h1>
-        <p class="workspace-home-title">Remember clearly. Move lightly.</p>
-        <p>A calm operating surface for people memory, event context, and platform-native follow-through.</p>
+        <p class="workspace-home-title">Warm context. Clear next step.</p>
         <p>${escapeHtml(
           summarizeCardCopy(
             bootstrap.summaryText ||
             'Capture what just happened, recall the right person or event, and only then branch into drafts or follow-up.'
-          , 168)
+          , 144)
         )}</p>
         ${renderWorkspaceSystemStatus(bootstrap)}
       </div>
       <div class="workspace-summary-actions">
         <div class="stack-meta">
-          <strong>Top actions</strong>
+          <strong>Next up</strong>
           <span>${escapeHtml(formatDateTime(bootstrap.generatedAt))}</span>
         </div>
         ${renderWorkspaceTopActionCards(bootstrap.topActions || [], requestUrl)}
@@ -972,7 +971,10 @@ function renderPeopleCards(people, showScore = false, hrefBuilder = (person) => 
     .map((person) => {
       const tags = Array.isArray(person.tags) ? person.tags : [];
       const score = showScore && typeof person.score === 'number' ? person.score.toFixed(3) : null;
-      const summary = summarizeCardCopy(person.evidenceSnippet || person.notes || '', 144, 'No notes yet.');
+      const summary = summarizeCardCopy(person.evidenceSnippet || person.notes || '', 112, 'No notes yet.');
+      const followUpLabel = readOptionalString(person.nextFollowUpAt, '')
+        ? `follow-up ${formatDateTime(person.nextFollowUpAt)}`
+        : '';
       return `
         <article class="stack-card">
           <div class="stack-meta">
@@ -983,9 +985,10 @@ function renderPeopleCards(people, showScore = false, hrefBuilder = (person) => 
           <p>${escapeHtml(summary)}</p>
           <div class="chip-row">
             ${(tags.length ? tags : ['no-tags']).map((tag) => renderPill(tag, 'soft')).join('')}
+            ${followUpLabel ? renderPill(followUpLabel, 'accent') : ''}
           </div>
           <div class="inline-actions">
-            <a class="mini-link" href="${escapeHtml(hrefBuilder(person))}">Open</a>
+            <a class="mini-link" href="${escapeHtml(hrefBuilder(person))}">Open Contact</a>
           </div>
         </article>
       `;
@@ -1460,7 +1463,7 @@ function renderQueueCards(queueTasks, publishMode) {
           </div>
           ${renderPublishActions(task, publishPackage)}
           <p>${escapeHtml(summarizeCardCopy(task.content || publishPackage.preview || publishPackage.title || '', 170, 'Draft package is ready for the next step.'))}</p>
-          <small>${escapeHtml(`Current workspace publish mode: ${publishMode}`)}</small>
+          <small>${escapeHtml(`Mode: ${formatHumanPublishMode(publishMode)} · destination ${task.platformLabel || task.platform || 'platform'}`)}</small>
           ${
             queued
               ? `
@@ -1494,13 +1497,16 @@ function renderQueueCards(queueTasks, publishMode) {
                   </div>
                   <div class="form-result" data-form-result></div>
                 </form>
+                <details class="details-shell queue-details">
+                  <summary>Live controls</summary>
+                  <p>Only switch these on when you really intend to leave Safe rehearsal and the platform credentials are ready.</p>
+                </details>
               `
               : needsManual
                 ? `
                   <div class="result-block">
                     <p><strong>Entry Target:</strong> ${escapeHtml(execution.preflight?.entryTarget || task.capability?.entryTarget || 'manual')}</p>
                     <p><strong>Preflight:</strong> ${escapeHtml(execution.preflight?.note || execution.delivery?.reason || 'manual handoff ready')}</p>
-                    ${renderLiveFallback(liveFallbackReason)}
                   </div>
                   <form class="api-form compact-form" data-api-form="true" data-endpoint="/publish/complete">
                     <input type="hidden" name="taskId" value="${escapeHtml(task.taskId)}" />
@@ -1519,17 +1525,25 @@ function renderQueueCards(queueTasks, publishMode) {
                     </div>
                     <div class="form-result" data-form-result></div>
                   </form>
+                  ${
+                    Object.keys(liveFallbackReason).length
+                      ? `<details class="details-shell queue-details"><summary>Live fallback details</summary>${renderLiveFallback(liveFallbackReason)}</details>`
+                      : ''
+                  }
                 `
               : `
                 <div class="result-block">
-                  <p><strong>Run:</strong> ${escapeHtml(execution.runId || 'n/a')}</p>
-                  <p><strong>Delivery:</strong> ${escapeHtml(
+                  <p><strong>Latest outcome:</strong> ${escapeHtml(
                     manualCompletion.outcome || execution.delivery?.reason || result.execution?.delivery?.reason || 'n/a'
                   )}</p>
                   ${manualCompletion.link ? `<p><strong>Link:</strong> ${escapeHtml(manualCompletion.link)}</p>` : ''}
+                </div>
+                <details class="details-shell queue-details">
+                  <summary>Execution details</summary>
+                  <p><strong>Run:</strong> ${escapeHtml(execution.runId || 'n/a')}</p>
                   ${manualCompletion.note ? `<p><strong>Note:</strong> ${escapeHtml(manualCompletion.note)}</p>` : ''}
                   ${renderLiveFallback(liveFallbackReason)}
-                </div>
+                </details>
               `
           }
         </article>
@@ -2145,10 +2159,11 @@ async function renderPeoplePage(page, requestUrl) {
     ${renderHero(
       page,
       [
-        renderMetric(String(recentPeople.length), 'people cards'),
+        renderMetric(String(recentPeople.length), 'contacts'),
         renderMetric(query ? String(searchResults.length) : '0', 'search hits'),
         renderMetric(detail?.person?.name ? '1' : '0', 'detail open'),
-      ].join('')
+      ].join(''),
+      `<div class="info-card"><strong>Contacts</strong><p>Keep the people you know searchable, scannable, and connected to the events they belong to.</p></div>`
     )}
     <div class="grid two-up">
       ${renderPanel(
@@ -2197,6 +2212,13 @@ async function renderPeoplePage(page, requestUrl) {
                 </div>
               </div>
               ${renderPanel(
+                'Related Events',
+                renderEventCards(detail.relatedEvents || [], (event) => `/events/${encodeURIComponent(event.eventId)}`),
+                'See the event threads connected to this relationship.'
+              )}
+              ${renderPanel('Graph Overview', renderGraphOverview(detail.graphOverview), 'A focused one-hop view of this contact and linked events.')}
+              ${renderPanel('Timeline', renderInteractionCards(detail.interactions || []))}
+              ${renderPanel(
                 'Edit Contact',
                 `
                   <form class="api-form compact-form" data-api-form="true" data-endpoint="/people/upsert">
@@ -2223,13 +2245,6 @@ async function renderPeoplePage(page, requestUrl) {
                 `
               )}
               ${renderPanel('Identities', renderIdentityCards(detail.identities || []))}
-              ${renderPanel(
-                'Related Events',
-                renderEventCards(detail.relatedEvents || [], (event) => `/events/${encodeURIComponent(event.eventId)}`),
-                'See the event threads connected to this relationship.'
-              )}
-              ${renderPanel('Graph Overview', renderGraphOverview(detail.graphOverview), 'A focused one-hop view of this contact and linked events.')}
-              ${renderPanel('Timeline', renderInteractionCards(detail.interactions || []))}
               ${renderPanel('Evidence', renderEvidenceList(detail.evidence || []))}
               <div class="grid two-up">
                 ${renderPanel(
@@ -2276,7 +2291,7 @@ async function renderPeoplePage(page, requestUrl) {
               </form>
             `,
         detail?.person?.personId
-          ? 'A contact card ties together profile, event context, graph links, and the next follow-up.'
+          ? 'A strong contact page shows the relationship summary first, then the connected event context, graph, and edit actions.'
           : 'Manual cards make the People page useful immediately.'
       )}
     </div>
@@ -3537,16 +3552,7 @@ function renderClientScript() {
       function renderWorkspaceAssistantTurn(payload) {
         const presentation = payload.presentation || {};
         const primaryCard = presentation.primaryCard || null;
-        const transcription = payload.transcription || {};
-        const extraction = payload.extraction || {};
         const relatedBlock = renderWorkspaceRelatedSections(presentation.related || payload.related || {});
-        const sourceChip = extraction.method === 'model'
-          ? (extraction.model ? 'model ' + extraction.model : 'model')
-          : 'fallback';
-
-        const transcriptionBlock = transcription.message
-          ? '<div class="workspace-note">' + escapeHtml(transcription.message) + '</div>'
-          : '';
         const primaryBlock = primaryCard
           ? '<section class="workspace-block"><h4>' + escapeHtml(getWorkspacePrimaryTitle(primaryCard)) + '</h4>' +
               renderWorkspacePresentationCard(primaryCard) +
@@ -3556,9 +3562,8 @@ function renderClientScript() {
         const actions = renderWorkspaceActionStrip(presentation.actions || [], payload);
 
         return '<article class="chat-bubble system workspace-assistant">' +
-          '<div class="stack-meta"><strong>SocialOS</strong><span>' + escapeHtml(sourceChip) + '</span></div>' +
+          '<div class="stack-meta"><strong>SocialOS</strong></div>' +
           '<p>' + escapeHtml(presentation.answer || payload.summary || '') + '</p>' +
-          transcriptionBlock +
           primaryBlock +
           reviewBlock +
           relatedBlock +
