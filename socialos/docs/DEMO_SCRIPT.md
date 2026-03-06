@@ -59,7 +59,7 @@ bash scripts/foundry_dispatch.sh STATUS
 Then open:
 - `http://127.0.0.1:4173/quick-capture`
 - `http://127.0.0.1:4173/settings`
-- `http://127.0.0.1:4173/dev-digest`
+- `http://127.0.0.1:4173/settings?panel=ops`
 
 ### Step B. Unified Workspace capture
 - Open `http://127.0.0.1:4173/quick-capture`
