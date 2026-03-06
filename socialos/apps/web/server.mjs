@@ -519,6 +519,281 @@ function renderWorkspaceQueuePreview(queueTasks) {
     .join('')}</div>`;
 }
 
+function renderWorkspaceTopActionCards(actions, requestUrl) {
+  if (!Array.isArray(actions) || !actions.length) return renderEmptyState('Start with one message and SocialOS will suggest the next step.');
+  return `<div class="workspace-action-grid">${actions
+    .slice(0, 4)
+    .map(
+      (action) => `
+        <article class="workspace-action-card">
+          <div class="stack-meta">
+            <strong>${escapeHtml(action.title || 'Next action')}</strong>
+            ${renderPill(action.tone === 'warn' ? 'priority' : action.tone === 'good' ? 'ready' : 'next', action.tone || 'soft')}
+          </div>
+          <p>${escapeHtml(summarizeCardCopy(action.reason || '', 110, 'A useful next action is ready.'))}</p>
+          <div class="inline-actions">
+            <a class="mini-link" href="${escapeHtml(normalizeWorkspaceHref(action.href || buildWorkspaceStateHref(requestUrl)))}">Open</a>
+          </div>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
+function renderWorkspaceSystemStatus(bootstrap = {}) {
+  const status = safeJson(bootstrap.systemStatus, {});
+  const voiceReadiness = safeJson(bootstrap.voiceReadiness, {});
+  const foundryTone = status.foundryEnabled ? 'good' : 'warn';
+  const voiceTone = voiceReadiness.openAiConfigured ? 'good' : 'soft';
+  return `
+    <div class="workspace-status-cluster">
+      <div class="chip-row">
+        ${renderPill(status.publishMode || 'dry-run', status.publishMode === 'dry-run' ? 'soft' : 'warn')}
+        ${renderPill(status.loopbackOnly ? 'loopback only' : 'network exposed', status.loopbackOnly ? 'good' : 'warn')}
+        ${renderPill(status.foundryEnabled ? 'foundry ready' : 'foundry unavailable', foundryTone)}
+        ${renderPill(voiceReadiness.openAiConfigured ? 'voice ready' : 'browser voice', voiceTone)}
+      </div>
+      <p>${escapeHtml(status.summary || bootstrap.summaryText || 'Local-first workspace is ready.')}</p>
+    </div>
+  `;
+}
+
+function renderWorkspaceSummaryStrip(bootstrap = {}, requestUrl) {
+  return `
+    <section class="workspace-summary-strip">
+      <div class="workspace-summary-copy">
+        <p class="eyebrow">Workspace</p>
+        <h1>One place to remember, write, and follow through.</h1>
+        <p>${escapeHtml(
+          bootstrap.summaryText ||
+            'Capture what just happened, recall the right person or event, and only then branch into drafts or follow-up.'
+        )}</p>
+        ${renderWorkspaceSystemStatus(bootstrap)}
+      </div>
+      <div class="workspace-summary-actions">
+        <div class="stack-meta">
+          <strong>Top actions</strong>
+          <span>${escapeHtml(formatDateTime(bootstrap.generatedAt))}</span>
+        </div>
+        ${renderWorkspaceTopActionCards(bootstrap.topActions || [], requestUrl)}
+      </div>
+    </section>
+  `;
+}
+
+function renderWorkspaceMirrorSnapshot(bootstrap = {}) {
+  if (bootstrap.latestMirror) {
+    return `
+      <div class="stack">
+        <article class="stack-card">
+          <div class="stack-meta">
+            <strong>${escapeHtml(bootstrap.latestMirror.rangeLabel || 'Latest mirror')}</strong>
+            <span>${escapeHtml(formatDateTime(bootstrap.latestMirror.createdAt))}</span>
+          </div>
+          <p>${escapeHtml(truncate(bootstrap.latestMirror.summaryText || bootstrap.latestMirror.content || '', 220))}</p>
+          ${
+            Array.isArray(bootstrap.latestMirror.themes) && bootstrap.latestMirror.themes.length
+              ? `<div class="chip-row">${bootstrap.latestMirror.themes
+                  .slice(0, 4)
+                  .map((item) => renderPill(`${item.theme} (${item.count})`, 'soft'))
+                  .join('')}</div>`
+              : ''
+          }
+          <div class="inline-actions">
+            <a class="mini-link" href="/self-mirror">Open Mirror</a>
+          </div>
+        </article>
+      </div>
+    `;
+  }
+  return renderCheckinCards((bootstrap.recentCheckins || []).slice(0, 4));
+}
+
+function renderWorkspaceRailContent(activePanel, bootstrap = {}) {
+  if (activePanel === 'events') {
+    return renderEventCards(bootstrap.recentEvents || []);
+  }
+  if (activePanel === 'drafts') {
+    return renderAskDraftCards(bootstrap.recentDrafts || []);
+  }
+  if (activePanel === 'mirror') {
+    return renderWorkspaceMirrorSnapshot(bootstrap);
+  }
+  return renderPeopleCards(bootstrap.recentContacts || []);
+}
+
+function renderWorkspaceRail(activePanel, bootstrap = {}, requestUrl) {
+  const tabs = [
+    { id: 'people', label: 'People' },
+    { id: 'events', label: 'Events' },
+    { id: 'drafts', label: 'Drafts' },
+    { id: 'mirror', label: 'Mirror' },
+  ];
+  const titleByPanel = {
+    people: 'Recent people',
+    events: 'Recent events',
+    drafts: 'Recent drafts',
+    mirror: 'Mirror signal',
+  };
+  const subtitleByPanel = {
+    people: 'Contacts stay inside the workspace instead of becoming a separate mode.',
+    events: 'Recent logbook entries stay visible without turning this into a dashboard wall.',
+    drafts: 'Jump back into the latest platform-ready packages from the same shell.',
+    mirror: 'Self signal stays nearby, but not louder than the conversation itself.',
+  };
+
+  return `
+    <aside class="workspace-context-rail panel" data-mobile-context-sections>
+      <div class="workspace-rail-tabs" data-workspace-rail-tabs>
+        ${tabs
+          .map((tab) => {
+            const active = tab.id === activePanel ? 'workspace-rail-tab active' : 'workspace-rail-tab';
+            return `<a class="${active}" href="${escapeHtml(buildWorkspaceStateHref(requestUrl, { panel: tab.id }))}">${escapeHtml(tab.label)}</a>`;
+          })
+          .join('')}
+      </div>
+      <div class="panel-head workspace-rail-head">
+        <div>
+          <h2>${escapeHtml(titleByPanel[activePanel] || 'Recent people')}</h2>
+          <p class="panel-subtitle">${escapeHtml(subtitleByPanel[activePanel] || subtitleByPanel.people)}</p>
+        </div>
+      </div>
+      <div class="workspace-rail-body">
+        ${renderWorkspaceRailContent(activePanel, bootstrap)}
+      </div>
+    </aside>
+  `;
+}
+
+function renderWorkspaceContactDrawer(detail, requestUrl) {
+  if (!detail?.person?.personId) return '';
+  const person = detail.person;
+  const followUpValue = readOptionalString(person.nextFollowUpAt, '').replace(/:\d{2}\.\d{3}Z$/u, '').replace('Z', '');
+  return `
+    <section class="workspace-drawer panel" data-workspace-drawer="contact">
+      <div class="workspace-drawer-head">
+        <div>
+          <p class="eyebrow">Contact detail</p>
+          <h2>${escapeHtml(person.name)}</h2>
+          <p class="panel-subtitle">${escapeHtml(person.notes || 'No notes yet.')}</p>
+        </div>
+        <a class="mini-link" href="${escapeHtml(buildWorkspaceStateHref(requestUrl, { panel: 'people', contactId: '' }))}">Close</a>
+      </div>
+      <div class="chip-row">
+        ${(person.tags || []).length ? (person.tags || []).map((tag) => renderPill(tag, 'soft')).join('') : renderPill('no-tags', 'soft')}
+        ${detail.suggestion?.nextFollowUpAt ? renderPill(`follow-up ${detail.suggestion.nextFollowUpAt}`, 'accent') : ''}
+      </div>
+      <div class="grid two-up workspace-drawer-grid">
+        ${renderPanel(
+          'Edit contact',
+          `
+            <form class="api-form compact-form" data-api-form="true" data-endpoint="/people/upsert">
+              <input type="hidden" name="personId" value="${escapeHtml(person.personId)}" />
+              ${renderFormField('Name', `<input name="name" type="text" value="${escapeHtml(person.name)}" />`)}
+              ${renderFormField('Tags', `<input name="tags" type="text" value="${escapeHtml((person.tags || []).join(', '))}" />`, 'Comma-separated')}
+              ${renderFormField('Notes', `<textarea name="notes" rows="5">${escapeHtml(person.notes || '')}</textarea>`)}
+              ${renderFormField('Next follow-up', `<input name="nextFollowUpAt" type="datetime-local" value="${escapeHtml(followUpValue)}" />`)}
+              <div class="inline-actions"><button type="submit">Save Contact</button></div>
+              <div class="form-result" data-form-result></div>
+            </form>
+          `,
+          'Keep the contact card accurate without leaving the main workspace.'
+        )}
+        ${renderPanel(
+          'Memory context',
+          `
+            <div class="stack">
+              <article class="stack-card compact-card">
+                <div class="stack-meta">
+                  <strong>Suggested follow-up</strong>
+                  <span>${escapeHtml(detail.suggestion?.nextFollowUpAt || 'not set')}</span>
+                </div>
+                <p>${escapeHtml(detail.suggestion?.followUpMessage || 'No follow-up suggestion yet.')}</p>
+              </article>
+              ${renderPanel('Identities', renderIdentityCards(detail.identities || []))}
+            </div>
+          `,
+          'Identity bindings and relationship cues stay close to the edit surface.'
+        )}
+      </div>
+      <div class="grid two-up workspace-drawer-grid">
+        ${renderPanel('Timeline', renderInteractionCards(detail.interactions || []))}
+        ${renderPanel('Evidence', renderEvidenceList(detail.evidence || []))}
+      </div>
+    </section>
+  `;
+}
+
+function renderWorkspaceEventDrawer(detail, requestUrl) {
+  if (!detail?.event?.eventId) return '';
+  const event = detail.event;
+  const relatedDrafts = Array.isArray(detail.relatedDrafts) ? detail.relatedDrafts : [];
+  return `
+    <section class="workspace-drawer panel" data-workspace-drawer="event">
+      <div class="workspace-drawer-head">
+        <div>
+          <p class="eyebrow">Event detail</p>
+          <h2>${escapeHtml(event.title)}</h2>
+          <p class="panel-subtitle">${escapeHtml(detail.summaryText || 'Structured event detail is ready for draft generation.')}</p>
+        </div>
+        <a class="mini-link" href="${escapeHtml(buildWorkspaceStateHref(requestUrl, { panel: 'events', eventId: '' }))}">Close</a>
+      </div>
+      <div class="chip-row">
+        ${detail.audience ? renderPill(detail.audience, 'soft') : ''}
+        ${detail.languageStrategy ? renderPill(detail.languageStrategy, 'accent') : ''}
+        ${detail.tone ? renderPill(detail.tone, 'soft') : ''}
+      </div>
+      <div class="grid two-up workspace-drawer-grid">
+        ${renderPanel(
+          'Event context',
+          `
+            <div class="stack">
+              <article class="stack-card compact-card">
+                <div class="stack-meta">
+                  <strong>Audience</strong>
+                  <span>${escapeHtml(detail.audience || 'not set')}</span>
+                </div>
+                <p>${escapeHtml(detail.details?.summary || detail.summaryText || 'No event summary yet.')}</p>
+              </article>
+              ${
+                detail.links?.length
+                  ? `<article class="stack-card compact-card"><strong>Links</strong><ul class="compact-list">${detail.links
+                      .map((item) => `<li>${escapeHtml(item)}</li>`)
+                      .join('')}</ul></article>`
+                  : ''
+              }
+            </div>
+          `,
+          'Use the logbook entry as the anchor before creating platform-native drafts.'
+        )}
+        ${renderPanel(
+          'Draft actions',
+          `
+            <form class="api-form compact-form" data-api-form="true" data-endpoint="/drafts/generate">
+              <input type="hidden" name="eventId" value="${escapeHtml(event.eventId)}" />
+              <input type="hidden" name="languages" value="platform-native" />
+              <input type="hidden" name="platforms" value="linkedin" />
+              <input type="hidden" name="platforms" value="x" />
+              <input type="hidden" name="platforms" value="instagram" />
+              <input type="hidden" name="platforms" value="zhihu" />
+              <input type="hidden" name="platforms" value="xiaohongshu" />
+              <input type="hidden" name="platforms" value="wechat_moments" />
+              <input type="hidden" name="platforms" value="wechat_official" />
+              <div class="inline-actions">
+                <button type="submit">Generate 7 Drafts</button>
+                <a class="mini-link" href="/drafts?eventId=${encodeURIComponent(event.eventId)}">Open Drafts</a>
+              </div>
+              <div class="form-result" data-form-result></div>
+            </form>
+            ${relatedDrafts.length ? renderAskDraftCards(relatedDrafts.slice(0, 3)) : renderEmptyState('No draft packages exist for this event yet.')}
+          `,
+          'Keep the event-to-draft jump inside the same operating surface.'
+        )}
+      </div>
+    </section>
+  `;
+}
+
 function renderCaptureFeed(captures) {
   const meaningfulCaptures = filterMeaningfulCaptures(captures, 4);
   if (!meaningfulCaptures.length) return renderEmptyState('No demo-ready captures yet.');
