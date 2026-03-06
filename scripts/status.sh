@@ -2,12 +2,12 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-QUEUE_FILE="${REPO_ROOT}/QUEUE.md"
+QUEUE_FILE="${SOCIALOS_QUEUE_FILE:-${REPO_ROOT}/QUEUE.md}"
 PAUSE_FILE="${REPO_ROOT}/.foundry/PAUSED"
 LOCK_DIR="${REPO_ROOT}/.locks/devloop.lock"
 LOCK_META="${LOCK_DIR}/meta.env"
-RUN_DIR="${REPO_ROOT}/reports/runs"
-LATEST="${REPO_ROOT}/reports/LATEST.md"
+RUN_DIR="${SOCIALOS_RUN_DIR:-${REPO_ROOT}/reports/runs}"
+LATEST="${SOCIALOS_LATEST_DIGEST_FILE:-${REPO_ROOT}/reports/LATEST.md}"
 
 mode="RUNNING"
 [[ -f "${PAUSE_FILE}" ]] && mode="PAUSED"
@@ -26,12 +26,23 @@ if [[ -d "${LOCK_DIR}" ]]; then
   fi
 fi
 
-pending_count="$(grep -cE '^- \[ \] ' "${QUEUE_FILE}" || true)"
-in_progress_count="$(grep -cE '^- \[-\] ' "${QUEUE_FILE}" || true)"
-blocked_count="$(grep -cE '^- \[!\] ' "${QUEUE_FILE}" || true)"
-# Keep queue accounting aligned with API parsing, which treats both [x] and [X] as done.
-done_count="$(grep -cE '^- \[[xX]\] ' "${QUEUE_FILE}" || true)"
-current_task="$(grep -nE '^- \[( |-|!)\] ' "${QUEUE_FILE}" | head -n 1 || true)"
+pending_count="0"
+in_progress_count="0"
+blocked_count="0"
+done_count="0"
+current_task="none"
+queue_notice=""
+if [[ -f "${QUEUE_FILE}" ]]; then
+  pending_count="$(grep -cE '^- \[ \] ' "${QUEUE_FILE}" || true)"
+  in_progress_count="$(grep -cE '^- \[-\] ' "${QUEUE_FILE}" || true)"
+  blocked_count="$(grep -cE '^- \[!\] ' "${QUEUE_FILE}" || true)"
+  # Keep queue accounting aligned with API parsing, which treats both [x] and [X] as done.
+  done_count="$(grep -cE '^- \[[xX]\] ' "${QUEUE_FILE}" || true)"
+  current_task="$(grep -nE '^- \[( |-|!)\] ' "${QUEUE_FILE}" | head -n 1 || true)"
+  [[ -z "${current_task}" ]] && current_task="none"
+else
+  queue_notice="missing (${QUEUE_FILE})"
+fi
 
 latest_json="$(node - "${RUN_DIR}" <<'NODE'
 const fs = require('fs');
@@ -101,7 +112,8 @@ echo "lock: ${lock_status}"
 echo
 echo "Queue:"
 echo "pending=${pending_count} in_progress=${in_progress_count} blocked=${blocked_count} done=${done_count}"
-echo "current_task: ${current_task:-none}"
+echo "current_task: ${current_task}"
+[[ -n "${queue_notice}" ]] && echo "queue_file: ${queue_notice}"
 echo
 echo "Consecutive failures: ${consecutive_failures}"
 echo
@@ -127,7 +139,11 @@ else
 fi
 echo
 echo "Blocked queue head:"
-grep -nE '^- \[!\] ' "${QUEUE_FILE}" | head -n 5 || true
+if [[ -f "${QUEUE_FILE}" ]]; then
+  grep -nE '^- \[!\] ' "${QUEUE_FILE}" | head -n 5 || true
+else
+  echo "none (queue file missing)"
+fi
 echo
 echo "Latest digest:"
 if [[ -f "${LATEST}" ]]; then
