@@ -36,14 +36,12 @@ const PAGE_DEFINITIONS = [
     title: 'Contacts',
     path: '/people',
     summary: 'A lighter directory view for people memory, identities, and follow-up context.',
-    nav: false,
   },
   {
     id: 'events',
     title: 'Logbook',
     path: '/events',
     summary: 'A structured record of campaign-worthy events and the timeline behind them.',
-    nav: false,
   },
   {
     id: 'drafts',
@@ -418,9 +416,9 @@ function renderChatComposerIntro() {
     <article class="chat-bubble system workspace-welcome">
       <div class="stack-meta">
         <strong>Start naturally</strong>
-        <span>model-guided</span>
+        <span>ready</span>
       </div>
-      <p>Drop in a note, a question, a voice memo, or a screenshot. SocialOS keeps the thread calm and only surfaces the next useful person, event, or draft.</p>
+      <p>Say what happened, ask what you need, or drop in a voice note. SocialOS keeps the thread calm and only opens the next useful person, event, draft, or mirror.</p>
     </article>
   `;
 }
@@ -448,7 +446,6 @@ function renderWorkspaceThreadSeed(captures) {
   const recent = filterMeaningfulCaptures(captures, 1);
   return `
     <div class="chat-shell workspace-thread" data-workspace-thread>
-      ${renderChatComposerIntro()}
       ${
         recent.length
           ? recent
@@ -466,7 +463,7 @@ function renderWorkspaceThreadSeed(captures) {
               .join('')
           : `
             <article class="chat-bubble system ghost">
-              <p>No saved turns yet. The first message you send here can become a contact, a self check-in, or an event suggestion.</p>
+              <p>Start with one natural message. We can turn it into a contact, an event, a draft thread, or a mirror reflection when it helps.</p>
             </article>
           `
       }
@@ -557,7 +554,7 @@ function renderWorkspaceSystemStatus(bootstrap = {}) {
       <div class="workspace-status-grid">
         <article class="workspace-status-item">
           <span class="workspace-status-label">Publish</span>
-          ${renderPill(status.publishMode || 'dry-run', status.publishMode === 'dry-run' ? 'soft' : 'warn')}
+          ${renderPill(formatHumanPublishMode(status.publishMode), status.publishMode === 'dry-run' ? 'soft' : 'warn')}
         </article>
         <article class="workspace-status-item">
           <span class="workspace-status-label">Network</span>
@@ -605,13 +602,14 @@ function renderWorkspaceSummaryStrip(bootstrap = {}, requestUrl) {
 }
 
 function renderWorkspaceMirrorSnapshot(bootstrap = {}) {
-  if (bootstrap.latestMirror) {
-    const themes = Array.isArray(bootstrap.latestMirror.themes) ? bootstrap.latestMirror.themes.slice(0, 3) : [];
-    const energizer = summarizeCardCopy(bootstrap.latestMirror.energizers?.[0]?.snippet || '', 96, '');
-    const drainer = summarizeCardCopy(bootstrap.latestMirror.drainers?.[0]?.snippet || '', 96, '');
+  const latestMirror = bootstrap.latestDailyMirror || bootstrap.latestMirror || bootstrap.latestWeeklyMirror || null;
+  if (latestMirror) {
+    const themes = Array.isArray(latestMirror.themes) ? latestMirror.themes.slice(0, 3) : [];
+    const energizer = summarizeCardCopy(latestMirror.energizers?.[0]?.snippet || '', 96, '');
+    const drainer = summarizeCardCopy(latestMirror.drainers?.[0]?.snippet || '', 96, '');
     const summaryParts = [];
     if (themes.length) {
-      summaryParts.push(`This week centered on ${joinNaturalList(themes.map((item) => `${item.theme}`))}.`);
+      summaryParts.push(`${latestMirror.cadence === 'daily' ? 'Today centered on' : 'This week centered on'} ${joinNaturalList(themes.map((item) => `${item.theme}`))}.`);
     }
     if (energizer) summaryParts.push(`Strongest lift: ${energizer}`);
     if (drainer) summaryParts.push(`Watch-out: ${drainer}`);
@@ -619,10 +617,10 @@ function renderWorkspaceMirrorSnapshot(bootstrap = {}) {
       <div class="stack">
         <article class="stack-card">
           <div class="stack-meta">
-            <strong>${escapeHtml(bootstrap.latestMirror.rangeLabel || 'Latest mirror')}</strong>
-            <span>${escapeHtml(formatDateTime(bootstrap.latestMirror.createdAt))}</span>
+            <strong>${escapeHtml(latestMirror.cadence === 'daily' ? 'Today' : latestMirror.rangeLabel || 'Latest mirror')}</strong>
+            <span>${escapeHtml(formatDateTime(latestMirror.createdAt))}</span>
           </div>
-          <p>${escapeHtml(summaryParts.join(' ') || truncate(bootstrap.latestMirror.summaryText || bootstrap.latestMirror.content || '', 220))}</p>
+          <p>${escapeHtml(summaryParts.join(' ') || truncate(latestMirror.summaryText || latestMirror.content || '', 220))}</p>
           ${
             themes.length
               ? `<div class="chip-row">${themes
@@ -632,7 +630,7 @@ function renderWorkspaceMirrorSnapshot(bootstrap = {}) {
               : ''
           }
           <div class="inline-actions">
-            <a class="mini-link" href="/self-mirror">Open Mirror</a>
+            <a class="mini-link" href="/self-mirror?cadence=${encodeURIComponent(latestMirror.cadence || 'weekly')}">Open Mirror</a>
           </div>
         </article>
       </div>
@@ -752,6 +750,14 @@ function renderWorkspaceContactDrawer(detail, requestUrl) {
         ${renderPanel('Timeline', renderInteractionCards(detail.interactions || []))}
         ${renderPanel('Evidence', renderEvidenceList(detail.evidence || []))}
       </div>
+      <div class="grid two-up workspace-drawer-grid">
+        ${renderPanel(
+          'Related Events',
+          renderEventCards(detail.relatedEvents || [], (event) => buildWorkspaceStateHref(requestUrl, { panel: 'events', eventId: event.eventId })),
+          'Stay in the same conversation while following the event threads linked to this contact.'
+        )}
+        ${renderPanel('Graph Overview', renderGraphOverview(detail.graphOverview), 'A focused one-hop view of this contact and the events around it.')}
+      </div>
     </section>
   `;
 }
@@ -821,6 +827,14 @@ function renderWorkspaceEventDrawer(detail, requestUrl) {
           `,
           'Generate and review draft packages without leaving the same operating surface.'
         )}
+      </div>
+      <div class="grid two-up workspace-drawer-grid">
+        ${renderPanel(
+          'Related People',
+          renderPeopleCards(detail.relatedPeople || [], false, (person) => buildWorkspaceStateHref(requestUrl, { panel: 'people', contactId: person.personId })),
+          'The people linked to this event stay close to the campaign context.'
+        )}
+        ${renderPanel('Graph Overview', renderGraphOverview(detail.graphOverview), 'A focused one-hop view of this event and its linked people.')}
       </div>
     </section>
   `;
@@ -952,7 +966,7 @@ function renderInteractionCards(interactions) {
     .join('')}</div>`;
 }
 
-function renderPeopleCards(people, showScore = false) {
+function renderPeopleCards(people, showScore = false, hrefBuilder = (person) => buildWorkspaceHref({ panel: 'people', contactId: person.personId })) {
   if (!people.length) return renderEmptyState('No people cards match this query.');
   return `<div class="stack">${people
     .map((person) => {
@@ -971,7 +985,7 @@ function renderPeopleCards(people, showScore = false) {
             ${(tags.length ? tags : ['no-tags']).map((tag) => renderPill(tag, 'soft')).join('')}
           </div>
           <div class="inline-actions">
-            <a class="mini-link" href="${escapeHtml(buildWorkspaceHref({ panel: 'people', contactId: person.personId }))}">Open</a>
+            <a class="mini-link" href="${escapeHtml(hrefBuilder(person))}">Open</a>
           </div>
         </article>
       `;
@@ -979,7 +993,7 @@ function renderPeopleCards(people, showScore = false) {
     .join('')}</div>`;
 }
 
-function renderEventCards(events) {
+function renderEventCards(events, hrefBuilder = (event) => buildWorkspaceHref({ panel: 'events', eventId: event.eventId })) {
   if (!events.length) return renderEmptyState('No events yet.');
   return `<div class="stack">${events
     .map((event) => {
@@ -1009,7 +1023,7 @@ function renderEventCards(events) {
           <p>${escapeHtml(detailPreview || 'No structured payload yet.')}</p>
           ${badges.length ? `<div class="chip-row">${badges.map((badge) => renderPill(badge, 'soft')).join('')}</div>` : ''}
           <div class="inline-actions">
-            <a class="mini-link" href="${escapeHtml(buildWorkspaceHref({ panel: 'events', eventId: event.eventId }))}">Open Event</a>
+            <a class="mini-link" href="${escapeHtml(hrefBuilder(event))}">Open Event</a>
           </div>
         </article>
       `;
@@ -1076,12 +1090,85 @@ function formatLanguageLabel(language) {
   }
 }
 
+function formatMirrorCadenceLabel(cadence) {
+  const normalized = readOptionalString(cadence, '').toLowerCase();
+  if (normalized === 'daily') return 'Daily Mirror';
+  if (normalized === 'weekly') return 'Weekly Mirror';
+  return 'Mirror';
+}
+
+function formatPlatformShellLabel(platform) {
+  const labels = {
+    linkedin: 'LinkedIn',
+    x: 'X',
+    instagram: 'Instagram',
+    zhihu: 'Zhihu',
+    xiaohongshu: 'Xiaohongshu',
+    wechat_moments: 'WeChat Moments',
+    wechat_official: 'WeChat Official Account',
+  };
+  return labels[platform] || platform || 'Draft';
+}
+
+function buildEntityHref(entityType, entityId) {
+  if (entityType === 'person') return `/people/${encodeURIComponent(entityId)}`;
+  if (entityType === 'event') return `/events/${encodeURIComponent(entityId)}`;
+  return '#';
+}
+
+function renderGraphOverview(graphOverview) {
+  if (!graphOverview?.nodes?.length) return renderEmptyState('No linked graph context yet.');
+  const width = 320;
+  const height = 220;
+  const nodes = Array.isArray(graphOverview.nodes) ? graphOverview.nodes : [];
+  const edges = Array.isArray(graphOverview.edges) ? graphOverview.edges : [];
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+
+  return `
+    <div class="graph-shell">
+      <svg viewBox="0 0 ${width} ${height}" class="graph-svg" role="img" aria-label="Relationship graph overview">
+        ${edges
+          .map((edge) => {
+            const from = nodeById.get(edge.from);
+            const to = nodeById.get(edge.to);
+            if (!from || !to) return '';
+            return `<line x1="${Math.round(from.x * width)}" y1="${Math.round(from.y * height)}" x2="${Math.round(
+              to.x * width
+            )}" y2="${Math.round(to.y * height)}" class="graph-edge" />`;
+          })
+          .join('')}
+        ${nodes
+          .map((node) => {
+            const x = Math.round(node.x * width);
+            const y = Math.round(node.y * height);
+            const radius = node.entityId === graphOverview.focusId ? 16 : 12;
+            return `
+              <a href="${escapeHtml(buildEntityHref(node.entityType, node.entityId))}">
+                <circle cx="${x}" cy="${y}" r="${radius}" class="graph-node ${escapeHtml(node.entityType)} ${
+                  node.entityId === graphOverview.focusId ? 'focus' : ''
+                }" />
+                <text x="${x}" y="${y + 32}" text-anchor="middle" class="graph-label">${escapeHtml(
+                  truncate(node.label || '', 20)
+                )}</text>
+              </a>
+            `;
+          })
+          .join('')}
+      </svg>
+    </div>
+  `;
+}
+
 function isChineseDraftLanguage(language) {
   return String(language || '').toLowerCase() === 'zh';
 }
 
 function pickDraftUiCopy(draft, englishLabel, chineseLabel) {
-  return isChineseDraftLanguage(draft?.language) ? chineseLabel : englishLabel;
+  return englishLabel;
+}
+
+function formatHumanPublishMode(mode) {
+  return readOptionalString(mode, 'dry-run') === 'live' ? 'Live publish' : 'Safe rehearsal';
 }
 
 function buildClipboardText(draft, publishPackage, mode = 'body') {
@@ -1213,6 +1300,7 @@ function renderDraftCards(drafts) {
       const supportLabel = publishPackage.supportLevel || capability.supportLevel || 'L0 Draft';
       const entryLabel = publishPackage.entryTarget || capability.entryTarget || 'manual';
       const blockedLabel = publishPackage.blockedBy || capability.blockedBy || 'n/a';
+      const shellPlatformLabel = readOptionalString(draft.platformShellLabel || draft.platformLabel, draft.platform || 'Draft');
       const displayTitle = readOptionalString(publishPackage.title, '');
       const displayHook = readOptionalString(publishPackage.hook, '');
       const showDisplayTitle = displayTitle && !/demo package/iu.test(displayTitle);
@@ -1222,16 +1310,12 @@ function renderDraftCards(drafts) {
           <div class="draft-head">
             <div>
               <p class="card-kicker">${escapeHtml(draftContextTitle)}</p>
-              <h3>${escapeHtml(draft.platformLabel)} · ${escapeHtml(formatLanguageLabel(draft.language))}</h3>
-              <p class="draft-subtitle">${escapeHtml(
-                isChineseDraftLanguage(draft.language)
-                  ? '中文平台稿件，直接复制即可。'
-                  : 'English platform draft, ready to copy.'
-              )}</p>
+              <h3>${escapeHtml(shellPlatformLabel)}</h3>
+              <p class="draft-subtitle">One localized card for this platform, ready to review, copy, and hand off.</p>
             </div>
             <div class="chip-row">
               ${renderPill(supportLabel, capability.liveEligible ? 'accent' : 'soft')}
-              ${renderPill(formatLanguageLabel(draft.language), 'neutral')}
+              ${renderPill(entryLabel, 'neutral')}
             </div>
           </div>
           ${renderPublishActions(draft, publishPackage)}
@@ -1246,9 +1330,7 @@ function renderDraftCards(drafts) {
           ${
             hasIssues
               ? `<div class="result-block">
-                  <p><strong>${escapeHtml(pickDraftUiCopy(draft, 'Validation', '校验'))}:</strong> ${escapeHtml(
-                    pickDraftUiCopy(draft, 'needs review', '需要检查')
-                  )}</p>
+                  <p><strong>Validation:</strong> ${escapeHtml('needs review')}</p>
                   <small>${escapeHtml(
                     (validation.issues || []).map((issue) => issue.message).join(' | ') || 'No issues'
                   )}</small>
@@ -1264,11 +1346,11 @@ function renderDraftCards(drafts) {
             <div class="form-result" data-form-result></div>
           </form>
           <details class="draft-details">
-            <summary>${escapeHtml(pickDraftUiCopy(draft, 'More options', '更多选项'))}</summary>
+            <summary>More options</summary>
             <div class="draft-details-body">
               <div class="package-meta">
-                <p><strong>${escapeHtml(pickDraftUiCopy(draft, 'Entry', '入口'))}:</strong> ${escapeHtml(entryLabel)}</p>
-                <p><strong>${escapeHtml(pickDraftUiCopy(draft, 'Blocked By', '受限于'))}:</strong> ${escapeHtml(blockedLabel)}</p>
+                <p><strong>Entry:</strong> ${escapeHtml(entryLabel)}</p>
+                <p><strong>Blocked by:</strong> ${escapeHtml(blockedLabel)}</p>
               </div>
               ${
                 steps.length
@@ -1280,17 +1362,17 @@ function renderDraftCards(drafts) {
                 draft.draftId
               )}">
                 ${renderFormField(
-                  pickDraftUiCopy(draft, 'Edit Draft', '编辑草稿'),
+                  'Edit draft',
                   `<textarea name="content" rows="8">${escapeHtml(draft.content)}</textarea>`,
-                  pickDraftUiCopy(draft, 'Edit the final copy before publishing.', '发布前可以在这里微调正文。')
+                  'Edit the final copy before publishing.'
                 )}
                 ${renderFormField(
-                  pickDraftUiCopy(draft, 'Variants', '备注'),
+                  'Variants',
                   `<textarea name="variants" rows="3">${escapeHtml((draft.variants || []).join('\n'))}</textarea>`,
-                  pickDraftUiCopy(draft, 'Optional notes, one line each.', '可选备注，每行一条。')
+                  'Optional notes, one line each.'
                 )}
                 <div class="inline-actions">
-                  <button type="submit">${escapeHtml(pickDraftUiCopy(draft, 'Save Edit', '保存修改'))}</button>
+                  <button type="submit">Save edit</button>
                 </div>
                 <div class="form-result" data-form-result></div>
               </form>
@@ -1298,7 +1380,7 @@ function renderDraftCards(drafts) {
                 draft.draftId
               )}/validate">
                 <div class="inline-actions">
-                  <button type="submit">${escapeHtml(pickDraftUiCopy(draft, 'Run Validation', '重新校验'))}</button>
+                  <button type="submit">Run validation</button>
                 </div>
                 <div class="form-result" data-form-result></div>
               </form>
@@ -1526,13 +1608,12 @@ function renderAskDraftCards(drafts) {
       (draft) => `
         <article class="stack-card">
           <div class="stack-meta">
-            <strong>${escapeHtml(draft.platformLabel || draft.platform || 'Draft')}</strong>
-            <span>${escapeHtml(formatLanguageLabel(draft.language))}</span>
+            <strong>${escapeHtml(draft.platformShellLabel || draft.platformLabel || draft.platform || 'Draft')}</strong>
+            <span>${escapeHtml(truncate(draft.eventTitle || 'Current event', 42))}</span>
           </div>
           <p>${escapeHtml(summarizeCardCopy(draft.snippet || draft.content || '', 164, 'A platform-ready draft already exists for this event.'))}</p>
           <div class="inline-actions">
             <a class="mini-link" href="${escapeHtml(buildWorkspaceHref({ panel: 'drafts', eventId: draft.eventId || '' }))}">Open Drafts</a>
-            ${draft.eventTitle ? `<span class="quiet-label">${escapeHtml(truncate(draft.eventTitle, 42))}</span>` : ''}
           </div>
         </article>
       `
@@ -2043,9 +2124,11 @@ async function renderQuickCapturePage(page, requestUrl) {
 
 async function renderPeoplePage(page, requestUrl) {
   const query = readOptionalString(requestUrl.searchParams.get('q'), '');
-  const selectedPersonId = readOptionalString(requestUrl.searchParams.get('personId'), '');
+  const selectedPersonId =
+    readOptionalString(requestUrl.searchParams.get('personId'), '') ||
+    (/^\/people\/([^/]+)$/u.exec(requestUrl.pathname)?.[1] || '');
   const [recentRes, searchRes, detailRes] = await Promise.all([
-    fetchJsonSafe('/people?limit=8'),
+    fetchJsonSafe('/people?limit=12'),
     query ? fetchJsonSafe(`/people?query=${encodeURIComponent(query)}&limit=8`) : Promise.resolve(null),
     selectedPersonId
       ? fetchJsonSafe(`/people/${encodeURIComponent(selectedPersonId)}`)
@@ -2068,17 +2151,18 @@ async function renderPeoplePage(page, requestUrl) {
     )}
     <div class="grid two-up">
       ${renderPanel(
-        'Search People Memory',
+        'Directory',
         `
           <form class="query-form" method="GET" action="/people">
             ${renderFormField(
-              'Query',
-              `<input name="q" type="text" value="${escapeHtml(query)}" placeholder="hackathon growth person, investor from last week, product designer..." />`,
-              'This uses keyword/hybrid retrieval and returns evidence-backed results.'
+              'Search contacts',
+              `<input name="q" type="text" value="${escapeHtml(query)}" placeholder="Sam, growth person, hackathon, investor..." />`,
+              'Search by name, topic, memory fragment, or follow-up context.'
             )}
             <div class="inline-actions">
-              <button type="submit">Search</button>
+              <button type="submit">Search Contacts</button>
               <a class="mini-link" href="/people">Reset</a>
+              <a class="mini-link" href="/quick-capture">Open Workspace</a>
             </div>
           </form>
           ${
@@ -2088,12 +2172,14 @@ async function renderPeoplePage(page, requestUrl) {
                 )} · provider ${escapeHtml(searchPayload?.retrieval?.effectiveProvider || 'local')}</div>`
               : ''
           }
-          ${query ? renderPeopleCards(searchResults, true) : renderEmptyState('Run a search to see ranked evidence.')}
+          ${query
+            ? renderPeopleCards(searchResults, true, (person) => `/people/${encodeURIComponent(person.personId)}`)
+            : renderPeopleCards(recentPeople, false, (person) => `/people/${encodeURIComponent(person.personId)}`)}
         `,
-        'Ask for people by topic, context, or memory fragment.'
+        'Browse the full relationship directory, then open one contact when you want detail.'
       )}
       ${renderPanel(
-        detail?.person?.personId ? 'Person Detail' : 'Add / Update Person Card',
+        detail?.person?.personId ? 'Contact Detail' : 'Create Contact',
         detail?.person?.personId
           ? `
               <div class="stack-card">
@@ -2105,6 +2191,9 @@ async function renderPeoplePage(page, requestUrl) {
                 <div class="chip-row">${(detail.person.tags || []).map((tag) => renderPill(tag, 'soft')).join('')}</div>
                 <small>Next follow-up: ${escapeHtml(detail.suggestion?.nextFollowUpAt || 'not set')}</small>
                 <p><strong>Suggested follow-up:</strong> ${escapeHtml(detail.suggestion?.followUpMessage || 'n/a')}</p>
+                <div class="inline-actions">
+                  <a class="mini-link" href="${escapeHtml(buildWorkspaceHref({ panel: 'people', contactId: detail.person.personId }))}">Open in Workspace</a>
+                </div>
               </div>
               ${renderPanel(
                 'Edit Contact',
@@ -2133,6 +2222,12 @@ async function renderPeoplePage(page, requestUrl) {
                 `
               )}
               ${renderPanel('Identities', renderIdentityCards(detail.identities || []))}
+              ${renderPanel(
+                'Related Events',
+                renderEventCards(detail.relatedEvents || [], (event) => `/events/${encodeURIComponent(event.eventId)}`),
+                'See the event threads connected to this relationship.'
+              )}
+              ${renderPanel('Graph Overview', renderGraphOverview(detail.graphOverview), 'A focused one-hop view of this contact and linked events.')}
               ${renderPanel('Timeline', renderInteractionCards(detail.interactions || []))}
               ${renderPanel('Evidence', renderEvidenceList(detail.evidence || []))}
               <div class="grid two-up">
@@ -2180,21 +2275,25 @@ async function renderPeoplePage(page, requestUrl) {
               </form>
             `,
         detail?.person?.personId
-          ? 'Unified person detail with identities, timeline, evidence, and next-step suggestion.'
+          ? 'A contact card ties together profile, event context, graph links, and the next follow-up.'
           : 'Manual cards make the People page useful immediately.'
       )}
     </div>
-    ${renderPanel('Recent People', renderPeopleCards(recentPeople))}
   `;
 }
 
-async function renderEventsPage(page) {
-  const [capturesRes, eventsRes] = await Promise.all([
+async function renderEventsPage(page, requestUrl) {
+  const selectedEventId =
+    readOptionalString(requestUrl.searchParams.get('eventId'), '') ||
+    (/^\/events\/([^/]+)$/u.exec(requestUrl.pathname)?.[1] || '');
+  const [capturesRes, eventsRes, detailRes] = await Promise.all([
     fetchJsonSafe('/captures?limit=8'),
-    fetchJsonSafe('/events?limit=8'),
+    fetchJsonSafe('/events?limit=12'),
+    selectedEventId ? fetchJsonSafe(`/events/${encodeURIComponent(selectedEventId)}`) : Promise.resolve(null),
   ]);
   const captures = capturesRes.ok ? capturesRes.payload.captures || [] : [];
   const events = eventsRes.ok ? eventsRes.payload.events || [] : [];
+  const detail = detailRes?.ok ? detailRes.payload : null;
 
   const captureOptions = ['<option value="">No linked capture</option>']
     .concat(
@@ -2214,8 +2313,34 @@ async function renderEventsPage(page) {
     )}
     <div class="grid two-up">
       ${renderPanel(
-        'Create Event',
-        `
+        detail?.event?.eventId ? 'Event Detail' : 'Create Event',
+        detail?.event?.eventId
+          ? `
+              <div class="stack-card">
+                <div class="stack-meta">
+                  <strong>${escapeHtml(detail.event.title)}</strong>
+                  <span>${escapeHtml(formatDateTime(detail.event.createdAt))}</span>
+                </div>
+                <p>${escapeHtml(detail.summaryText || 'No event summary yet.')}</p>
+                <div class="chip-row">
+                  ${detail.audience ? renderPill(detail.audience, 'soft') : ''}
+                  ${detail.languageStrategy ? renderPill(detail.languageStrategy, 'soft') : ''}
+                  ${detail.tone ? renderPill(detail.tone, 'soft') : ''}
+                </div>
+                <div class="inline-actions">
+                  <a class="mini-link" href="${escapeHtml(buildWorkspaceHref({ panel: 'events', eventId: detail.event.eventId }))}">Open in Workspace</a>
+                  <a class="mini-link" href="/drafts?eventId=${encodeURIComponent(detail.event.eventId)}">Open Drafts</a>
+                </div>
+              </div>
+              ${renderPanel(
+                'Related People',
+                renderPeopleCards(detail.relatedPeople || [], false, (person) => `/people/${encodeURIComponent(person.personId)}`),
+                'These are the people directly linked to this event.'
+              )}
+              ${renderPanel('Graph Overview', renderGraphOverview(detail.graphOverview), 'The graph keeps the event at the center and shows the first ring of linked people.')}
+              ${renderPanel('Related Drafts', renderAskDraftCards(detail.relatedDrafts || []))}
+            `
+          : `
           <form class="api-form" data-api-form="true" data-endpoint="/events" data-json-fields="payload">
             ${renderFormField('Title', '<input name="title" type="text" placeholder="OpenClaw SocialOS product push" />')}
             ${renderFormField('Capture Seed', `<select name="captureId">${captureOptions}</select>`)}
@@ -2242,11 +2367,36 @@ async function renderEventsPage(page) {
             <div class="form-result" data-form-result></div>
           </form>
         `,
-        'Events are the handoff point from captures into campaigns.'
+        detail?.event?.eventId
+          ? 'Event detail ties together people, campaign strategy, and linked draft packages.'
+          : 'Events are the handoff point from captures into campaigns.'
       )}
-      ${renderPanel('Recent Captures', renderCaptureCards(captures.slice(0, 4)), 'Choose one as context if it helps')}
+      ${renderPanel(
+        'Logbook Index',
+        events.length
+          ? `<div class="stack">${events
+              .map(
+                (event) => `
+                  <article class="stack-card">
+                    <div class="stack-meta">
+                      <strong>${escapeHtml(event.title)}</strong>
+                      <span>${escapeHtml(formatDateTime(event.createdAt))}</span>
+                    </div>
+                    <p>${escapeHtml(summarizeCardCopy(event.payload?.details?.summary || event.payload?.summary || '', 150, 'Open the event to review people, tone, and drafts.'))}</p>
+                    <div class="inline-actions">
+                      <a class="mini-link" href="/events/${encodeURIComponent(event.eventId)}">${escapeHtml(
+                        event.eventId === selectedEventId ? 'Viewing' : 'Open'
+                      )}</a>
+                    </div>
+                  </article>
+                `
+              )
+              .join('')}</div>`
+          : renderEmptyState('No events yet.'),
+        'Browse the event timeline directly instead of relying only on chat recall.'
+      )}
     </div>
-    ${renderPanel('Recent Events', renderEventCards(events))}
+    ${renderPanel('Recent Captures', renderCaptureCards(captures.slice(0, 4)), 'Choose one as context if it helps')}
   `;
 }
 
@@ -2378,39 +2528,119 @@ async function renderQueuePage(page) {
   `;
 }
 
-async function renderSelfMirrorPage(page) {
-  const mirrorRes = await fetchJsonSafe('/self-mirror');
-  const payload = mirrorRes.ok ? mirrorRes.payload : { latestMirror: null, checkins: [] };
+function renderMirrorInsightCards(mirror) {
+  if (!mirror) return renderEmptyState('No mirror generated yet.');
+  const themes = Array.isArray(mirror.themes) ? mirror.themes : [];
+  const conclusions = Array.isArray(mirror.conclusions) ? mirror.conclusions : [];
+  return `
+    <div class="stack">
+      <article class="stack-card">
+        <div class="stack-meta">
+          <strong>${escapeHtml(mirror.cadence === 'daily' ? 'Daily mirror' : 'Weekly mirror')}</strong>
+          <span>${escapeHtml(formatDateTime(mirror.createdAt))}</span>
+        </div>
+        <p>${escapeHtml(mirror.summaryText || mirror.content || 'No summary yet.')}</p>
+        ${themes.length ? `<div class="chip-row">${themes.slice(0, 4).map((item) => renderPill(`${item.theme} (${item.count})`, 'soft')).join('')}</div>` : ''}
+      </article>
+      <div class="grid two-up">
+        ${renderPanel(
+          'Energizers',
+          (mirror.energizers || []).length
+            ? `<ul class="compact-list">${(mirror.energizers || []).slice(0, 4).map((row) => `<li>${escapeHtml(row.snippet || '')}</li>`).join('')}</ul>`
+            : renderEmptyState('No energizers yet.')
+        )}
+        ${renderPanel(
+          'Drainers',
+          (mirror.drainers || []).length
+            ? `<ul class="compact-list">${(mirror.drainers || []).slice(0, 4).map((row) => `<li>${escapeHtml(row.snippet || '')}</li>`).join('')}</ul>`
+            : renderEmptyState('No drainers yet.')
+        )}
+      </div>
+      ${renderPanel(
+        'Evidence-backed reflections',
+        conclusions.length
+          ? `<div class="stack">${conclusions
+              .map(
+                (conclusion) => `
+                  <details class="detail-card">
+                    <summary>${escapeHtml(conclusion.title || 'Reflection')}</summary>
+                    <p>${escapeHtml(conclusion.summary || '')}</p>
+                    ${renderEvidenceList(conclusion.evidence?.evidence || [])}
+                  </details>
+                `
+              )
+              .join('')}</div>`
+          : renderEmptyState('No reflection cards yet.')
+      )}
+    </div>
+  `;
+}
+
+function renderMirrorCadenceTabs(activeCadence) {
+  const tabs = [
+    { id: 'daily', label: 'Daily Mirror' },
+    { id: 'weekly', label: 'Weekly Mirror' },
+  ];
+  return `<div class="workspace-rail-tabs">${tabs
+    .map((tab) => {
+      const active = tab.id === activeCadence ? 'workspace-rail-tab active' : 'workspace-rail-tab';
+      return `<a class="${active}" href="/self-mirror?cadence=${tab.id}">${tab.label}</a>`;
+    })
+    .join('')}</div>`;
+}
+
+async function renderSelfMirrorPage(page, requestUrl) {
+  const cadence = readOptionalString(requestUrl.searchParams.get('cadence'), 'daily') || 'daily';
+  const mirrorRes = await fetchJsonSafe(`/self-mirror?cadence=${encodeURIComponent(cadence)}`);
+  const payload = mirrorRes.ok ? mirrorRes.payload : { latestMirror: null, latestDailyMirror: null, latestWeeklyMirror: null, checkins: [] };
+  const activeMirror =
+    cadence === 'weekly'
+      ? payload.latestWeeklyMirror || payload.latestMirror
+      : payload.latestDailyMirror || payload.latestMirror;
 
   return `
     ${renderHero(
       page,
       [
-        renderMetric(String((payload.checkins || []).length), 'check-ins'),
-        renderMetric(payload.latestMirror ? '1' : '0', 'latest mirror'),
-      ].join('')
+        renderMetric(String((payload.checkins || []).length), 'recent check-ins'),
+        renderMetric(payload.latestDailyMirror ? 'ready' : 'pending', 'daily'),
+        renderMetric(payload.latestWeeklyMirror ? 'ready' : 'pending', 'weekly'),
+      ].join(''),
+      `<div class="info-card"><strong>What Mirror does</strong><p>Mirror is not a personality test. It turns captures, interactions, and self check-ins into a daily reflection and a weekly synthesis with evidence.</p></div>`
     )}
-    ${renderPanel(
-      'Generate Mirror',
-      `
-        <form class="api-form" data-api-form="true" data-endpoint="/self-mirror/generate">
-          ${renderFormField(
-            'Range',
-            `<select name="range">
-              <option value="last-7d">last-7d</option>
-              <option value="last-14d">last-14d</option>
-              <option value="last-30d">last-30d</option>
-            </select>`
-          )}
-          <div class="inline-actions">
-            <button type="submit">Generate Mirror</button>
+    ${renderMirrorCadenceTabs(cadence)}
+    <div class="grid two-up">
+      ${renderPanel(
+        cadence === 'weekly' ? 'Weekly synthesis' : 'Daily reflection',
+        renderMirrorInsightCards(activeMirror),
+        cadence === 'weekly'
+          ? 'Weekly Mirror distills the last seven days into the clearest patterns and next experiments.'
+          : 'Daily Mirror closes the loop on what happened today and what it meant.'
+      )}
+      ${renderPanel(
+        'Generate or refresh',
+        `
+          <div class="control-stack">
+            <form class="api-form compact-form" data-api-form="true" data-endpoint="/self-mirror/generate">
+              <input type="hidden" name="cadence" value="daily" />
+              <div class="inline-actions">
+                <button type="submit">Generate Daily Mirror</button>
+              </div>
+              <div class="form-result" data-form-result></div>
+            </form>
+            <form class="api-form compact-form" data-api-form="true" data-endpoint="/self-mirror/generate">
+              <input type="hidden" name="cadence" value="weekly" />
+              <div class="inline-actions">
+                <button type="submit">Generate Weekly Mirror</button>
+              </div>
+              <div class="form-result" data-form-result></div>
+            </form>
           </div>
-          <div class="form-result" data-form-result></div>
-        </form>
-      `,
-      'Rebuild the weekly synthesis from current check-ins, captures, and relationship evidence.'
-    )}
-    ${renderMirrorBlock(payload)}
+        `,
+        'Daily keeps today legible. Weekly turns repeated evidence into a higher-level pattern view.'
+      )}
+    </div>
+    ${renderPanel('Recent Check-ins', renderCheckinCards((payload.checkins || []).slice(0, 8)), 'These are the newest self signals feeding the mirror loop.')}
   `;
 }
 
@@ -2487,7 +2717,7 @@ async function renderDevDigestPage(page) {
   `;
 }
 
-async function renderSettingsPage(page) {
+async function renderSettingsPage(page, requestUrl) {
   const [runtimeRes, clusterRes, tasksRes, statusRes, runsRes, blockedOpsRes, digestRes] = await Promise.all([
     fetchJsonSafe('/settings/runtime'),
     fetchJsonSafe('/ops/cluster'),
@@ -2509,77 +2739,117 @@ async function renderSettingsPage(page) {
   const digestBlocked = blockedOpsRes.ok ? blockedOpsRes.payload.blockedTasks || [] : [];
   const digests = digestRes.ok ? digestRes.payload.digests || [] : [];
   const latestRun = status.latestRun || runs[0] || null;
-
-  return `
-    ${renderHero(
-      page,
-      [
-        renderMetric(runtime.publishMode || 'dry-run', 'publish mode'),
-        renderMetric(embeddings.effectiveProvider || 'local', 'embeddings'),
-        renderMetric(String((cluster?.agents || []).length), 'foundry lanes'),
-        renderMetric(String(tasks.length), 'structured tasks'),
-      ].join(''),
-      `<div class="info-card"><strong>First-layer Foundry</strong><p>The cluster can now be treated as an execution surface, not just a background loop.</p></div>`
-    )}
+  const rawPanel = readOptionalString(requestUrl?.searchParams?.get('panel'), 'basics').toLowerCase();
+  const activePanel = ['automation', 'advanced', 'ops'].includes(rawPanel)
+    ? rawPanel === 'ops'
+      ? 'advanced'
+      : rawPanel
+    : 'basics';
+  const panelTabs = [
+    { id: 'basics', label: 'Basics' },
+    { id: 'automation', label: 'Automation' },
+    { id: 'advanced', label: 'Advanced' },
+  ];
+  const basicsBody = `
     <div class="grid two-up">
       ${renderPanel(
-        'Runtime Controls',
+        'Publish safety',
         `
-          <div class="control-stack">
-            <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
-              <input type="hidden" name="command" value="RUN_DEVLOOP_ONCE" />
-              <button type="submit">Run Devloop Once</button>
-              <div class="form-result" data-form-result></div>
-            </form>
-            <div class="inline-actions stretch">
-              <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
-                <input type="hidden" name="command" value="PAUSE_DEVLOOP" />
-                <button type="submit">Pause</button>
-                <div class="form-result" data-form-result></div>
-              </form>
-              <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
-                <input type="hidden" name="command" value="RESUME_DEVLOOP" />
-                <button type="submit">Resume</button>
-                <div class="form-result" data-form-result></div>
-              </form>
-              <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
-                <input type="hidden" name="command" value="STATUS" />
-                <button type="submit">Refresh Status</button>
-                <div class="form-result" data-form-result></div>
-              </form>
-            </div>
+          <div class="stack">
+            <article class="stack-card">
+              <div class="stack-meta">
+                <strong>${escapeHtml(formatHumanPublishMode(runtime.publishMode))}</strong>
+                ${renderPill(runtime.publishMode === 'dry-run' ? 'default' : 'gated', runtime.publishMode === 'dry-run' ? 'good' : 'warn')}
+              </div>
+              <p>${escapeHtml(
+                runtime.publishMode === 'dry-run'
+                  ? 'Safe rehearsal prepares copy, queue state, and platform handoff, but never posts automatically.'
+                  : 'Live publish can post for real, but it still requires explicit credentials and operator intent.'
+              )}</p>
+            </article>
             <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
               <input type="hidden" name="command" value="SET_PUBLISH_MODE" />
               ${renderFormField(
-                'Publish Mode',
+                'Mode',
                 `<select name="mode">
-                  <option value="dry-run"${runtime.publishMode === 'dry-run' ? ' selected' : ''}>dry-run</option>
-                  <option value="live"${runtime.publishMode === 'live' ? ' selected' : ''}>live</option>
+                  <option value="dry-run"${runtime.publishMode === 'dry-run' ? ' selected' : ''}>Safe rehearsal</option>
+                  <option value="live"${runtime.publishMode === 'live' ? ' selected' : ''}>Live publish</option>
                 </select>`,
-                'Changing this only flips the runtime mode file; live still needs credentials.'
+                'Safe rehearsal is the default. It keeps handoff visible without pushing anything live.'
               )}
               <div class="inline-actions">
-                <button type="submit">Set Publish Mode</button>
+                <button type="submit">Update mode</button>
               </div>
               <div class="form-result" data-form-result></div>
             </form>
           </div>
         `,
-        'Operate the loop without leaving the product workspace.'
+        'Make the publish posture understandable before you touch automation.'
       )}
       ${renderPanel(
-        'Foundry Task Intake',
+        'System basics',
+        `
+          <ul class="compact-list">
+            <li><strong>Memory:</strong> local-first</li>
+            <li><strong>Network:</strong> loopback only</li>
+            <li><strong>Voice:</strong> ${escapeHtml(cluster?.llmTaskHealth?.status === 'ok' || cluster?.llmTaskHealth?.status === 'mock' ? 'server-ready or browser fallback available' : 'browser fallback only')}</li>
+            <li><strong>Embeddings:</strong> ${escapeHtml(embeddings.effectiveProvider || 'local')}</li>
+          </ul>
+          <div class="chip-row">
+            ${renderPill(formatHumanPublishMode(runtime.publishMode), runtime.publishMode === 'dry-run' ? 'soft' : 'warn')}
+            ${renderPill('loopback only', 'good')}
+            ${renderPill(cluster?.enabled ? 'Foundry ready' : 'Foundry unavailable', cluster?.enabled ? 'good' : 'warn')}
+          </div>
+        `,
+        'The basics panel answers how safe and automatic the system is in plain language.'
+      )}
+    </div>
+  `;
+  const automationBody = `
+    <div class="grid two-up">
+      ${renderPanel(
+        'Runtime controls',
+        `
+          <div class="control-stack">
+            <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
+              <input type="hidden" name="command" value="RUN_DEVLOOP_ONCE" />
+              <button type="submit">Run once</button>
+              <div class="form-result" data-form-result></div>
+            </form>
+            <div class="inline-actions stretch">
+              <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
+                <input type="hidden" name="command" value="PAUSE_DEVLOOP" />
+                <button type="submit">Pause loop</button>
+                <div class="form-result" data-form-result></div>
+              </form>
+              <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
+                <input type="hidden" name="command" value="RESUME_DEVLOOP" />
+                <button type="submit">Resume loop</button>
+                <div class="form-result" data-form-result></div>
+              </form>
+            </div>
+            <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
+              <input type="hidden" name="command" value="STATUS" />
+              <button type="submit">Refresh status</button>
+              <div class="form-result" data-form-result></div>
+            </form>
+          </div>
+        `,
+        'Use automation here when you want the loop to keep moving without leaving the product shell.'
+      )}
+      ${renderPanel(
+        'Foundry task intake',
         `
           <div class="control-stack">
             <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/tasks">
               <input type="hidden" name="intakeMode" value="quick" />
               ${renderFormField(
-                'Quick Task',
-                '<input name="taskText" type="text" placeholder="Implement live publish preflight for X" />',
-                '一句话下任务，默认只允许 Foundry 在 SocialOS 仓库里执行。'
+                'Quick task',
+                '<input name="taskText" type="text" placeholder="Polish the queue handoff for demo mode" />',
+                'Use one sentence when you want the cluster to pick up a product-facing improvement.'
               )}
               <div class="inline-actions">
-                <button type="submit">Create Quick Task</button>
+                <button type="submit">Create quick task</button>
               </div>
               <div class="form-result" data-form-result></div>
             </form>
@@ -2587,26 +2857,10 @@ async function renderSettingsPage(page) {
               <summary>Structured Task Intake</summary>
               <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/tasks">
                 <input type="hidden" name="intakeMode" value="structured" />
-                ${renderFormField(
-                  'Title',
-                  '<input name="title" type="text" placeholder="Upgrade generic queue visibility" />',
-                  'Structured mode is for real execution, not just reminders.'
-                )}
-                ${renderFormField(
-                  'Goal',
-                  '<textarea name="goal" rows="3" placeholder="Describe the product outcome the Foundry cluster should deliver."></textarea>',
-                  'Write the user-facing or operator-facing outcome.'
-                )}
-                ${renderFormField(
-                  'Acceptance Criteria',
-                  '<textarea name="acceptanceCriteria" rows="4" placeholder="One line per criterion"></textarea>',
-                  'One line per criterion keeps the task verifiable.'
-                )}
-                ${renderFormField(
-                  'Constraints',
-                  '<textarea name="constraints" rows="3" placeholder="One line per constraint"></textarea>',
-                  'Use this for safety, scope, brand, or rollout constraints.'
-                )}
+                ${renderFormField('Title', '<input name="title" type="text" placeholder="Improve contact-event graph clarity" />')}
+                ${renderFormField('Goal', '<textarea name="goal" rows="3" placeholder="Describe the user-facing outcome you want."></textarea>')}
+                ${renderFormField('Acceptance Criteria', '<textarea name="acceptanceCriteria" rows="4" placeholder="One line per criterion"></textarea>')}
+                ${renderFormField('Constraints', '<textarea name="constraints" rows="3" placeholder="One line per constraint"></textarea>')}
                 ${renderFormField(
                   'Scope',
                   `<select name="scope">
@@ -2614,20 +2868,12 @@ async function renderSettingsPage(page) {
                     <option value="openclaw">openclaw</option>
                     <option value="multi-repo">multi-repo</option>
                   </select>`,
-                  'Only explicit scope allows cross-repo execution.'
+                  'Only an explicit scope allows cross-repo work.'
                 )}
-                ${renderFormField(
-                  'Repo Targets',
-                  '<textarea name="repoTargets" rows="3" placeholder="socialos&#10;openclaw"></textarea>',
-                  'One line per repo target. Use `socialos`, `openclaw`, or an absolute path.'
-                )}
-                ${renderFormField(
-                  'Preferred Tests',
-                  '<textarea name="preferredTests" rows="3" placeholder="bash scripts/test.sh&#10;node scripts/tests/product_workspace_smoke.mjs"></textarea>',
-                  'One line per verification command.'
-                )}
+                ${renderFormField('Repo Targets', '<textarea name="repoTargets" rows="3" placeholder="socialos&#10;openclaw"></textarea>')}
+                ${renderFormField('Preferred Tests', '<textarea name="preferredTests" rows="3" placeholder="bash scripts/test.sh&#10;node scripts/tests/product_workspace_smoke.mjs"></textarea>')}
                 <div class="inline-actions">
-                  <button type="submit">Create Structured Task</button>
+                  <button type="submit">Create structured task</button>
                 </div>
                 <div class="form-result" data-form-result></div>
               </form>
@@ -2637,39 +2883,23 @@ async function renderSettingsPage(page) {
         'Quick mode is the fast lane. Structured mode gives Foundry enough detail to execute directly.'
       )}
     </div>
+    ${renderPanel('Recent Structured Tasks', renderFoundryTaskCards(tasks), 'These are the tasks the generic executor can act on right now.')}
+  `;
+  const advancedBody = `
     <div class="grid two-up">
       ${renderPanel(
-        'Embeddings + Safety',
-        `
-          <ul class="compact-list">
-            <li><strong>Requested:</strong> ${escapeHtml(embeddings.requestedProvider || 'auto')}</li>
-            <li><strong>Effective:</strong> ${escapeHtml(embeddings.effectiveProvider || 'local')}</li>
-            <li><strong>Retrieval:</strong> ${escapeHtml(embeddings.retrievalMode || 'hybrid-keyword')}</li>
-            <li><strong>Semantic boost:</strong> ${escapeHtml(String(Boolean(embeddings.semanticBoostEnabled)))}</li>
-            <li><strong>Live env enabled:</strong> ${escapeHtml(String(Boolean(runtime.liveEnvironmentEnabled)))}</li>
-          </ul>
-          <div class="chip-row">
-            ${renderPill(`blocked items ${blocked.length}`, blocked.length ? 'warn' : 'good')}
-            ${renderPill('loopback only', 'soft')}
-            ${renderPill(`llm-task ${healthStatus}`, healthStatus === 'ok' || healthStatus === 'mock' ? 'good' : healthStatus === 'unknown' ? 'soft' : 'warn')}
-          </div>
-        `,
-        'Operational truth for the current runtime.'
+        'Foundry Execution Surface',
+        renderFoundryExecutionSurface(cluster),
+        'The first-layer cluster can now act as an execution surface, not just a background loop.'
       )}
       ${renderPanel(
-        'Recent Structured Tasks',
-        renderFoundryTaskCards(tasks),
-        'These are the tasks the generic Foundry executor can now pick up.'
+        'Foundry Cluster',
+        renderClusterCards(cluster),
+        'Each lane keeps a narrow role so the product can stay understandable while the system stays automated.'
       )}
     </div>
-    ${renderPanel(
-      'Foundry Execution Surface',
-      renderFoundryExecutionSurface(cluster),
-      'This is the control plane for generic execution, not just status wallpaper.'
-    )}
-    ${renderPanel('Foundry Cluster', renderClusterCards(cluster), 'Each lane has a role now visible in the product.')}
     ${renderCodexSummary(codex)}
-    ${renderPanel('Blocked Surface', renderBlockedList(blocked), 'This is the remaining queue you still need to push through credentials or platform-specific decisions.')}
+    ${renderPanel('Blocked Surface', renderBlockedList(blocked), 'These are the items still blocked by credentials, rollout decisions, or platform limits.')}
     <div class="grid two-up">
       ${renderPanel(
         'Ops Digest',
@@ -2695,7 +2925,7 @@ async function renderSettingsPage(page) {
               </div>
             `
           : renderEmptyState('No ops digest snapshot yet.'),
-        'Dev Digest now lives under Settings instead of competing with the main product navigation.'
+        'Ops Digest now lives here instead of competing with the product shell.'
       )}
       ${renderPanel(
         'Recent Runs + Digest Feed',
@@ -2721,9 +2951,31 @@ async function renderSettingsPage(page) {
               : renderEmptyState('No digest feed rows yet.')
           )}
         `,
-        'Keep deeper run history in Settings, not in the product shell.'
+        'Advanced keeps the dense operational detail available without making the product itself feel like a console.'
       )}
     </div>
+  `;
+
+  return `
+    ${renderHero(
+      page,
+      [
+        renderMetric(formatHumanPublishMode(runtime.publishMode), 'publish mode'),
+        renderMetric(embeddings.effectiveProvider || 'local', 'embeddings'),
+        renderMetric(String((cluster?.agents || []).length), 'foundry lanes'),
+        renderMetric(String(tasks.length), 'structured tasks'),
+      ].join(''),
+      `<div class="info-card"><strong>Settings</strong><p>Understand how safe the system is first, then decide how much automation you actually want to expose.</p></div>`
+    )}
+    <div class="workspace-rail-tabs">
+      ${panelTabs
+        .map((tab) => {
+          const active = tab.id === activePanel ? 'workspace-rail-tab active' : 'workspace-rail-tab';
+          return `<a class="${active}" href="/settings?panel=${tab.id}">${tab.label}</a>`;
+        })
+        .join('')}
+    </div>
+    ${activePanel === 'automation' ? automationBody : activePanel === 'advanced' ? advancedBody : basicsBody}
   `;
 }
 
@@ -2738,17 +2990,17 @@ async function renderPageBody(page, requestUrl) {
     case 'people':
       return renderPeoplePage(page, requestUrl);
     case 'events':
-      return renderEventsPage(page);
+      return renderEventsPage(page, requestUrl);
     case 'drafts':
       return renderDraftsPage(page, requestUrl);
     case 'queue':
       return renderQueuePage(page);
     case 'self-mirror':
-      return renderSelfMirrorPage(page);
+      return renderSelfMirrorPage(page, requestUrl);
     case 'dev-digest':
       return renderDevDigestPage(page);
     case 'settings':
-      return renderSettingsPage(page);
+      return renderSettingsPage(page, requestUrl);
     default:
       return `
         ${renderHero(page)}
@@ -3213,6 +3465,29 @@ function renderClientScript() {
         '</div>';
       }
 
+      function renderWorkspaceRelatedGroup(title, cards = []) {
+        if (!Array.isArray(cards) || !cards.length) return '';
+        return '<section class="workspace-related-group">' +
+          '<h5>' + escapeHtml(title) + '</h5>' +
+          '<div class="workspace-secondary-grid">' +
+            cards.map((card) => renderWorkspacePresentationCard(card, true)).join('') +
+          '</div>' +
+        '</section>';
+      }
+
+      function renderWorkspaceRelatedSections(related = {}) {
+        const sections = [
+          renderWorkspaceRelatedGroup('People', related.people || []),
+          renderWorkspaceRelatedGroup('Events', related.events || []),
+          renderWorkspaceRelatedGroup('Drafts', related.drafts || []),
+          renderWorkspaceRelatedGroup('Mirror', related.mirror || []),
+        ].filter(Boolean);
+
+        if (!sections.length) return '';
+
+        return '<section class="workspace-block"><h4>Related</h4>' + sections.join('') + '</section>';
+      }
+
       function renderWorkspaceContactReviewForm(payload) {
         const captureDraft = payload.captureDraft || {};
         const personDraft = captureDraft.personDraft || {};
@@ -3261,15 +3536,12 @@ function renderClientScript() {
       function renderWorkspaceAssistantTurn(payload) {
         const presentation = payload.presentation || {};
         const primaryCard = presentation.primaryCard || null;
-        const secondaryCards = Array.isArray(presentation.secondaryCards) ? presentation.secondaryCards : [];
         const transcription = payload.transcription || {};
         const extraction = payload.extraction || {};
-        const metaChips = [
-          formatWorkspaceModeLabel(presentation.mode || payload.intent || 'guided'),
-          extraction.method === 'model'
-            ? (extraction.model ? 'model ' + extraction.model : 'model-guided')
-            : 'heuristic fallback',
-        ].filter(Boolean);
+        const relatedBlock = renderWorkspaceRelatedSections(presentation.related || payload.related || {});
+        const sourceChip = extraction.method === 'model'
+          ? (extraction.model ? 'model ' + extraction.model : 'model')
+          : 'fallback';
 
         const transcriptionBlock = transcription.message
           ? '<div class="workspace-note">' + escapeHtml(transcription.message) + '</div>'
@@ -3280,23 +3552,15 @@ function renderClientScript() {
             '</section>'
           : '';
         const reviewBlock = renderWorkspaceContactReviewForm(payload);
-        const secondaryBlock = secondaryCards.length
-          ? '<section class="workspace-block"><h4>Related context</h4><div class="workspace-secondary-grid">' +
-              secondaryCards.map((card) => renderWorkspacePresentationCard(card, true)).join('') +
-            '</div></section>'
-          : '';
         const actions = renderWorkspaceActionStrip(presentation.actions || [], payload);
 
         return '<article class="chat-bubble system workspace-assistant">' +
-          '<div class="stack-meta"><strong>SocialOS</strong><span>Concise guide</span></div>' +
-          (metaChips.length
-            ? '<div class="chip-row workspace-response-meta">' + metaChips.map((chip) => '<span class="pill tone-soft">' + escapeHtml(chip) + '</span>').join('') + '</div>'
-            : '') +
+          '<div class="stack-meta"><strong>SocialOS</strong><span>' + escapeHtml(sourceChip) + '</span></div>' +
           '<p>' + escapeHtml(presentation.answer || payload.summary || '') + '</p>' +
           transcriptionBlock +
           primaryBlock +
           reviewBlock +
-          secondaryBlock +
+          relatedBlock +
           actions +
         '</article>';
       }
@@ -5157,50 +5421,17 @@ async function routeRequest(req, res) {
     return;
   }
 
-  if (pathname === '/people') {
-    sendRedirect(res, 302, buildWorkspaceStateHref(requestUrl, { panel: 'people', eventId: '' }));
-    return;
-  }
-
-  if (pathname === '/events') {
-    sendRedirect(res, 302, buildWorkspaceStateHref(requestUrl, { panel: 'events', contactId: '' }));
-    return;
-  }
-
-  const eventDetailMatch = pathname.match(/^\/events\/([^/]+)$/u);
-  if (eventDetailMatch) {
-    sendRedirect(
-      res,
-      302,
-      buildWorkspaceHref({
-        panel: 'events',
-        eventId: decodeURIComponent(eventDetailMatch[1]),
-        q: readOptionalString(requestUrl.searchParams.get('q'), ''),
-      })
-    );
-    return;
-  }
-
   if (pathname === '/dev-digest') {
     sendRedirect(res, 302, '/settings?panel=ops');
     return;
   }
 
   let page = PAGE_BY_PATH.get(pathname);
-  if (!page) {
-    const peopleDetailMatch = pathname.match(/^\/people\/([^/]+)$/u);
-    if (peopleDetailMatch) {
-      sendRedirect(
-        res,
-        302,
-        buildWorkspaceHref({
-          panel: 'people',
-          contactId: decodeURIComponent(peopleDetailMatch[1]),
-          q: readOptionalString(requestUrl.searchParams.get('q'), ''),
-        })
-      );
-      return;
-    }
+  if (!page && /^\/people\/[^/]+$/u.test(pathname)) {
+    page = PAGE_BY_PATH.get('/people');
+  }
+  if (!page && /^\/events\/[^/]+$/u.test(pathname)) {
+    page = PAGE_BY_PATH.get('/events');
   }
 
   if (page) {

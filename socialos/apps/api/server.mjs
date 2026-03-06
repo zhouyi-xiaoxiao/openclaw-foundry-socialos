@@ -5941,10 +5941,17 @@ async function routeRequest(req, res, statements) {
       });
     });
 
+    const detail = buildEventDetailPayload(statements, eventId);
     sendJson(res, 201, {
       eventId,
       createdAt,
-      event: buildEventDetailPayload(statements, eventId),
+      event: detail?.event || formatEventRow({
+        id: eventId,
+        title,
+        payload,
+        created_at: createdAt,
+      }),
+      detail,
     });
     return;
   }

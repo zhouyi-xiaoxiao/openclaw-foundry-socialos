@@ -63,6 +63,12 @@ async function main() {
     assert(workspace.presentation?.primaryCard?.type === 'contact', 'capture-like workspace input should foreground a contact card');
     assert(Array.isArray(workspace.presentation?.actions), 'workspace chat should expose lightweight actions');
     assert((workspace.presentation?.actions || []).length <= 3, 'workspace chat should cap lightweight actions');
+    assert(Array.isArray(workspace.presentation?.related?.people), 'workspace chat should expose related people');
+    assert(Array.isArray(workspace.presentation?.related?.events), 'workspace chat should expose related events');
+    assert(Array.isArray(workspace.presentation?.related?.drafts), 'workspace chat should expose related drafts');
+    assert(Array.isArray(workspace.presentation?.related?.mirror), 'workspace chat should expose related mirror context');
+    assert(workspace.presentation.answer.length <= 240, 'workspace answer should stay concise');
+    assert(!/\bmixed\b|memory match|model-guided/iu.test(workspace.presentation.answer), 'workspace answer should not leak internal labels');
     assert(
       workspace.presentation.actions.some((action) => action.action === 'review-contact'),
       'workspace contact drafts should be reviewed before saving'
@@ -82,8 +88,11 @@ async function main() {
       'search-like workspace input should expose a primary presentation card'
     );
     assert(
-      (searchWorkspace.presentation?.secondaryCards || []).length <= 3,
-      'workspace presentation should cap secondary cards'
+      Array.isArray(searchWorkspace.presentation?.related?.people) &&
+        Array.isArray(searchWorkspace.presentation?.related?.events) &&
+        Array.isArray(searchWorkspace.presentation?.related?.drafts) &&
+        Array.isArray(searchWorkspace.presentation?.related?.mirror),
+      'search-like workspace input should expose grouped related references'
     );
     assert(
       (searchWorkspace.presentation?.actions || []).length <= 3,
@@ -110,6 +119,7 @@ async function main() {
     const event = await postJson(api.baseUrl, '/events', {
       captureId: capture.captureId,
       title: 'Product workspace launch lane',
+      relatedPeople: [person.person.personId],
       payload: {
         audience: 'builders',
         details: {
@@ -263,10 +273,23 @@ async function main() {
     const previewForDraft = bootstrap.queuePreview.filter((task) => task.draftId === generated.drafts[0].draftId);
     assert(previewForDraft.length === 1, 'workspace queue preview should avoid duplicate queue rows');
     assert(typeof bootstrap.voiceReadiness?.summary === 'string', 'workspace bootstrap should expose voice readiness');
+    assert(Array.isArray(bootstrap.recentDrafts), 'workspace bootstrap should expose recent drafts');
 
     const eventDetail = await getJson(api.baseUrl, `/events/${encodeURIComponent(event.eventId)}`);
     assert(eventDetail.event?.eventId === event.eventId, 'event detail endpoint should return the requested event');
     assert(Array.isArray(eventDetail.relatedDrafts), 'event detail endpoint should expose related drafts');
+    assert(
+      Array.isArray(eventDetail.relatedPeople) && eventDetail.relatedPeople.some((entry) => entry.personId === person.person.personId),
+      'event detail endpoint should expose linked people'
+    );
+    assert(Array.isArray(eventDetail.graphOverview?.nodes) && eventDetail.graphOverview.nodes.length >= 2, 'event detail should expose graph overview');
+
+    const graph = await getJson(
+      api.baseUrl,
+      `/graph/overview?focusType=event&focusId=${encodeURIComponent(event.eventId)}`
+    );
+    assert(graph.focusType === 'event', 'graph overview should preserve event focus');
+    assert(Array.isArray(graph.edges) && graph.edges.length >= 1, 'graph overview should expose event-person edges');
 
     const ask = await getJson(
       api.baseUrl,
