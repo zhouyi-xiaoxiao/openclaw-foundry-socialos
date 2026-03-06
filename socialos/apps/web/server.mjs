@@ -404,7 +404,7 @@ function renderPeopleCards(people, showScore = false) {
             ${(tags.length ? tags : ['no-tags']).map((tag) => renderPill(tag, 'soft')).join('')}
           </div>
           <div class="inline-actions">
-            <a class="mini-link" href="/people?personId=${encodeURIComponent(person.personId)}">Open Detail</a>
+            <a class="mini-link" href="/people/${encodeURIComponent(person.personId)}">Open Detail</a>
             <code>${escapeHtml(person.personId)}</code>
           </div>
         </article>
@@ -1285,16 +1285,17 @@ async function renderDraftsPage(page, requestUrl) {
           <form class="api-form" data-api-form="true" data-endpoint="/drafts/generate">
             ${renderFormField('Event', `<select name="eventId">${eventOptions}</select>`)}
             ${renderFormField(
-              'Languages',
+              'Language Strategy',
               `<select name="languages">
-                <option value="en">English</option>
-                <option value="zh">Chinese</option>
-                <option value="bilingual">Bilingual</option>
+                <option value="platform-native">Platform-native (EN for X/LinkedIn/Instagram, 中文 for 知乎/小红书/微信)</option>
+                <option value="en">All English</option>
+                <option value="zh">All Chinese</option>
+                <option value="bilingual">Bilingual variants</option>
               </select>`
             )}
-            ${renderFormField('Angle', '<input name="angle" type="text" value="operator update" />')}
-            ${renderFormField('Tone', '<input name="tone" type="text" value="clear" />')}
-            ${renderFormField('Audience', '<input name="audience" type="text" value="builders, collaborators, future users" />')}
+            ${renderFormField('Angle', '<input name="angle" type="text" value="" placeholder="Leave blank to use platform-native angle" />')}
+            ${renderFormField('Tone', '<input name="tone" type="text" value="" placeholder="Leave blank to use platform-native tone" />')}
+            ${renderFormField('Audience', '<input name="audience" type="text" value="" placeholder="Leave blank to target each platform natively" />')}
             ${renderFormField('CTA', '<input name="cta" type="text" placeholder="Reply if you want to compare notes." />')}
             <fieldset class="field">
               <span>Platforms</span>
@@ -2047,6 +2048,32 @@ function renderClientScript() {
       });
 
       document.addEventListener('click', async (event) => {
+        const copyButton = event.target.closest('[data-copy-text]');
+        if (copyButton) {
+          event.preventDefault();
+          const text = copyButton.getAttribute('data-copy-text') || '';
+          try {
+            await navigator.clipboard.writeText(text);
+            sessionStorage.setItem(
+              flashKey,
+              JSON.stringify({
+                ok: true,
+                message: 'Copied the publish content. You can paste it straight into the platform.',
+              })
+            );
+          } catch (error) {
+            sessionStorage.setItem(
+              flashKey,
+              JSON.stringify({
+                ok: false,
+                message: error.message || 'Copy failed in this browser.',
+              })
+            );
+          }
+          window.location.reload();
+          return;
+        }
+
         const startButton = event.target.closest('[data-audio-record-start]');
         const stopButton = event.target.closest('[data-audio-record-stop]');
 
@@ -2686,7 +2713,17 @@ async function routeRequest(req, res) {
     return;
   }
 
-  const page = PAGE_BY_PATH.get(pathname);
+  let page = PAGE_BY_PATH.get(pathname);
+  if (!page) {
+    const peopleDetailMatch = pathname.match(/^\/people\/([^/]+)$/u);
+    if (peopleDetailMatch) {
+      page = PAGE_BY_PATH.get('/people');
+      if (page && !requestUrl.searchParams.get('personId')) {
+        requestUrl.searchParams.set('personId', decodeURIComponent(peopleDetailMatch[1]));
+      }
+    }
+  }
+
   if (page) {
     const body = await renderPageBody(page, requestUrl);
     sendHtml(
