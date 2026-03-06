@@ -119,12 +119,15 @@ function detectPublishMode() {
 }
 
 function detectGitState() {
-  const branch = run('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
+  const symbolicBranch = run('git', ['symbolic-ref', '--short', '-q', 'HEAD']);
+  const branch = safeTrim(symbolicBranch.stdout);
+  const detached = !branch;
   const head = run('git', ['rev-parse', '--short', 'HEAD']);
   const status = run('git', ['status', '--short']);
 
   return {
-    branch: safeTrim(branch.stdout) || 'unknown',
+    branch: branch || 'detached',
+    detached,
     head: safeTrim(head.stdout) || 'unknown',
     dirty: Boolean(safeTrim(status.stdout)),
     dirtySummary: safeTrim(status.stdout).split('\n').filter(Boolean).slice(0, 10),
@@ -183,6 +186,7 @@ function writeReports(report) {
     '',
     '## Git',
     `- Branch: ${report.git.branch}`,
+    `- Detached HEAD: ${report.git.detached}`,
     `- HEAD: ${report.git.head}`,
     `- Dirty: ${report.git.dirty}`,
   );
