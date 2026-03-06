@@ -1041,6 +1041,7 @@ async function renderQuickCapturePage(page) {
           <form class="workspace-composer" data-workspace-chat-form data-openai-transcription-ready="${openAiReady ? 'true' : 'false'}">
             <input type="hidden" name="source" value="workspace-chat" />
             <input type="hidden" name="assetIds" value="" data-capture-asset-ids />
+            <input type="hidden" name="voiceLang" value="" />
             <input type="file" data-workspace-file accept="image/*,audio/*" multiple hidden />
             <button type="button" class="secondary-button workspace-icon-button workspace-attach-button" data-workspace-attach>+</button>
             <textarea name="text" rows="2" data-workspace-input placeholder="Ask anything about people, follow-ups, events, or drafts."></textarea>
@@ -1048,18 +1049,19 @@ async function renderQuickCapturePage(page) {
               <div class="audio-meter" data-audio-meter aria-hidden="true">
                 ${Array.from({ length: 14 }, (_, index) => `<span class="audio-meter-bar" data-audio-meter-bar="${index}"></span>`).join('')}
               </div>
-              <select name="voiceLang" class="workspace-lang-select" aria-label="Voice language">
-                <option value="zh-CN" selected>中文</option>
-                <option value="en-US">English</option>
-                <option value="ja-JP">日本語</option>
-                <option value="es-ES">Español</option>
-              </select>
-              <button type="button" class="secondary-button workspace-icon-button" data-audio-record-toggle>Mic</button>
+              <button type="button" class="secondary-button workspace-icon-button workspace-mic-button" data-audio-record-toggle aria-label="Record voice">
+                <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 15a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M18 11.5a6 6 0 0 1-12 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M12 17.5v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M9.5 20.5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </button>
               <button type="submit" class="workspace-send-button">↗</button>
             </div>
           </form>
           <div class="workspace-composer-note" data-audio-status>
-            点一下 Mic 开始说，再点一下发出去。回车发送，Shift+回车换行。
+            Tap the mic to record. We transcribe first, then send automatically. Press Enter to send text.
           </div>
         </div>
         <div class="form-result" data-form-result hidden></div>
