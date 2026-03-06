@@ -2893,12 +2893,16 @@ function renderClientScript() {
           return;
         }
 
-        const label = tone === 'live' ? 'Live transcript' : tone === 'ready' ? 'Transcript draft' : 'Transcript note';
+        const label = tone === 'live' ? 'Listening' : tone === 'ready' ? 'Transcript ready' : 'Transcript note';
+        const displayText =
+          tone === 'ready'
+            ? 'The transcript is now in the composer. Edit it there before sending.'
+            : value;
         previewNode.hidden = false;
         previewNode.dataset.tone = tone;
         previewNode.innerHTML =
           '<strong>' + escapeHtml(label) + '</strong>' +
-          '<p>' + escapeHtml(value) + '</p>';
+          '<p>' + escapeHtml(displayText) + '</p>';
       }
 
       function mergeTranscriptIntoComposer(form, transcript) {
@@ -2988,7 +2992,10 @@ function renderClientScript() {
         tray.innerHTML = captureState.assets
           .map((asset) => {
             const label = asset.kind === 'audio' ? 'voice' : asset.kind === 'image' ? 'image' : 'asset';
-            const preview = asset.extractedText || asset.previewText || asset.fileName || asset.assetId;
+            const preview =
+              asset.kind === 'audio'
+                ? (asset.fileName || 'Voice note attached')
+                : (asset.fileName || asset.previewText || asset.assetId);
             return '<span class="asset-chip">' +
               '<strong>' + escapeHtml(label) + '</strong>' +
               '<span>' + escapeHtml(preview.slice(0, 48)) + '</span>' +
