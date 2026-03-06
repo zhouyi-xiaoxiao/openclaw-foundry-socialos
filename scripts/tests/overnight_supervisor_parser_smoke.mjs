@@ -25,6 +25,7 @@ Task A blocked
 Task B blocked`;
 
 const parsedWithoutDigest = parseFoundryStatus(outputWithoutDigest);
+assert(parsedWithoutDigest.commandOk === true, 'commandOk should default true');
 assert(parsedWithoutDigest.queue.blocked === 2, 'blocked count should still parse');
 assert(parsedWithoutDigest.blockedHead.length === 2, 'blocked queue head should parse without Latest digest section');
 assert(parsedWithoutDigest.blockedHead[0] === 'Task A blocked', 'first blocked item should stay intact');
@@ -38,5 +39,7 @@ Latest digest:
 const parsedWithDigest = parseFoundryStatus(outputWithDigest);
 assert(parsedWithDigest.latestDigest.length === 2, 'latest digest lines should still parse');
 assert(parsedWithDigest.latestDigest[0] === '- line 1', 'first digest line should parse');
+const parsedCommandFailure = parseFoundryStatus('', { commandOk: false });
+assert(parsedCommandFailure.commandOk === false, 'commandOk should reflect failed status probe');
 
 console.log('overnight_supervisor_parser_smoke: PASS');

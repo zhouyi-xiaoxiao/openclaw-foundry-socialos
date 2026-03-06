@@ -57,7 +57,8 @@ function parseDemoStatus(output) {
   };
 }
 
-export function parseFoundryStatus(output) {
+export function parseFoundryStatus(output, options = {}) {
+  const commandOk = options.commandOk !== false;
   const queueMatch = output.match(/pending=(\d+) in_progress=(\d+) blocked=(\d+) done=(\d+)/);
   const runIdMatch = output.match(/run_id: (.+)/);
   const runStatusMatch = output.match(/status: (.+)/);
@@ -86,6 +87,7 @@ export function parseFoundryStatus(output) {
     : [];
 
   return {
+    commandOk,
     mode: modeMatch ? modeMatch[1].trim() : 'unknown',
     lock: lockMatch ? lockMatch[1].trim() : 'unknown',
     queue: {
@@ -175,6 +177,7 @@ function writeReports(report) {
     '',
     '## Foundry',
     `- Mode: ${report.foundry.mode}`,
+    `- Status command ok: ${report.foundry.commandOk}`,
     `- Lock: ${report.foundry.lock}`,
     `- Queue: pending=${report.foundry.queue.pending} in_progress=${report.foundry.queue.inProgress} blocked=${report.foundry.queue.blocked} done=${report.foundry.queue.done}`,
     `- Current task: ${report.foundry.queue.currentTask}`,
@@ -249,6 +252,14 @@ function determineDecision({ demo, foundry, publishMode }) {
     };
   }
 
+  if (!foundry.commandOk) {
+    return {
+      decision: 'stop',
+      nextFocus: 'stabilize-foundry',
+      reason: 'Foundry STATUS command failed or returned empty output.',
+    };
+  }
+
   if (foundry.queue.pending > 0 || foundry.queue.inProgress > 0) {
     return {
       decision: 'continue',
@@ -296,7 +307,13 @@ function main() {
   const demo = restartDemoIfNeeded(initialDemo, actions);
 
   const foundryStatusResult = run('bash', [FOUNDRY_DISPATCH_SCRIPT, 'STATUS']);
-  const foundry = parseFoundryStatus(foundryStatusResult.stdout);
+  const foundryStatusOutput = safeTrim(foundryStatusResult.stdout);
+  const foundryCommandOk = foundryStatusResult.status === 0 && Boolean(foundryStatusOutput);
+  if (!foundryCommandOk) {
+    const detail = safeTrim(foundryStatusResult.stderr) || foundryStatusOutput || 'empty output';
+    actions.push(`Foundry STATUS check failed: ${detail}`);
+  }
+  const foundry = parseFoundryStatus(foundryStatusResult.stdout, { commandOk: foundryCommandOk });
   const publishMode = detectPublishMode();
   const git = detectGitState();
   const decision = determineDecision({ demo, foundry, publishMode });
