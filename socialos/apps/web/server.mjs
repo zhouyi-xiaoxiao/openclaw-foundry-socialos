@@ -558,7 +558,7 @@ function renderPeopleCards(people, showScore = false) {
     .map((person) => {
       const tags = Array.isArray(person.tags) ? person.tags : [];
       const score = showScore && typeof person.score === 'number' ? person.score.toFixed(3) : null;
-      const summary = truncate(person.evidenceSnippet || person.notes || '', 140) || 'No notes yet.';
+      const summary = summarizeCardCopy(person.evidenceSnippet || person.notes || '', 144, 'No notes yet.');
       return `
         <article class="stack-card">
           <div class="stack-meta">
@@ -584,13 +584,22 @@ function renderEventCards(events) {
   return `<div class="stack">${events
     .map((event) => {
       const payload = safeJson(event.payload, {});
-      const detailPreview = truncate(
-        Object.entries(payload.details || payload)
-          .slice(0, 4)
-          .map(([key, value]) => `${key}: ${typeof value === 'string' ? value : JSON.stringify(value)}`)
-          .join(' | '),
-        180
+      const details = safeJson(payload.details, {});
+      const detailPreview = summarizeCardCopy(
+        details.summary ||
+          details.focus ||
+          payload.summary ||
+          payload.description ||
+          payload.audience ||
+          Object.values(details).join(' '),
+        168,
+        'Structured event details are ready for draft generation.'
       );
+      const badges = [
+        normalizeInlineText(payload.audience),
+        normalizeInlineText(payload.languageStrategy || payload.language),
+        normalizeInlineText(payload.tone),
+      ].filter(Boolean);
       return `
         <article class="stack-card">
           <div class="stack-meta">
@@ -598,9 +607,9 @@ function renderEventCards(events) {
             <span>${escapeHtml(formatDateTime(event.createdAt))}</span>
           </div>
           <p>${escapeHtml(detailPreview || 'No structured payload yet.')}</p>
+          ${badges.length ? `<div class="chip-row">${badges.map((badge) => renderPill(badge, 'soft')).join('')}</div>` : ''}
           <div class="inline-actions">
             <a class="mini-link" href="/drafts?eventId=${encodeURIComponent(event.eventId)}">Open in Drafts</a>
-            <code>${escapeHtml(event.eventId)}</code>
           </div>
         </article>
       `;
@@ -781,7 +790,9 @@ function renderDraftCards(drafts) {
             </div>
           </div>
           ${renderPublishActions(draft, publishPackage)}
-          <pre>${escapeHtml(draft.content)}</pre>
+          ${publishPackage.title ? `<p class="draft-title">${escapeHtml(publishPackage.title)}</p>` : ''}
+          ${publishPackage.hook ? `<p class="draft-hook">${escapeHtml(publishPackage.hook)}</p>` : ''}
+          ${renderRichTextPreview(draft.content, 'draft-preview')}
           ${
             hashtags.length
               ? `<p class="draft-tags">${escapeHtml(hashtags.join(' '))}</p>`
@@ -1035,10 +1046,10 @@ function renderAskDraftCards(drafts) {
             <strong>${escapeHtml(draft.platformLabel || draft.platform || 'Draft')}</strong>
             <span>${escapeHtml(formatLanguageLabel(draft.language))}</span>
           </div>
-          <p>${escapeHtml(truncate(draft.snippet || draft.content || '', 180))}</p>
+          <p>${escapeHtml(summarizeCardCopy(draft.snippet || draft.content || '', 164, 'A platform-ready draft already exists for this event.'))}</p>
           <div class="inline-actions">
             <a class="mini-link" href="/drafts?eventId=${encodeURIComponent(draft.eventId || '')}">Open Drafts</a>
-            <code>${escapeHtml(draft.eventTitle || draft.eventId || draft.draftId)}</code>
+            ${draft.eventTitle ? `<span class="quiet-label">${escapeHtml(truncate(draft.eventTitle, 42))}</span>` : ''}
           </div>
         </article>
       `
@@ -1516,10 +1527,10 @@ async function renderQuickCapturePage(page, requestUrl) {
         <div class="form-result" data-form-result hidden></div>
       </section>
       <aside class="workspace-side" data-mobile-context-sections>
-        ${renderPanel('Recent Contacts', renderPeopleCards(bootstrap.recentContacts || []), 'People memory stays behind the main conversation and is ready when needed.')}
-        ${renderPanel('Recent Events', renderEventCards(bootstrap.recentEvents || []), 'Turn a chat turn into an event only when it deserves campaign treatment.')}
-        ${renderPanel('Draft Shelf', renderAskDraftCards(bootstrap.recentDrafts || []), 'If content already exists, you can jump straight into the package library.')}
-        ${renderPanel('Queue Preview', renderWorkspaceQueuePreview(bootstrap.queuePreview || []), 'Keep manual steps and approvals visible without leaving home.')}
+        ${renderPanel('Recent Contacts', renderPeopleCards(bootstrap.recentContacts || []), 'Cleaner memory cards stay one click away from the main chat.')}
+        ${renderPanel('Recent Events', renderEventCards(bootstrap.recentEvents || []), 'Only the event signal that matters should survive into this rail.')}
+        ${renderPanel('Draft Shelf', renderAskDraftCards(bootstrap.recentDrafts || []), 'Recent packages stay short and readable so you can jump back in fast.')}
+        ${renderPanel('Queue Preview', renderWorkspaceQueuePreview(bootstrap.queuePreview || []), 'Manual publish steps stay visible without turning the page into an ops wall.')}
         ${renderPanel(
           'Latest Mirror Signal',
           bootstrap.latestMirror
@@ -2329,7 +2340,7 @@ function renderClientScript() {
       function serializeIdentityLines(identities) {
         return (Array.isArray(identities) ? identities : [])
           .map((item) => [item?.platform || '', item?.handle || '', item?.url || '', item?.note || ''].join('|'))
-          .join('\n');
+          .join('\\n');
       }
 
       function updateWorkspaceContactReviewState(form) {
