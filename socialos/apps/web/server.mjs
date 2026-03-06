@@ -3196,18 +3196,23 @@ function renderLayout({ currentPath, title, body }) {
         width: 4px;
         height: 100%;
         border-radius: 999px;
-        background: rgba(22, 33, 50, 0.16);
+        background: rgba(255, 255, 255, 0.16);
         transform-origin: center bottom;
         transform: scaleY(0.2);
         transition: transform 120ms ease, background 120ms ease;
       }
       .audio-meter-bar.live {
-        background: rgba(21, 111, 106, 0.72);
+        background: rgba(110, 203, 195, 0.92);
       }
       .workspace-icon-button.is-recording {
-        background: rgba(181, 93, 52, 0.14);
-        color: var(--warn);
-        border-color: rgba(181, 93, 52, 0.26);
+        background: rgba(181, 93, 52, 0.18);
+        color: #ffd8ca;
+        border-color: rgba(255, 194, 170, 0.26);
+      }
+      .workspace-composer-note {
+        margin-top: 10px;
+        color: rgba(245, 247, 251, 0.7);
+        font-size: 13px;
       }
       .result-block-warn {
         border-color: rgba(181, 93, 52, 0.2);
@@ -3365,6 +3370,9 @@ function renderLayout({ currentPath, title, body }) {
         .workspace-composer-controls {
           grid-auto-flow: row;
           grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .workspace-composer-shell {
+          bottom: 10px;
         }
         .composer-row {
           grid-template-columns: 1fr;
