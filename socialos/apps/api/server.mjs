@@ -431,6 +431,44 @@ function getPlatformCapability(platformId) {
   };
 }
 
+function localizeCapability(capability, platformId, language) {
+  if (language !== 'zh') return capability;
+
+  const supportLevelMap = {
+    'L0 Draft': 'L0 草稿',
+    'L1 Assisted': 'L1 辅助发布',
+    'L1 Assisted+': 'L1 增强辅助发布',
+    'L1.5 Rich Article Package': 'L1.5 图文稿包',
+    'L2 Auto Publish (credentials gated)': 'L2 自动发布（需凭据）',
+  };
+
+  const entryTargetMap = {
+    instagram: 'Instagram 发布器',
+    x: 'X 发布入口',
+    linkedin: 'LinkedIn 发布入口',
+    zhihu: '知乎编辑器',
+    xiaohongshu: '小红书移动端发布页',
+    wechat_moments: '微信朋友圈发布页',
+    wechat_official: '微信公众号后台',
+  };
+
+  const blockedByMap = {
+    'final publish stays manual': '最终发布仍需手动完成',
+    'requires live mode + credentials': '需要开启 live 模式并提供凭据',
+    'manual media + final publish step': '需要手动处理素材并完成最终发布',
+    'manual mobile-only publish': '仅支持手机端手动发布',
+    'manual article assembly + final publish': '需要手动组装图文并完成最终发布',
+    'manual completion required': '需要手动完成发布',
+  };
+
+  return {
+    ...capability,
+    supportLevel: supportLevelMap[capability.supportLevel] || capability.supportLevel,
+    entryTarget: entryTargetMap[platformId] || capability.entryTarget,
+    blockedBy: blockedByMap[capability.blockedBy] || capability.blockedBy,
+  };
+}
+
 function truncateText(value, maxLength) {
   const text = readOptionalString(value, '');
   if (text.length <= maxLength) return text;
@@ -829,6 +867,23 @@ function buildNativeAudience(platformRule, language, options = {}) {
 
 function buildPublishSteps(platformId, capability, language) {
   const common = language === 'zh' ? '检查语气、标签、封面建议后再发布。' : 'Review tone, tags, and media notes before publishing.';
+
+  if (language === 'zh') {
+    switch (platformId) {
+      case 'x':
+        return ['先在 SocialOS 中排队等待审核。', '如果 live 模式和凭据都已就绪，再交给 publisher 推进。', common];
+      case 'linkedin':
+        return ['先检查长文语气和 CTA。', '如果 live 模式和凭据都已就绪，再交给 publisher 推进。', common];
+      case 'instagram':
+      case 'xiaohongshu':
+      case 'wechat_moments':
+        return ['复制正文和标签块。', `打开${capability.entryTarget}。`, common];
+      case 'wechat_official':
+        return ['整理标题、导语、正文结构和封面图。', `打开${capability.entryTarget}。`, common];
+      default:
+        return ['复制准备好的正文和说明。', `打开${capability.entryTarget}。`, common];
+    }
+  }
 
   switch (platformId) {
     case 'x':
@@ -1242,7 +1297,7 @@ function buildPlatformPackageAdditions(platformRule, event, language, sections) 
 }
 
 function buildPublishPackage(platformRule, event, language, content, options = {}) {
-  const capability = getPlatformCapability(platformRule.id);
+  const capability = localizeCapability(getPlatformCapability(platformRule.id), platformRule.id, language);
   const sections = buildPackageSections(platformRule, event, language, options);
   const hashtags = buildHashtags(platformRule, language, readOptionalString(options.tone, ''));
   const imageIdeas =

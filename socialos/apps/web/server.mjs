@@ -644,7 +644,10 @@ function renderDraftCards(drafts) {
               <h3>${escapeHtml(draft.platformLabel)} · ${escapeHtml(formatLanguageLabel(draft.language))}</h3>
             </div>
             <div class="chip-row">
-              ${renderPill(capability.supportLevel || 'L0 Draft', capability.liveEligible ? 'accent' : 'soft')}
+              ${renderPill(
+                publishPackage.supportLevel || capability.supportLevel || 'L0 Draft',
+                capability.liveEligible ? 'accent' : 'soft'
+              )}
               ${renderPill(draft.platform, 'neutral')}
             </div>
           </div>
