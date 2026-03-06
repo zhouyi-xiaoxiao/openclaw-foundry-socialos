@@ -3639,6 +3639,10 @@ function buildWorkspaceBootstrapPayload(statements) {
     ? formatMirrorPayload(latestWeeklyMirrorRow, statements.listMirrorEvidenceByMirrorId.all(latestWeeklyMirrorRow.id))
     : null;
   const latestMirror = latestDailyMirror || latestWeeklyMirror || cockpit.latestMirror || null;
+  const queuePreview = [
+    ...cockpit.queue.manualSteps,
+    ...cockpit.queue.awaitingApproval,
+  ].slice(0, 3);
 
   return {
     generatedAt: nowIso(),
@@ -3647,10 +3651,7 @@ function buildWorkspaceBootstrapPayload(statements) {
     recentContacts: cockpit.recentPeople.slice(0, 3),
     recentEvents: cockpit.recentEvents.slice(0, 3),
     recentDrafts: drafts,
-    queuePreview: [
-      ...cockpit.queue.awaitingApproval,
-      ...cockpit.queue.manualSteps,
-    ].slice(0, 3),
+    queuePreview,
     latestMirror,
     latestDailyMirror,
     latestWeeklyMirror,

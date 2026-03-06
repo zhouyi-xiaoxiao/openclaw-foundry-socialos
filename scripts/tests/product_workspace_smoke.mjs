@@ -233,6 +233,16 @@ async function main() {
     });
     assert(typeof queuedRetry.taskId === 'string', 'second queue from same draft should return a task id');
     assert(queuedRetry.taskId !== queued.taskId, 'second queue should create a distinct task row');
+    const queuedSecondDraft = await postJson(api.baseUrl, '/publish/queue', {
+      draftId: generated.drafts[1].draftId,
+      mode: 'dry-run',
+    });
+    assert(typeof queuedSecondDraft.taskId === 'string', 'queue should support staging a second draft');
+    const approved = await postJson(api.baseUrl, '/publish/approve', {
+      taskId: queuedRetry.taskId,
+      note: 'workspace smoke approval',
+    });
+    assert(approved.status === 'manual_step_needed', 'approved queue task should transition to manual step needed');
 
     const queueTasks = await getJson(api.baseUrl, '/queue/tasks?limit=10');
     assert(Array.isArray(queueTasks.queueTasks), 'queue/tasks should return queue task list');
@@ -240,6 +250,10 @@ async function main() {
     assert(
       queueTasks.queueTasks.some((task) => task.taskId === queuedRetry.taskId),
       'second queued task should appear in queue list history'
+    );
+    assert(
+      queueTasks.queueTasks.some((task) => task.taskId === queuedSecondDraft.taskId),
+      'queued task for a second draft should appear in queue list history'
     );
 
     const cluster = await getJson(api.baseUrl, '/ops/cluster');
@@ -257,11 +271,13 @@ async function main() {
     assert(typeof cockpit.summaryText === 'string' && cockpit.summaryText.length > 0, 'cockpit should expose an action summary');
     assert(Array.isArray(cockpit.actions), 'cockpit should expose action cards');
     assert(Array.isArray(cockpit.followUps), 'cockpit should expose follow-up candidates');
-    const queuedForDraft = cockpit.queue.awaitingApproval.filter((task) => task.draftId === generated.drafts[0].draftId);
+    const queuedForSecondDraft = cockpit.queue.awaitingApproval.filter((task) => task.draftId === generated.drafts[1].draftId);
     assert(
-      queuedForDraft.length === 1,
+      queuedForSecondDraft.length === 1,
       'cockpit queue summary should dedupe repeated queue rows for the same draft/platform'
     );
+    const manualForDraft = cockpit.queue.manualSteps.filter((task) => task.draftId === generated.drafts[0].draftId);
+    assert(manualForDraft.length === 1, 'cockpit queue summary should include approved tasks awaiting manual handoff');
 
     const bootstrap = await getJson(api.baseUrl, '/workspace/bootstrap');
     assert(typeof bootstrap.summaryText === 'string' && bootstrap.summaryText.length > 0, 'workspace bootstrap should expose a summary');
@@ -272,6 +288,10 @@ async function main() {
     assert(Array.isArray(bootstrap.queuePreview), 'workspace bootstrap should expose queue preview');
     const previewForDraft = bootstrap.queuePreview.filter((task) => task.draftId === generated.drafts[0].draftId);
     assert(previewForDraft.length === 1, 'workspace queue preview should avoid duplicate queue rows');
+    assert(
+      bootstrap.queuePreview[0]?.status === 'manual_step_needed',
+      'workspace queue preview should prioritize manual handoff items'
+    );
     assert(typeof bootstrap.voiceReadiness?.summary === 'string', 'workspace bootstrap should expose voice readiness');
     assert(Array.isArray(bootstrap.recentDrafts), 'workspace bootstrap should expose recent drafts');
 
