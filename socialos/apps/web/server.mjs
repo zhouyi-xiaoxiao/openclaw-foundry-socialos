@@ -2525,70 +2525,79 @@ function renderClientScript() {
           const statusNode = document.querySelector('[data-audio-status]');
           const openAiReady = form?.dataset.openaiTranscriptionReady === 'true';
           const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-          if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
-            statusNode.innerHTML = '<strong>Browser audio tools</strong><p>MediaRecorder is unavailable in this browser. Upload an audio file instead.</p>';
-            return;
-          }
-
-          if (!captureState.recorder && !SpeechRecognition && !openAiReady) {
-            statusNode.innerHTML = '<strong>Voice chat is not ready yet</strong><p>This browser has no built-in speech recognition, and the server has no OpenAI transcription key right now. Add OPENAI_API_KEY to .env if you want one-tap voice send with automatic replies.</p>';
-            return;
-          }
-          if (!captureState.recorder) {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            captureState.recordChunks = [];
-            await startAudioMeter(stream);
-            captureState.recorder = new MediaRecorder(stream);
-            captureState.recorder.ondataavailable = (recordEvent) => {
-              if (recordEvent.data.size > 0) captureState.recordChunks.push(recordEvent.data);
-            };
-            captureState.recorder.start();
-            recordToggle.dataset.originalLabel = recordToggle.textContent;
-            recordToggle.textContent = 'Recording';
-            recordToggle.setAttribute('aria-pressed', 'true');
-            recordToggle.classList.add('is-recording');
-
-            const textField = form?.elements?.text;
-            if (SpeechRecognition && textField) {
-              captureState.recognition = new SpeechRecognition();
-              captureState.recognition.continuous = true;
-              captureState.recognition.interimResults = true;
-              const selectedLang = String(form?.elements?.voiceLang?.value || 'auto');
-              captureState.recognition.lang = selectedLang === 'auto' ? (navigator.language || 'en-US') : selectedLang;
-              captureState.recognition.onresult = (speechEvent) => {
-                const transcript = Array.from(speechEvent.results)
-                  .map((result) => result[0]?.transcript || '')
-                  .join(' ')
-                  .trim();
-                textField.value = transcript;
-              };
-              captureState.recognition.start();
+          try {
+            if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+              statusNode.innerHTML = '<strong>Browser audio tools</strong><p>MediaRecorder is unavailable in this browser. Upload an audio file instead.</p>';
+              return;
             }
 
-            renderWorkspaceComposerResult(form?.querySelector('[data-form-result]'), '');
-            statusNode.innerHTML = '<strong>Recording</strong><p>Speak naturally. Tap Mic again to send the voice turn.</p>';
-            return;
-          }
+            if (!captureState.recorder && !SpeechRecognition && !openAiReady) {
+              statusNode.innerHTML = '<strong>Voice chat is not ready yet</strong><p>This browser has no built-in speech recognition, and the server has no OpenAI transcription key right now. Add OPENAI_API_KEY to .env if you want one-tap voice send with automatic replies.</p>';
+              return;
+            }
+            if (!captureState.recorder) {
+              const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+              captureState.recordChunks = [];
+              await startAudioMeter(stream);
+              captureState.recorder = new MediaRecorder(stream);
+              captureState.recorder.ondataavailable = (recordEvent) => {
+                if (recordEvent.data.size > 0) captureState.recordChunks.push(recordEvent.data);
+              };
+              captureState.recorder.start();
+              recordToggle.dataset.originalLabel = recordToggle.textContent;
+              recordToggle.textContent = 'Recording';
+              recordToggle.setAttribute('aria-pressed', 'true');
+              recordToggle.classList.add('is-recording');
 
-          captureState.recorder.onstop = async () => {
-            const blob = new Blob(captureState.recordChunks, { type: 'audio/webm' });
-            const file = new File([blob], 'recorded-note.webm', { type: 'audio/webm' });
-            statusNode.innerHTML = '<strong>Uploading voice note</strong><p>Adding this recording to the current chat turn.</p>';
-            await uploadWorkspaceAsset(file, { autoSend: true });
+              const textField = form?.elements?.text;
+              if (SpeechRecognition && textField) {
+                captureState.recognition = new SpeechRecognition();
+                captureState.recognition.continuous = true;
+                captureState.recognition.interimResults = true;
+                const selectedLang = String(form?.elements?.voiceLang?.value || 'auto');
+                captureState.recognition.lang = selectedLang === 'auto' ? (navigator.language || 'en-US') : selectedLang;
+                captureState.recognition.onresult = (speechEvent) => {
+                  const transcript = Array.from(speechEvent.results)
+                    .map((result) => result[0]?.transcript || '')
+                    .join(' ')
+                    .trim();
+                  textField.value = transcript;
+                };
+                captureState.recognition.start();
+              }
+
+              renderWorkspaceComposerResult(form?.querySelector('[data-form-result]'), '');
+              statusNode.innerHTML = '<strong>Recording</strong><p>Speak naturally. Tap Mic again to send the voice turn.</p>';
+              return;
+            }
+
+            captureState.recorder.onstop = async () => {
+              const blob = new Blob(captureState.recordChunks, { type: 'audio/webm' });
+              const file = new File([blob], 'recorded-note.webm', { type: 'audio/webm' });
+              statusNode.innerHTML = '<strong>Uploading voice note</strong><p>Adding this recording to the current chat turn.</p>';
+              await uploadWorkspaceAsset(file, { autoSend: true });
+              recordToggle.textContent = recordToggle.dataset.originalLabel || 'Mic';
+              recordToggle.setAttribute('aria-pressed', 'false');
+              recordToggle.classList.remove('is-recording');
+            };
+
+            captureState.recorder.stop();
+            stopAudioMeter();
+            captureState.recorder.stream.getTracks().forEach((track) => track.stop());
+            if (captureState.recognition) {
+              captureState.recognition.stop();
+              captureState.recognition = null;
+            }
+            captureState.recorder = null;
+            return;
+          } catch (error) {
+            stopAudioMeter();
             recordToggle.textContent = recordToggle.dataset.originalLabel || 'Mic';
             recordToggle.setAttribute('aria-pressed', 'false');
             recordToggle.classList.remove('is-recording');
-          };
-
-          captureState.recorder.stop();
-          stopAudioMeter();
-          captureState.recorder.stream.getTracks().forEach((track) => track.stop());
-          if (captureState.recognition) {
-            captureState.recognition.stop();
-            captureState.recognition = null;
+            statusNode.innerHTML = '<strong>Mic unavailable</strong><p>' + escapeHtml(error.message || String(error)) + '</p>';
+            return;
           }
-          captureState.recorder = null;
-          return;
         }
       });
 
