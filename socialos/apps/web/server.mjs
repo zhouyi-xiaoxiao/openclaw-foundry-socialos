@@ -2048,7 +2048,6 @@ function renderClientScript() {
         audioSource: null,
         audioAnalyser: null,
         meterFrame: 0,
-        composerTextBeforeRecording: '',
       };
 
       function parseMaybeJson(text) {
@@ -2523,7 +2522,6 @@ function renderClientScript() {
             form.reset();
             captureState.assets = [];
             captureState.liveTranscript = '';
-            captureState.composerTextBeforeRecording = '';
             updateCaptureAssetInputs();
             setTranscriptPreview('');
             renderWorkspaceComposerResult(resultNode, '');
@@ -2893,7 +2891,7 @@ function renderClientScript() {
             }
 
             if (!captureState.recorder && !SpeechRecognition && !openAiReady) {
-              statusNode.innerHTML = '<strong>Voice chat is not ready yet</strong><p>This browser has no built-in speech recognition, and the server has no OpenAI transcription key right now. Add OPENAI_API_KEY to .env if you want one-tap voice send with automatic replies.</p>';
+              statusNode.innerHTML = '<strong>Voice chat is not ready yet</strong><p>This browser has no built-in speech recognition, and the server has no OpenAI transcription key right now. Add OPENAI_API_KEY to .env if you want voice notes to draft into the composer before sending.</p>';
               return;
             }
             if (!captureState.recorder) {
@@ -2906,7 +2904,6 @@ function renderClientScript() {
                 if (recordEvent.data.size > 0) captureState.recordChunks.push(recordEvent.data);
               };
               captureState.recorder.start();
-              captureState.composerTextBeforeRecording = String(form?.elements?.text?.value || '');
               recordToggle.dataset.originalLabel = recordToggle.textContent;
               recordToggle.textContent = 'Recording';
               recordToggle.setAttribute('aria-pressed', 'true');
@@ -2958,7 +2955,7 @@ function renderClientScript() {
                 ''
               ).trim();
 
-              if (finalTranscript) {
+              if (finalTranscript && asset) {
                 mergeTranscriptIntoComposer(form, finalTranscript);
                 setTranscriptPreview(finalTranscript, 'ready');
                 statusNode.innerHTML = '<strong>Transcript ready</strong><p>Review or edit the text in the composer, then press send when you are happy with it.</p>';
@@ -2966,6 +2963,10 @@ function renderClientScript() {
                   form?.querySelector('[data-form-result]'),
                   'Voice note saved. The transcript is now in the composer for editing before send.'
                 );
+              } else if (finalTranscript) {
+                mergeTranscriptIntoComposer(form, finalTranscript);
+                setTranscriptPreview(finalTranscript, 'ready');
+                statusNode.innerHTML = '<strong>Transcript drafted, audio not saved</strong><p>The transcript is in the composer, but the voice attachment did not upload. You can still edit and send the text-only version.</p>';
               } else if (asset) {
                 setTranscriptPreview('', 'neutral');
                 statusNode.innerHTML = '<strong>Voice note saved</strong><p>I kept the recording as an attachment, but there is no transcript yet. You can type or edit before sending.</p>';
@@ -2974,6 +2975,9 @@ function renderClientScript() {
                   'Voice note saved, but transcription is not ready yet. Edit the composer manually when you want to send.',
                   false
                 );
+              } else {
+                setTranscriptPreview('', 'neutral');
+                statusNode.innerHTML = '<strong>Voice note failed</strong><p>The recording was not saved and no transcript is available yet. Please try again.</p>';
               }
 
               recordToggle.textContent = recordToggle.dataset.originalLabel || 'Mic';
@@ -3595,6 +3599,35 @@ function renderLayout({ currentPath, title, body }) {
         margin-top: 10px;
         color: var(--ink-soft);
         font-size: 13px;
+      }
+      .workspace-transcript-preview {
+        margin-top: 10px;
+        padding: 12px 14px;
+        border-radius: 18px;
+        border: 1px solid rgba(22, 33, 50, 0.08);
+        background: rgba(255, 255, 255, 0.72);
+        color: var(--ink-soft);
+      }
+      .workspace-transcript-preview strong {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--ink);
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .workspace-transcript-preview p {
+        margin: 0;
+        line-height: 1.6;
+        white-space: pre-wrap;
+      }
+      .workspace-transcript-preview[data-tone="live"] {
+        background: rgba(21, 111, 106, 0.08);
+        border-color: rgba(21, 111, 106, 0.14);
+      }
+      .workspace-transcript-preview[data-tone="ready"] {
+        background: rgba(46, 125, 81, 0.08);
+        border-color: rgba(46, 125, 81, 0.14);
       }
       .result-block-warn {
         border-color: rgba(181, 93, 52, 0.2);
