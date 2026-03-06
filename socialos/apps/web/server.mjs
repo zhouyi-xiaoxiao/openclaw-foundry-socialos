@@ -2271,25 +2271,28 @@ async function renderQueuePage(page) {
   const queueTasks = queueRes.ok ? queueRes.payload.queueTasks || [] : [];
   const runtime = runtimeRes.ok ? runtimeRes.payload : {};
   const publishMode = runtime.publishMode || 'dry-run';
+  const readyTasks = queueTasks.filter((task) => task.status === 'queued');
+  const manualTasks = queueTasks.filter((task) => task.status === 'manual_step_needed');
+  const doneTasks = queueTasks.filter((task) => ['posted', 'failed'].includes(task.status));
 
   return `
     ${renderHero(
       page,
       [
-        renderMetric(String(queueTasks.filter((task) => task.status === 'queued').length), 'queued'),
-        renderMetric(String(queueTasks.filter((task) => task.status === 'manual_step_needed').length), 'manual step'),
-        renderMetric(String(queueTasks.filter((task) => task.status === 'posted').length), 'posted'),
+        renderMetric(String(readyTasks.length), 'ready'),
+        renderMetric(String(manualTasks.length), 'manual step'),
+        renderMetric(String(doneTasks.filter((task) => task.status === 'posted').length), 'posted'),
         renderMetric(String(runtime.ops?.queue?.blocked ?? 0), 'blocked product items'),
       ].join(''),
       `<div class="info-card"><strong>Current publish mode</strong><p>${escapeHtml(
         publishMode
       )} · live still requires env + UI intent + credentials.</p></div>`
     )}
-    ${renderPanel(
-      'Queue Tasks',
-      renderQueueCards(queueTasks, publishMode),
-      'Approve in dry-run by default, or explicitly attempt live with all gates enabled.'
-    )}
+    <div class="grid three-up">
+      ${renderPanel('Ready', renderQueueCards(readyTasks, publishMode), 'Approved here first, still dry-run by default.')}
+      ${renderPanel('Manual Step', renderQueueCards(manualTasks, publishMode), 'Assistant prepares the handoff, you record the real outcome.')}
+      ${renderPanel('Done / Failed', renderQueueCards(doneTasks, publishMode), 'Closed tasks keep the audit trail visible without cluttering the live lane.')}
+    </div>
   `;
 }
 
