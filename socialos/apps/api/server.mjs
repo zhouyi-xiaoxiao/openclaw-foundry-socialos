@@ -2083,6 +2083,50 @@ function toTimestamp(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function isNoiseCheckinRow(row) {
+  const triggerText = cleanText(row?.trigger_text || row?.triggerText || '').toLowerCase();
+  const reflection = cleanText(row?.reflection || '').toLowerCase();
+  return (
+    triggerText.includes('weekly_mirror_smoke') ||
+    triggerText.includes('product_workspace_smoke') ||
+    reflection.includes('weekly_mirror_smoke') ||
+    reflection.includes('product workspace smoke')
+  );
+}
+
+function normalizeCheckinRow(row) {
+  return {
+    checkinId: row.id || row.checkinId || '',
+    energy: Number(row.energy || 0),
+    emotions: Array.isArray(row.emotions) ? row.emotions : parseJsonStringArray(row.emotions),
+    triggerText: row.trigger_text || row.triggerText || '',
+    reflection: readOptionalString(row.reflection, ''),
+    createdAt: row.created_at || row.createdAt || '',
+  };
+}
+
+function dedupeMeaningfulCheckins(rows, limit = 8) {
+  const seen = new Set();
+  const results = [];
+
+  for (const row of rows) {
+    if (isNoiseCheckinRow(row)) continue;
+    const normalized = normalizeCheckinRow(row);
+    const signature = [
+      normalized.energy,
+      normalized.emotions.join('|'),
+      cleanText(normalized.reflection).toLowerCase(),
+    ].join('::');
+    if (!signature.replace(/[:]/g, '').trim()) continue;
+    if (seen.has(signature)) continue;
+    seen.add(signature);
+    results.push(normalized);
+    if (results.length >= limit) break;
+  }
+
+  return results;
+}
+
 function classifyFollowUpState(nextFollowUpAt, fallbackAt) {
   const now = Date.now();
   const dueTs = toTimestamp(nextFollowUpAt);
@@ -2339,13 +2383,7 @@ function buildAskSearchPayload(statements, query) {
   const latestMirror = latestMirrorRow
     ? formatMirrorPayload(latestMirrorRow, statements.listMirrorEvidenceByMirrorId.all(latestMirrorRow.id))
     : null;
-  const checkins = statements.listRecentSelfCheckins.all(6).map((row) => ({
-    checkinId: row.id,
-    energy: row.energy,
-    emotions: parseJsonStringArray(row.emotions),
-    reflection: row.reflection,
-    createdAt: row.created_at,
-  }));
+  const checkins = dedupeMeaningfulCheckins(statements.listRecentSelfCheckins.all(18), 6);
   const followUps = buildFollowUpCandidates(statements, 6)
     .map((candidate) => ({
       ...candidate,
@@ -2395,13 +2433,7 @@ function buildCockpitSummary(statements) {
   const recentEvents = statements.listRecentEvents.all(8).map(formatEventRow);
   const recentDrafts = statements.listRecentDrafts.all(20).map(formatDraftRow);
   const recentQueueTasks = statements.listRecentQueueTasks.all(20).map(formatQueueTaskRow);
-  const recentCheckins = statements.listRecentSelfCheckins.all(8).map((row) => ({
-    checkinId: row.id,
-    energy: row.energy,
-    emotions: parseJsonStringArray(row.emotions),
-    reflection: row.reflection,
-    createdAt: row.created_at,
-  }));
+  const recentCheckins = dedupeMeaningfulCheckins(statements.listRecentSelfCheckins.all(24), 8);
   const latestMirrorRow = statements.selectLatestMirror.get();
   const latestMirror = latestMirrorRow
     ? formatMirrorPayload(latestMirrorRow, statements.listMirrorEvidenceByMirrorId.all(latestMirrorRow.id))
@@ -3494,18 +3526,11 @@ async function routeRequest(req, res, statements) {
 
   if (method === 'GET' && pathname === '/self-mirror') {
     const latestMirror = statements.selectLatestMirror.get();
-    const checkins = statements.listRecentSelfCheckins.all(20);
+    const checkins = dedupeMeaningfulCheckins(statements.listRecentSelfCheckins.all(40), 20);
     const evidenceRows = latestMirror ? statements.listMirrorEvidenceByMirrorId.all(latestMirror.id) : [];
     sendJson(res, 200, {
       latestMirror: latestMirror ? formatMirrorPayload(latestMirror, evidenceRows) : null,
-      checkins: checkins.map((checkin) => ({
-        checkinId: checkin.id,
-        energy: checkin.energy,
-        emotions: parseJsonStringArray(checkin.emotions),
-        triggerText: checkin.trigger_text,
-        reflection: checkin.reflection,
-        createdAt: checkin.created_at,
-      })),
+      checkins,
     });
     return;
   }
@@ -3569,16 +3594,12 @@ async function routeRequest(req, res, statements) {
       }
     }
 
+    const meaningfulCheckins = dedupeMeaningfulCheckins(checkins, 12);
+
     const captures = statements.listRecentCaptures.all(12).map(formatCaptureRow);
     const interactions = statements.listRecentInteractions.all(12).map(formatInteractionRow);
     const structuredMirror = buildStructuredMirror({
-      checkins: checkins.map((checkin) => ({
-        checkinId: checkin.id,
-        energy: checkin.energy,
-        emotions: parseJsonStringArray(checkin.emotions),
-        reflection: checkin.reflection,
-        createdAt: checkin.created_at,
-      })),
+      checkins: meaningfulCheckins,
       captures,
       interactions,
     });
