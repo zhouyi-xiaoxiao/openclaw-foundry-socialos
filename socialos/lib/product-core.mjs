@@ -182,11 +182,24 @@ export function inferTagsFromText(text) {
 
 export function inferFollowUpSuggestion(personName, text) {
   const subject = personName || 'them';
-  if (cleanText(text).toLowerCase().includes('invest')) {
+  const source = cleanText(text);
+  const normalized = source.toLowerCase();
+  const prefersChinese = /[\u4e00-\u9fa5]/u.test(source) || /[\u4e00-\u9fa5]/u.test(subject);
+
+  if (normalized.includes('invest') || source.includes('投资') || source.includes('融资')) {
+    if (prefersChinese) {
+      return `趁投资话题还新鲜，给${subject}发一条简短跟进，并明确一个具体的下一步。`;
+    }
     return `Send ${subject} a concise follow-up with the investment angle you discussed and one specific next step.`;
   }
-  if (cleanText(text).toLowerCase().includes('growth')) {
+  if (normalized.includes('growth') || source.includes('增长')) {
+    if (prefersChinese) {
+      return `可以把刚聊到的一个增长动作发给${subject}，顺手约一个简短的 follow-up。`;
+    }
     return `Message ${subject} with one growth experiment you mentioned and invite a quick compare-notes follow-up.`;
+  }
+  if (prefersChinese) {
+    return `趁上下文还新鲜，给${subject}发一条跟进，把刚聊过的话题和下一步动作接起来。`;
   }
   return `Follow up with ${subject} while the context is fresh, and anchor the message on the topic you just discussed.`;
 }
