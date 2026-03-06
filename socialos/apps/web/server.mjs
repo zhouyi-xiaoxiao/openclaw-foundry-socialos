@@ -1340,6 +1340,7 @@ function collapseQueueTasksForDisplay(queueTasks, limit = queueTasks.length) {
 
 function renderQueueCards(queueTasks, publishMode) {
   if (!queueTasks.length) return renderEmptyState('No queue tasks yet.');
+  const liveApprovalEnabled = String(publishMode || '').toLowerCase() === 'live';
   return `<div class="stack">${queueTasks
     .map((task) => {
       const result = safeJson(task.result, {});
@@ -1376,18 +1377,23 @@ function renderQueueCards(queueTasks, publishMode) {
                       'Mode',
                       `<select name="mode">
                         <option value="dry-run">dry-run</option>
-                        <option value="live">live</option>
+                        <option value="live"${liveApprovalEnabled ? '' : ' disabled'}>live</option>
                       </select>`
                     )}
                     ${renderFormField(
                       'Live Gate',
-                      `<label class="toggle"><input type="checkbox" name="liveEnabled" value="true" /> <span>UI live intent</span></label>`
+                      `<label class="toggle"><input type="checkbox" name="liveEnabled" value="true"${liveApprovalEnabled ? '' : ' disabled'} /> <span>UI live intent</span></label>`
                     )}
                     ${renderFormField(
                       'Credentials',
-                      `<label class="toggle"><input type="checkbox" name="credentialsReady" value="true" /> <span>credentials ready</span></label>`
+                      `<label class="toggle"><input type="checkbox" name="credentialsReady" value="true"${liveApprovalEnabled ? '' : ' disabled'} /> <span>credentials ready</span></label>`
                     )}
                   </div>
+                  ${
+                    liveApprovalEnabled
+                      ? ''
+                      : '<p class="quiet-label">Switch runtime publish mode to live before enabling live execution controls.</p>'
+                  }
                   <div class="inline-actions">
                     <button type="submit">Approve + Execute</button>
                   </div>
