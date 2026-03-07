@@ -264,6 +264,7 @@ const SUPPORTED_MODEL_PROVIDERS = new Set([
   MODEL_PROVIDER_AUTO,
   MODEL_PROVIDER_OPENAI,
   MODEL_PROVIDER_GLM,
+  MODEL_PROVIDER_FLOCK,
   MODEL_PROVIDER_LOCAL,
 ]);
 
@@ -560,6 +561,8 @@ function resolveRequestedModelProvider({ requestedProvider = MODEL_PROVIDER_AUTO
       ? explicitProvider
       : normalizedBounty === 'z-ai-general'
         ? MODEL_PROVIDER_GLM
+        : normalizedBounty === 'ai-agents-for-good'
+          ? MODEL_PROVIDER_FLOCK
         : MODEL_PROVIDER_AUTO;
 
   if (preferredProvider === MODEL_PROVIDER_GLM) {
@@ -574,12 +577,22 @@ function resolveRequestedModelProvider({ requestedProvider = MODEL_PROVIDER_AUTO
       : { requested: explicitProvider, effective: MODEL_PROVIDER_LOCAL, configured: false, fallbackUsed: true, reason: 'openai-not-configured' };
   }
 
+  if (preferredProvider === MODEL_PROVIDER_FLOCK) {
+    return hasConfiguredFlock()
+      ? { requested: explicitProvider, effective: MODEL_PROVIDER_FLOCK, configured: true, fallbackUsed: false, reason: 'flock-configured' }
+      : { requested: explicitProvider, effective: MODEL_PROVIDER_LOCAL, configured: false, fallbackUsed: true, reason: 'flock-not-configured' };
+  }
+
   if (hasConfiguredOpenAi()) {
     return { requested: explicitProvider, effective: MODEL_PROVIDER_OPENAI, configured: true, fallbackUsed: false, reason: 'auto-openai' };
   }
 
   if (hasConfiguredGlm()) {
     return { requested: explicitProvider, effective: MODEL_PROVIDER_GLM, configured: true, fallbackUsed: false, reason: 'auto-glm' };
+  }
+
+  if (hasConfiguredFlock()) {
+    return { requested: explicitProvider, effective: MODEL_PROVIDER_FLOCK, configured: true, fallbackUsed: false, reason: 'auto-flock' };
   }
 
   return { requested: explicitProvider, effective: MODEL_PROVIDER_LOCAL, configured: false, fallbackUsed: true, reason: 'local-fallback' };
