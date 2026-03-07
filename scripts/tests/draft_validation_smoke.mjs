@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { startApiServer } from '../../socialos/apps/api/server.mjs';
 
 function assert(condition, message) {
@@ -80,6 +81,26 @@ async function main() {
 
     const listed = await requestJson(api.baseUrl, `/drafts?eventId=${encodeURIComponent(event.eventId)}&limit=5`);
     assert(listed.drafts[0].validation?.ok === false, 'draft list should expose stored validation');
+
+    const db = new DatabaseSync(dbPath);
+    try {
+      const legacyMetadata = {
+        ...listed.drafts[0].metadata,
+        variants: 'legacy-one,legacy-two',
+      };
+      db.prepare('UPDATE PostDraft SET metadata = ? WHERE id = ?').run(JSON.stringify(legacyMetadata), draftId);
+    } finally {
+      db.close();
+    }
+
+    const normalized = await requestJson(api.baseUrl, `/drafts?eventId=${encodeURIComponent(event.eventId)}&limit=5`);
+    assert(
+      Array.isArray(normalized.drafts[0].variants) &&
+        normalized.drafts[0].variants.length === 2 &&
+        normalized.drafts[0].variants[0] === 'legacy-one' &&
+        normalized.drafts[0].variants[1] === 'legacy-two',
+      'draft list should normalize legacy string variants into an array'
+    );
 
     console.log('draft_validation_smoke: PASS');
   } finally {

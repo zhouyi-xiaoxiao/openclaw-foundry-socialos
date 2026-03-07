@@ -6141,7 +6141,7 @@ function formatDraftRow(row) {
     capability: metadata.capability || getPlatformCapability(row.platform),
     publishPackage: metadata.publishPackage || null,
     validation: metadata.validation || null,
-    variants: metadata.variants || [],
+    variants: normalizeStringList(metadata.variants),
     createdAt: row.created_at,
   };
 }
