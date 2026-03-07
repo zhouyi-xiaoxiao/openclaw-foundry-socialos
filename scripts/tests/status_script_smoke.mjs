@@ -39,7 +39,7 @@ fs.writeFileSync(
   [
     '- [ ] Parent task',
     '  - [-] Nested in-progress task',
-    '    - [!] Deep blocked task',
+    '    -    [!] Deep blocked task',
     '\t- [x] Deep done task',
   ].join('\n'),
   'utf8',

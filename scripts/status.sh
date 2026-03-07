@@ -176,7 +176,7 @@ fi
 echo
 echo "Blocked queue head:"
 if [[ -f "${QUEUE_FILE}" ]]; then
-  blocked_head="$(grep -E '^[[:space:]]*-[[:space:]]\[!\][[:space:]]' "${QUEUE_FILE}" | head -n 5 | sed -E 's/^[[:space:]]*-[[:space:]]\[!\][[:space:]]+//' || true)"
+  blocked_head="$(grep -E '^[[:space:]]*-[[:space:]]+\[!\][[:space:]]+' "${QUEUE_FILE}" | head -n 5 | sed -E 's/^[[:space:]]*-[[:space:]]+\[!\][[:space:]]+//' || true)"
   if [[ -n "${blocked_head}" ]]; then
     printf '%s\n' "${blocked_head}"
   else
