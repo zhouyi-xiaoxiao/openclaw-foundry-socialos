@@ -2767,7 +2767,8 @@ function readTextFileOrDefault(filePath, fallback = '') {
 }
 
 export function parseQueueSummary(queueMarkdown) {
-  const lines = queueMarkdown.split(/\r?\n/u);
+  const source = typeof queueMarkdown === 'string' ? queueMarkdown : '';
+  const lines = source.split(/\r?\n/u);
   const summary = {
     pending: 0,
     inProgress: 0,
@@ -2799,7 +2800,11 @@ export function parseQueueSummary(queueMarkdown) {
 }
 
 export function parseBlockedTasks(queueMarkdown, limit = 20) {
-  const lines = queueMarkdown.split(/\r?\n/u);
+  const source = typeof queueMarkdown === 'string' ? queueMarkdown : '';
+  const normalizedLimit = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : 20;
+  if (normalizedLimit === 0) return [];
+
+  const lines = source.split(/\r?\n/u);
   const blocked = [];
 
   for (let index = 0; index < lines.length; index += 1) {
@@ -2809,7 +2814,7 @@ export function parseBlockedTasks(queueMarkdown, limit = 20) {
       line: index + 1,
       task: match[1].trim(),
     });
-    if (blocked.length >= limit) break;
+    if (blocked.length >= normalizedLimit) break;
   }
 
   return blocked;
