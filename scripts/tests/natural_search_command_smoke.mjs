@@ -42,6 +42,14 @@ async function main() {
         notes: 'Talked about agent workflows and evaluation loops.',
       },
     });
+    const hometown = await requestJson(api.baseUrl, '/people/upsert', {
+      method: 'POST',
+      body: {
+        name: 'Yanzhen Li',
+        tags: ['design', 'bristol'],
+        notes: 'Originally from 山东泰安 and now working across Bristol product and operator systems.',
+      },
+    });
 
     await requestJson(api.baseUrl, `/people/${encodeURIComponent(sam.person.personId)}/identity`, {
       method: 'POST',
@@ -69,6 +77,15 @@ async function main() {
     assert(
       peopleNaturalSearch.results.some((result) => result.personId === sam.person.personId),
       'natural-language people search should find the Bristol PDRA contact'
+    );
+
+    const hometownSearch = await requestJson(
+      api.baseUrl,
+      '/people?query=那个来自山东泰安的人是谁？&limit=5'
+    );
+    assert(
+      hometownSearch.results.some((result) => result.personId === hometown.person.personId),
+      'natural-language people search should find a contact by hometown clues'
     );
 
     const peopleCommandSearch = await requestJson(api.baseUrl, '/people/command?query=Sam from Bristol');

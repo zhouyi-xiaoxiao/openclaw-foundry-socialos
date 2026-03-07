@@ -43,6 +43,11 @@ async function main() {
       tags: ['design', 'launch'],
       notes: 'Bristol-based design operator. Needs operational workspace coverage.',
     });
+    const hometownPerson = await postJson(api.baseUrl, '/people/upsert', {
+      name: 'Yanzhen Li',
+      tags: ['design', 'bristol'],
+      notes: 'Met in Bristol. Originally from 山东泰安 and working across product design and operator workflows.',
+    });
     assert(person.person?.name === 'Product Workspace Tester', 'person upsert should echo saved person');
 
     const people = await getJson(api.baseUrl, '/people?query=workspace&limit=5');
@@ -112,6 +117,16 @@ async function main() {
     assert(
       fuzzyWorkspace.presentation?.primaryCard?.title !== 'Unconfirmed contact',
       'descriptive workspace recall should not fall back to a contact draft card'
+    );
+
+    const hometownWorkspace = await postJson(api.baseUrl, '/workspace/chat', {
+      text: '那个来自山东泰安的人是谁？',
+      source: 'product_workspace_smoke',
+    });
+    assert(
+      hometownWorkspace.presentation?.primaryCard?.title === hometownPerson.person?.name ||
+        (hometownWorkspace.presentation?.related?.people || []).some((item) => item.title === hometownPerson.person?.name),
+      'workspace fuzzy hometown recall should surface the matching contact'
     );
 
     const casualWorkspace = await postJson(api.baseUrl, '/workspace/chat', {

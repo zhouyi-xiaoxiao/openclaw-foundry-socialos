@@ -450,9 +450,9 @@ function renderWorkspaceThreadSeed(captures) {
           ? recent
               .map(
                 (capture) => `
-                  <article class="chat-bubble system ghost workspace-recent-note">
+                  <article class="workspace-context-note workspace-recent-note">
                     <div class="stack-meta">
-                      <strong>Recent note</strong>
+                      <strong>Recent context</strong>
                       <span>${escapeHtml(formatDateTime(capture.createdAt))}</span>
                     </div>
                     <p>${escapeHtml(summarizeCardCopy(capture.text || capture.combinedText || '', 140, 'A recent note is already in this workspace.'))}</p>
@@ -461,8 +461,8 @@ function renderWorkspaceThreadSeed(captures) {
               )
               .join('')
           : `
-            <article class="chat-bubble system ghost">
-              <p>Start with one natural message. We will only branch into contacts, events, drafts, or mirror when that next step is actually useful.</p>
+            <article class="workspace-context-note workspace-context-note-empty">
+              <p>Start with one natural message. SocialOS stays light until you need a contact, event, draft, or mirror.</p>
             </article>
           `
       }
@@ -2210,9 +2210,7 @@ async function renderQuickCapturePage(page, requestUrl) {
             </div>
           </form>
           <div class="workspace-transcript-preview" data-transcript-preview hidden></div>
-          <div class="workspace-composer-note" data-audio-status>
-            Ask, attach context, or record a voice note. When the voice note stops, the transcript lands in the composer so you can edit it before sending.
-          </div>
+          <div class="workspace-composer-note" data-audio-status>Type, attach, or record. Transcripts stay editable before send.</div>
         </div>
         <div class="form-result" data-form-result hidden></div>
       </section>
@@ -3753,7 +3751,7 @@ function renderClientScript() {
             renderWorkspaceComposerResult(resultNode, '');
             if (document.querySelector('[data-audio-status]')) {
               document.querySelector('[data-audio-status]').innerHTML =
-                '<strong>Ready</strong><p>Keep typing, talking, or attaching files in the same thread.</p>';
+                '<strong>Ready</strong><p>Keep going when you are ready.</p>';
             }
             form.elements.text?.focus();
           } else {
@@ -4710,11 +4708,24 @@ function renderLayout({ currentPath, title, body }) {
       .chat-bubble.ghost {
         opacity: 0.72;
       }
-      .workspace-recent-note {
-        max-width: min(420px, 100%);
+      .workspace-context-note {
+        max-width: min(480px, 100%);
         justify-self: start;
-        background: rgba(255, 255, 255, 0.64);
-        border-style: dashed;
+        padding: 14px 16px;
+        border-radius: 18px;
+        border: 1px dashed rgba(22, 33, 50, 0.12);
+        background: rgba(255, 255, 255, 0.56);
+      }
+      .workspace-context-note-empty {
+        color: var(--ink-soft);
+      }
+      .workspace-context-note p {
+        margin: 0;
+        line-height: 1.5;
+      }
+      .workspace-recent-note {
+        max-width: min(460px, 100%);
+        opacity: 0.88;
       }
       .workspace-layout {
         display: grid;
@@ -4835,7 +4846,7 @@ function renderLayout({ currentPath, title, body }) {
         margin-bottom: 4px;
       }
       .workspace-thread {
-        min-height: 420px;
+        min-height: 280px;
         max-height: 72vh;
         overflow: auto;
         padding-right: 6px;
@@ -5110,6 +5121,7 @@ function renderLayout({ currentPath, title, body }) {
         margin-top: 10px;
         color: var(--ink-soft);
         font-size: 13px;
+        line-height: 1.45;
       }
       .workspace-transcript-preview {
         margin-top: 8px;

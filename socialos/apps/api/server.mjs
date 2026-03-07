@@ -1954,21 +1954,186 @@ function extractPlatformHint(value) {
   return candidates.find((item) => source.includes(item)) || '';
 }
 
-function buildPersonSearchContext(query, captureDraft = null) {
+function inferPersonSearchAssistFallback(query, captureDraft = null) {
+  const source = cleanText(query);
+  const lowerSource = source.toLowerCase();
+  const personDraft = captureDraft?.personDraft || {};
+  const directName = cleanText(personDraft.name || personDraft.displayName || '');
+  const quotedName =
+    source.match(/[“"'「『]([A-Za-z][A-Za-z .'-]{1,40}|[\u3400-\u9fff]{2,12})[”"'」』]/u)?.[1] || '';
+  const explicitName =
+    source.match(/(?:叫|named|name is|比如|for example)\s*([A-Za-z][A-Za-z .'-]{1,40}|[\u3400-\u9fff]{2,12})/iu)?.[1] ||
+    source.match(/([A-Za-z][A-Za-z .'-]{1,40}|[\u3400-\u9fff]{2,12})\s*(?:他是|她是|做|来自|from)\b/iu)?.[1] ||
+    '';
+  const placeMatches = [
+    ...source.matchAll(/(?:来自|from|in|at)\s*([A-Za-z][A-Za-z .'-]{1,40}|[\u3400-\u9fff]{2,12})/giu),
+  ]
+    .map((match) => cleanText(match[1] || ''))
+    .filter(Boolean);
+  const roleMatches = [
+    ...source.matchAll(/(?:做|works as|working on|role is|是)\s*([A-Za-z][A-Za-z .'-]{2,40}|[\u3400-\u9fff]{2,18})/giu),
+  ]
+    .map((match) => cleanText(match[1] || ''))
+    .filter(Boolean);
+  const topicMatches = [
+    ...source.matchAll(/(?:聊|about|on|topic|主题是)\s*([A-Za-z][A-Za-z .'-]{2,40}|[\u3400-\u9fff]{2,18})/giu),
+  ]
+    .map((match) => cleanText(match[1] || ''))
+    .filter(Boolean);
+  const handles = [...source.matchAll(/@([a-z0-9_.-]{2,40})/giu)].map((match) => cleanText(match[1] || '')).filter(Boolean);
+  const platformHint = extractPlatformHint(query);
+  const directNameCandidate = cleanText(directName || quotedName || explicitName);
+  return {
+    directName: isPlaceholderContactName(directNameCandidate) ? '' : directNameCandidate,
+    aliases: [],
+    handles,
+    roles: roleMatches.slice(0, 3),
+    topics: topicMatches.slice(0, 4),
+    places: placeMatches.slice(0, 3),
+    platforms: platformHint ? [platformHint] : [],
+    followUpHint: /(?:follow.?up|next step|follow up|联系|跟进)/iu.test(lowerSource),
+    extraction: { method: 'heuristic', model: '' },
+  };
+}
+
+async function buildPersonSearchAssist({ query, source = 'people-search', captureDraft = null }) {
+  const fallback = inferPersonSearchAssistFallback(query, captureDraft);
+  if (!shouldUseModelCaptureAssist(source)) {
+    return fallback;
+  }
+
+  const apiKey = readOptionalString(process.env.OPENAI_API_KEY, '');
+  const model = readOptionalString(process.env.OPENAI_PEOPLE_SEARCH_MODEL, 'gpt-5.4');
+  const cleanedQuery = cleanText(query);
+  if (!apiKey || !cleanedQuery) {
+    return fallback;
+  }
+
+  const prompt = [
+    'Extract search hints for finding an existing contact in a relationship workspace.',
+    'Do not create or draft a new contact. This is a recall/search task.',
+    'Return compact JSON only.',
+    'Use these fields:',
+    '{"directName":"","aliases":[],"handles":[],"roles":[],"topics":[],"places":[],"platforms":[],"followUpHint":false}',
+    'Rules:',
+    '- Prefer a real person name when one is implied, even if the user says "比如 sam" or "someone like Sam".',
+    '- Generic group words like "很多人", "some people", "团队", "group" must never become a directName.',
+    '- Put hometowns, cities, schools, labs, and countries in places.',
+    '- Put job titles and roles in roles.',
+    '- Put conversation topics and product themes in topics.',
+    '- If the user is asking who someone is from a fuzzy description, directName may be empty and the other fields should carry the search intent.',
+  ].join('\n');
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: prompt },
+          {
+            role: 'user',
+            content: JSON.stringify({
+              query: cleanedQuery,
+              fallback,
+            }),
+          },
+        ],
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return fallback;
+    }
+    const rawContent = payload?.choices?.[0]?.message?.content;
+    const parsed = parseLooseJsonObject(
+      typeof rawContent === 'string'
+        ? rawContent
+        : Array.isArray(rawContent)
+          ? rawContent
+              .map((item) =>
+                typeof item === 'string'
+                  ? item
+                  : typeof item?.text === 'string'
+                    ? item.text
+                    : typeof item?.content === 'string'
+                      ? item.content
+                      : ''
+              )
+              .join('\n')
+          : ''
+    );
+    if (!parsed) {
+      return fallback;
+    }
+    const directName = cleanText(parsed.directName || fallback.directName || '');
+    return {
+      directName: isPlaceholderContactName(directName) ? '' : directName,
+      aliases: cleanList(parsed.aliases || fallback.aliases || []).slice(0, 4),
+      handles: cleanList(parsed.handles || fallback.handles || []).slice(0, 4),
+      roles: cleanList(parsed.roles || fallback.roles || []).slice(0, 4),
+      topics: cleanList(parsed.topics || fallback.topics || []).slice(0, 5),
+      places: cleanList(parsed.places || fallback.places || []).slice(0, 4),
+      platforms: cleanList(parsed.platforms || fallback.platforms || []).slice(0, 4),
+      followUpHint: readOptionalBoolean(parsed.followUpHint, fallback.followUpHint),
+      extraction: { method: 'model', model },
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function buildPersonSearchContext(query, captureDraft = null, searchAssist = null) {
   const personDraft = captureDraft?.personDraft || {};
   const interactionDraft = captureDraft?.interactionDraft || {};
-  const directName = cleanText(personDraft.name || personDraft.displayName || '');
-  const tags = cleanList(personDraft.tags || []);
-  const notes = cleanText(personDraft.notes || interactionDraft.summary || interactionDraft.evidence || '');
-  const platformHint = extractPlatformHint(query);
+  const directName = cleanText(searchAssist?.directName || personDraft.name || personDraft.displayName || '');
+  const tags = cleanList([
+    ...(personDraft.tags || []),
+    ...(searchAssist?.roles || []),
+    ...(searchAssist?.topics || []),
+  ]);
+  const notes = cleanText(
+    [
+      personDraft.notes || '',
+      interactionDraft.summary || '',
+      interactionDraft.evidence || '',
+      ...(searchAssist?.places || []),
+      ...(searchAssist?.roles || []),
+      ...(searchAssist?.topics || []),
+    ]
+      .filter(Boolean)
+      .join(' ')
+  );
+  const platformHint = extractPlatformHint(query) || cleanList(searchAssist?.platforms || [])[0] || '';
   return {
     query: cleanText(query),
     directName,
+    aliases: cleanList(searchAssist?.aliases || []),
+    handles: cleanList(searchAssist?.handles || []),
+    roles: cleanList(searchAssist?.roles || []),
+    topics: cleanList(searchAssist?.topics || []),
+    places: cleanList(searchAssist?.places || []),
     tags,
     notes,
     platformHint,
-    followUpHint: /(?:follow.?up|next step|follow up|联系|跟进)/iu.test(query),
-    terms: uniqueSearchTerms([query, directName, ...tags, notes, platformHint]),
+    followUpHint: Boolean(searchAssist?.followUpHint) || /(?:follow.?up|next step|follow up|联系|跟进)/iu.test(query),
+    terms: uniqueSearchTerms([
+      query,
+      directName,
+      ...cleanList(searchAssist?.aliases || []),
+      ...cleanList(searchAssist?.handles || []),
+      ...cleanList(searchAssist?.roles || []),
+      ...cleanList(searchAssist?.topics || []),
+      ...cleanList(searchAssist?.places || []),
+      ...tags,
+      notes,
+      platformHint,
+    ]),
   };
 }
 
@@ -2000,6 +2165,7 @@ function buildEnhancedPersonSearchResult(statements, row, queryContext, embeddin
   const haystack = cleanText(
     [row.name, notes, tags.join(' '), identityText, interactionText, relatedEventText].filter(Boolean).join(' ')
   ).toLowerCase();
+  const identityLower = identityText.toLowerCase();
   const keywordScore = computeKeywordScore(queryContext.terms, haystack);
   const directName = cleanText(queryContext.directName).toLowerCase();
   const normalizedName = cleanText(row.name).toLowerCase();
@@ -2014,10 +2180,36 @@ function buildEnhancedPersonSearchResult(statements, row, queryContext, embeddin
     : 0;
   const platformBoost =
     queryContext.platformHint && identityText.toLowerCase().includes(queryContext.platformHint.toLowerCase()) ? 0.5 : 0;
-  const handleBoost = queryContext.directName
-    ? identities.some((identity) => cleanText(identity.handle).toLowerCase() === directName.toLowerCase())
+  const handleBoost =
+    (queryContext.directName
+      ? identities.some((identity) => cleanText(identity.handle).toLowerCase() === directName.toLowerCase())
+      : false) ||
+    queryContext.handles.some((handle) => identityLower.includes(cleanText(handle).toLowerCase()))
       ? 1.2
-      : 0
+      : 0;
+  const aliasBoost = queryContext.aliases.some((alias) => {
+    const normalizedAlias = cleanText(alias).toLowerCase();
+    return normalizedAlias && (normalizedName.includes(normalizedAlias) || identityLower.includes(normalizedAlias));
+  })
+    ? 0.9
+    : 0;
+  const placeBoost = queryContext.places.some((place) => {
+    const normalizedPlace = cleanText(place).toLowerCase();
+    return normalizedPlace && haystack.includes(normalizedPlace);
+  })
+    ? 0.55
+    : 0;
+  const roleBoost = queryContext.roles.some((role) => {
+    const normalizedRole = cleanText(role).toLowerCase();
+    return normalizedRole && haystack.includes(normalizedRole);
+  })
+    ? 0.42
+    : 0;
+  const topicBoost = queryContext.topics.some((topic) => {
+    const normalizedTopic = cleanText(topic).toLowerCase();
+    return normalizedTopic && haystack.includes(normalizedTopic);
+  })
+    ? 0.28
     : 0;
   const followUpBoost = queryContext.followUpHint && row.next_follow_up_at ? 0.24 : 0;
   const semanticScore = embeddingsSettings.semanticBoostEnabled
@@ -2030,6 +2222,10 @@ function buildEnhancedPersonSearchResult(statements, row, queryContext, embeddin
     exactNameBoost +
     platformBoost +
     handleBoost +
+    aliasBoost +
+    placeBoost +
+    roleBoost +
+    topicBoost +
     followUpBoost +
     computeRecencyBoost(row.updated_at) +
     semanticScore * 0.25;
@@ -2571,11 +2767,11 @@ function buildFollowUpMessage(person, interactions = []) {
     : `Follow up with ${person.name} while the context is still fresh.`;
 }
 
-function searchPeopleMatches(statements, query, limit = 4, captureDraft = null) {
+function searchPeopleMatches(statements, query, limit = 4, captureDraft = null, searchAssist = null) {
   const normalizedQuery = cleanText(query).toLowerCase();
   if (!normalizedQuery) return [];
   const embeddingsSettings = resolveEmbeddingsSettings();
-  const queryContext = buildPersonSearchContext(query, captureDraft);
+  const queryContext = buildPersonSearchContext(query, captureDraft, searchAssist);
   return statements.listAllPeople
     .all()
     .filter(isDisplayablePersonRow)
@@ -3337,7 +3533,10 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
   const hasTranscribedAudio = audioAssets.some((asset) => cleanText(asset.extractedText || asset.previewText));
   const hasUntypedVoiceOnly = !cleanText(text) && audioAssets.length > 0 && !hasTranscribedAudio;
   const intent = inferWorkspaceIntent(combinedText, assets);
-  const relatedPeople = searchPeopleMatches(statements, combinedText, 4, captureDraft);
+  const personSearchAssist = intent === 'search'
+    ? await buildPersonSearchAssist({ query: combinedText, source: 'workspace-search', captureDraft })
+    : null;
+  const relatedPeople = searchPeopleMatches(statements, combinedText, 4, captureDraft, personSearchAssist);
   const relatedEvents = searchEventMatches(statements, combinedText, 4);
   const relatedDrafts = searchDraftMatches(statements, combinedText, 3);
   const suggestedEvent = buildSuggestedEventPayload(text, captureDraft, relatedPeople);
@@ -3454,7 +3653,10 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
     text,
     assets,
     captureDraft,
-    extraction: captureDraft.extraction || { method: 'heuristic', model: '' },
+    extraction:
+      (intent === 'search' ? personSearchAssist?.extraction : null) ||
+      captureDraft.extraction ||
+      { method: 'heuristic', model: '' },
     relatedPeople,
     relatedEvents,
     relatedDrafts,
@@ -3527,11 +3729,18 @@ function buildEventCommandDraftCard(reviewDraft) {
 async function buildPeopleCommandPayload(statements, query, source = 'people-command') {
   const cleanedQuery = cleanText(query);
   const captureDraft = await buildCaptureDraftWithModelAssist({ text: cleanedQuery, source });
-  const queryContext = buildPersonSearchContext(cleanedQuery, captureDraft);
-  const results = searchPeopleMatches(statements, cleanedQuery, 8, captureDraft);
+  const personSearchAssist = await buildPersonSearchAssist({ query: cleanedQuery, source, captureDraft });
   const mutationIntent =
     !hasSearchIntent(cleanedQuery) &&
     (hasCreateIntent(cleanedQuery) || hasUpdateIntent(cleanedQuery) || hasContactCaptureIntent(cleanedQuery));
+  const queryContext = buildPersonSearchContext(cleanedQuery, mutationIntent ? captureDraft : null, personSearchAssist);
+  const results = searchPeopleMatches(
+    statements,
+    cleanedQuery,
+    8,
+    mutationIntent ? captureDraft : null,
+    personSearchAssist
+  );
   const matchedExistingPerson =
     cleanText(captureDraft?.personDraft?.name || '')
       ? findExistingPersonByName(statements, captureDraft.personDraft.name)
@@ -3557,7 +3766,10 @@ async function buildPeopleCommandPayload(statements, query, source = 'people-com
     query: cleanedQuery,
     intent: mutationIntent ? (matchedExistingPerson ? 'update' : 'review') : 'search',
     answer,
-    extraction: captureDraft.extraction || { method: 'heuristic', model: '' },
+    extraction:
+      (mutationIntent ? captureDraft.extraction : personSearchAssist?.extraction) ||
+      captureDraft.extraction ||
+      { method: 'heuristic', model: '' },
     presentation: {
       answer,
       primaryCard,
@@ -5874,8 +6086,8 @@ async function routeRequest(req, res, statements) {
       return;
     }
 
-    const captureDraft = await buildCaptureDraftWithModelAssist({ text: query, source: 'people-search' });
-    const results = searchPeopleMatches(statements, query, limit, captureDraft);
+    const searchAssist = await buildPersonSearchAssist({ query, source: 'people-search' });
+    const results = searchPeopleMatches(statements, query, limit, null, searchAssist);
 
     sendJson(res, 200, {
       query,
@@ -5885,7 +6097,7 @@ async function routeRequest(req, res, statements) {
         semanticBoostEnabled: embeddingsSettings.semanticBoostEnabled,
         fallback: 'keyword + graph + recency',
       },
-      extraction: captureDraft.extraction || { method: 'heuristic', model: '' },
+      extraction: searchAssist.extraction || { method: 'heuristic', model: '' },
       count: results.length,
       results,
     });
@@ -6576,8 +6788,8 @@ async function routeRequest(req, res, statements) {
     const body = await readJsonBody(req);
     const query = requireString(body.query, 'query');
     const limit = normalizeSearchLimit(body.limit, 8);
-    const captureDraft = await buildCaptureDraftWithModelAssist({ text: query, source: 'people-search' });
-    const results = searchPeopleMatches(statements, query, limit, captureDraft);
+    const searchAssist = await buildPersonSearchAssist({ query, source: 'people-search' });
+    const results = searchPeopleMatches(statements, query, limit, null, searchAssist);
     const embeddingsSettings = resolveEmbeddingsSettings();
 
     sendJson(res, 200, {
@@ -6588,7 +6800,7 @@ async function routeRequest(req, res, statements) {
         semanticBoostEnabled: embeddingsSettings.semanticBoostEnabled,
         fallback: 'keyword + graph + recency',
       },
-      extraction: captureDraft.extraction || { method: 'heuristic', model: '' },
+      extraction: searchAssist.extraction || { method: 'heuristic', model: '' },
       count: results.length,
       results,
     });

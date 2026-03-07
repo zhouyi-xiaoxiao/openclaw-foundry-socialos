@@ -17,8 +17,8 @@ async function main() {
       'workspace composer should render a transcript preview area'
     );
     assert(
-      html.includes('the transcript lands in the composer so you can edit it before sending'),
-      'workspace composer note should explain manual send after transcription'
+      html.includes('Type, attach, or record. Transcripts stay editable before send.'),
+      'workspace composer note should stay short and promise manual send after transcription'
     );
     assert(
       html.includes('Tap Mic again to stop. We will draft the transcript into the composer for review before you send.'),
