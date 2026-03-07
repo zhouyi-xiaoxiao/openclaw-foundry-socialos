@@ -5296,14 +5296,15 @@ function touchExistingPerson(statements, personRow, overrides = {}) {
 }
 
 function ensurePersonRecord(statements, personDraft = {}, preferredPersonId = '') {
-  if (isPlaceholderContactName(personDraft.name)) {
+  const requestedPersonId = cleanText(preferredPersonId || personDraft.personId || '');
+  const existingById = requestedPersonId ? statements.selectPersonById.get(requestedPersonId) : null;
+
+  if (isPlaceholderContactName(personDraft.name) && !existingById) {
     throw new HttpError(400, 'name confirmation required', {
       field: 'personDraft.name',
       reason: 'placeholder_name',
     });
   }
-  const requestedPersonId = cleanText(preferredPersonId || personDraft.personId || '');
-  const existingById = requestedPersonId ? statements.selectPersonById.get(requestedPersonId) : null;
 
   if (existingById) {
     return touchExistingPerson(statements, existingById, personDraft);
@@ -5516,8 +5517,10 @@ function commitCaptureDraft(statements, body = {}) {
   let personRow;
   let interactionRow;
   let checkinRow;
+  const requestedPersonId = cleanText(body.personId || draft.personDraft?.personId || '');
+  const existingPersonTarget = requestedPersonId ? statements.selectPersonById.get(requestedPersonId) : null;
 
-  if (isPlaceholderContactName(draft.personDraft?.name)) {
+  if (isPlaceholderContactName(draft.personDraft?.name) && !existingPersonTarget) {
     throw new HttpError(400, 'name confirmation required', {
       field: 'personDraft.name',
       reason: 'placeholder_name',

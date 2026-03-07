@@ -72,6 +72,27 @@ async function main() {
     const detail = await requestJson(api.baseUrl, `/people/${encodeURIComponent(saved.person.personId)}`);
     assert(detail.person.name === '王章', 'saved review flow should create a real person detail');
 
+    const refined = await requestJson(api.baseUrl, '/capture/commit', {
+      method: 'POST',
+      body: {
+        source: 'workspace_contact_review_smoke',
+        personId: saved.person.personId,
+        personDraft: {
+          name: '',
+          tags: ['investor', 'london', 'warm-intro'],
+          notes: '补充：约在下周二继续聊合作方向。',
+        },
+        selfCheckinDraft: {
+          energy: 1,
+          emotions: ['focused'],
+          reflection: '整理了 follow-up 计划',
+        },
+      },
+    });
+    assert(refined.person.personId === saved.person.personId, 'existing person refinement should keep the same person id');
+    assert(refined.person.name === '王章', 'existing person refinement should keep prior confirmed name');
+    assert(refined.person.tags.includes('warm-intro'), 'existing person refinement should merge new tags');
+
     const mixedWorkspace = await requestJson(api.baseUrl, '/workspace/chat', {
       method: 'POST',
       body: {
