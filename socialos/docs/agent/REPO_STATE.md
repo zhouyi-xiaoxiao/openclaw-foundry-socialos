@@ -1,8 +1,8 @@
 # Repo State Handoff
 
-- Generated: 2026-03-07T11:04:01.894Z
+- Generated: 2026-03-07T13:03:16.275Z
 - Branch: detached
-- Git head: 5f37a75
+- Git head: a76e49d
 - Dirty working tree: true
 
 ## Canonical Chain
@@ -51,8 +51,8 @@
 - `socialos/docs/evidence/socialos-demo.gif`
 
 ## Dirty Summary
-- M scripts/tests/web_routes_smoke.mjs
--  M socialos/apps/web/server.mjs
+- M scripts/overnight_supervisor.mjs
+-  M scripts/tests/overnight_supervisor_parser_smoke.mjs
 -  M socialos/docs/STATUS.md
 -  M socialos/docs/agent/REPO_STATE.md
 -  M socialos/docs/evidence/LATEST_VALIDATION.md

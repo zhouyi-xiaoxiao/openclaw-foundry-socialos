@@ -38,6 +38,54 @@ function normalizeCount(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function extractJsonPayload(output) {
+  const trimmed = safeTrim(output);
+  if (!trimmed) return '';
+  if (trimmed.startsWith('{') && trimmed.endsWith('}')) return trimmed;
+
+  const firstBrace = trimmed.indexOf('{');
+  if (firstBrace < 0) return '';
+  const candidate = trimmed.slice(firstBrace);
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let index = 0; index < candidate.length; index += 1) {
+    const char = candidate[index];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+    if (char === '{') {
+      depth += 1;
+      continue;
+    }
+    if (char === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        return candidate.slice(0, index + 1);
+      }
+    }
+  }
+
+  return '';
+}
+
 function parseDemoStatus(output) {
   const services = output
     .split('\n')
@@ -64,18 +112,12 @@ function parseDemoStatus(output) {
 }
 
 function parseFoundryStatusJson(output, commandOk) {
-  const trimmed = safeTrim(output);
-  if (!trimmed.includes('{') || !trimmed.includes('}')) return null;
-
-  const firstBraceIndex = trimmed.indexOf('{');
-  const lastBraceIndex = trimmed.lastIndexOf('}');
-  if (firstBraceIndex < 0 || lastBraceIndex <= firstBraceIndex) return null;
-
-  const jsonCandidate = trimmed.slice(firstBraceIndex, lastBraceIndex + 1);
+  const jsonPayload = extractJsonPayload(output);
+  if (!jsonPayload) return null;
 
   let parsed;
   try {
-    parsed = JSON.parse(jsonCandidate);
+    parsed = JSON.parse(jsonPayload);
   } catch {
     return null;
   }
