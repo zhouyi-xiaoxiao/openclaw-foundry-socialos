@@ -4420,12 +4420,36 @@ function renderClientScript() {
         handleWorkspaceChat(form, form.querySelector('button[type="submit"]'));
       }
 
+      function maybeRevealWorkspaceDrawer() {
+        const params = new URLSearchParams(window.location.search);
+        const hasDrawerTarget = Boolean(
+          String(params.get('contactId') || '').trim() ||
+          String(params.get('eventId') || '').trim()
+        );
+        if (!hasDrawerTarget) return;
+
+        const drawer =
+          document.querySelector('[data-workspace-drawer=\"contact\"]') ||
+          document.querySelector('[data-workspace-drawer=\"event\"]');
+        if (!(drawer instanceof HTMLElement)) return;
+
+        requestAnimationFrame(() => {
+          drawer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          const heading = drawer.querySelector('h1, h2, h3, [data-drawer-focus]');
+          if (heading instanceof HTMLElement) {
+            if (!heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1');
+            heading.focus({ preventScroll: true });
+          }
+        });
+      }
+
       consumeFlash();
       renderWorkspaceAssets();
       document.querySelectorAll('[data-workspace-contact-review]').forEach((reviewForm) => {
         updateWorkspaceContactReviewState(reviewForm);
       });
       maybeRunInitialWorkspaceQuery();
+      maybeRevealWorkspaceDrawer();
     </script>
   `;
 }
