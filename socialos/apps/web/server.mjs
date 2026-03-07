@@ -1517,7 +1517,7 @@ function renderQueueCards(queueTasks, publishMode) {
   };
   const renderLiveFallback = (liveFallbackReason) =>
     Object.keys(liveFallbackReason).length
-      ? `<p><strong>Live Fallback:</strong> env=${escapeHtml(
+      ? `<p><strong>Live fallback:</strong> env=${escapeHtml(
           String(Boolean(liveFallbackReason.envEnabled))
         )} · ui=${escapeHtml(String(Boolean(liveFallbackReason.uiEnabled)))} · creds=${escapeHtml(
           String(Boolean(liveFallbackReason.credentialsReady))
@@ -1533,65 +1533,96 @@ function renderQueueCards(queueTasks, publishMode) {
       const queued = task.status === 'queued';
       const needsManual = task.status === 'manual_step_needed';
       const taskPrefersLive = liveApprovalEnabled && String(task.mode || '').toLowerCase() === 'live';
+      const supportLevel = task.capability?.supportLevel || 'L0 Draft';
+      const entryTarget = execution.preflight?.entryTarget || task.capability?.entryTarget || 'manual';
+      const summaryText = summarizeCardCopy(
+        task.content || publishPackage.preview || publishPackage.title || '',
+        118,
+        queued
+          ? 'This package is ready for the next handoff.'
+          : needsManual
+            ? 'This package is waiting for the real handoff outcome.'
+            : 'This queue item is now closed.'
+      );
+      const nextStepText = queued
+        ? taskPrefersLive
+          ? 'Ready to review before a live handoff.'
+          : 'Ready for Safe rehearsal or a manual handoff.'
+        : needsManual
+          ? `Next step: finish the handoff in ${entryTarget} and record what happened here.`
+          : manualCompletion.outcome === 'failed'
+            ? 'This handoff closed as failed. Open the details if you need the trail.'
+            : 'This handoff is closed and the latest outcome is recorded below.';
+      const liveControlsMessage = liveApprovalEnabled
+        ? 'Only open live controls when you truly intend to post and the credentials are ready.'
+        : 'Live publish stays gated until you switch Settings out of Safe rehearsal.';
       return `
         <article class="stack-card queue-card">
           <div class="stack-meta">
-            <strong>${escapeHtml(task.eventTitle || task.platformLabel)}</strong>
-            <span>${escapeHtml(formatDateTime(task.updatedAt))}</span>
+            <strong>${escapeHtml(task.eventTitle || 'Untitled event')}</strong>
+            <span>${escapeHtml(task.platformLabel || task.platform || 'platform')}</span>
           </div>
           <div class="chip-row">
             ${renderPill(task.status, statusTone(task.status))}
-            ${renderPill(task.mode, task.mode === 'live' ? 'accent' : 'soft')}
-            ${renderPill(task.capability?.supportLevel || 'L0 Draft', 'neutral')}
+            ${renderPill(supportLevel, supportLevel.includes('L2') ? 'accent' : 'soft')}
             ${renderPill(formatLanguageLabel(task.language), 'soft')}
+            ${renderPill(task.mode === 'live' ? 'live intent' : 'safe rehearsal', task.mode === 'live' ? 'warn' : 'good')}
             ${task.duplicateCount > 1 ? renderPill(`${task.duplicateCount} recent attempts`, 'soft') : ''}
           </div>
           ${renderPublishActions(task, publishPackage)}
-          <p>${escapeHtml(summarizeCardCopy(task.content || publishPackage.preview || publishPackage.title || '', 170, 'Draft package is ready for the next step.'))}</p>
-          <small>${escapeHtml(`Mode: ${formatHumanPublishMode(publishMode)} · destination ${task.platformLabel || task.platform || 'platform'}`)}</small>
+          <p>${escapeHtml(summaryText)}</p>
+          <div class="result-block compact-card">
+            <p><strong>Next step:</strong> ${escapeHtml(nextStepText)}</p>
+            <small>${escapeHtml(`Updated ${formatDateTime(task.updatedAt)} · entry ${entryTarget}`)}</small>
+          </div>
           ${
             queued
               ? `
                 <form class="api-form compact-form" data-api-form="true" data-endpoint="/publish/approve">
                   <input type="hidden" name="taskId" value="${escapeHtml(task.taskId)}" />
                   <input type="hidden" name="approvedBy" value="dashboard" />
-                  <div class="form-grid compact-grid">
-                    ${renderFormField(
-                      'Mode',
-                      `<select name="mode">
-                        <option value="dry-run"${taskPrefersLive ? '' : ' selected'}>dry-run</option>
-                        <option value="live"${taskPrefersLive ? ' selected' : ''}${liveApprovalEnabled ? '' : ' disabled'}>live</option>
-                      </select>`
-                    )}
-                    ${renderFormField(
-                      'Live Gate',
-                      `<label class="toggle"><input type="checkbox" name="liveEnabled" value="true"${taskPrefersLive ? ' checked' : ''}${liveApprovalEnabled ? '' : ' disabled'} /> <span>UI live intent</span></label>`
-                    )}
-                    ${renderFormField(
-                      'Credentials',
-                      `<label class="toggle"><input type="checkbox" name="credentialsReady" value="true"${taskPrefersLive ? ' checked' : ''}${liveApprovalEnabled ? '' : ' disabled'} /> <span>credentials ready</span></label>`
-                    )}
-                  </div>
-                  ${
-                    liveApprovalEnabled
-                      ? ''
-                      : '<p class="quiet-label">Switch runtime publish mode to live before enabling live execution controls.</p>'
-                  }
+                  <input type="hidden" name="mode" value="dry-run" />
                   <div class="inline-actions">
-                    <button type="submit">Approve + Execute</button>
+                    <button type="submit">Start Safe rehearsal</button>
                   </div>
                   <div class="form-result" data-form-result></div>
                 </form>
                 <details class="details-shell queue-details">
-                  <summary>Live controls</summary>
-                  <p>Only switch these on when you really intend to leave Safe rehearsal and the platform credentials are ready.</p>
+                  <summary>Live options</summary>
+                  <p>${escapeHtml(liveControlsMessage)}</p>
+                  <form class="api-form compact-form" data-api-form="true" data-endpoint="/publish/approve">
+                    <input type="hidden" name="taskId" value="${escapeHtml(task.taskId)}" />
+                    <input type="hidden" name="approvedBy" value="dashboard" />
+                    <div class="form-grid compact-grid">
+                      ${renderFormField(
+                        'Mode',
+                        `<select name="mode">
+                          <option value="dry-run"${taskPrefersLive ? '' : ' selected'}>dry-run</option>
+                          <option value="live"${taskPrefersLive ? ' selected' : ''}${liveApprovalEnabled ? '' : ' disabled'}>live</option>
+                        </select>`
+                      )}
+                      ${renderFormField(
+                        'Live Gate',
+                        `<label class="toggle"><input type="checkbox" name="liveEnabled" value="true"${taskPrefersLive ? ' checked' : ''}${liveApprovalEnabled ? '' : ' disabled'} /> <span>UI live intent</span></label>`
+                      )}
+                      ${renderFormField(
+                        'Credentials',
+                        `<label class="toggle"><input type="checkbox" name="credentialsReady" value="true"${taskPrefersLive ? ' checked' : ''}${liveApprovalEnabled ? '' : ' disabled'} /> <span>credentials ready</span></label>`
+                      )}
+                    </div>
+                    <div class="inline-actions">
+                      <button type="submit"${liveApprovalEnabled ? '' : ' disabled'}>Review live handoff</button>
+                    </div>
+                    <div class="form-result" data-form-result></div>
+                  </form>
                 </details>
               `
               : needsManual
                 ? `
                   <div class="result-block">
-                    <p><strong>Entry Target:</strong> ${escapeHtml(execution.preflight?.entryTarget || task.capability?.entryTarget || 'manual')}</p>
-                    <p><strong>Preflight:</strong> ${escapeHtml(execution.preflight?.note || execution.delivery?.reason || 'manual handoff ready')}</p>
+                    <p><strong>Handoff note:</strong> ${escapeHtml(
+                      execution.preflight?.note || execution.delivery?.reason || 'manual handoff ready'
+                    )}</p>
                   </div>
                   <form class="api-form compact-form" data-api-form="true" data-endpoint="/publish/complete">
                     <input type="hidden" name="taskId" value="${escapeHtml(task.taskId)}" />
@@ -1612,7 +1643,7 @@ function renderQueueCards(queueTasks, publishMode) {
                   </form>
                   ${
                     Object.keys(liveFallbackReason).length
-                      ? `<details class="details-shell queue-details"><summary>Live fallback details</summary>${renderLiveFallback(liveFallbackReason)}</details>`
+                      ? `<details class="details-shell queue-details"><summary>Handoff details</summary>${renderLiveFallback(liveFallbackReason)}</details>`
                       : ''
                   }
                 `
@@ -1624,7 +1655,7 @@ function renderQueueCards(queueTasks, publishMode) {
                   ${manualCompletion.link ? `<p><strong>Link:</strong> ${escapeHtml(manualCompletion.link)}</p>` : ''}
                 </div>
                 <details class="details-shell queue-details">
-                  <summary>Execution details</summary>
+                  <summary>More details</summary>
                   <p><strong>Run:</strong> ${escapeHtml(execution.runId || 'n/a')}</p>
                   ${manualCompletion.note ? `<p><strong>Note:</strong> ${escapeHtml(manualCompletion.note)}</p>` : ''}
                   ${renderLiveFallback(liveFallbackReason)}
