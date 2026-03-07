@@ -93,6 +93,23 @@ async function main() {
     assert(refined.person.name === '王章', 'existing person refinement should keep prior confirmed name');
     assert(refined.person.tags.includes('warm-intro'), 'existing person refinement should merge new tags');
 
+    const missingPersonResponse = await fetch(`${api.baseUrl}/capture/commit`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        source: 'workspace_contact_review_smoke',
+        personId: 'person_missing',
+        personDraft: {
+          name: '',
+          tags: ['warm-intro'],
+          notes: '这次应该命中缺失 personId 保护。',
+        },
+      }),
+    });
+    const missingPersonPayload = await missingPersonResponse.json();
+    assert(missingPersonResponse.status === 404, 'refinement should fail fast when personId does not exist');
+    assert(missingPersonPayload.error === 'personId not found', 'missing personId should return a clear 404 error');
+
     const mixedWorkspace = await requestJson(api.baseUrl, '/workspace/chat', {
       method: 'POST',
       body: {

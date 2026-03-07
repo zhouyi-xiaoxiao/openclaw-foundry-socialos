@@ -5299,6 +5299,13 @@ function ensurePersonRecord(statements, personDraft = {}, preferredPersonId = ''
   const requestedPersonId = cleanText(preferredPersonId || personDraft.personId || '');
   const existingById = requestedPersonId ? statements.selectPersonById.get(requestedPersonId) : null;
 
+  if (requestedPersonId && !existingById) {
+    throw new HttpError(404, 'personId not found', {
+      field: 'personId',
+      reason: 'missing_person',
+    });
+  }
+
   if (isPlaceholderContactName(personDraft.name) && !existingById) {
     throw new HttpError(400, 'name confirmation required', {
       field: 'personDraft.name',
@@ -5519,6 +5526,13 @@ function commitCaptureDraft(statements, body = {}) {
   let checkinRow;
   const requestedPersonId = cleanText(body.personId || draft.personDraft?.personId || '');
   const existingPersonTarget = requestedPersonId ? statements.selectPersonById.get(requestedPersonId) : null;
+
+  if (requestedPersonId && !existingPersonTarget) {
+    throw new HttpError(404, 'personId not found', {
+      field: 'personId',
+      reason: 'missing_person',
+    });
+  }
 
   if (isPlaceholderContactName(draft.personDraft?.name) && !existingPersonTarget) {
     throw new HttpError(400, 'name confirmation required', {
