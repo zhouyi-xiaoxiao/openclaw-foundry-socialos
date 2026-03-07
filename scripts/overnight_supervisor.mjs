@@ -65,11 +65,17 @@ function parseDemoStatus(output) {
 
 function parseFoundryStatusJson(output, commandOk) {
   const trimmed = safeTrim(output);
-  if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return null;
+  if (!trimmed.includes('{') || !trimmed.includes('}')) return null;
+
+  const firstBraceIndex = trimmed.indexOf('{');
+  const lastBraceIndex = trimmed.lastIndexOf('}');
+  if (firstBraceIndex < 0 || lastBraceIndex <= firstBraceIndex) return null;
+
+  const jsonCandidate = trimmed.slice(firstBraceIndex, lastBraceIndex + 1);
 
   let parsed;
   try {
-    parsed = JSON.parse(trimmed);
+    parsed = JSON.parse(jsonCandidate);
   } catch {
     return null;
   }
@@ -80,7 +86,14 @@ function parseFoundryStatusJson(output, commandOk) {
   const latestRun = parsed.latestRun && typeof parsed.latestRun === 'object' ? parsed.latestRun : {};
   const health = parsed.health && typeof parsed.health === 'object' ? parsed.health : {};
   const blockedHead = Array.isArray(parsed.blockedHead) ? parsed.blockedHead : [];
-  const latestDigest = Array.isArray(parsed.latestDigest) ? parsed.latestDigest : [];
+  const latestDigest = Array.isArray(parsed.latestDigest)
+    ? parsed.latestDigest
+    : typeof parsed.latestDigest === 'string'
+      ? parsed.latestDigest
+          .split('\n')
+          .map((line) => line.trim())
+          .filter(Boolean)
+      : [];
 
   return {
     commandOk,

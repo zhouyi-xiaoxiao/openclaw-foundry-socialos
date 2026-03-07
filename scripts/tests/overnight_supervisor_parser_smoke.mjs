@@ -124,4 +124,36 @@ assert(parsedJsonStatus.blockedHead.length === 2, 'json blocked head entries sho
 assert(parsedJsonStatus.blockedHead[0] === 'Blocked from JSON object', 'json blocked head object should use task field');
 assert(parsedJsonStatus.latestDigest.length === 2, 'json digest entries should parse');
 
+const jsonStatusWithPrefixLogs = `(node:12345) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+Boot banner line
+${JSON.stringify(
+  {
+    mode: 'ACTIVE',
+    queue: {
+      pending: 0,
+      inProgress: 0,
+      blocked: 1,
+      done: 7,
+      currentTask: '',
+    },
+    lock: {
+      present: false,
+    },
+    health: {
+      consecutiveFailures: 0,
+    },
+    latestRun: null,
+    blockedHead: ['Blocked with prefixed logs'],
+    latestDigest: 'digest line from string',
+  },
+  null,
+  2
+)}`;
+const parsedJsonWithPrefixLogs = parseFoundryStatus(jsonStatusWithPrefixLogs, { commandOk: true });
+assert(parsedJsonWithPrefixLogs.mode === 'ACTIVE', 'json with prefix logs should still parse mode');
+assert(parsedJsonWithPrefixLogs.queue.blocked === 1, 'json with prefix logs should still parse queue counts');
+assert(parsedJsonWithPrefixLogs.queue.currentTask === 'none', 'json empty currentTask should normalize to none');
+assert(parsedJsonWithPrefixLogs.latestDigest.length === 1, 'string digest should normalize into a list');
+assert(parsedJsonWithPrefixLogs.latestDigest[0] === 'digest line from string', 'string digest entry should be preserved');
+
 console.log('overnight_supervisor_parser_smoke: PASS');
