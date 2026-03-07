@@ -33,6 +33,11 @@ function safeTrim(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function normalizeCount(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function parseDemoStatus(output) {
   const services = output
     .split('\n')
@@ -58,8 +63,57 @@ function parseDemoStatus(output) {
   };
 }
 
+function parseFoundryStatusJson(output, commandOk) {
+  const trimmed = safeTrim(output);
+  if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return null;
+
+  let parsed;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch {
+    return null;
+  }
+
+  if (!parsed || typeof parsed !== 'object') return null;
+  const queue = parsed.queue && typeof parsed.queue === 'object' ? parsed.queue : {};
+  const lock = parsed.lock && typeof parsed.lock === 'object' ? parsed.lock : {};
+  const latestRun = parsed.latestRun && typeof parsed.latestRun === 'object' ? parsed.latestRun : {};
+  const health = parsed.health && typeof parsed.health === 'object' ? parsed.health : {};
+  const blockedHead = Array.isArray(parsed.blockedHead) ? parsed.blockedHead : [];
+  const latestDigest = Array.isArray(parsed.latestDigest) ? parsed.latestDigest : [];
+
+  return {
+    commandOk,
+    mode: typeof parsed.mode === 'string' ? parsed.mode : 'unknown',
+    lock: lock.present === true ? 'present' : lock.present === false ? 'none' : 'unknown',
+    queue: {
+      pending: normalizeCount(queue.pending),
+      inProgress: normalizeCount(queue.inProgress),
+      blocked: normalizeCount(queue.blocked),
+      done: normalizeCount(queue.done),
+      currentTask: typeof queue.currentTask === 'string' && queue.currentTask.trim() ? queue.currentTask.trim() : 'none',
+    },
+    consecutiveFailures: normalizeCount(health.consecutiveFailures ?? parsed.consecutiveFailures),
+    latestRun: {
+      runId: typeof latestRun.runId === 'string' && latestRun.runId.trim() ? latestRun.runId.trim() : 'unknown',
+      status: typeof latestRun.status === 'string' && latestRun.status.trim() ? latestRun.status.trim() : 'unknown',
+      summary: typeof latestRun.summary === 'string' && latestRun.summary.trim() ? latestRun.summary.trim() : 'unknown',
+    },
+    blockedHead: blockedHead
+      .map((entry) => {
+        if (typeof entry === 'string') return entry.trim();
+        if (entry && typeof entry === 'object' && typeof entry.task === 'string') return entry.task.trim();
+        return '';
+      })
+      .filter(Boolean),
+    latestDigest: latestDigest.map((line) => (typeof line === 'string' ? line.trim() : '')).filter(Boolean),
+  };
+}
+
 export function parseFoundryStatus(output, options = {}) {
   const commandOk = options.commandOk !== false;
+  const parsedJson = parseFoundryStatusJson(output, commandOk);
+  if (parsedJson) return parsedJson;
   const queueMatch = output.match(
     /pending\s*[:=]\s*(\d+)\s*(?:,?\s*)in[_ ]progress\s*[:=]\s*(\d+)\s*(?:,?\s*)blocked\s*[:=]\s*(\d+)\s*(?:,?\s*)done\s*[:=]\s*(\d+)/iu
   );

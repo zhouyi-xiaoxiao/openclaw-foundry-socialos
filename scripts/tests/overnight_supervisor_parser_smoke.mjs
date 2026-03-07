@@ -87,4 +87,41 @@ assert(parsedWithCaseVariant.queue.currentTask === 'TASK-123 Workspace polish', 
 assert(parsedWithCaseVariant.consecutiveFailures === 2, 'consecutive failures should parse with case-insensitive label');
 assert(parsedWithCaseVariant.latestRun.runId === 'RUN-999', 'run id should parse with equals format');
 
+const jsonStatusOutput = JSON.stringify(
+  {
+    mode: 'ACTIVE',
+    queue: {
+      pending: 1,
+      inProgress: 2,
+      blocked: 3,
+      done: 4,
+      currentTask: null,
+    },
+    lock: {
+      present: false,
+    },
+    health: {
+      consecutiveFailures: 5,
+    },
+    latestRun: null,
+    blockedHead: [{ line: 1, task: 'Blocked from JSON object' }, 'Blocked from JSON string'],
+    latestDigest: ['digest line 1', 'digest line 2'],
+  },
+  null,
+  2
+);
+const parsedJsonStatus = parseFoundryStatus(jsonStatusOutput, { commandOk: true });
+assert(parsedJsonStatus.mode === 'ACTIVE', 'json mode should parse');
+assert(parsedJsonStatus.lock === 'none', 'json lock should normalize lock.present=false to none');
+assert(parsedJsonStatus.queue.pending === 1, 'json pending queue should parse');
+assert(parsedJsonStatus.queue.inProgress === 2, 'json in-progress queue should parse');
+assert(parsedJsonStatus.queue.blocked === 3, 'json blocked queue should parse');
+assert(parsedJsonStatus.queue.done === 4, 'json done queue should parse');
+assert(parsedJsonStatus.queue.currentTask === 'none', 'json currentTask should normalize null to none');
+assert(parsedJsonStatus.consecutiveFailures === 5, 'json health.consecutiveFailures should parse');
+assert(parsedJsonStatus.latestRun.runId === 'unknown', 'missing latest run fields should normalize to unknown');
+assert(parsedJsonStatus.blockedHead.length === 2, 'json blocked head entries should normalize');
+assert(parsedJsonStatus.blockedHead[0] === 'Blocked from JSON object', 'json blocked head object should use task field');
+assert(parsedJsonStatus.latestDigest.length === 2, 'json digest entries should parse');
+
 console.log('overnight_supervisor_parser_smoke: PASS');
