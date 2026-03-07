@@ -1,8 +1,8 @@
 # Repo State Handoff
 
-- Generated: 2026-03-07T21:05:04.728Z
-- Branch: detached
-- Git head: a76e49d
+- Generated: 2026-03-07T21:06:23.165Z
+- Branch: automation/socialos-overnight-454e
+- Git head: a976cc3
 - Dirty working tree: true
 
 ## Canonical Chain
@@ -51,13 +51,11 @@
 - `socialos/docs/evidence/socialos-demo.gif`
 
 ## Dirty Summary
-- M scripts/tests/capture_parse_commit_smoke.mjs
--  M socialos/apps/web/server.mjs
--  M socialos/docs/STATUS.md
+- M socialos/docs/STATUS.md
 -  M socialos/docs/agent/REPO_STATE.md
 -  M socialos/docs/evidence/LATEST_VALIDATION.md
 -  M socialos/docs/pitch/DECK_STATUS.json
--  M socialos/lib/product-core.mjs
+- ?? .deck-site/
 
 ## Overnight Context
 - Next focus: workspace-usability-and-demo-trust
