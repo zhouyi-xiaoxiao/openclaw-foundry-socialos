@@ -151,6 +151,26 @@ async function main() {
     assert(genericNameResponse.status === 400, 'generic placeholder labels like Contact should be blocked at commit time');
     assert(genericNamePayload.error === 'name confirmation required', 'generic placeholder name rejection should explain missing confirmation');
 
+    const numberedGenericNameResponse = await fetch(`${api.baseUrl}/capture/commit`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        text: unresolvedParsed.captureDraft.rawText,
+        source: unresolvedParsed.captureDraft.source,
+        combinedText: unresolvedParsed.captureDraft.combinedText,
+        personDraft: {
+          ...unresolvedParsed.captureDraft.personDraft,
+          name: 'Contact 1',
+          requiresNameConfirmation: false,
+        },
+        selfCheckinDraft: unresolvedParsed.captureDraft.selfCheckinDraft,
+        interactionDraft: unresolvedParsed.captureDraft.interactionDraft,
+      }),
+    });
+    const numberedGenericNamePayload = await numberedGenericNameResponse.json();
+    assert(numberedGenericNameResponse.status === 400, 'numbered generic labels like Contact 1 should be blocked at commit time');
+    assert(numberedGenericNamePayload.error === 'name confirmation required', 'numbered generic placeholder rejection should explain missing confirmation');
+
     console.log('capture_parse_commit_smoke: PASS');
   } finally {
     await api.close();

@@ -56,6 +56,22 @@ async function main() {
     assert(blockedResponse.status === 400, 'unconfirmed contact drafts must be blocked at commit time');
     assert(blockedPayload.error === 'name confirmation required', 'blocked drafts should explain why saving is disabled');
 
+    const numberedPlaceholderResponse = await fetch(`${api.baseUrl}/capture/commit`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        ...workspace.commitPayload,
+        personDraft: {
+          ...workspace.commitPayload.personDraft,
+          name: '联系人1',
+          requiresNameConfirmation: false,
+        },
+      }),
+    });
+    const numberedPlaceholderPayload = await numberedPlaceholderResponse.json();
+    assert(numberedPlaceholderResponse.status === 400, 'numbered placeholder names like 联系人1 should stay blocked');
+    assert(numberedPlaceholderPayload.error === 'name confirmation required', 'numbered placeholder rejection should explain missing confirmation');
+
     const saved = await requestJson(api.baseUrl, '/capture/commit', {
       method: 'POST',
       body: {

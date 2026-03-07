@@ -45,6 +45,8 @@ const CONTACT_PLACEHOLDER_NAMES = new Set([
   '新联系人',
   '未确认联系人',
 ]);
+const CONTACT_PLACEHOLDER_SUFFIX_PATTERN =
+  /^(?:\d{1,3}|[ivxlcdm]{1,6}|[一二三四五六七八九十百]{1,3}|[a-z])$/iu;
 const CHINESE_CONTACT_NAME_STOPWORDS = new Set([
   '很多人',
   '几个人',
@@ -187,7 +189,21 @@ export function inferPersonName(text) {
 
 export function isPlaceholderContactName(value) {
   const normalized = cleanText(value).toLowerCase();
-  return !normalized || CONTACT_PLACEHOLDER_NAMES.has(normalized);
+  if (!normalized) return true;
+  if (CONTACT_PLACEHOLDER_NAMES.has(normalized)) return true;
+
+  const collapsed = normalized.replace(/[-_/.,!?。！？:：;；'"`“”‘’()[\]{}]+/gu, ' ').replace(/\s+/gu, ' ').trim();
+  if (CONTACT_PLACEHOLDER_NAMES.has(collapsed)) return true;
+
+  for (const placeholder of CONTACT_PLACEHOLDER_NAMES) {
+    if (!collapsed.startsWith(placeholder)) continue;
+    const suffix = collapsed.slice(placeholder.length).trim();
+    if (!suffix) return true;
+    const normalizedSuffix = suffix.replace(/^(?:#|no\.?|第)\s*/iu, '').replace(/位$/u, '').trim();
+    if (CONTACT_PLACEHOLDER_SUFFIX_PATTERN.test(normalizedSuffix)) return true;
+  }
+
+  return false;
 }
 
 export function sanitizeContactDraftText(value) {
