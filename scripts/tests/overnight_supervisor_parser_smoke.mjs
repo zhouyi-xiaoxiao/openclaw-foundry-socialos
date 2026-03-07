@@ -156,4 +156,23 @@ assert(parsedJsonWithPrefixLogs.queue.currentTask === 'none', 'json empty curren
 assert(parsedJsonWithPrefixLogs.latestDigest.length === 1, 'string digest should normalize into a list');
 assert(parsedJsonWithPrefixLogs.latestDigest[0] === 'digest line from string', 'string digest entry should be preserved');
 
+const jsonStatusWithStringFields = JSON.stringify(
+  {
+    mode: 'ACTIVE',
+    queue: { pending: 0, inProgress: 0, blocked: 0, done: 10, currentTask: '' },
+    lock: { present: false },
+    health: { consecutiveFailures: 0 },
+    latestRun: { runId: 'RUN-STRING', status: 'success', summary: 'ok' },
+    blockedHead: 'none',
+    latestDigest: 'digest line A\ndigest line B\nNo digest yet.',
+  },
+  null,
+  2
+);
+const parsedJsonStringFields = parseFoundryStatus(jsonStatusWithStringFields, { commandOk: true });
+assert(parsedJsonStringFields.blockedHead.length === 0, 'json blocked head string sentinel should normalize to empty');
+assert(parsedJsonStringFields.latestDigest.length === 2, 'json digest string should split into digest lines');
+assert(parsedJsonStringFields.latestDigest[0] === 'digest line A', 'json digest string first line should parse');
+assert(parsedJsonStringFields.latestDigest[1] === 'digest line B', 'json digest string second line should parse');
+
 console.log('overnight_supervisor_parser_smoke: PASS');

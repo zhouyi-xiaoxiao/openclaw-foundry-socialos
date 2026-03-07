@@ -38,6 +38,28 @@ function normalizeCount(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function normalizeStatusLines(value, { treatObjectsAsTask = false } = {}) {
+  const normalized = [];
+  const values = Array.isArray(value) ? value : [value];
+
+  for (const entry of values) {
+    if (typeof entry === 'string') {
+      for (const line of entry.split('\n')) {
+        const trimmed = line.trim();
+        if (trimmed) normalized.push(trimmed);
+      }
+      continue;
+    }
+
+    if (treatObjectsAsTask && entry && typeof entry === 'object' && typeof entry.task === 'string') {
+      const task = entry.task.trim();
+      if (task) normalized.push(task);
+    }
+  }
+
+  return normalized;
+}
+
 function extractJsonPayload(output) {
   const trimmed = safeTrim(output);
   if (!trimmed) return '';
@@ -127,15 +149,8 @@ function parseFoundryStatusJson(output, commandOk) {
   const lock = parsed.lock && typeof parsed.lock === 'object' ? parsed.lock : {};
   const latestRun = parsed.latestRun && typeof parsed.latestRun === 'object' ? parsed.latestRun : {};
   const health = parsed.health && typeof parsed.health === 'object' ? parsed.health : {};
-  const blockedHead = Array.isArray(parsed.blockedHead) ? parsed.blockedHead : [];
-  const latestDigest = Array.isArray(parsed.latestDigest)
-    ? parsed.latestDigest
-    : typeof parsed.latestDigest === 'string'
-      ? parsed.latestDigest
-          .split('\n')
-          .map((line) => line.trim())
-          .filter(Boolean)
-      : [];
+  const blockedHead = normalizeStatusLines(parsed.blockedHead, { treatObjectsAsTask: true });
+  const latestDigest = normalizeStatusLines(parsed.latestDigest);
 
   return {
     commandOk,
@@ -154,14 +169,8 @@ function parseFoundryStatusJson(output, commandOk) {
       status: typeof latestRun.status === 'string' && latestRun.status.trim() ? latestRun.status.trim() : 'unknown',
       summary: typeof latestRun.summary === 'string' && latestRun.summary.trim() ? latestRun.summary.trim() : 'unknown',
     },
-    blockedHead: blockedHead
-      .map((entry) => {
-        if (typeof entry === 'string') return entry.trim();
-        if (entry && typeof entry === 'object' && typeof entry.task === 'string') return entry.task.trim();
-        return '';
-      })
-      .filter(Boolean),
-    latestDigest: latestDigest.map((line) => (typeof line === 'string' ? line.trim() : '')).filter(Boolean),
+    blockedHead: blockedHead.filter((line) => !/^none(?:\b|$)/iu.test(line)),
+    latestDigest: latestDigest.filter((line) => !/^none(?:\b|$)/iu.test(line) && !/^no digest yet\.?$/iu.test(line)),
   };
 }
 
