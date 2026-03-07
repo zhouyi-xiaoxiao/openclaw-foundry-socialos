@@ -31,10 +31,13 @@ async function main() {
         kind: 'image',
         mimeType: 'image/png',
         fileName: 'card.png',
+        contentBase64: 'data:image/png;base64,ZmFrZQ==',
         extractedText: '李雷 Growth Lead wechat lylei_growth @lilei',
       },
     });
     assert(ocrAsset.asset.status === 'parsed', 'ocr asset should be parsed when extracted text exists');
+    assert(ocrAsset.asset.hasOriginalFile === true, 'image asset should keep the original file locally');
+    assert(typeof ocrAsset.asset.originalUrl === 'string' && ocrAsset.asset.originalUrl.length > 0, 'image asset should expose the original asset route');
 
     const parsed = await requestJson(api.baseUrl, '/capture/parse', {
       method: 'POST',
@@ -66,12 +69,14 @@ async function main() {
         kind: 'image',
         mimeType: 'image/png',
         fileName: 'manual-review.png',
+        contentBase64: 'data:image/png;base64,ZmFrZQ==',
       },
     });
     assert(
       manualAsset.asset.status === 'manual_review',
       'image without extracted text should fall back to manual review'
     );
+    assert(manualAsset.asset.hasOriginalFile === true, 'manual review image should still keep the original file locally');
 
     console.log('business_card_ocr_smoke: PASS');
   } finally {

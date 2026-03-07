@@ -17,6 +17,14 @@ async function main() {
       'workspace composer should render a transcript preview area'
     );
     assert(
+      html.includes('data-source-asset-ids'),
+      'workspace composer should preserve source-only assets separately from visible message attachments'
+    );
+    assert(
+      html.includes('data-voice-source-actions'),
+      'workspace composer should render a source-voice action area for transcript-vs-voice handling'
+    );
+    assert(
       html.includes('Type, attach, or record. Transcripts stay editable before send.'),
       'workspace composer note should stay short and promise manual send after transcription'
     );
@@ -29,8 +37,8 @@ async function main() {
       'workspace client script should merge transcript into the composer'
     );
     assert(
-      html.includes('await uploadWorkspaceAsset(file);'),
-      'voice stop should upload the asset without triggering auto-send'
+      html.includes("deliveryMode: 'transcript'"),
+      'voice stop should upload the recording in transcript mode by default'
     );
     assert(
       html.includes("if (form.dataset.submitting === 'true' || submitButton?.disabled) return;"),

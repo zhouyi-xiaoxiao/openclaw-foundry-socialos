@@ -4033,13 +4033,20 @@ function renderClientScript() {
         }
         setButtonBusy(submitter, true);
         try {
+          const transcriptText = form.querySelector('textarea[name="transcript"]')?.value || '';
           const payload = {
             kind: form.dataset.assetUpload || 'image',
             mimeType: file.type || 'application/octet-stream',
             fileName: file.name || 'upload.bin',
             contentBase64: await encodeFileAsDataUrl(file),
-            transcript: form.querySelector('textarea[name="transcript"]')?.value || '',
+            transcript: transcriptText,
             source: 'dashboard',
+            deliveryMode:
+              (form.dataset.assetUpload || 'image') === 'audio'
+                ? String(transcriptText || '').trim()
+                  ? 'transcript'
+                  : 'voice'
+                : 'asset',
           };
           const response = await apiRequest('/capture/assets', payload, 'POST');
           renderResult(resultNode, response.payload);
@@ -4722,6 +4729,12 @@ function renderLayout({ currentPath, title, body }) {
         border: 1px solid rgba(22, 33, 50, 0.12);
         box-shadow: none;
       }
+      .ghost-button {
+        color: var(--ink-soft);
+        background: transparent;
+        border: 1px dashed rgba(22, 33, 50, 0.14);
+        box-shadow: none;
+      }
       button:hover {
         filter: brightness(1.03);
       }
@@ -5216,6 +5229,33 @@ function renderLayout({ currentPath, title, body }) {
         color: var(--ink-soft);
         font-size: 13px;
         line-height: 1.45;
+      }
+      .workspace-voice-source-actions {
+        margin-top: 10px;
+      }
+      .workspace-voice-source-actions[hidden] {
+        display: none !important;
+      }
+      .voice-source-note {
+        display: grid;
+        gap: 8px;
+        padding: 12px 14px;
+        border-radius: 18px;
+        border: 1px solid rgba(21, 111, 106, 0.12);
+        background: rgba(21, 111, 106, 0.06);
+        color: var(--ink-soft);
+      }
+      .voice-source-note strong {
+        color: var(--ink);
+      }
+      .voice-source-note span {
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      .voice-source-note-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
       }
       .workspace-transcript-preview {
         margin-top: 8px;

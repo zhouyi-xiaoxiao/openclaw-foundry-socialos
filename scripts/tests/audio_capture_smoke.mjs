@@ -31,11 +31,23 @@ async function main() {
         kind: 'audio',
         mimeType: 'audio/webm',
         fileName: 'note.webm',
+        deliveryMode: 'transcript',
         transcript: 'Met Casey after the builder meetup and want to follow up on growth experiments.',
         contentBase64: 'data:audio/webm;base64,ZmFrZQ==',
       },
     });
     assert(transcriptAsset.asset.status === 'parsed', 'audio asset with transcript should parse immediately');
+    assert(transcriptAsset.asset.deliveryMode === 'transcript', 'audio asset should preserve transcript delivery mode');
+    assert(transcriptAsset.asset.hasOriginalFile === true, 'audio asset should keep the original file locally');
+    assert(typeof transcriptAsset.asset.localPath === 'string' && transcriptAsset.asset.localPath.length > 0, 'audio asset should expose a local storage path');
+    assert(
+      typeof transcriptAsset.asset.originalUrl === 'string' && transcriptAsset.asset.originalUrl.includes('/capture/assets/'),
+      'audio asset should expose an original file URL'
+    );
+
+    const originalAudio = await fetch(`${api.baseUrl}${transcriptAsset.asset.originalUrl}`);
+    assert(originalAudio.status === 200, 'saved audio should be downloadable from the original asset route');
+    assert((await originalAudio.arrayBuffer()).byteLength > 0, 'saved audio route should return file bytes');
 
     const parsed = await requestJson(api.baseUrl, '/capture/parse', {
       method: 'POST',
@@ -70,6 +82,7 @@ async function main() {
         kind: 'audio',
         mimeType: 'audio/webm',
         fileName: 'manual-review.webm',
+        deliveryMode: 'voice',
         contentBase64: 'data:audio/webm;base64,ZmFrZQ==',
       },
     });
@@ -77,6 +90,8 @@ async function main() {
       fallbackAsset.asset.status === 'manual_review',
       'audio asset without transcript should fall back to manual review'
     );
+    assert(fallbackAsset.asset.deliveryMode === 'voice', 'voice-only upload should preserve voice delivery mode');
+    assert(fallbackAsset.asset.hasOriginalFile === true, 'voice-only upload should still keep the original file locally');
 
     const workspaceFallback = await requestJson(api.baseUrl, '/workspace/chat', {
       method: 'POST',
