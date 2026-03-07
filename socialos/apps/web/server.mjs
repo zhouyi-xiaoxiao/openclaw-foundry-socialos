@@ -5386,7 +5386,20 @@ function renderClientScript() {
 
       function isInvalidContactDraftName(value) {
         const normalized = String(value || '').trim().toLowerCase();
-        return !normalized || ['new contact', 'new contact draft', 'unconfirmed contact', 'unknown contact', '新联系人', '未确认联系人'].includes(normalized);
+        return !normalized || [
+          'new contact',
+          'new contact draft',
+          'unconfirmed contact',
+          'unknown contact',
+          'contact',
+          'person',
+          'someone',
+          '新联系人',
+          '未确认联系人',
+          '联系人',
+          '某人',
+          '某位联系人',
+        ].includes(normalized);
       }
 
       function serializeIdentityLines(identities) {

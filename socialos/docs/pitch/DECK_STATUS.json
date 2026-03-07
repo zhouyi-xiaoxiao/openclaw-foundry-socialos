@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-03-07T21:05:11.453Z",
-  "latestGreenValidationAt": "2026-03-07T21:05:11.453Z",
-  "repoHead": "62f4f45",
-  "validationSource": "scripts/test.sh",
+  "generatedAt": "2026-03-07T21:05:04.728Z",
+  "latestGreenValidationAt": "2026-03-07T21:04:14.488Z",
+  "repoHead": "a76e49d",
+  "validationSource": "codex-automation",
   "demo": {
     "healthy": true,
     "summary": "Local demo services are healthy and ready for rehearsal.",

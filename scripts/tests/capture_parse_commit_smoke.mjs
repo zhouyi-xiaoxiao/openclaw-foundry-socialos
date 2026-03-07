@@ -128,6 +128,26 @@ async function main() {
     assert(invalidResponse.status === 400, 'placeholder or missing names should be blocked at commit time');
     assert(invalidPayload.error === 'name confirmation required', 'blocked commit should explain that name confirmation is required');
 
+    const genericNameResponse = await fetch(`${api.baseUrl}/capture/commit`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        text: unresolvedParsed.captureDraft.rawText,
+        source: unresolvedParsed.captureDraft.source,
+        combinedText: unresolvedParsed.captureDraft.combinedText,
+        personDraft: {
+          ...unresolvedParsed.captureDraft.personDraft,
+          name: 'Contact',
+          requiresNameConfirmation: false,
+        },
+        selfCheckinDraft: unresolvedParsed.captureDraft.selfCheckinDraft,
+        interactionDraft: unresolvedParsed.captureDraft.interactionDraft,
+      }),
+    });
+    const genericNamePayload = await genericNameResponse.json();
+    assert(genericNameResponse.status === 400, 'generic placeholder labels like Contact should be blocked at commit time');
+    assert(genericNamePayload.error === 'name confirmation required', 'generic placeholder name rejection should explain missing confirmation');
+
     console.log('capture_parse_commit_smoke: PASS');
   } finally {
     await api.close();

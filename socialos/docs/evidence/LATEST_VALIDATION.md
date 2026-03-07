@@ -1,9 +1,9 @@
 # Latest Validation Snapshot
 
-- Generated: 2026-03-07T21:05:11.453Z
-- Refreshed by: scripts/test.sh
-- Latest green validation: 2026-03-07T21:05:11.453Z
-- Git head: 62f4f45
+- Generated: 2026-03-07T21:05:04.728Z
+- Refreshed by: codex-automation
+- Latest green validation: 2026-03-07T21:04:14.488Z
+- Git head: a76e49d
 
 ## Current Health Snapshot
 - Demo healthy: true
@@ -20,4 +20,4 @@
 - `socialos/docs/evidence/socialos-demo-step08.png`
 - `socialos/docs/evidence/socialos-demo.gif`
 
-- This refresh followed a green validation path and updated the latest validation marker.
+- This refresh did not assert a new green validation. Keep using the last green marker above as the authoritative reference.

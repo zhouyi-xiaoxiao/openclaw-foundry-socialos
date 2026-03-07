@@ -34,6 +34,12 @@ const CONTACT_PLACEHOLDER_NAMES = new Set([
   'new contact draft',
   'unconfirmed contact',
   'unknown contact',
+  'contact',
+  'person',
+  'someone',
+  '联系人',
+  '某人',
+  '某位联系人',
   '新联系人',
   '未确认联系人',
 ]);
