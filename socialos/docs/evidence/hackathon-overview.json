@@ -1,0 +1,751 @@
+{
+  "mode": "off",
+  "generatedAt": "2026-03-07T21:08:02.349Z",
+  "integrations": [
+    {
+      "id": "openclaw",
+      "label": "OpenClaw Runtime",
+      "configured": true,
+      "status": "ready",
+      "summary": "4 lanes active for orchestrator, memory, compliance, and publishing.",
+      "model": "",
+      "route": "/studio?panel=agents"
+    },
+    {
+      "id": "workspace",
+      "label": "Workspace UI",
+      "configured": true,
+      "status": "ready",
+      "summary": "Judge-facing capture, memory, drafts, queue, and mirror loop.",
+      "model": "",
+      "route": "/demo"
+    },
+    {
+      "id": "buddy",
+      "label": "Buddy Guardrails",
+      "configured": true,
+      "status": "ready",
+      "summary": "Friendship and gratitude mode keeps the experience narrow and trust-first.",
+      "model": "",
+      "route": "/buddy"
+    },
+    {
+      "id": "deck",
+      "label": "Pitch Deck",
+      "configured": true,
+      "status": "ready",
+      "summary": "Public deck now carries the shared story plus bounty-specific appendix slides.",
+      "model": "",
+      "route": "/deck"
+    },
+    {
+      "id": "glm",
+      "label": "Z.AI GLM",
+      "configured": false,
+      "status": "pending",
+      "summary": "Add GLM_API_KEY to activate Z.AI routing for Workspace and Drafts.",
+      "model": "",
+      "route": "/hackathon?bounty=z-ai-general"
+    },
+    {
+      "id": "flock",
+      "label": "FLock",
+      "configured": false,
+      "status": "pending",
+      "summary": "Add FLOCK_API_KEY to activate SDG triage for AI Agents for Good.",
+      "model": "",
+      "route": "/hackathon?bounty=ai-agents-for-good"
+    }
+  ],
+  "routes": [
+    {
+      "id": "demo",
+      "label": "Judge Demo",
+      "path": "/demo"
+    },
+    {
+      "id": "hackathon",
+      "label": "Hackathon Hub",
+      "path": "/hackathon"
+    },
+    {
+      "id": "buddy",
+      "label": "Buddy Mode",
+      "path": "/buddy"
+    },
+    {
+      "id": "deck",
+      "label": "Pitch Deck",
+      "path": "/deck"
+    }
+  ],
+  "bounties": [
+    {
+      "id": "claw-for-human",
+      "label": "Claw for Human",
+      "prize": "$500 USD",
+      "route": "/demo",
+      "audience": "judges who want a human-ready product surface",
+      "hook": "Bring Claw out of the shell and into a guided relationship workspace.",
+      "fit": "SocialOS already turns OpenClaw-powered agent orchestration into a calm interface with memory, drafts, queue, and reflection.",
+      "uniqueAngle": "Explainable relationship OS instead of a generic assistant shell.",
+      "integrations": [
+        "openclaw",
+        "workspace",
+        "deck"
+      ],
+      "proofKinds": [
+        "openclaw",
+        "ui",
+        "deck"
+      ],
+      "demoSteps": [
+        "Open /demo",
+        "Launch /quick-capture",
+        "Show agent trace + evidence cards"
+      ],
+      "status": "ready",
+      "requiredIntegrations": [
+        {
+          "id": "openclaw",
+          "label": "OpenClaw Runtime",
+          "configured": true,
+          "status": "ready",
+          "summary": "4 lanes active for orchestrator, memory, compliance, and publishing.",
+          "model": "",
+          "route": "/studio?panel=agents"
+        },
+        {
+          "id": "workspace",
+          "label": "Workspace UI",
+          "configured": true,
+          "status": "ready",
+          "summary": "Judge-facing capture, memory, drafts, queue, and mirror loop.",
+          "model": "",
+          "route": "/demo"
+        },
+        {
+          "id": "deck",
+          "label": "Pitch Deck",
+          "configured": true,
+          "status": "ready",
+          "summary": "Public deck now carries the shared story plus bounty-specific appendix slides.",
+          "model": "",
+          "route": "/deck"
+        }
+      ],
+      "proofCount": 4,
+      "recommendedRoute": "/demo",
+      "proofs": [
+        {
+          "id": "proof-openclaw-runtime",
+          "kind": "openclaw",
+          "status": "ready",
+          "title": "OpenClaw runtime powers the product lanes",
+          "summary": "4 lanes active for orchestrator, memory, compliance, and publishing.",
+          "bounties": [
+            "claw-for-human",
+            "animoca",
+            "ai-agents-for-good",
+            "human-for-claw"
+          ],
+          "route": "/studio?panel=agents",
+          "source": "socialos/openclaw/runtime.openclaw.json5"
+        },
+        {
+          "id": "proof-workspace-loop",
+          "kind": "ui",
+          "status": "ready",
+          "title": "Judge-ready Workspace loop already exists",
+          "summary": "Quick Capture, Contacts, Drafts, Queue, and Mirror already operate inside one loopback-only product surface.",
+          "bounties": [
+            "claw-for-human",
+            "animoca",
+            "z-ai-general"
+          ],
+          "route": "/demo",
+          "source": "socialos/apps/web/server.mjs"
+        },
+        {
+          "id": "proof-buddy-guardrails",
+          "kind": "safety",
+          "status": "ready",
+          "title": "Buddy mode keeps the experience safe and narrow",
+          "summary": "The product stays loopback-only, dry-run by default, and Buddy mode funnels users into four friendly tasks.",
+          "bounties": [
+            "human-for-claw",
+            "claw-for-human"
+          ],
+          "route": "/buddy",
+          "source": "socialos/apps/web/server.mjs"
+        },
+        {
+          "id": "proof-pitch-pack",
+          "kind": "deck",
+          "status": "ready",
+          "title": "Deck and public evidence stay submission-ready",
+          "summary": "The shared pitch pack stays repo-native, with 4 runtime lanes and public evidence snapshots available for judges.",
+          "bounties": [
+            "claw-for-human",
+            "animoca",
+            "human-for-claw",
+            "z-ai-general",
+            "ai-agents-for-good"
+          ],
+          "route": "/deck",
+          "source": "socialos/docs/pitch/VC_DECK_SPEC.md"
+        }
+      ]
+    },
+    {
+      "id": "animoca",
+      "label": "Animoca Bounty",
+      "prize": "$1,000 USD",
+      "route": "/hackathon?bounty=animoca",
+      "audience": "judges looking for identity, memory, and multi-agent coordination",
+      "hook": "Position SocialOS as an identity-rich agent system for creator and community ops.",
+      "fit": "The repo already has persistent people memory, linked identities, and explicit agent lanes for memory, compliance, and publishing.",
+      "uniqueAngle": "Persistent identity and long-horizon memory instead of a one-shot agent demo.",
+      "integrations": [
+        "openclaw",
+        "workspace",
+        "deck"
+      ],
+      "proofKinds": [
+        "openclaw",
+        "memory",
+        "ui"
+      ],
+      "demoSteps": [
+        "Open /hackathon",
+        "Inspect Animoca card",
+        "Jump into Contacts and Studio agents"
+      ],
+      "status": "ready",
+      "requiredIntegrations": [
+        {
+          "id": "openclaw",
+          "label": "OpenClaw Runtime",
+          "configured": true,
+          "status": "ready",
+          "summary": "4 lanes active for orchestrator, memory, compliance, and publishing.",
+          "model": "",
+          "route": "/studio?panel=agents"
+        },
+        {
+          "id": "workspace",
+          "label": "Workspace UI",
+          "configured": true,
+          "status": "ready",
+          "summary": "Judge-facing capture, memory, drafts, queue, and mirror loop.",
+          "model": "",
+          "route": "/demo"
+        },
+        {
+          "id": "deck",
+          "label": "Pitch Deck",
+          "configured": true,
+          "status": "ready",
+          "summary": "Public deck now carries the shared story plus bounty-specific appendix slides.",
+          "model": "",
+          "route": "/deck"
+        }
+      ],
+      "proofCount": 4,
+      "recommendedRoute": "/hackathon?bounty=animoca",
+      "proofs": [
+        {
+          "id": "proof-openclaw-runtime",
+          "kind": "openclaw",
+          "status": "ready",
+          "title": "OpenClaw runtime powers the product lanes",
+          "summary": "4 lanes active for orchestrator, memory, compliance, and publishing.",
+          "bounties": [
+            "claw-for-human",
+            "animoca",
+            "ai-agents-for-good",
+            "human-for-claw"
+          ],
+          "route": "/studio?panel=agents",
+          "source": "socialos/openclaw/runtime.openclaw.json5"
+        },
+        {
+          "id": "proof-workspace-loop",
+          "kind": "ui",
+          "status": "ready",
+          "title": "Judge-ready Workspace loop already exists",
+          "summary": "Quick Capture, Contacts, Drafts, Queue, and Mirror already operate inside one loopback-only product surface.",
+          "bounties": [
+            "claw-for-human",
+            "animoca",
+            "z-ai-general"
+          ],
+          "route": "/demo",
+          "source": "socialos/apps/web/server.mjs"
+        },
+        {
+          "id": "proof-memory-identity",
+          "kind": "memory",
+          "status": "ready",
+          "title": "Persistent identity and relationship memory are first-class",
+          "summary": "Person, Identity, Interaction, Event, SelfCheckin, Mirror, and MirrorEvidence rows already power recall and follow-up.",
+          "bounties": [
+            "animoca",
+            "human-for-claw",
+            "ai-agents-for-good"
+          ],
+          "route": "/people",
+          "source": "infra/db/schema.sql"
+        },
+        {
+          "id": "proof-pitch-pack",
+          "kind": "deck",
+          "status": "ready",
+          "title": "Deck and public evidence stay submission-ready",
+          "summary": "The shared pitch pack stays repo-native, with 4 runtime lanes and public evidence snapshots available for judges.",
+          "bounties": [
+            "claw-for-human",
+            "animoca",
+            "human-for-claw",
+            "z-ai-general",
+            "ai-agents-for-good"
+          ],
+          "route": "/deck",
+          "source": "socialos/docs/pitch/VC_DECK_SPEC.md"
+        }
+      ]
+    },
+    {
+      "id": "human-for-claw",
+      "label": "Human for Claw",
+      "prize": "$500 USD",
+      "route": "/buddy",
+      "audience": "judges evaluating kid-friendly or family-friendly Claw experiences",
+      "hook": "Offer a friendship and gratitude coach with guardrails instead of an unrestricted agent.",
+      "fit": "SocialOS already captures people, follow-up, and reflection. Buddy mode narrows that loop to safe, supportive actions.",
+      "uniqueAngle": "Positive social coaching with explicit boundaries and no risky publishing surface.",
+      "integrations": [
+        "openclaw",
+        "buddy",
+        "workspace"
+      ],
+      "proofKinds": [
+        "ui",
+        "safety",
+        "memory"
+      ],
+      "demoSteps": [
+        "Open /buddy",
+        "Pick a safe task card",
+        "Jump into a prefilled Workspace flow"
+      ],
+      "status": "ready",
+      "requiredIntegrations": [
+        {
+          "id": "openclaw",
+          "label": "OpenClaw Runtime",
+          "configured": true,
+          "status": "ready",
+          "summary": "4 lanes active for orchestrator, memory, compliance, and publishing.",
+          "model": "",
+          "route": "/studio?panel=agents"
+        },
+        {
+          "id": "buddy",
+          "label": "Buddy Guardrails",
+          "configured": true,
+          "status": "ready",
+          "summary": "Friendship and gratitude mode keeps the experience narrow and trust-first.",
+          "model": "",
+          "route": "/buddy"
+        },
+        {
+          "id": "workspace",
+          "label": "Workspace UI",
+          "configured": true,
+          "status": "ready",
+          "summary": "Judge-facing capture, memory, drafts, queue, and mirror loop.",
+          "model": "",
+          "route": "/demo"
+        }
+      ],
+      "proofCount": 4,
+      "recommendedRoute": "/buddy",
+      "proofs": [
+        {
+          "id": "proof-openclaw-runtime",
+          "kind": "openclaw",
+          "status": "ready",
+          "title": "OpenClaw runtime powers the product lanes",
+          "summary": "4 lanes active for orchestrator, memory, compliance, and publishing.",
+          "bounties": [
+            "claw-for-human",
+            "animoca",
+            "ai-agents-for-good",
+            "human-for-claw"
+          ],
+          "route": "/studio?panel=agents",
+          "source": "socialos/openclaw/runtime.openclaw.json5"
+        },
+        {
+          "id": "proof-memory-identity",
+          "kind": "memory",
+          "status": "ready",
+          "title": "Persistent identity and relationship memory are first-class",
+          "summary": "Person, Identity, Interaction, Event, SelfCheckin, Mirror, and MirrorEvidence rows already power recall and follow-up.",
+          "bounties": [
+            "animoca",
+            "human-for-claw",
+            "ai-agents-for-good"
+          ],
+          "route": "/people",
+          "source": "infra/db/schema.sql"
+        },
+        {
+          "id": "proof-buddy-guardrails",
+          "kind": "safety",
+          "status": "ready",
+          "title": "Buddy mode keeps the experience safe and narrow",
+          "summary": "The product stays loopback-only, dry-run by default, and Buddy mode funnels users into four friendly tasks.",
+          "bounties": [
+            "human-for-claw",
+            "claw-for-human"
+          ],
+          "route": "/buddy",
+          "source": "socialos/apps/web/server.mjs"
+        },
+        {
+          "id": "proof-pitch-pack",
+          "kind": "deck",
+          "status": "ready",
+          "title": "Deck and public evidence stay submission-ready",
+          "summary": "The shared pitch pack stays repo-native, with 4 runtime lanes and public evidence snapshots available for judges.",
+          "bounties": [
+            "claw-for-human",
+            "animoca",
+            "human-for-claw",
+            "z-ai-general",
+            "ai-agents-for-good"
+          ],
+          "route": "/deck",
+          "source": "socialos/docs/pitch/VC_DECK_SPEC.md"
+        }
+      ]
+    },
+    {
+      "id": "z-ai-general",
+      "label": "Z.AI General",
+      "prize": "$4,000 USD",
+      "route": "/hackathon?bounty=z-ai-general",
+      "audience": "judges who want a real GLM-powered prototype",
+      "hook": "Use GLM in the core multilingual SocialOS workflow, not as a side widget.",
+      "fit": "Workspace responses, bilingual summarization, and draft generation all map naturally onto the current product loop.",
+      "uniqueAngle": "Chinese + English creator workflow where GLM is a core path, not a decorative provider option.",
+      "integrations": [
+        "glm",
+        "workspace",
+        "deck"
+      ],
+      "proofKinds": [
+        "glm",
+        "ui",
+        "deck"
+      ],
+      "demoSteps": [
+        "Open /hackathon",
+        "Call GLM router",
+        "Show GLM-tagged Workspace or Draft flow"
+      ],
+      "status": "partial",
+      "requiredIntegrations": [
+        {
+          "id": "glm",
+          "label": "Z.AI GLM",
+          "configured": false,
+          "status": "pending",
+          "summary": "Add GLM_API_KEY to activate Z.AI routing for Workspace and Drafts.",
+          "model": "",
+          "route": "/hackathon?bounty=z-ai-general"
+        },
+        {
+          "id": "workspace",
+          "label": "Workspace UI",
+          "configured": true,
+          "status": "ready",
+          "summary": "Judge-facing capture, memory, drafts, queue, and mirror loop.",
+          "model": "",
+          "route": "/demo"
+        },
+        {
+          "id": "deck",
+          "label": "Pitch Deck",
+          "configured": true,
+          "status": "ready",
+          "summary": "Public deck now carries the shared story plus bounty-specific appendix slides.",
+          "model": "",
+          "route": "/deck"
+        }
+      ],
+      "proofCount": 3,
+      "recommendedRoute": "/hackathon?bounty=z-ai-general",
+      "proofs": [
+        {
+          "id": "proof-workspace-loop",
+          "kind": "ui",
+          "status": "ready",
+          "title": "Judge-ready Workspace loop already exists",
+          "summary": "Quick Capture, Contacts, Drafts, Queue, and Mirror already operate inside one loopback-only product surface.",
+          "bounties": [
+            "claw-for-human",
+            "animoca",
+            "z-ai-general"
+          ],
+          "route": "/demo",
+          "source": "socialos/apps/web/server.mjs"
+        },
+        {
+          "id": "proof-glm-router",
+          "kind": "glm",
+          "status": "pending",
+          "title": "GLM router is wired into Workspace and Draft generation",
+          "summary": "Add GLM_API_KEY to activate Z.AI routing for Workspace and Drafts.",
+          "bounties": [
+            "z-ai-general"
+          ],
+          "route": "/hackathon?bounty=z-ai-general",
+          "source": "socialos/apps/api/server.mjs"
+        },
+        {
+          "id": "proof-pitch-pack",
+          "kind": "deck",
+          "status": "ready",
+          "title": "Deck and public evidence stay submission-ready",
+          "summary": "The shared pitch pack stays repo-native, with 4 runtime lanes and public evidence snapshots available for judges.",
+          "bounties": [
+            "claw-for-human",
+            "animoca",
+            "human-for-claw",
+            "z-ai-general",
+            "ai-agents-for-good"
+          ],
+          "route": "/deck",
+          "source": "socialos/docs/pitch/VC_DECK_SPEC.md"
+        }
+      ]
+    },
+    {
+      "id": "ai-agents-for-good",
+      "label": "AI Agents for Good",
+      "prize": "$5,000 USDT",
+      "route": "/hackathon?bounty=ai-agents-for-good",
+      "audience": "judges looking for impact-focused agent workflows",
+      "hook": "Turn SocialOS into a community support and volunteer coordination operating system.",
+      "fit": "Contacts, events, follow-up drafts, and evidence-backed coordination already exist; FLock adds SDG triage and urgency scoring.",
+      "uniqueAngle": "Long-term relationship memory and follow-through for impact work, not a one-turn charity chatbot.",
+      "integrations": [
+        "openclaw",
+        "flock",
+        "workspace"
+      ],
+      "proofKinds": [
+        "flock",
+        "openclaw",
+        "memory"
+      ],
+      "demoSteps": [
+        "Open /hackathon",
+        "Run SDG triage",
+        "Promote the result into follow-up actions and drafts"
+      ],
+      "status": "partial",
+      "requiredIntegrations": [
+        {
+          "id": "openclaw",
+          "label": "OpenClaw Runtime",
+          "configured": true,
+          "status": "ready",
+          "summary": "4 lanes active for orchestrator, memory, compliance, and publishing.",
+          "model": "",
+          "route": "/studio?panel=agents"
+        },
+        {
+          "id": "flock",
+          "label": "FLock",
+          "configured": false,
+          "status": "pending",
+          "summary": "Add FLOCK_API_KEY to activate SDG triage for AI Agents for Good.",
+          "model": "",
+          "route": "/hackathon?bounty=ai-agents-for-good"
+        },
+        {
+          "id": "workspace",
+          "label": "Workspace UI",
+          "configured": true,
+          "status": "ready",
+          "summary": "Judge-facing capture, memory, drafts, queue, and mirror loop.",
+          "model": "",
+          "route": "/demo"
+        }
+      ],
+      "proofCount": 4,
+      "recommendedRoute": "/hackathon?bounty=ai-agents-for-good",
+      "proofs": [
+        {
+          "id": "proof-openclaw-runtime",
+          "kind": "openclaw",
+          "status": "ready",
+          "title": "OpenClaw runtime powers the product lanes",
+          "summary": "4 lanes active for orchestrator, memory, compliance, and publishing.",
+          "bounties": [
+            "claw-for-human",
+            "animoca",
+            "ai-agents-for-good",
+            "human-for-claw"
+          ],
+          "route": "/studio?panel=agents",
+          "source": "socialos/openclaw/runtime.openclaw.json5"
+        },
+        {
+          "id": "proof-memory-identity",
+          "kind": "memory",
+          "status": "ready",
+          "title": "Persistent identity and relationship memory are first-class",
+          "summary": "Person, Identity, Interaction, Event, SelfCheckin, Mirror, and MirrorEvidence rows already power recall and follow-up.",
+          "bounties": [
+            "animoca",
+            "human-for-claw",
+            "ai-agents-for-good"
+          ],
+          "route": "/people",
+          "source": "infra/db/schema.sql"
+        },
+        {
+          "id": "proof-flock-triage",
+          "kind": "flock",
+          "status": "pending",
+          "title": "FLock SDG triage is ready for impact workflows",
+          "summary": "Add FLOCK_API_KEY to activate SDG triage for AI Agents for Good.",
+          "bounties": [
+            "ai-agents-for-good"
+          ],
+          "route": "/hackathon?bounty=ai-agents-for-good",
+          "source": "socialos/apps/api/server.mjs"
+        },
+        {
+          "id": "proof-pitch-pack",
+          "kind": "deck",
+          "status": "ready",
+          "title": "Deck and public evidence stay submission-ready",
+          "summary": "The shared pitch pack stays repo-native, with 4 runtime lanes and public evidence snapshots available for judges.",
+          "bounties": [
+            "claw-for-human",
+            "animoca",
+            "human-for-claw",
+            "z-ai-general",
+            "ai-agents-for-good"
+          ],
+          "route": "/deck",
+          "source": "socialos/docs/pitch/VC_DECK_SPEC.md"
+        }
+      ]
+    }
+  ],
+  "proofsPreview": [
+    {
+      "id": "proof-openclaw-runtime",
+      "kind": "openclaw",
+      "status": "ready",
+      "title": "OpenClaw runtime powers the product lanes",
+      "summary": "4 lanes active for orchestrator, memory, compliance, and publishing.",
+      "bounties": [
+        "claw-for-human",
+        "animoca",
+        "ai-agents-for-good",
+        "human-for-claw"
+      ],
+      "route": "/studio?panel=agents",
+      "source": "socialos/openclaw/runtime.openclaw.json5"
+    },
+    {
+      "id": "proof-workspace-loop",
+      "kind": "ui",
+      "status": "ready",
+      "title": "Judge-ready Workspace loop already exists",
+      "summary": "Quick Capture, Contacts, Drafts, Queue, and Mirror already operate inside one loopback-only product surface.",
+      "bounties": [
+        "claw-for-human",
+        "animoca",
+        "z-ai-general"
+      ],
+      "route": "/demo",
+      "source": "socialos/apps/web/server.mjs"
+    },
+    {
+      "id": "proof-memory-identity",
+      "kind": "memory",
+      "status": "ready",
+      "title": "Persistent identity and relationship memory are first-class",
+      "summary": "Person, Identity, Interaction, Event, SelfCheckin, Mirror, and MirrorEvidence rows already power recall and follow-up.",
+      "bounties": [
+        "animoca",
+        "human-for-claw",
+        "ai-agents-for-good"
+      ],
+      "route": "/people",
+      "source": "infra/db/schema.sql"
+    },
+    {
+      "id": "proof-buddy-guardrails",
+      "kind": "safety",
+      "status": "ready",
+      "title": "Buddy mode keeps the experience safe and narrow",
+      "summary": "The product stays loopback-only, dry-run by default, and Buddy mode funnels users into four friendly tasks.",
+      "bounties": [
+        "human-for-claw",
+        "claw-for-human"
+      ],
+      "route": "/buddy",
+      "source": "socialos/apps/web/server.mjs"
+    },
+    {
+      "id": "proof-glm-router",
+      "kind": "glm",
+      "status": "pending",
+      "title": "GLM router is wired into Workspace and Draft generation",
+      "summary": "Add GLM_API_KEY to activate Z.AI routing for Workspace and Drafts.",
+      "bounties": [
+        "z-ai-general"
+      ],
+      "route": "/hackathon?bounty=z-ai-general",
+      "source": "socialos/apps/api/server.mjs"
+    },
+    {
+      "id": "proof-flock-triage",
+      "kind": "flock",
+      "status": "pending",
+      "title": "FLock SDG triage is ready for impact workflows",
+      "summary": "Add FLOCK_API_KEY to activate SDG triage for AI Agents for Good.",
+      "bounties": [
+        "ai-agents-for-good"
+      ],
+      "route": "/hackathon?bounty=ai-agents-for-good",
+      "source": "socialos/apps/api/server.mjs"
+    },
+    {
+      "id": "proof-pitch-pack",
+      "kind": "deck",
+      "status": "ready",
+      "title": "Deck and public evidence stay submission-ready",
+      "summary": "The shared pitch pack stays repo-native, with 4 runtime lanes and public evidence snapshots available for judges.",
+      "bounties": [
+        "claw-for-human",
+        "animoca",
+        "human-for-claw",
+        "z-ai-general",
+        "ai-agents-for-good"
+      ],
+      "route": "/deck",
+      "source": "socialos/docs/pitch/VC_DECK_SPEC.md"
+    }
+  ]
+}

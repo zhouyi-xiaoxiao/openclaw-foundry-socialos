@@ -3,6 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { startApiServer } from '../../socialos/apps/api/server.mjs';
 
+// Intentional Chinese fixtures below verify Han-name parsing, bilingual captures,
+// and Chinese contact confirmation behavior.
+
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }

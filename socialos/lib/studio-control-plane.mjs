@@ -47,19 +47,19 @@ const FOUNDY_TO_STUDIO_SECTION = Object.freeze({
 const AGENT_RESPONSIBILITIES = Object.freeze({
   forge_orchestrator: Object.freeze({
     title: 'Orchestrator',
-    responsibility: '拆目标、排优先级、生成可执行的 Studio 计划',
+    responsibility: 'Break work down, prioritize it, and turn it into an executable Studio plan.',
   }),
   forge_coder: Object.freeze({
     title: 'Coder',
-    responsibility: '实现 API、UI、runtime、docs 等代码变更',
+    responsibility: 'Implement API, UI, runtime, and documentation changes.',
   }),
   forge_tester: Object.freeze({
     title: 'Tester',
-    responsibility: '执行 smoke/e2e/gate，确认改动可验证',
+    responsibility: 'Run smoke, e2e, and gate checks so every change is verifiable.',
   }),
   forge_reviewer: Object.freeze({
     title: 'Reviewer',
-    responsibility: '检查策略、安全边界和回归风险',
+    responsibility: 'Review policy, safety boundaries, and regression risk.',
   }),
 });
 

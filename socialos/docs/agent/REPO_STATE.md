@@ -41,6 +41,18 @@
 - Overnight: `scripts/overnight_supervisor.sh` refreshes the generated docs after writing the local summary.
 
 ## Evidence Files
+- `socialos/docs/evidence/hackathon-drafts-zai.json`
+- `socialos/docs/evidence/hackathon-flock-triage.json`
+- `socialos/docs/evidence/hackathon-glm-generate.json`
+- `socialos/docs/evidence/hackathon-overview.json`
+- `socialos/docs/evidence/hackathon-proof-summary.md`
+- `socialos/docs/evidence/hackathon-proofs-ai-agents-for-good.json`
+- `socialos/docs/evidence/hackathon-proofs-all.json`
+- `socialos/docs/evidence/hackathon-proofs-animoca.json`
+- `socialos/docs/evidence/hackathon-proofs-claw-for-human.json`
+- `socialos/docs/evidence/hackathon-proofs-human-for-claw.json`
+- `socialos/docs/evidence/hackathon-proofs-z-ai-general.json`
+- `socialos/docs/evidence/hackathon-workspace-zai.json`
 - `socialos/docs/evidence/sample-digest.md`
 - `socialos/docs/evidence/sample-run-report.json`
 - `socialos/docs/evidence/sample-run-report.md`
@@ -58,15 +70,17 @@
 - ?? .deck-site/
 
 ## Overnight Context
-- Next focus: workspace-usability-and-demo-trust
-- Reason: Repo is healthy; continue aggressive product/core polish in Workspace, Contacts, Drafts, and Queue.
+- Next focus: respect-foundry-queue
+- Reason: Foundry already has active queue work; outer loop should bias to validation and repo trust.
 
 ## Script Entry Points
 - `bash scripts/demo.sh` -> install, deploy runtime, validate safety, start public demo
 - `bash scripts/demo_status.sh` -> report local demo service health
 - `bash scripts/overnight_supervisor.sh` -> run the unattended outer-loop guard and write a morning-review summary
 - `node scripts/refresh_public_docs.mjs` -> refresh generated public docs and evidence status after a safe run
-- `node scripts/export_vc_deck.mjs` -> export the public VC deck as a static site artifact for GitHub Pages
+- `bash scripts/hackathon_preflight.sh` -> verify record-ready demo state, capture proof snapshots, and export the public proof site
+- `node scripts/capture_hackathon_proofs.mjs` -> write stable bounty proof snapshots into public evidence files
+- `node scripts/export_vc_deck.mjs` -> export the public deck plus proof pages as a static site artifact for GitHub Pages
 - `bash scripts/stop_demo.sh` -> stop local demo services
 - `bash scripts/test.sh` -> run full public validation suite
 - `bash scripts/foundry_dispatch.sh STATUS` -> inspect and control Foundry automation

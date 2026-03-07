@@ -23,6 +23,11 @@ This document is the curated source of truth for the public VC deck served from 
 6. Why it is different
 7. Why this is credible
 8. What I want now
+9. Appendix: Claw for Human
+10. Appendix: Animoca Bounty
+11. Appendix: Human for Claw
+12. Appendix: Z.AI General
+13. Appendix: AI Agents for Good
 
 ## Slide Headlines
 1. `People, context, content, and self-understanding drift apart.`
@@ -92,8 +97,15 @@ This document is the curated source of truth for the public VC deck served from 
 - Local rehearsal URLs may appear only in rehearsal mode or speaker notes.
 - Keep the deck self-contained and repo-native.
 
+## Public Proof Links
+- Public deck root: `https://zhouyixiaoxiao.org/`
+- Public demo proof: `https://zhouyixiaoxiao.org/demo/`
+- Public hackathon hub: `https://zhouyixiaoxiao.org/hackathon/`
+- Public buddy proof: `https://zhouyixiaoxiao.org/buddy/`
+
 ## Out Of Scope
 - Do not turn the deck into a general product dashboard.
 - Do not show deep operator/Studio internals in the main story.
 - Do not add raw local run logs or volatile runtime state.
 - Do not auto-regenerate slide copy from scripts.
+- Do not let the bounty appendix replace the core 8-slide product story.

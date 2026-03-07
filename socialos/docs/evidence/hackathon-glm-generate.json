@@ -1,0 +1,13 @@
+{
+  "answer": "EN: Summarize why SocialOS fits Z.AI General for judges in one short bilingual answer.\nZH: {\"audience\":\"DoraHacks judges\",\"languages\":[\"en\",\"zh\"]}",
+  "proof": {
+    "provider": "local",
+    "requestedProvider": "glm",
+    "model": "",
+    "fallbackUsed": true,
+    "reason": "glm-not-configured"
+  },
+  "auditId": "audit_4877fdb37dbf4090979998f385c20e7d",
+  "digestId": "digest_a79e2a48036842058013627744437630",
+  "createdAt": "2026-03-07T21:08:02.439Z"
+}

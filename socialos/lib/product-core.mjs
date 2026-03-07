@@ -1,3 +1,5 @@
+// Intentional Chinese strings in this module are limited to Chinese-input parsing,
+// bilingual contact extraction, and Chinese-platform content support.
 const POSITIVE_ENERGY_MARKERS = ['excited', 'energized', 'focused', 'grateful', 'happy', 'shipped', '进展', '开心', '高兴', '顺利', '推进'];
 const NEGATIVE_ENERGY_MARKERS = ['tired', 'drained', 'stretched', 'anxious', 'frustrated', 'sad', '累', '疲惫', '焦虑', '压力', '耗电'];
 const TAG_KEYWORDS = new Map([
@@ -439,17 +441,24 @@ export function buildStructuredMirror({ checkins = [], captures = [], interactio
     .sort((left, right) => left.energy - right.energy)
     .slice(0, 3);
 
+  const momentumEvidenceRows = energizers.length
+    ? energizers
+    : energyRows.length
+      ? energyRows.slice(0, 2)
+      : allEvidence.slice(0, 2);
+  const nextExperimentEvidenceRows = [...drainers.slice(0, 1), ...energizers.slice(0, 1)].filter(Boolean);
+
   const conclusions = [
     {
       title: 'Momentum Pattern',
-      summary:
-        energizers.length > drainers.length
+      summary: energyRows.length
+        ? energizers.length > drainers.length
           ? 'Positive momentum outweighed drag in this window.'
-          : 'Energy was mixed, and recovery needs to be scheduled intentionally.',
-      evidence: summarizeClaimEvidence(
-        'Momentum Pattern',
-        energizers.length ? energizers : energyRows.slice(0, 2)
-      ),
+          : 'Energy was mixed, and recovery needs to be scheduled intentionally.'
+        : allEvidence.length
+          ? 'Recent captures show active movement across people and progress work.'
+          : 'Not enough recent signal is available to judge momentum yet.',
+      evidence: summarizeClaimEvidence('Momentum Pattern', momentumEvidenceRows),
     },
     {
       title: 'Relationship Signal',
@@ -463,7 +472,7 @@ export function buildStructuredMirror({ checkins = [], captures = [], interactio
       summary: 'Protect one follow-up block and one recovery block next week.',
       evidence: summarizeClaimEvidence(
         'Next Experiment',
-        [...drainers.slice(0, 1), ...energizers.slice(0, 1)].filter(Boolean)
+        nextExperimentEvidenceRows.length ? nextExperimentEvidenceRows : allEvidence.slice(0, 2)
       ),
     },
   ];
@@ -486,7 +495,7 @@ export function buildStructuredMirror({ checkins = [], captures = [], interactio
     summaryText:
       themes.length || energyRows.length
         ? summaryParts.join(' ')
-        : '本周暂无足够 check-in 数据。建议至少完成 3 次 Quick Capture 后再生成 Self Mirror。',
+        : 'There is not enough recent check-in data yet. Add at least three Quick Captures before generating a Self Mirror.',
     themes,
     energizers,
     drainers,

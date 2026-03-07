@@ -21,12 +21,22 @@ This index is the fastest way for a human reviewer or a future agent to understa
 ## Demo and Pitch
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/DEMO_SCRIPT.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/DEMO_SCRIPT.md)
   Demo runbook and live flow.
+- [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/HACKATHON_BOUNTIES.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/HACKATHON_BOUNTIES.md)
+  Bounty-by-bounty fit, routes, proof surfaces, and honest integration status.
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/PITCH_5_MIN.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/PITCH_5_MIN.md)
   Five-minute pitch structure and timing.
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/JUDGE_BRIEF.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/JUDGE_BRIEF.md)
   Short judge-oriented product brief.
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DEMO_TALK_TRACK.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DEMO_TALK_TRACK.md)
   Exact talk track and URLs for the live demo.
+- [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DORAHACKS_MASTER_SCRIPT.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DORAHACKS_MASTER_SCRIPT.md)
+  Main 8-9 minute English script for the recording.
+- [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DORAHACKS_BOUNTY_SWAPS.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DORAHACKS_BOUNTY_SWAPS.md)
+  45-60 second bounty-specific swap segments.
+- [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/REHEARSAL_CUES_CN.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/REHEARSAL_CUES_CN.md)
+  Chinese rehearsal prompts keyed to the English script.
+- [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/RECORDING_AND_SUBMISSION_RUNBOOK.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/RECORDING_AND_SUBMISSION_RUNBOOK.md)
+  End-to-end recording, export, and DoraHacks submission checklist.
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/VC_DECK_SPEC.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/VC_DECK_SPEC.md)
   VC-facing deck source of truth: slide order, copy, and visual intent.
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DECK_MAINTENANCE.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DECK_MAINTENANCE.md)
@@ -62,6 +72,8 @@ This index is the fastest way for a human reviewer or a future agent to understa
 - Public deck route and rendering shell: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/apps/web/server.mjs`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/apps/web/server.mjs) (`/deck`)
 - Deck runtime assets: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/apps/web/vendor/reveal/reveal.min.js`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/apps/web/vendor/reveal/reveal.min.js), [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/apps/web/vendor/reveal/reveal.min.css`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/apps/web/vendor/reveal/reveal.min.css)
 - Static deck export: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/scripts/export_vc_deck.mjs`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/scripts/export_vc_deck.mjs)
+- Hackathon proof capture: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/scripts/capture_hackathon_proofs.mjs`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/scripts/capture_hackathon_proofs.mjs)
+- Recording preflight: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/scripts/hackathon_preflight.sh`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/scripts/hackathon_preflight.sh)
 - Pages deployment workflow: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/.github/workflows/deploy-deck.yml`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/.github/workflows/deploy-deck.yml)
 
 ## Static vs Generated
@@ -87,4 +99,10 @@ Export the public deck as a static site artifact with:
 
 ```bash
 node scripts/export_vc_deck.mjs
+```
+
+Refresh the hackathon proof snapshots with:
+
+```bash
+node scripts/capture_hackathon_proofs.mjs
 ```

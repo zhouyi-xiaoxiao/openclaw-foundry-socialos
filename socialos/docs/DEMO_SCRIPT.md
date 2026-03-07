@@ -26,11 +26,22 @@ bash scripts/demo_status.sh
 ```
 
 Expected health checks:
+- `ready=true` for both services
 - API returns `{"ok":true}`
 - Web returns the unified `Workspace` page
 - loopback-only ports are bound
 
-## 3. Full validation before presenting
+## 3. Recording-day preflight
+```bash
+bash scripts/hackathon_preflight.sh
+```
+
+This command:
+- verifies or repairs local demo readiness
+- captures stable hackathon proof snapshots
+- exports the public proof site into `.deck-site/`
+- prints the exact local and public URLs to open
+## 4. Full validation before presenting
 ```bash
 bash scripts/test.sh
 ```
@@ -48,8 +59,9 @@ The validation suite now covers:
 - `weekly_mirror_smoke`
 - `ops_api_smoke`
 - `web_routes_smoke`
+- `review_demo_seed_smoke`
 
-## 4. Suggested demo flow (5-10 minutes)
+## 5. Suggested demo flow (5-10 minutes)
 ### Step A. Confirm runtime status
 ```bash
 bash scripts/demo_status.sh
@@ -58,6 +70,9 @@ bash scripts/foundry_dispatch.sh STATUS
 
 Then open:
 - `http://127.0.0.1:4173/quick-capture`
+- `http://127.0.0.1:4173/demo`
+- `http://127.0.0.1:4173/hackathon`
+- `http://127.0.0.1:4173/buddy`
 - `http://127.0.0.1:4173/settings`
 - `http://127.0.0.1:4173/settings?panel=ops`
 
@@ -84,7 +99,7 @@ Talk track:
 - Open `http://127.0.0.1:4173/drafts`
 - Generate the 7-platform package set:
   - English only for `LinkedIn / X / Instagram`
-  - Chinese only for `知乎 / 小红书 / 微信朋友圈 / 微信公众号`
+  - Chinese only for `Zhihu / Rednote / WeChat Moments / WeChat Official Account`
 - Edit one draft and run validation
 
 ### Step E. Queue / Publish
@@ -102,20 +117,31 @@ Talk track:
 - Generate a mirror
 - Expand one conclusion and show evidence
 
-## 5. Safety line to say out loud
+### Step G. Bounty overlays
+- Open `http://127.0.0.1:4173/demo` for the shared judge path and `Claw for Human`
+- Open `http://127.0.0.1:4173/hackathon` for the 5-bounty hub and integration proof cards
+- Open `http://127.0.0.1:4173/buddy` for the `Human for Claw` Friendship & Gratitude Coach flow
+- Use `POST /integrations/glm/generate` to capture GLM proof for `Z.AI General`
+- Use `POST /integrations/flock/sdg-triage` to capture SDG proof for `AI Agents for Good`
+- Open `https://zhouyixiaoxiao.org/`, `/demo/`, `/hackathon/`, and `/buddy/` only for the public proof segment, not for the interactive demo loop
+
+## 6. Safety line to say out loud
 - API stays loopback-only.
 - Publish mode stays `dry-run` by default.
 - No widening of `gateway.bind`, `gateway.tailscale`, or `gateway.auth`.
 - Live publish still needs explicit credentials and operator intent.
 
-## 6. Public evidence
+## 7. Public evidence
 - curated public evidence: `socialos/docs/EVIDENCE.md`
+- hackathon framing: `socialos/docs/HACKATHON_BOUNTIES.md`
+- master recording script: `socialos/docs/pitch/DORAHACKS_MASTER_SCRIPT.md`
+- recording + submission runbook: `socialos/docs/pitch/RECORDING_AND_SUBMISSION_RUNBOOK.md`
 - representative run report snapshots: `socialos/docs/evidence/`
 - runtime config: `socialos/openclaw/runtime.openclaw.json5`
 - test suite: `bash scripts/test.sh`
 - one automation pass: `bash scripts/devloop_once.sh`
 
-## 7. Stop the demo cleanly
+## 8. Stop the demo cleanly
 ```bash
 bash scripts/stop_demo.sh
 ```

@@ -3,6 +3,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { startApiServer } from '../../socialos/apps/api/server.mjs';
 
+// This smoke stays fully English because it validates review-facing mirror output.
+
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
@@ -28,7 +30,7 @@ async function main() {
     await requestJson(api.baseUrl, '/capture', {
       method: 'POST',
       body: {
-        text: '今天遇到了李静，一起推进了产品工作台，感觉很有进展，也有一点压力。',
+        text: 'I met Jamie Li today, advanced the product workspace, felt real momentum, and also noticed some pressure.',
         source: 'mirror_evidence_smoke',
       },
     });

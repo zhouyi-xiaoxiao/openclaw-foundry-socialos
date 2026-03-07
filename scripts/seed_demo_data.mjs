@@ -17,6 +17,21 @@ const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, '..');
 const DB_PATH = path.resolve(process.env.SOCIALOS_DB_PATH || path.join(REPO_ROOT, 'infra/db/socialos.db'));
 const SCHEMA_PATH = path.join(REPO_ROOT, 'infra/db/schema.sql');
+const RESET_REVIEW_DEMO = process.argv.includes('--reset-review-demo');
+const REVIEW_RESET_TABLES = Object.freeze([
+  'MirrorEvidence',
+  'Mirror',
+  'SelfCheckin',
+  'PublishTask',
+  'PostDraft',
+  'CaptureAsset',
+  'Audit',
+  'EventPersonLink',
+  'Event',
+  'Interaction',
+  'Identity',
+  'Person',
+]);
 
 function nowIso(offsetMinutes = 0) {
   return new Date(Date.now() + offsetMinutes * 60 * 1000).toISOString();
@@ -24,6 +39,12 @@ function nowIso(offsetMinutes = 0) {
 
 function writeRow(db, sql, params) {
   db.prepare(sql).run(...params);
+}
+
+function wipeReviewDemoTables(db) {
+  for (const tableName of REVIEW_RESET_TABLES) {
+    db.exec(`DELETE FROM ${tableName}`);
+  }
 }
 
 function deletePersonSeed(db, personId) {
@@ -37,6 +58,19 @@ function deleteEventSeed(db, eventId) {
   writeRow(db, 'DELETE FROM EventPersonLink WHERE event_id = ?', [eventId]);
   writeRow(db, 'DELETE FROM PostDraft WHERE event_id = ?', [eventId]);
   writeRow(db, 'DELETE FROM Event WHERE id = ?', [eventId]);
+}
+
+function formatSeedPlatformLabel(platform) {
+  const labels = {
+    instagram: 'Instagram',
+    x: 'X',
+    linkedin: 'LinkedIn',
+    zhihu: 'Zhihu',
+    xiaohongshu: 'Rednote',
+    wechat_moments: 'WeChat Moments',
+    wechat_official: 'WeChat Official Account',
+  };
+  return labels[platform] || platform;
 }
 
 function seedNetworkContacts(db) {
@@ -119,6 +153,7 @@ function seedNetworkEvents(db) {
   }
 }
 
+// Chinese strings below are intentional and limited to Chinese-platform draft bodies.
 function buildPrimaryDemoDraftContent(platform) {
   if (platform === 'instagram') {
     return 'Today I turned one real conversation with London hackathon organiser Minghan Xiao into a SocialOS loop that keeps people, context, and follow-up alive.';
@@ -177,6 +212,10 @@ function buildRecentCaptureSeeds() {
 function main() {
   const db = new DatabaseSync(DB_PATH);
   db.exec(fs.readFileSync(SCHEMA_PATH, 'utf8'));
+
+  if (RESET_REVIEW_DEMO) {
+    wipeReviewDemoTables(db);
+  }
 
   const now = nowIso();
   const earlier = nowIso(-180);
@@ -240,8 +279,22 @@ function main() {
   );
 
   const checkins = [
-    ['checkin_demo_1', 1, ['energized', 'social'], 'hackathon debrief', '今天见完几个做产品的人，脑子很亮，想把 follow-up 快点接起来。', nowIso(-240)],
-    ['checkin_demo_2', -1, ['stretched'], 'back-to-back meetings', '下午连续聊天以后有点空，需要留一个恢复时间，不然晚上写东西会散。', nowIso(-60)],
+    [
+      'checkin_demo_1',
+      1,
+      ['energized', 'social'],
+      'hackathon debrief',
+      'After a day of strong product conversations, I felt energized and wanted to lock in the follow-up quickly.',
+      nowIso(-240),
+    ],
+    [
+      'checkin_demo_2',
+      -1,
+      ['stretched'],
+      'back-to-back meetings',
+      'After a run of back-to-back conversations, I felt stretched and needed a recovery block before writing again.',
+      nowIso(-60),
+    ],
   ];
 
   for (const [id, energy, emotions, trigger, reflection, createdAt] of checkins) {
@@ -283,11 +336,11 @@ function main() {
             entryTarget: `${platform} publish surface`,
           },
           publishPackage: {
-            title: platform === 'wechat_official' ? '把一次真实 follow-up 做成可持续的 SocialOS' : `${platform} demo package`,
+            title: `${formatSeedPlatformLabel(platform)} demo package`,
             body: `A reusable ${platform} package for the London organiser follow-up event.`,
             hashtags: ['#SocialOS', '#OpenClaw'],
             cta: 'Reply if you want to compare notes.',
-            entryTarget: `${platform} publish surface`,
+            entryTarget: `${formatSeedPlatformLabel(platform)} publish surface`,
             supportLevel: platform === 'wechat_official' ? 'L1.5 Rich Article Package' : 'L1 Assisted',
             assetChecklist: ['1 hero visual', '1 follow-up note'],
             steps: ['Copy content', 'Open platform entry', 'Post or mark manual complete'],
@@ -362,7 +415,7 @@ function main() {
     });
   });
 
-  console.log(`Demo data seeded into ${DB_PATH}`);
+  console.log(`Demo data seeded into ${DB_PATH}${RESET_REVIEW_DEMO ? ' (review reset mode)' : ''}`);
 }
 
 main();

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -66,6 +66,16 @@ function isPidAlive(pid) {
   }
 }
 
+function findListeningPid(port) {
+  const result = spawnSync('lsof', ['-tiTCP:' + String(port), '-sTCP:LISTEN'], {
+    encoding: 'utf8',
+  });
+  if (result.error) return null;
+  if (result.status !== 0 && result.status !== 1) return null;
+  const pid = Number(String(result.stdout || '').trim().split('\n').filter(Boolean)[0] || '');
+  return Number.isFinite(pid) && pid > 0 ? pid : null;
+}
+
 async function checkHealth(url) {
   try {
     const response = await fetch(url);
@@ -86,21 +96,43 @@ async function waitForHealth(url, retries = 30, delayMs = 300) {
 async function serviceStatus(service) {
   const pid = readPid(service.pidFile);
   const pidAlive = isPidAlive(pid);
+  const listeningPid = findListeningPid(service.port);
   const healthy = await checkHealth(service.healthUrl);
-  const alive = pid ? pidAlive : healthy;
+  const stalePid = Boolean(pid && !pidAlive);
+  const unmanagedHealthy = Boolean(healthy && listeningPid && (!pid || !pidAlive || listeningPid !== pid));
+  const ready = Boolean(healthy && listeningPid && !stalePid && (!pid || pidAlive));
   return {
     ...service,
     pid,
-    pidAlive: alive,
+    pidAlive,
+    stalePid,
+    listeningPid,
+    unmanagedHealthy,
     healthy,
+    ready,
   };
 }
 
 async function startService(service) {
   const current = await serviceStatus(service);
-  if (current.healthy) {
+  if (current.stalePid) {
+    clearPid(service.pidFile);
+  }
+
+  if (current.unmanagedHealthy && current.listeningPid) {
+    writePid(service.pidFile, current.listeningPid);
+    const adopted = await serviceStatus(service);
+    console.log(`${service.label} adopted healthy listener ${current.listeningPid} on :${service.port}`);
+    return adopted;
+  }
+
+  if (current.ready) {
     console.log(`${service.label} already healthy on :${service.port}`);
     return current;
+  }
+
+  if (current.pidAlive && !current.healthy) {
+    await stopService(service);
   }
 
   ensureControlDir();
@@ -161,22 +193,29 @@ async function commandStop() {
 }
 
 async function commandStatus() {
+  let allReady = true;
   for (const service of SERVICES) {
     const status = await serviceStatus(service);
+    allReady = allReady && status.ready;
     console.log(
-      `${status.label}: healthy=${status.healthy} pid=${status.pid ?? 'none'} alive=${status.pidAlive} health=${status.healthUrl}`
+      `${status.label}: ready=${status.ready} healthy=${status.healthy} pid=${status.pid ?? 'none'} pidAlive=${status.pidAlive} stalePid=${status.stalePid} listeningPid=${status.listeningPid ?? 'none'} unmanagedHealthy=${status.unmanagedHealthy} health=${status.healthUrl}`
     );
   }
+  return allReady;
 }
 
 const command = process.argv[2] || 'status';
+const strict = process.argv.includes('--strict');
 
 if (command === 'start') {
   await commandStart();
 } else if (command === 'stop') {
   await commandStop();
 } else if (command === 'status') {
-  await commandStatus();
+  const ready = await commandStatus();
+  if (strict && !ready) {
+    process.exitCode = 1;
+  }
 } else {
   console.error(`Unknown command: ${command}`);
   process.exit(1);

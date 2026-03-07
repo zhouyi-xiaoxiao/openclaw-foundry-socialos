@@ -1,0 +1,50 @@
+{
+  "bounty": "z-ai-general",
+  "kind": "",
+  "limit": 24,
+  "count": 3,
+  "proofs": [
+    {
+      "id": "proof-workspace-loop",
+      "kind": "ui",
+      "status": "ready",
+      "title": "Judge-ready Workspace loop already exists",
+      "summary": "Quick Capture, Contacts, Drafts, Queue, and Mirror already operate inside one loopback-only product surface.",
+      "bounties": [
+        "claw-for-human",
+        "animoca",
+        "z-ai-general"
+      ],
+      "route": "/demo",
+      "source": "socialos/apps/web/server.mjs"
+    },
+    {
+      "id": "proof-glm-router",
+      "kind": "glm",
+      "status": "pending",
+      "title": "GLM router is wired into Workspace and Draft generation",
+      "summary": "Add GLM_API_KEY to activate Z.AI routing for Workspace and Drafts.",
+      "bounties": [
+        "z-ai-general"
+      ],
+      "route": "/hackathon?bounty=z-ai-general",
+      "source": "socialos/apps/api/server.mjs"
+    },
+    {
+      "id": "proof-pitch-pack",
+      "kind": "deck",
+      "status": "ready",
+      "title": "Deck and public evidence stay submission-ready",
+      "summary": "The shared pitch pack stays repo-native, with 4 runtime lanes and public evidence snapshots available for judges.",
+      "bounties": [
+        "claw-for-human",
+        "animoca",
+        "human-for-claw",
+        "z-ai-general",
+        "ai-agents-for-good"
+      ],
+      "route": "/deck",
+      "source": "socialos/docs/pitch/VC_DECK_SPEC.md"
+    }
+  ]
+}

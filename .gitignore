@@ -1,6 +1,7 @@
 .DS_Store
 .locks/
 .demo/
+.deck-site/
 foundry/backups/
 reports/
 foundry/WORKSPACE_FOUNDY/*/.openclaw/

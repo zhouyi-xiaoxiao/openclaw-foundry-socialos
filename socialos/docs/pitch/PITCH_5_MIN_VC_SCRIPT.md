@@ -20,7 +20,7 @@ It starts in a single chat-first Workspace. I can begin with one natural note in
 
 Then I can recall it later with fuzzy context, not just exact search. I do not need the precise name or event title. I can search from the shape of the memory, and the system can bring the right person or interaction back to me.
 
-Once that moment becomes worth expressing, SocialOS can generate a clean set of platform-native drafts around the same event. Today that means one draft each for LinkedIn, X, and Instagram in English, and one draft each for Zhihu, Xiaohongshu, WeChat Moments, and WeChat Official Accounts in Chinese.
+Once that moment becomes worth expressing, SocialOS can generate a clean set of platform-native drafts around the same event. Today that means one draft each for LinkedIn, X, and Instagram in English, and one draft each for Zhihu, Rednote, WeChat Moments, and WeChat Official Accounts in Chinese.
 
 And importantly, the product does not pretend everything should be fully automated. The first version is trust-first. Drafts move into a queue and prepare a handoff. The system helps me organize, validate, and package the work, but it does not auto-post on my behalf.
 
@@ -35,6 +35,8 @@ SocialOS combines all three. It is Relationship OS, Content OS, and Self OS in o
 And the reason I believe this is credible is that it is built around real operational boundaries, not just a nice demo story.
 
 It is local-first because the most valuable data here is personal: private notes, screenshots, relationship context, and self signals. It stays loopback-only and dry-run by default because trust has to be earned before automation can expand. Under the surface, the system links people and events in a structured way, so memory and recall are not just loose text search. And the multi-agent runtime is there as enabling infrastructure so capture, memory, reflection, validation, and publish handoff can stay narrow, safer, and more explainable.
+
+For DoraHacks specifically, I keep the public proof layer separate from the interactive runtime. The live demo remains localhost-only, while the deck, bounty hub, and proof pages are published as a stable read-only site that judges can revisit after the video.
 
 What matters most is that the core loop already works today. A user can capture naturally, recall with fuzzy context, generate seven platform-native drafts, move through a trust-first queue, and end with evidence-backed reflection.
 

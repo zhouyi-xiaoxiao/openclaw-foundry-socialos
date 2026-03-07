@@ -3,6 +3,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { startApiServer } from '../../socialos/apps/api/server.mjs';
 
+// Intentional Chinese fixtures below verify hometown recall and bilingual natural search.
+
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
@@ -129,7 +131,7 @@ async function main() {
 
     const eventSearch = await requestJson(
       api.baseUrl,
-      '/events?query=the Bristol meetup with Sam that led to Xiaohongshu drafts&limit=5'
+      '/events?query=the Bristol meetup with Sam that led to Rednote drafts&limit=5'
     );
     assert(eventSearch.results[0]?.eventId === event.eventId, 'event natural-language search should rank the Bristol Sam event first');
 

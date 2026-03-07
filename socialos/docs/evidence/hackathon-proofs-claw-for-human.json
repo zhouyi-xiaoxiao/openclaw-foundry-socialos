@@ -1,0 +1,66 @@
+{
+  "bounty": "claw-for-human",
+  "kind": "",
+  "limit": 24,
+  "count": 4,
+  "proofs": [
+    {
+      "id": "proof-openclaw-runtime",
+      "kind": "openclaw",
+      "status": "ready",
+      "title": "OpenClaw runtime powers the product lanes",
+      "summary": "4 lanes active for orchestrator, memory, compliance, and publishing.",
+      "bounties": [
+        "claw-for-human",
+        "animoca",
+        "ai-agents-for-good",
+        "human-for-claw"
+      ],
+      "route": "/studio?panel=agents",
+      "source": "socialos/openclaw/runtime.openclaw.json5"
+    },
+    {
+      "id": "proof-workspace-loop",
+      "kind": "ui",
+      "status": "ready",
+      "title": "Judge-ready Workspace loop already exists",
+      "summary": "Quick Capture, Contacts, Drafts, Queue, and Mirror already operate inside one loopback-only product surface.",
+      "bounties": [
+        "claw-for-human",
+        "animoca",
+        "z-ai-general"
+      ],
+      "route": "/demo",
+      "source": "socialos/apps/web/server.mjs"
+    },
+    {
+      "id": "proof-buddy-guardrails",
+      "kind": "safety",
+      "status": "ready",
+      "title": "Buddy mode keeps the experience safe and narrow",
+      "summary": "The product stays loopback-only, dry-run by default, and Buddy mode funnels users into four friendly tasks.",
+      "bounties": [
+        "human-for-claw",
+        "claw-for-human"
+      ],
+      "route": "/buddy",
+      "source": "socialos/apps/web/server.mjs"
+    },
+    {
+      "id": "proof-pitch-pack",
+      "kind": "deck",
+      "status": "ready",
+      "title": "Deck and public evidence stay submission-ready",
+      "summary": "The shared pitch pack stays repo-native, with 4 runtime lanes and public evidence snapshots available for judges.",
+      "bounties": [
+        "claw-for-human",
+        "animoca",
+        "human-for-claw",
+        "z-ai-general",
+        "ai-agents-for-good"
+      ],
+      "route": "/deck",
+      "source": "socialos/docs/pitch/VC_DECK_SPEC.md"
+    }
+  ]
+}

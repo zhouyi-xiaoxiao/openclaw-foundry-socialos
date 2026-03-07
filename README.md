@@ -12,9 +12,21 @@ SocialOS is a local-first relationship + identity operating system. It turns raw
 The public repo is designed to be readable by judges, maintainers, and future AI/agents without any hidden context. It stays local-first, loopback-only, and `dry-run` by default.
 
 Public web deck target:
-- `zhouyixiaoxiao.org/deck`
+- `zhouyixiaoxiao.org/`
+- `zhouyixiaoxiao.org/deck/`
 - Local route during development: `http://127.0.0.1:4173/deck`
 - Whole-site deck export target: `zhouyixiaoxiao.org/`
+
+Public proof routes:
+- `https://zhouyixiaoxiao.org/demo/`
+- `https://zhouyixiaoxiao.org/hackathon/`
+- `https://zhouyixiaoxiao.org/buddy/`
+- `https://zhouyixiaoxiao.org/data/proofs/all.json`
+
+Hackathon routes:
+- `http://127.0.0.1:4173/demo`
+- `http://127.0.0.1:4173/hackathon`
+- `http://127.0.0.1:4173/buddy`
 
 ## Project Overview
 Current stable scope:
@@ -29,7 +41,7 @@ What the current `P1` build already does:
 - Capture text, voice, and image/business-card inputs into structured `Person / Identity / Interaction / SelfCheckin` memory
 - Search people, events, drafts, and self signals in natural language
 - Generate one English draft each for `LinkedIn / X / Instagram`
-- Generate one Chinese draft each for `知乎 / 小红书 / 微信朋友圈 / 微信公众号`
+- Generate one Chinese draft each for `Zhihu / Rednote / WeChat Moments / WeChat Official Account`
 - Validate drafts for format, PII, and sensitive wording
 - Queue assisted publish actions and record manual outcomes
 - Generate evidence-backed weekly self mirror summaries
@@ -40,19 +52,21 @@ git clone https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos.git
 cd openclaw-foundry-socialos
 cp .env.example .env
 bash scripts/demo.sh
+node scripts/seed_demo_data.mjs --reset-review-demo
 ```
 
 Canonical public lifecycle:
 ```bash
 bash scripts/demo.sh
 bash scripts/demo_status.sh
+bash scripts/hackathon_preflight.sh
 bash scripts/overnight_supervisor.sh
 bash scripts/test.sh
 bash scripts/stop_demo.sh
 ```
 
 The demo bootstrap:
-1. installs dependencies and initializes SQLite demo data
+1. installs dependencies and hard-resets the review demo data in SQLite
 2. deploys the local OpenClaw runtime profile
 3. runs `runtime_policy_check`
 4. starts loopback-only API + Web services
@@ -61,6 +75,13 @@ The demo bootstrap:
 Local URLs after boot:
 - Web: `http://127.0.0.1:4173/quick-capture`
 - API: `http://127.0.0.1:8787/health`
+
+Optional hackathon provider env:
+- `HACKATHON_MODE`
+- `GLM_API_KEY`
+- `GLM_MODEL_ID`
+- `FLOCK_API_KEY`
+- `FLOCK_MODEL_ID`
 
 ## Architecture Overview
 - Frontend: loopback-only Node dashboard in `socialos/apps/web`
@@ -76,6 +97,41 @@ System design at a glance:
 4. Events feed a 7-platform draft generator with platform-native language defaults.
 5. Drafts are edited, validated, queued, and handed into assisted publishing.
 6. Studio keeps the repo validated, taskable, and evidence-backed.
+
+Hackathon overlays now sit on top of the same architecture:
+- `/demo`: master judge walkthrough for `Claw for Human`
+- `/hackathon`: bounty hub with integration status and proof cards
+- `/buddy`: simplified `Human for Claw` experience
+- `GET /hackathon/overview`: bounty status + recommended routes
+- `GET /proofs`: repo-native proof cards
+- `POST /integrations/glm/generate`: GLM evidence flow for `Z.AI General`
+- `POST /integrations/flock/sdg-triage`: SDG triage flow for `AI Agents for Good`
+
+## Hackathon Bounties
+Current submission set:
+- `Claw for Human`: use `/demo` to show the full product loop and OpenClaw-backed UI trace
+- `Animoca Bounty`: use `/hackathon?bounty=animoca` to frame SocialOS as persistent identity + memory + agent coordination
+- `Human for Claw`: use `/buddy` to show a simpler, safer Friendship & Gratitude Coach
+- `Z.AI General`: use `/hackathon?bounty=z-ai-general` to show GLM inside Workspace and multilingual draft generation
+- `AI Agents for Good`: use `/hackathon?bounty=ai-agents-for-good` to show FLock SDG triage feeding follow-up coordination
+
+Detailed route and proof guidance:
+- [Hackathon Bounties](socialos/docs/HACKATHON_BOUNTIES.md)
+
+## Integration Proof
+Repo-native proof surfaces:
+- [Evidence](socialos/docs/EVIDENCE.md)
+- [Hackathon Bounties](socialos/docs/HACKATHON_BOUNTIES.md)
+- `GET /proofs`
+- `GET /hackathon/overview`
+- `POST /integrations/glm/generate`
+- `POST /integrations/flock/sdg-triage`
+
+Provider posture:
+- `GLM` is used for `Z.AI General` generation flows when configured
+- `FLock` is used for `AI Agents for Good` SDG triage when configured
+- fallback/demo mode stays explicit when those keys are not configured
+- all bounty flows stay `loopback-only` and `dry-run` by default
 
 ## OpenClaw / Studio Integration
 SocialOS is not a static dashboard. It is backed by two coordinated multi-agent layers:
@@ -110,6 +166,10 @@ Agent-facing entrypoints:
 - [Judge Brief](socialos/docs/pitch/JUDGE_BRIEF.md)
 - [Demo Talk Track](socialos/docs/pitch/DEMO_TALK_TRACK.md)
 - [Deck Page Script](socialos/docs/pitch/DECK_PAGE_SCRIPT.md)
+- [DoraHacks Master Script](socialos/docs/pitch/DORAHACKS_MASTER_SCRIPT.md)
+- [DoraHacks Bounty Swaps](socialos/docs/pitch/DORAHACKS_BOUNTY_SWAPS.md)
+- [Chinese Rehearsal Cues](socialos/docs/pitch/REHEARSAL_CUES_CN.md)
+- [Recording + Submission Runbook](socialos/docs/pitch/RECORDING_AND_SUBMISSION_RUNBOOK.md)
 - [VC Deck Spec](socialos/docs/pitch/VC_DECK_SPEC.md)
 - [Deck Maintenance](socialos/docs/pitch/DECK_MAINTENANCE.md)
 
@@ -120,10 +180,15 @@ The pitch is product-led on purpose:
 - close with the next implementation layer for real-data onboarding
 
 The public deck is served from:
+- `/`
 - `/deck`
+- `/demo/`
+- `/hackathon/`
+- `/buddy/`
 - `?mode=rehearsal` for speaker-only local notes
 - `?print-pdf` for print/PDF-friendly layout
 - Static export for GitHub Pages: `node scripts/export_vc_deck.mjs`
+- Recording-day preflight + export: `bash scripts/hackathon_preflight.sh`
 
 ## Public Evidence
 Curated public evidence lives in [socialos/docs/EVIDENCE.md](socialos/docs/EVIDENCE.md).
@@ -132,6 +197,7 @@ Included evidence:
 - demo GIF and screenshots
 - representative Studio run report snapshots
 - stable evidence files copied out of volatile local runtime paths
+- stable hackathon proof snapshots generated by `node scripts/capture_hackathon_proofs.mjs`
 - generated validation snapshot: `socialos/docs/evidence/LATEST_VALIDATION.md`
 
 ## Generated Public Status
@@ -146,12 +212,22 @@ Refresh generated docs safely with:
 node scripts/refresh_public_docs.mjs
 ```
 
+## Demo Flow
+Use one master 5-10 minute flow and swap only the bounty-specific segment:
+1. Open `/demo` and show the shared product loop.
+2. Walk `Workspace -> Contacts -> Drafts -> Queue -> Mirror`.
+3. Open `/hackathon` for the target bounty and show its proof cards.
+4. For `Human for Claw`, switch to `/buddy`.
+5. For `Z.AI General`, show `GLM` proof and generation output.
+6. For `AI Agents for Good`, show `FLock` SDG triage and the follow-up path.
+7. End by showing the public proof site on `zhouyixiaoxiao.org`.
+
 ## Current Product Capabilities
 - Capture and commit people memory with explicit human confirmation
 - Keep a single chat-first `Workspace` instead of multiple competing entry forms
 - Generate platform-specific drafts with:
   - English for `LinkedIn / X / Instagram`
-  - Chinese for `知乎 / 小红书 / 微信朋友圈 / 微信公众号`
+  - Chinese for `Zhihu / Rednote / WeChat Moments / WeChat Official Account`
 - Keep publish behavior trust-first:
   - `dry-run` by default
   - assisted/manual handoff in `P1`
@@ -177,6 +253,10 @@ node scripts/refresh_public_docs.mjs
 - [5-Minute Pitch](socialos/docs/pitch/PITCH_5_MIN.md)
 - [Judge Brief](socialos/docs/pitch/JUDGE_BRIEF.md)
 - [Demo Talk Track](socialos/docs/pitch/DEMO_TALK_TRACK.md)
+- [DoraHacks Master Script](socialos/docs/pitch/DORAHACKS_MASTER_SCRIPT.md)
+- [DoraHacks Bounty Swaps](socialos/docs/pitch/DORAHACKS_BOUNTY_SWAPS.md)
+- [Chinese Rehearsal Cues](socialos/docs/pitch/REHEARSAL_CUES_CN.md)
+- [Recording + Submission Runbook](socialos/docs/pitch/RECORDING_AND_SUBMISSION_RUNBOOK.md)
 - [VC Deck Spec](socialos/docs/pitch/VC_DECK_SPEC.md)
 - [Deck Maintenance](socialos/docs/pitch/DECK_MAINTENANCE.md)
 - [Public Status](socialos/docs/STATUS.md)
@@ -188,8 +268,11 @@ node scripts/refresh_public_docs.mjs
 ```bash
 bash scripts/demo.sh
 bash scripts/demo_status.sh
+bash scripts/hackathon_preflight.sh
 bash scripts/stop_demo.sh
 bash scripts/overnight_supervisor.sh
+node scripts/capture_hackathon_proofs.mjs
+node scripts/export_vc_deck.mjs
 node scripts/refresh_public_docs.mjs
 bash scripts/test.sh
 bash scripts/studio.sh status

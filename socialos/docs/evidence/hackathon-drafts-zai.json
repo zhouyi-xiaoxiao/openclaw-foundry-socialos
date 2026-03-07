@@ -1,0 +1,524 @@
+{
+  "eventId": "event_bd830e3f21b4424ea16e63d1993cef75",
+  "bountyMode": "z-ai-general",
+  "provider": "glm",
+  "count": 4,
+  "drafts": [
+    {
+      "draftId": "draft_5b1e9edfaf284868a6643483d02d8a45",
+      "eventId": "event_bd830e3f21b4424ea16e63d1993cef75",
+      "eventTitle": "Community Mentor Follow-up",
+      "platform": "linkedin",
+      "platformLabel": "LinkedIn",
+      "platformShellLabel": "LinkedIn",
+      "language": "en",
+      "content": "Community Mentor Follow-up: an operational upgrade, not just a feature update\n\nThis came out of a recent conversation.\nThis was not just a UI refresh. The goal was to make Quick Capture, People, Drafts, Queue, and Self Mirror operate as one workflow.\nContext: The conversation was grounded in community. We focused on community building.\nWhy it matters: this turns content writing into an operating loop instead of a pile of drafts.\nWhat next: Reply if you want to compare notes on a similar workflow.\n\n#socialos #builder #campaign #ship #leadership",
+      "metadata": {
+        "source": "api.drafts_generate",
+        "capability": {
+          "supportLevel": "L2 Auto Publish (credentials gated)",
+          "lane": "publisher",
+          "entryTarget": "LinkedIn post workflow",
+          "liveEligible": true,
+          "blockedBy": "requires live mode + credentials"
+        },
+        "publishPackage": {
+          "supportLevel": "L2 Auto Publish (credentials gated)",
+          "lane": "publisher",
+          "entryTarget": "LinkedIn post workflow",
+          "entryUrl": "https://www.linkedin.com/feed/",
+          "liveEligible": true,
+          "blockedBy": "requires live mode + credentials",
+          "localizedTitle": "Community Mentor Follow-up",
+          "title": "Community Mentor Follow-up: an operational upgrade, not just a feature update",
+          "hook": "Sharing this for peers, collaborators, and future partners, framed as operator update.",
+          "body": "The conversation was grounded in community. We focused on community building.",
+          "cta": "Reply if you want to compare notes on a similar workflow.",
+          "hashtags": [
+            "#socialos",
+            "#builder",
+            "#campaign",
+            "#ship",
+            "#leadership"
+          ],
+          "imageIdeas": [
+            "A lead image that makes Community Mentor Follow-up feel tangible",
+            "A supporting detail shot or screenshot for context"
+          ],
+          "steps": [
+            "Review long-form tone and CTA.",
+            "If live mode + credentials are ready, promote through publisher.",
+            "Review tone, tags, and media notes before publishing."
+          ],
+          "codexAssist": [
+            "Codex can further refine tone, structure, CTA, and media notes."
+          ],
+          "preview": "Community Mentor Follow-up: an operational upgrade, not just a feature update\n\nThis came out of a recent conversation.\nThis was not just a UI refresh. The goal was to make Quick Capture, People, Drafts, Queue, and Self Mirror operate as one workflow.\nContext: The conversation was grounded in community. We focused on community building.\nWhy it matters: this turns content writing into an operating loop instead of a pile of drafts.\nWhat next: Reply if you want to compare notes on a similar workflow.\n\n#socialos #builder #campaign #ship #leadership"
+        },
+        "variants": [],
+        "validation": null,
+        "generation": {
+          "provider": "local",
+          "model": "",
+          "bountyMode": "z-ai-general",
+          "fallbackUsed": true,
+          "reason": "glm-not-configured",
+          "tone": "",
+          "angle": "",
+          "audience": "",
+          "languageStrategy": "platform-native",
+          "links": [],
+          "assets": []
+        }
+      },
+      "capability": {
+        "supportLevel": "L2 Auto Publish (credentials gated)",
+        "lane": "publisher",
+        "entryTarget": "LinkedIn post workflow",
+        "liveEligible": true,
+        "blockedBy": "requires live mode + credentials"
+      },
+      "publishPackage": {
+        "supportLevel": "L2 Auto Publish (credentials gated)",
+        "lane": "publisher",
+        "entryTarget": "LinkedIn post workflow",
+        "entryUrl": "https://www.linkedin.com/feed/",
+        "liveEligible": true,
+        "blockedBy": "requires live mode + credentials",
+        "localizedTitle": "Community Mentor Follow-up",
+        "title": "Community Mentor Follow-up: an operational upgrade, not just a feature update",
+        "hook": "Sharing this for peers, collaborators, and future partners, framed as operator update.",
+        "body": "The conversation was grounded in community. We focused on community building.",
+        "cta": "Reply if you want to compare notes on a similar workflow.",
+        "hashtags": [
+          "#socialos",
+          "#builder",
+          "#campaign",
+          "#ship",
+          "#leadership"
+        ],
+        "imageIdeas": [
+          "A lead image that makes Community Mentor Follow-up feel tangible",
+          "A supporting detail shot or screenshot for context"
+        ],
+        "steps": [
+          "Review long-form tone and CTA.",
+          "If live mode + credentials are ready, promote through publisher.",
+          "Review tone, tags, and media notes before publishing."
+        ],
+        "codexAssist": [
+          "Codex can further refine tone, structure, CTA, and media notes."
+        ],
+        "preview": "Community Mentor Follow-up: an operational upgrade, not just a feature update\n\nThis came out of a recent conversation.\nThis was not just a UI refresh. The goal was to make Quick Capture, People, Drafts, Queue, and Self Mirror operate as one workflow.\nContext: The conversation was grounded in community. We focused on community building.\nWhy it matters: this turns content writing into an operating loop instead of a pile of drafts.\nWhat next: Reply if you want to compare notes on a similar workflow.\n\n#socialos #builder #campaign #ship #leadership"
+      },
+      "validation": null,
+      "variants": [],
+      "createdAt": "2026-03-07T21:08:02.457Z"
+    },
+    {
+      "draftId": "draft_f1b11fd718e14077a28f22928d2b1465",
+      "eventId": "event_bd830e3f21b4424ea16e63d1993cef75",
+      "eventTitle": "Community Mentor Follow-up",
+      "platform": "x",
+      "platformLabel": "X",
+      "platformShellLabel": "X",
+      "language": "en",
+      "content": "Community Mentor Follow-up: one operator takeaway after shipping this.\nThis came out of a recent conversation.\nThe conversation was grounded in community. We focused on community building.\nWhat matters now is not another screen. It is whether the whole SocialOS loop actually ope…",
+      "metadata": {
+        "source": "api.drafts_generate",
+        "capability": {
+          "supportLevel": "L2 Auto Publish (credentials gated)",
+          "lane": "publisher",
+          "entryTarget": "X web/API publishing lane",
+          "liveEligible": true,
+          "blockedBy": "requires live mode + credentials"
+        },
+        "publishPackage": {
+          "supportLevel": "L2 Auto Publish (credentials gated)",
+          "lane": "publisher",
+          "entryTarget": "X web/API publishing lane",
+          "entryUrl": "https://x.com/compose/post",
+          "liveEligible": true,
+          "blockedBy": "requires live mode + credentials",
+          "localizedTitle": "Community Mentor Follow-up",
+          "title": "Community Mentor Follow-up: one operator takeaway after shipping this.",
+          "hook": "Sharing this for builders shipping product and AI workflows, framed as operator update.",
+          "body": "The conversation was grounded in community. We focused on community building.",
+          "cta": "Reply if you want the short operator notes behind this workflow.",
+          "hashtags": [
+            "#socialos",
+            "#builder",
+            "#campaign",
+            "#ship"
+          ],
+          "imageIdeas": [
+            "A lead image that makes Community Mentor Follow-up feel tangible",
+            "A supporting detail shot or screenshot for context"
+          ],
+          "steps": [
+            "Queue for review in SocialOS.",
+            "If live mode + credentials are ready, promote through publisher.",
+            "Review tone, tags, and media notes before publishing."
+          ],
+          "codexAssist": [
+            "Codex can further refine tone, structure, CTA, and media notes."
+          ],
+          "preview": "Community Mentor Follow-up: one operator takeaway after shipping this.\nThis came out of a recent conversation.\nThe conversation was grounded in community. We focused on community building.\nWhat matters now is not another screen. It is whether the whole SocialOS loop actually ope…"
+        },
+        "variants": [],
+        "validation": null,
+        "generation": {
+          "provider": "local",
+          "model": "",
+          "bountyMode": "z-ai-general",
+          "fallbackUsed": true,
+          "reason": "glm-not-configured",
+          "tone": "",
+          "angle": "",
+          "audience": "",
+          "languageStrategy": "platform-native",
+          "links": [],
+          "assets": []
+        }
+      },
+      "capability": {
+        "supportLevel": "L2 Auto Publish (credentials gated)",
+        "lane": "publisher",
+        "entryTarget": "X web/API publishing lane",
+        "liveEligible": true,
+        "blockedBy": "requires live mode + credentials"
+      },
+      "publishPackage": {
+        "supportLevel": "L2 Auto Publish (credentials gated)",
+        "lane": "publisher",
+        "entryTarget": "X web/API publishing lane",
+        "entryUrl": "https://x.com/compose/post",
+        "liveEligible": true,
+        "blockedBy": "requires live mode + credentials",
+        "localizedTitle": "Community Mentor Follow-up",
+        "title": "Community Mentor Follow-up: one operator takeaway after shipping this.",
+        "hook": "Sharing this for builders shipping product and AI workflows, framed as operator update.",
+        "body": "The conversation was grounded in community. We focused on community building.",
+        "cta": "Reply if you want the short operator notes behind this workflow.",
+        "hashtags": [
+          "#socialos",
+          "#builder",
+          "#campaign",
+          "#ship"
+        ],
+        "imageIdeas": [
+          "A lead image that makes Community Mentor Follow-up feel tangible",
+          "A supporting detail shot or screenshot for context"
+        ],
+        "steps": [
+          "Queue for review in SocialOS.",
+          "If live mode + credentials are ready, promote through publisher.",
+          "Review tone, tags, and media notes before publishing."
+        ],
+        "codexAssist": [
+          "Codex can further refine tone, structure, CTA, and media notes."
+        ],
+        "preview": "Community Mentor Follow-up: one operator takeaway after shipping this.\nThis came out of a recent conversation.\nThe conversation was grounded in community. We focused on community building.\nWhat matters now is not another screen. It is whether the whole SocialOS loop actually ope…"
+      },
+      "validation": null,
+      "variants": [],
+      "createdAt": "2026-03-07T21:08:02.458Z"
+    },
+    {
+      "draftId": "draft_ac8c8b3d39f04b848321fc8f785e441b",
+      "eventId": "event_bd830e3f21b4424ea16e63d1993cef75",
+      "eventTitle": "Community Mentor Follow-up",
+      "platform": "zhihu",
+      "platformLabel": "Zhihu",
+      "platformShellLabel": "Zhihu",
+      "language": "zh",
+      "content": "如果把“这次推进的后续跟进”讲透，最值得说的是哪几件事？\n\n这次内容来自最近的一次交流。\n先给结论：如果一个 SocialOS 真的要能用，最重要的不是功能列表，而是录入、检索、生成和发布之间的数据连续性。\n围绕「这次推进的后续跟进」的关键背景是：对方主要在做社区运营。这次聊到的重点是社区运营。\n我会重点展开 3 个部分：为什么这样设计、哪些地方卡住、现在怎么让它至少能稳定演示。\n如果你也在做类似方向，欢迎交流。\n\n#社交系统 #行动复盘 #内容实验 #增长",
+      "metadata": {
+        "source": "api.drafts_generate",
+        "capability": {
+          "supportLevel": "L1 Assisted",
+          "lane": "publish-package",
+          "entryTarget": "Zhihu editor",
+          "liveEligible": false,
+          "blockedBy": "final publish stays manual"
+        },
+        "publishPackage": {
+          "supportLevel": "L1 Assisted",
+          "lane": "publish-package",
+          "entryTarget": "Zhihu editor",
+          "entryUrl": "https://zhuanlan.zhihu.com/write",
+          "liveEligible": false,
+          "blockedBy": "final publish stays manual",
+          "localizedTitle": "这次推进的后续跟进",
+          "title": "如果把“这次推进的后续跟进”讲透，最值得说的是哪几件事？",
+          "hook": "这次我想用“拆解思路”的角度，面向想看完整拆解的人分享这次进展。",
+          "body": "对方主要在做社区运营。这次聊到的重点是社区运营。",
+          "cta": "如果你也在做类似方向，欢迎交流。",
+          "hashtags": [
+            "#社交系统",
+            "#行动复盘",
+            "#内容实验",
+            "#增长"
+          ],
+          "imageIdeas": [
+            "一张能体现“这次推进的后续跟进”现场感或结果感的主图",
+            "一张细节图或过程图，帮助解释背景"
+          ],
+          "steps": [
+            "复制准备好的正文和说明。",
+            "打开Zhihu editor。",
+            "检查语气、标签、封面建议后再发布。"
+          ],
+          "codexAssist": [
+            "可以继续帮你改语气、改结构、补 CTA、补图文大纲"
+          ],
+          "preview": "如果把“这次推进的后续跟进”讲透，最值得说的是哪几件事？\n\n这次内容来自最近的一次交流。\n先给结论：如果一个 SocialOS 真的要能用，最重要的不是功能列表，而是录入、检索、生成和发布之间的数据连续性。\n围绕「这次推进的后续跟进」的关键背景是：对方主要在做社区运营。这次聊到的重点是社区运营。\n我会重点展开 3 个部分：为什么这样设计、哪些地方卡住、现在怎么让它至少能稳定演示。\n如果你也在做类似方向，欢迎交流。\n\n#社交系统 #行动复盘 #内容实验 #增长"
+        },
+        "variants": [],
+        "validation": null,
+        "generation": {
+          "provider": "local",
+          "model": "",
+          "bountyMode": "z-ai-general",
+          "fallbackUsed": true,
+          "reason": "glm-not-configured",
+          "tone": "",
+          "angle": "",
+          "audience": "",
+          "languageStrategy": "platform-native",
+          "links": [],
+          "assets": []
+        }
+      },
+      "capability": {
+        "supportLevel": "L1 Assisted",
+        "lane": "publish-package",
+        "entryTarget": "Zhihu editor",
+        "liveEligible": false,
+        "blockedBy": "final publish stays manual"
+      },
+      "publishPackage": {
+        "supportLevel": "L1 Assisted",
+        "lane": "publish-package",
+        "entryTarget": "Zhihu editor",
+        "entryUrl": "https://zhuanlan.zhihu.com/write",
+        "liveEligible": false,
+        "blockedBy": "final publish stays manual",
+        "localizedTitle": "这次推进的后续跟进",
+        "title": "如果把“这次推进的后续跟进”讲透，最值得说的是哪几件事？",
+        "hook": "这次我想用“拆解思路”的角度，面向想看完整拆解的人分享这次进展。",
+        "body": "对方主要在做社区运营。这次聊到的重点是社区运营。",
+        "cta": "如果你也在做类似方向，欢迎交流。",
+        "hashtags": [
+          "#社交系统",
+          "#行动复盘",
+          "#内容实验",
+          "#增长"
+        ],
+        "imageIdeas": [
+          "一张能体现“这次推进的后续跟进”现场感或结果感的主图",
+          "一张细节图或过程图，帮助解释背景"
+        ],
+        "steps": [
+          "复制准备好的正文和说明。",
+          "打开Zhihu editor。",
+          "检查语气、标签、封面建议后再发布。"
+        ],
+        "codexAssist": [
+          "可以继续帮你改语气、改结构、补 CTA、补图文大纲"
+        ],
+        "preview": "如果把“这次推进的后续跟进”讲透，最值得说的是哪几件事？\n\n这次内容来自最近的一次交流。\n先给结论：如果一个 SocialOS 真的要能用，最重要的不是功能列表，而是录入、检索、生成和发布之间的数据连续性。\n围绕「这次推进的后续跟进」的关键背景是：对方主要在做社区运营。这次聊到的重点是社区运营。\n我会重点展开 3 个部分：为什么这样设计、哪些地方卡住、现在怎么让它至少能稳定演示。\n如果你也在做类似方向，欢迎交流。\n\n#社交系统 #行动复盘 #内容实验 #增长"
+      },
+      "validation": null,
+      "variants": [],
+      "createdAt": "2026-03-07T21:08:02.459Z"
+    },
+    {
+      "draftId": "draft_bad5e73e023e4444ad181685be1e74ff",
+      "eventId": "event_bd830e3f21b4424ea16e63d1993cef75",
+      "eventTitle": "Community Mentor Follow-up",
+      "platform": "wechat_moments",
+      "platformLabel": "WeChat Moments",
+      "platformShellLabel": "WeChat Moments",
+      "language": "zh",
+      "content": "关于「这次推进的后续跟进」的一个近况\n这次内容来自最近的一次交流。\n对方主要在做社区运营。这次聊到的重点是社区运营。\n这次终于不只是“有个界面”，而是真的把流程跑顺了一些。\n如果你也在折腾类似的事，欢迎来聊聊。",
+      "metadata": {
+        "source": "api.drafts_generate",
+        "capability": {
+          "supportLevel": "L1 Assisted+",
+          "lane": "publish-package",
+          "entryTarget": "WeChat Moments mobile composer",
+          "liveEligible": false,
+          "blockedBy": "manual mobile-only publish"
+        },
+        "publishPackage": {
+          "supportLevel": "L1 Assisted+",
+          "lane": "publish-package",
+          "entryTarget": "WeChat Moments mobile composer",
+          "entryUrl": "https://weixin.qq.com/",
+          "liveEligible": false,
+          "blockedBy": "manual mobile-only publish",
+          "localizedTitle": "这次推进的后续跟进",
+          "title": "关于「这次推进的后续跟进」的一个近况",
+          "hook": "这次我想用“近况记录”的角度，面向熟人朋友分享这次进展。",
+          "body": "对方主要在做社区运营。这次聊到的重点是社区运营。",
+          "cta": "如果你也在折腾类似的事，欢迎来聊聊。",
+          "hashtags": [
+            "#社交系统",
+            "#行动复盘",
+            "#内容实验",
+            "#增长"
+          ],
+          "imageIdeas": [
+            "一张能体现“这次推进的后续跟进”现场感或结果感的主图",
+            "一张细节图或过程图，帮助解释背景"
+          ],
+          "steps": [
+            "复制正文和标签块。",
+            "打开WeChat Moments mobile composer。",
+            "检查语气、标签、封面建议后再发布。"
+          ],
+          "codexAssist": [
+            "可以继续帮你改语气、改结构、补 CTA、补图文大纲"
+          ],
+          "preview": "关于「这次推进的后续跟进」的一个近况\n这次内容来自最近的一次交流。\n对方主要在做社区运营。这次聊到的重点是社区运营。\n这次终于不只是“有个界面”，而是真的把流程跑顺了一些。\n如果你也在折腾类似的事，欢迎来聊聊。",
+          "captionVariants": [
+            "关于「这次推进的后续跟进」的一个近况。今天最深的感受是：对方主要在做社区运营。这次聊到的重点是社区运营。",
+            "刚处理完“这次推进的后续跟进”，比结果更重要的是过程里的判断。",
+            "关于这次推进的后续跟进，这次我最想记住的一句是：这次我想用“近况记录”的角度，面向熟人朋友分享这次进展。"
+          ],
+          "visualStoryboard": [
+            "首图：结果或现场",
+            "第二张：细节/过程",
+            "第三张：补充说明或截图"
+          ],
+          "assetChecklist": [
+            "手机可读短文案 2-3 版",
+            "图片 3 张以内",
+            "评论区跟进句 1 条"
+          ]
+        },
+        "variants": [],
+        "validation": null,
+        "generation": {
+          "provider": "local",
+          "model": "",
+          "bountyMode": "z-ai-general",
+          "fallbackUsed": true,
+          "reason": "glm-not-configured",
+          "tone": "",
+          "angle": "",
+          "audience": "",
+          "languageStrategy": "platform-native",
+          "links": [],
+          "assets": []
+        }
+      },
+      "capability": {
+        "supportLevel": "L1 Assisted+",
+        "lane": "publish-package",
+        "entryTarget": "WeChat Moments mobile composer",
+        "liveEligible": false,
+        "blockedBy": "manual mobile-only publish"
+      },
+      "publishPackage": {
+        "supportLevel": "L1 Assisted+",
+        "lane": "publish-package",
+        "entryTarget": "WeChat Moments mobile composer",
+        "entryUrl": "https://weixin.qq.com/",
+        "liveEligible": false,
+        "blockedBy": "manual mobile-only publish",
+        "localizedTitle": "这次推进的后续跟进",
+        "title": "关于「这次推进的后续跟进」的一个近况",
+        "hook": "这次我想用“近况记录”的角度，面向熟人朋友分享这次进展。",
+        "body": "对方主要在做社区运营。这次聊到的重点是社区运营。",
+        "cta": "如果你也在折腾类似的事，欢迎来聊聊。",
+        "hashtags": [
+          "#社交系统",
+          "#行动复盘",
+          "#内容实验",
+          "#增长"
+        ],
+        "imageIdeas": [
+          "一张能体现“这次推进的后续跟进”现场感或结果感的主图",
+          "一张细节图或过程图，帮助解释背景"
+        ],
+        "steps": [
+          "复制正文和标签块。",
+          "打开WeChat Moments mobile composer。",
+          "检查语气、标签、封面建议后再发布。"
+        ],
+        "codexAssist": [
+          "可以继续帮你改语气、改结构、补 CTA、补图文大纲"
+        ],
+        "preview": "关于「这次推进的后续跟进」的一个近况\n这次内容来自最近的一次交流。\n对方主要在做社区运营。这次聊到的重点是社区运营。\n这次终于不只是“有个界面”，而是真的把流程跑顺了一些。\n如果你也在折腾类似的事，欢迎来聊聊。",
+        "captionVariants": [
+          "关于「这次推进的后续跟进」的一个近况。今天最深的感受是：对方主要在做社区运营。这次聊到的重点是社区运营。",
+          "刚处理完“这次推进的后续跟进”，比结果更重要的是过程里的判断。",
+          "关于这次推进的后续跟进，这次我最想记住的一句是：这次我想用“近况记录”的角度，面向熟人朋友分享这次进展。"
+        ],
+        "visualStoryboard": [
+          "首图：结果或现场",
+          "第二张：细节/过程",
+          "第三张：补充说明或截图"
+        ],
+        "assetChecklist": [
+          "手机可读短文案 2-3 版",
+          "图片 3 张以内",
+          "评论区跟进句 1 条"
+        ]
+      },
+      "validation": null,
+      "variants": [],
+      "createdAt": "2026-03-07T21:08:02.460Z"
+    }
+  ],
+  "auditId": "audit_c3b96c774b884a218d979328ec16fb21",
+  "digestId": "digest_cd2c2bf71f884a11aa20b6d635b37dff",
+  "proof": {
+    "requestedProvider": "glm",
+    "bountyMode": "z-ai-general",
+    "routes": [
+      "/hackathon?bounty=z-ai-general",
+      "/drafts"
+    ],
+    "generations": [
+      {
+        "draftId": "draft_5b1e9edfaf284868a6643483d02d8a45",
+        "platform": "linkedin",
+        "language": "en",
+        "provider": "local",
+        "model": "",
+        "fallbackUsed": true,
+        "reason": "glm-not-configured"
+      },
+      {
+        "draftId": "draft_f1b11fd718e14077a28f22928d2b1465",
+        "platform": "x",
+        "language": "en",
+        "provider": "local",
+        "model": "",
+        "fallbackUsed": true,
+        "reason": "glm-not-configured"
+      },
+      {
+        "draftId": "draft_ac8c8b3d39f04b848321fc8f785e441b",
+        "platform": "zhihu",
+        "language": "zh",
+        "provider": "local",
+        "model": "",
+        "fallbackUsed": true,
+        "reason": "glm-not-configured"
+      },
+      {
+        "draftId": "draft_bad5e73e023e4444ad181685be1e74ff",
+        "platform": "wechat_moments",
+        "language": "zh",
+        "provider": "local",
+        "model": "",
+        "fallbackUsed": true,
+        "reason": "glm-not-configured"
+      }
+    ]
+  }
+}

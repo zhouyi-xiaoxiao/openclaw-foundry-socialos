@@ -3,6 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { LOOPBACK_HOST, startApiServer } from '../../socialos/apps/api/server.mjs';
 
+// Intentional Chinese fixtures below are limited to bilingual search coverage and
+// Chinese-platform draft generation.
+
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
@@ -257,10 +260,10 @@ async function main() {
     });
     const cleanedLinkedIn = cleanedDrafts.drafts.find((draft) => draft.platform === 'linkedin');
     const cleanedX = cleanedDrafts.drafts.find((draft) => draft.platform === 'x');
-    const cleanedXiaohongshu = cleanedDrafts.drafts.find((draft) => draft.platform === 'xiaohongshu');
+    const cleanedRednote = cleanedDrafts.drafts.find((draft) => draft.platform === 'xiaohongshu');
     const cleanedOfficial = cleanedDrafts.drafts.find((draft) => draft.platform === 'wechat_official');
     assert(cleanedLinkedIn?.language === 'en', 'legacy workspace events should keep LinkedIn in English');
-    assert(cleanedXiaohongshu?.language === 'zh', 'legacy workspace events should keep 小红书 in Chinese');
+    assert(cleanedRednote?.language === 'zh', 'legacy workspace events should keep Rednote in Chinese');
     assert(
       !/focus:|source:|personName:|summary:/i.test(cleanedLinkedIn?.content || '') &&
         !/workspace-chat/i.test(cleanedLinkedIn?.content || '') &&
@@ -268,13 +271,13 @@ async function main() {
       'English drafts should not leak internal workspace metadata'
     );
     assert(
-      !/focus:|source:|personName:|summary:/i.test(cleanedXiaohongshu?.content || '') &&
-        !/\bMessage\b/u.test(cleanedXiaohongshu?.content || '') &&
+      !/focus:|source:|personName:|summary:/i.test(cleanedRednote?.content || '') &&
+        !/\bMessage\b/u.test(cleanedRednote?.content || '') &&
         !/\bMessage\b/u.test(cleanedOfficial?.content || ''),
       'Chinese drafts should not leak metadata or English follow-up copy'
     );
     assert(
-      String(cleanedXiaohongshu?.publishPackage?.title || '').includes('和陈一的后续跟进') &&
+      String(cleanedRednote?.publishPackage?.title || '').includes('和陈一的后续跟进') &&
         String(cleanedOfficial?.publishPackage?.title || '').includes('和陈一的后续跟进'),
       'Chinese platform packages should localize follow-up titles'
     );

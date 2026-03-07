@@ -21,6 +21,20 @@ This folder contains curated, stable evidence copied out of volatile local runti
 - Sample digest snapshot: `socialos/docs/evidence/sample-digest.md`
 - Generated validation snapshot: `socialos/docs/evidence/LATEST_VALIDATION.md`
 
+## Hackathon Proof Snapshots
+- Overview snapshot: `socialos/docs/evidence/hackathon-overview.json`
+- All proofs: `socialos/docs/evidence/hackathon-proofs-all.json`
+- `Claw for Human` proofs: `socialos/docs/evidence/hackathon-proofs-claw-for-human.json`
+- `Animoca` proofs: `socialos/docs/evidence/hackathon-proofs-animoca.json`
+- `Human for Claw` proofs: `socialos/docs/evidence/hackathon-proofs-human-for-claw.json`
+- `Z.AI General` proofs: `socialos/docs/evidence/hackathon-proofs-z-ai-general.json`
+- `AI Agents for Good` proofs: `socialos/docs/evidence/hackathon-proofs-ai-agents-for-good.json`
+- GLM generation proof: `socialos/docs/evidence/hackathon-glm-generate.json`
+- Workspace GLM proof: `socialos/docs/evidence/hackathon-workspace-zai.json`
+- Draft generation GLM proof: `socialos/docs/evidence/hackathon-drafts-zai.json`
+- FLock SDG proof: `socialos/docs/evidence/hackathon-flock-triage.json`
+- Summary note: `socialos/docs/evidence/hackathon-proof-summary.md`
+
 ## Why This Exists
 - Public reviewers need credible runtime proof.
 - Future maintainers and AI/agents need stable references.

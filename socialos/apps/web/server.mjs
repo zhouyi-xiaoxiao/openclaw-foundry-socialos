@@ -7,10 +7,7 @@ import { DEMO_NETWORK_DECK_CLUSTERS } from '../../lib/demo-network.mjs';
 export const LOOPBACK_HOST = '127.0.0.1';
 export const DEFAULT_PORT = Number(process.env.SOCIALOS_WEB_PORT || 4173);
 export const DEFAULT_API_PORT = Number(process.env.SOCIALOS_API_PORT || 8787);
-export const DEFAULT_API_BASE_URL = readOptionalString(
-  process.env.SOCIALOS_API_BASE_URL,
-  `http://${LOOPBACK_HOST}:${DEFAULT_API_PORT}`
-);
+export const DEFAULT_API_BASE_URL = `http://${LOOPBACK_HOST}:${DEFAULT_API_PORT}`;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
@@ -28,6 +25,7 @@ const EVIDENCE_STEP_FOUR_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step04.pn
 const EVIDENCE_STEP_EIGHT_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step08.png');
 const PUBLIC_REPO_URL = 'https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos';
 const PUBLIC_DECK_URL = 'https://zhouyixiaoxiao.org/';
+let apiBaseUrlOverride = '';
 const fileTextCache = new Map();
 const dataUriCache = new Map();
 
@@ -44,6 +42,24 @@ const PAGE_DEFINITIONS = [
     title: 'Workspace',
     path: '/quick-capture',
     summary: 'One unified home for capture, memory recall, event suggestions, and platform-ready next actions.',
+  },
+  {
+    id: 'demo',
+    title: 'Demo',
+    path: '/demo',
+    summary: 'Judge-ready walkthrough of the SocialOS loop for Claw for Human and the shared master demo.',
+  },
+  {
+    id: 'hackathon',
+    title: 'Hackathon',
+    path: '/hackathon',
+    summary: 'Bounty hub for fit, integrations, proof cards, and the fastest route through each submission story.',
+  },
+  {
+    id: 'buddy',
+    title: 'Buddy',
+    path: '/buddy',
+    summary: 'A friendlier, safer Friendship and Gratitude Coach mode for Human for Claw.',
   },
   {
     id: 'ask',
@@ -116,11 +132,69 @@ const ROUTE_PAGES = PAGE_DEFINITIONS.map((page) => ({ ...page }));
 export const DASHBOARD_PAGES = ROUTE_PAGES.filter((page) => page.nav !== false).map((page) => ({ ...page }));
 
 const PAGE_BY_PATH = new Map(ROUTE_PAGES.map((page) => [page.path, page]));
+const PUBLIC_NAV_LINKS = Object.freeze([
+  Object.freeze({ title: 'Deck', path: '/' }),
+  Object.freeze({ title: 'Demo', path: '/demo/' }),
+  Object.freeze({ title: 'Hackathon', path: '/hackathon/' }),
+  Object.freeze({ title: 'Buddy', path: '/buddy/' }),
+  Object.freeze({ title: 'Repo', path: PUBLIC_REPO_URL }),
+]);
+
+const HACKATHON_PAGE_FALLBACK = Object.freeze([
+  Object.freeze({
+    id: 'claw-for-human',
+    label: 'Claw for Human',
+    status: 'ready',
+    route: '/demo',
+    uniqueAngle: 'Bring Claw into a human-readable relationship workspace.',
+    integrations: ['OpenClaw Runtime', 'Workspace UI', 'Pitch Deck'],
+  }),
+  Object.freeze({
+    id: 'animoca',
+    label: 'Animoca Bounty',
+    status: 'ready',
+    route: '/hackathon?bounty=animoca',
+    uniqueAngle: 'Persistent identity, memory, and agent coordination for creator/community ops.',
+    integrations: ['OpenClaw Runtime', 'People Memory', 'Studio Agents'],
+  }),
+  Object.freeze({
+    id: 'human-for-claw',
+    label: 'Human for Claw',
+    status: 'ready',
+    route: '/buddy',
+    uniqueAngle: 'Friendship and gratitude coaching with visible guardrails.',
+    integrations: ['Buddy Guardrails', 'People Memory', 'Self Mirror'],
+  }),
+  Object.freeze({
+    id: 'z-ai-general',
+    label: 'Z.AI General',
+    status: 'partial',
+    route: '/hackathon?bounty=z-ai-general',
+    uniqueAngle: 'GLM inside multilingual Workspace and draft generation, not a side widget.',
+    integrations: ['GLM Router', 'Workspace Chat', 'Draft Generation'],
+  }),
+  Object.freeze({
+    id: 'ai-agents-for-good',
+    label: 'AI Agents for Good',
+    status: 'partial',
+    route: '/hackathon?bounty=ai-agents-for-good',
+    uniqueAngle: 'Impact workflows with SDG triage, long-term relationship memory, and follow-through.',
+    integrations: ['FLock SDG Triage', 'OpenClaw Runtime', 'Events + Drafts'],
+  }),
+]);
 
 function readOptionalString(value, fallback) {
   if (typeof value !== 'string') return fallback;
   const trimmed = value.trim();
   return trimmed || fallback;
+}
+
+function resolveApiBaseUrl() {
+  return readOptionalString(apiBaseUrlOverride, readOptionalString(process.env.SOCIALOS_API_BASE_URL, DEFAULT_API_BASE_URL));
+}
+
+function setApiBaseUrlOverride(value) {
+  apiBaseUrlOverride = readOptionalString(value, '');
 }
 
 function readFileTextCached(filePath, fallback = '') {
@@ -279,7 +353,7 @@ function safeJson(value, fallback = {}) {
 
 async function fetchJsonSafe(pathname) {
   try {
-    const response = await fetch(`${DEFAULT_API_BASE_URL}${pathname}`);
+    const response = await fetch(`${resolveApiBaseUrl()}${pathname}`);
     const text = await response.text();
     const payload = text ? JSON.parse(text) : {};
 
@@ -326,6 +400,35 @@ function normalizePath(pathname) {
     return pathname.slice(0, -1);
   }
   return pathname;
+}
+
+function isPublicPageMode(requestUrl) {
+  return readOptionalString(requestUrl?.searchParams?.get('mode'), '').toLowerCase() === 'public';
+}
+
+function buildPublicProofDataHref(bountyId = '') {
+  const normalized = readOptionalString(bountyId, '');
+  return normalized ? `/data/proofs/${encodeURIComponent(normalized)}.json` : '/data/proofs/all.json';
+}
+
+function buildPublicPageHref(route = '') {
+  const raw = readOptionalString(route, '');
+  if (!raw) return '';
+
+  try {
+    const parsed = new URL(raw, 'http://localhost');
+    const pathname = normalizePath(parsed.pathname || '/');
+    if (pathname === '/deck' || pathname === '/') return '/';
+    if (pathname === '/demo') return '/demo/';
+    if (pathname === '/buddy') return '/buddy/';
+    if (pathname === '/hackathon') {
+      const bounty = readOptionalString(parsed.searchParams.get('bounty'), '');
+      return bounty ? `/hackathon/#bounty-${encodeURIComponent(bounty)}` : '/hackathon/';
+    }
+    return '';
+  } catch {
+    return '';
+  }
 }
 
 function buildWorkspaceHref(params = {}) {
@@ -402,11 +505,16 @@ function buildWorkspaceStateHref(requestUrl, overrides = {}) {
   return buildWorkspaceHref(params);
 }
 
-function renderNavigation(currentPath) {
-  return DASHBOARD_PAGES.map((page) => {
-    const active = currentPath === page.path ? 'nav-link active' : 'nav-link';
-    return `<a class="${active}" href="${page.path}">${escapeHtml(page.title)}</a>`;
-  }).join('');
+function renderNavigation(currentPath, { publicMode = false } = {}) {
+  const pages = publicMode ? PUBLIC_NAV_LINKS : DASHBOARD_PAGES;
+  return pages
+    .map((page) => {
+      const normalizedLinkPath = page.path.startsWith('http') ? page.path : normalizePath(page.path);
+      const active = currentPath === page.path || currentPath === normalizedLinkPath ? 'nav-link active' : 'nav-link';
+      const rel = page.path.startsWith('http') ? ' rel="noreferrer"' : '';
+      return `<a class="${active}" href="${escapeHtml(page.path)}"${rel}>${escapeHtml(page.title)}</a>`;
+    })
+    .join('');
 }
 
 function renderPill(label, tone = 'neutral') {
@@ -444,6 +552,15 @@ function renderHero(page, metricsHtml = '', asideHtml = '') {
         ${asideHtml}
       </div>
     </header>
+  `;
+}
+
+function renderPublicProofNotice(label, detail) {
+  return `
+    <div class="info-callout">
+      <strong>${escapeHtml(label)}</strong><br />
+      ${escapeHtml(detail)}
+    </div>
   `;
 }
 
@@ -1197,23 +1314,21 @@ function renderEventCommandReview(reviewDraft = {}) {
 }
 
 function renderPackageHighlights(draft, publishPackage) {
-  const zh = isChineseDraftLanguage(draft?.language);
-  const t = (englishLabel, chineseLabel) => (zh ? chineseLabel : englishLabel);
   const detailGroups = [
-    [t('Image Ideas', '配图思路'), publishPackage.imageIdeas],
-    [t('Asset Checklist', '素材清单'), publishPackage.assetChecklist],
-    [t('Cover Hooks', '封面钩子'), publishPackage.coverHooks],
-    [t('Visual Storyboard', '图文结构'), publishPackage.visualStoryboard],
-    [t('Caption Variants', '文案备选'), publishPackage.captionVariants],
-    [t('Article Outline', '文章结构'), publishPackage.articleOutline],
-    [t('Section Bullets', '分段要点'), publishPackage.sectionBullets],
-    [t('Codex Assist', '补充建议'), publishPackage.codexAssist],
+    ['Image Ideas', publishPackage.imageIdeas],
+    ['Asset Checklist', publishPackage.assetChecklist],
+    ['Cover Hooks', publishPackage.coverHooks],
+    ['Visual Storyboard', publishPackage.visualStoryboard],
+    ['Caption Variants', publishPackage.captionVariants],
+    ['Article Outline', publishPackage.articleOutline],
+    ['Section Bullets', publishPackage.sectionBullets],
+    ['Codex Assist', publishPackage.codexAssist],
   ].filter(([, items]) => Array.isArray(items) && items.length);
 
   const detailNotes = [
-    [t('Lead Paragraph', '导语'), publishPackage.leadParagraph],
-    [t('Comment Prompt', '评论引导'), publishPackage.commentPrompt],
-    [t('First Comment', '首条评论'), publishPackage.firstComment],
+    ['Lead Paragraph', publishPackage.leadParagraph],
+    ['Comment Prompt', publishPackage.commentPrompt],
+    ['First Comment', publishPackage.firstComment],
   ].filter(([, value]) => typeof value === 'string' && value.trim());
 
   if (!detailGroups.length && !detailNotes.length) return '';
@@ -1247,7 +1362,7 @@ function renderPackageHighlights(draft, publishPackage) {
 function formatLanguageLabel(language) {
   switch (String(language || '').toLowerCase()) {
     case 'zh':
-      return '中文';
+      return 'Chinese';
     case 'en':
       return 'English';
     default:
@@ -1268,7 +1383,7 @@ function formatPlatformShellLabel(platform) {
     x: 'X',
     instagram: 'Instagram',
     zhihu: 'Zhihu',
-    xiaohongshu: 'Xiaohongshu',
+    xiaohongshu: 'Rednote',
     wechat_moments: 'WeChat Moments',
     wechat_official: 'WeChat Official Account',
   };
@@ -1328,7 +1443,7 @@ function isChineseDraftLanguage(language) {
   return String(language || '').toLowerCase() === 'zh';
 }
 
-function pickDraftUiCopy(draft, englishLabel, chineseLabel) {
+function pickDraftUiCopy(draft, englishLabel) {
   return englishLabel;
 }
 
@@ -1339,19 +1454,18 @@ function formatHumanPublishMode(mode) {
 function buildClipboardText(draft, publishPackage, mode = 'body') {
   const hashtags = Array.isArray(publishPackage.hashtags) ? publishPackage.hashtags.join(' ') : '';
   const sections = [];
-  const zh = isChineseDraftLanguage(draft?.language);
 
   if (mode === 'bundle') {
-    sections.push(zh ? `${draft.platformLabel} 发布包` : `${draft.platformLabel} Publish Package`);
-    if (publishPackage.title) sections.push(`${zh ? '标题' : 'Title'}\n${publishPackage.title}`);
-    if (publishPackage.hook) sections.push(`${zh ? '开头' : 'Hook'}\n${publishPackage.hook}`);
-    if (publishPackage.preview || draft.content) sections.push(`${zh ? '正文' : 'Body'}\n${publishPackage.preview || draft.content}`);
-    if (hashtags) sections.push(`${zh ? '标签' : 'Tags'}\n${hashtags}`);
+    sections.push(`${draft.platformLabel} Publish Package`);
+    if (publishPackage.title) sections.push(`Title\n${publishPackage.title}`);
+    if (publishPackage.hook) sections.push(`Hook\n${publishPackage.hook}`);
+    if (publishPackage.preview || draft.content) sections.push(`Body\n${publishPackage.preview || draft.content}`);
+    if (hashtags) sections.push(`Tags\n${hashtags}`);
     if (Array.isArray(publishPackage.assetChecklist) && publishPackage.assetChecklist.length) {
-      sections.push(`${zh ? '素材' : 'Assets'}\n${publishPackage.assetChecklist.join('\n')}`);
+      sections.push(`Assets\n${publishPackage.assetChecklist.join('\n')}`);
     }
     if (Array.isArray(publishPackage.steps) && publishPackage.steps.length) {
-      sections.push(`${zh ? '发布步骤' : 'Publish Steps'}\n${publishPackage.steps.join('\n')}`);
+      sections.push(`Publish Steps\n${publishPackage.steps.join('\n')}`);
     }
     return sections.filter(Boolean).join('\n\n');
   }
@@ -1408,15 +1522,15 @@ function renderPublishActions(draft, publishPackage) {
   return `
     <div class="inline-actions action-strip">
       <button type="button" class="secondary-button" data-copy-text="${escapeHtml(copyBody)}">${escapeHtml(
-        pickDraftUiCopy(draft, 'Copy Draft', '复制草稿')
+        pickDraftUiCopy(draft, 'Copy Draft')
       )}</button>
       <button type="button" class="secondary-button" data-copy-text="${escapeHtml(copyBundle)}">${escapeHtml(
-        pickDraftUiCopy(draft, 'Copy Package', '复制发布包')
+        pickDraftUiCopy(draft, 'Copy Package')
       )}</button>
       ${
         entryUrl
           ? `<a class="mini-link action-link" href="${escapeHtml(entryUrl)}" target="_blank" rel="noreferrer">${escapeHtml(
-              pickDraftUiCopy(draft, 'Open Platform', '打开平台')
+              pickDraftUiCopy(draft, 'Open Platform')
             )}</a>`
           : ''
       }
@@ -1508,7 +1622,7 @@ function renderDraftCards(drafts) {
             <input type="hidden" name="mode" value="dry-run" />
             <div class="inline-actions">
               <button type="submit"${queueDisabled ? ' disabled' : ''}>${escapeHtml(
-                pickDraftUiCopy(draft, 'Queue Draft', '加入队列')
+                pickDraftUiCopy(draft, 'Queue Draft')
               )}</button>
             </div>
             ${
@@ -1913,9 +2027,9 @@ function renderAskResultBlock(payload) {
           <strong>Try asking things like:</strong>
           <ul class="compact-list">
             <li>Who was the growth person I met at the hackathon?</li>
-            <li>最近最适合联系谁来帮我扩散 demo？</li>
+            <li>Who is the best person to contact next for the demo?</li>
             <li>What event already has draft material?</li>
-            <li>我最近最有能量的场景是什么？</li>
+            <li>What kind of situation has been giving me the most energy lately?</li>
           </ul>
         </article>
       </div>
@@ -2090,9 +2204,9 @@ function renderFoundryExecutionSurface(cluster) {
           </div>
         </div>
         <ul class="compact-list">
-          <li>接收统一任务并把它们收口到 SQLite 控制面</li>
-          <li>驱动 orchestrator/coder/tester/reviewer 多 lane 执行链</li>
-          <li>导出 queue、run report、digest 作为公开证据</li>
+          <li>Take one shared task stream and close it through the SQLite control plane.</li>
+          <li>Drive orchestrator, coder, tester, and reviewer lanes as one execution chain.</li>
+          <li>Export queue status, run reports, and digests as public evidence.</li>
         </ul>
       </article>
       <article class="panel inset-panel">
@@ -2673,7 +2787,7 @@ async function renderDraftsPage(page, requestUrl) {
     ${renderHero(
       page,
       [renderMetric(String(recentEvents.length), 'recent events'), renderMetric(String(drafts.length), 'drafts visible')].join(''),
-      `<div class="info-card"><strong>Simple draft mode</strong><p>One event, seven standard drafts. LinkedIn, X, and Instagram stay in English. Zhihu, Xiaohongshu, WeChat Moments, and WeChat Official Account stay in Chinese.</p></div>`
+      `<div class="info-card"><strong>Simple draft mode</strong><p>One event, seven standard drafts. LinkedIn, X, and Instagram stay in English. Zhihu, Rednote, WeChat Moments, and WeChat Official Account stay in Chinese.</p></div>`
     )}
     <div class="grid two-up">
       ${renderPanel(
@@ -2712,7 +2826,7 @@ async function renderDraftsPage(page, requestUrl) {
             <div class="info-callout">
               <strong>Standard output</strong><br />
               LinkedIn, X, and Instagram use English only.<br />
-              Zhihu, Xiaohongshu, WeChat Moments, and WeChat Official Account use Chinese only.
+              Zhihu, Rednote, WeChat Moments, and WeChat Official Account use Chinese only.
             </div>
             ${selectedEvent ? `<div class="chip-row">${renderPill(selectedEvent.title, 'accent')}</div>` : renderEmptyState('Find or pick an event first.')}
             ${renderFormField('CTA', '<input name="cta" type="text" placeholder="Optional closing line if you want one." />')}
@@ -2773,6 +2887,417 @@ async function renderQueuePage(page) {
       ${renderPanel('Manual Step', renderQueueCards(manualTasks, publishMode), 'These cards hold the handoff while you capture the real outcome.')}
       ${renderPanel('Done / Failed', renderQueueCards(doneTasks, publishMode), 'Closed items stay visible without crowding the live queue.')}
     </div>
+  `;
+}
+
+function toneForHackathonStatus(status = '') {
+  const normalized = readOptionalString(status, '').toLowerCase();
+  if (['ready', 'configured', 'captured'].includes(normalized)) return 'good';
+  if (['partial', 'pending', 'fallback', 'warn'].includes(normalized)) return 'warn';
+  return 'soft';
+}
+
+function renderHackathonBountyCards(bounties = [], selectedId = '', { publicMode = false } = {}) {
+  if (!Array.isArray(bounties) || !bounties.length) {
+    return renderEmptyState('No bounty overview is available right now.');
+  }
+
+  const ordered = [
+    ...bounties.filter((bounty) => bounty.id === selectedId),
+    ...bounties.filter((bounty) => bounty.id !== selectedId),
+  ];
+
+  return `<div class="grid two-up">${ordered
+    .map((bounty) => {
+      const route = readOptionalString(bounty.recommendedRoute || bounty.route, '/hackathon');
+      const proofCount = Number(bounty.proofCount || 0);
+      const routeHref = publicMode ? buildPublicPageHref(route) : route;
+      const proofsHref = publicMode ? buildPublicProofDataHref(bounty.id || '') : `/proofs?bounty=${encodeURIComponent(bounty.id || '')}`;
+      return `
+        <article id="bounty-${escapeHtml(bounty.id || '')}" class="stack-card ${bounty.id === selectedId ? 'hackathon-card-selected' : ''}">
+          <div class="stack-meta">
+            <strong>${escapeHtml(bounty.label || bounty.id)}</strong>
+            ${renderPill(readOptionalString(bounty.status, 'ready'), toneForHackathonStatus(bounty.status))}
+          </div>
+          <p>${escapeHtml(truncate(bounty.hook || bounty.uniqueAngle || bounty.summary || '', 180))}</p>
+          <div class="chip-row">
+            ${bounty.prize ? renderPill(bounty.prize, 'soft') : ''}
+            ${renderPill(`${proofCount} proof${proofCount === 1 ? '' : 's'}`, proofCount ? 'accent' : 'soft')}
+          </div>
+          <p>${escapeHtml(truncate(bounty.uniqueAngle || bounty.fit || '', 160))}</p>
+          <div class="inline-actions">
+            ${routeHref ? `<a class="mini-link" href="${escapeHtml(routeHref)}">${publicMode ? 'Open page' : 'Open route'}</a>` : ''}
+            <a class="mini-link" href="${escapeHtml(proofsHref)}">${publicMode ? 'Proof JSON' : 'View proofs'}</a>
+          </div>
+        </article>
+      `;
+    })
+    .join('')}</div>`;
+}
+
+function renderHackathonProofCards(proofs = [], { publicMode = false } = {}) {
+  if (!Array.isArray(proofs) || !proofs.length) {
+    return renderEmptyState('Proof cards will appear here when the API hub is available.');
+  }
+
+  return `<div class="grid two-up">${proofs
+    .map(
+      (proof) => {
+        const routeHref = publicMode ? buildPublicPageHref(proof.route || '') : readOptionalString(proof.route, '');
+        const fallbackProofHref = publicMode ? buildPublicProofDataHref((proof.bounties || [])[0] || '') : '';
+        return `
+        <article class="stack-card compact-card">
+          <div class="stack-meta">
+            <strong>${escapeHtml(proof.title || proof.id || 'Proof')}</strong>
+            ${renderPill(readOptionalString(proof.kind, 'proof'), 'soft')}
+            ${renderPill(readOptionalString(proof.status, 'ready'), toneForHackathonStatus(proof.status))}
+          </div>
+          <p>${escapeHtml(truncate(proof.summary || '', 180))}</p>
+          <div class="chip-row">
+            ${(proof.bounties || []).slice(0, 3).map((bountyId) => renderPill(bountyId, 'soft')).join('')}
+          </div>
+          <div class="inline-actions">
+            ${routeHref ? `<a class="mini-link" href="${escapeHtml(routeHref)}">${publicMode ? 'Open page' : 'Open'}</a>` : ''}
+            ${!routeHref && fallbackProofHref ? `<a class="mini-link" href="${escapeHtml(fallbackProofHref)}">Proof JSON</a>` : ''}
+            ${proof.source ? `<small>${escapeHtml(proof.source)}</small>` : ''}
+          </div>
+        </article>
+      `;
+      }
+    )
+    .join('')}</div>`;
+}
+
+function renderHackathonShotGallery() {
+  const shots = [
+    {
+      title: 'Workspace',
+      caption: 'Judge-friendly capture and action loop.',
+      image: readDataUriCached(EVIDENCE_STEP_ONE_PATH),
+    },
+    {
+      title: 'Contacts',
+      caption: 'Persistent identity and people memory.',
+      image: readDataUriCached(EVIDENCE_STEP_TWO_CONTACTS_PATH),
+    },
+    {
+      title: 'Drafts',
+      caption: 'Multilingual, platform-native output.',
+      image: readDataUriCached(EVIDENCE_STEP_FOUR_PATH),
+    },
+    {
+      title: 'Queue',
+      caption: 'Trust-first publish handoff and traceability.',
+      image: readDataUriCached(EVIDENCE_STEP_EIGHT_PATH),
+    },
+  ];
+
+  return `<div class="grid two-up">${shots
+    .map(
+      (shot) => `
+        <article class="stack-card compact-card">
+          <div class="stack-meta">
+            <strong>${escapeHtml(shot.title)}</strong>
+            ${renderPill('evidence', 'accent')}
+          </div>
+          ${
+            shot.image
+              ? `<img class="hackathon-shot" src="${shot.image}" alt="${escapeHtml(shot.title)} screenshot" />`
+              : `<div class="empty-state"><p>Screenshot unavailable</p></div>`
+          }
+          <p>${escapeHtml(shot.caption)}</p>
+        </article>
+      `
+    )
+    .join('')}</div>`;
+}
+
+async function renderDemoPage(page, requestUrl) {
+  const publicMode = isPublicPageMode(requestUrl);
+  const [bootstrapRes, queueRes, agentsRes, proofsRes] = await Promise.all([
+    fetchJsonSafe('/workspace/bootstrap'),
+    fetchJsonSafe('/queue/tasks?limit=8'),
+    fetchJsonSafe('/studio/agents'),
+    fetchJsonSafe('/proofs?bounty=claw-for-human&limit=4'),
+  ]);
+
+  const bootstrap = bootstrapRes.ok
+    ? bootstrapRes.payload
+    : { recentContacts: [], recentEvents: [], recentDrafts: [], queuePreview: [], latestMirror: null };
+  const queueTasks = queueRes.ok ? queueRes.payload.queueTasks || [] : [];
+  const agents = agentsRes.ok ? agentsRes.payload.cluster || { agents: [] } : { agents: [] };
+  const proofs = proofsRes.ok ? proofsRes.payload.proofs || [] : [];
+  const judgeFlow = `
+    <div class="stack">
+      <article class="stack-card compact-card">
+        <div class="stack-meta"><strong>1. Workspace</strong>${renderPill('start here', 'accent')}</div>
+        <p>Show one natural note or voice/image capture entering the system.</p>
+        ${
+          publicMode
+            ? '<div class="inline-actions"><small>Recorded locally in the video from the main Workspace surface.</small></div>'
+            : '<div class="inline-actions"><a class="mini-link" href="/quick-capture">Open Workspace</a></div>'
+        }
+      </article>
+      <article class="stack-card compact-card">
+        <div class="stack-meta"><strong>2. Contacts + Logbook</strong>${renderPill('memory', 'soft')}</div>
+        <p>Open the linked person and event to prove the note became reusable relationship context.</p>
+        ${
+          publicMode
+            ? '<div class="inline-actions"><small>Shown locally as the relationship-memory step in the recording.</small></div>'
+            : `
+              <div class="inline-actions">
+                <a class="mini-link" href="/people">Contacts</a>
+                <a class="mini-link" href="/events">Logbook</a>
+              </div>
+            `
+        }
+      </article>
+      <article class="stack-card compact-card">
+        <div class="stack-meta"><strong>3. Drafts + Queue</strong>${renderPill('handoff', 'soft')}</div>
+        <p>Generate platform-native drafts and show the dry-run approval lane.</p>
+        ${
+          publicMode
+            ? '<div class="inline-actions"><small>Shown locally as the trust-first handoff step in the recording.</small></div>'
+            : `
+              <div class="inline-actions">
+                <a class="mini-link" href="/drafts">Drafts</a>
+                <a class="mini-link" href="/queue">Queue</a>
+              </div>
+            `
+        }
+      </article>
+      <article class="stack-card compact-card">
+        <div class="stack-meta"><strong>4. Mirror + Trace</strong>${renderPill('close the loop', 'soft')}</div>
+        <p>Finish with evidence-backed reflection and agent/runtime proof.</p>
+        ${
+          publicMode
+            ? '<div class="inline-actions"><small>Shown locally with runtime trace, then mirrored here as proof cards.</small></div>'
+            : `
+              <div class="inline-actions">
+                <a class="mini-link" href="/self-mirror">Mirror</a>
+                <a class="mini-link" href="/studio?panel=agents">Studio Agents</a>
+              </div>
+            `
+        }
+      </article>
+    </div>
+  `;
+
+  return `
+    ${renderHero(
+      page,
+      [
+        renderMetric(String((bootstrap.recentContacts || []).length), 'contacts'),
+        renderMetric(String((bootstrap.recentEvents || []).length), 'events'),
+        renderMetric(String((bootstrap.recentDrafts || []).length), 'drafts'),
+        renderMetric(String((queueTasks || []).length), 'queue items'),
+      ].join(''),
+      `<div class="info-card"><strong>Shared judge path</strong><p>Use this route for the master demo and for Claw for Human. It keeps the story fixed: problem, product loop, OpenClaw trace, and safe handoff.</p></div>`
+    )}
+    ${publicMode ? renderPublicProofNotice('Read-only public proof page', 'The full interactive demo stays localhost-only for recording. This page keeps the judge flow, screenshots, and proof cards public.') : ''}
+    <div class="grid two-up">
+      ${renderPanel('Judge Flow', judgeFlow, publicMode ? 'This public page mirrors the exact recording sequence without exposing local-only controls.' : 'The sequence stays fixed so the 5-10 minute video remains easy to rehearse.')}
+      ${renderPanel('OpenClaw Trace Snapshot', renderAgentLaneSnapshot(agents), 'These lanes are the backend proof for Claw for Human and Animoca.')}
+    </div>
+    ${
+      publicMode
+        ? ''
+        : `
+          <div class="grid two-up">
+            ${renderPanel('Recent People Memory', renderPeopleCards((bootstrap.recentContacts || []).slice(0, 4)), 'Start from a person to show this is more than a generic chat response.')}
+            ${renderPanel('Recent Drafts and Queue', renderAskDraftCards((bootstrap.recentDrafts || []).slice(0, 4)) + renderQueueCards((queueTasks || []).slice(0, 4), 'dry-run'), 'The publish surface stays visible, but human approval remains in control.')}
+          </div>
+        `
+    }
+    ${renderPanel('Proof Gallery', renderHackathonShotGallery(), 'Use these screenshots in README, deck appendix, and the demo video cut-downs.')}
+    ${renderPanel('Claw for Human Proofs', renderHackathonProofCards(proofs, { publicMode }), publicMode ? 'Open the page links or JSON snapshots to review the public proof surface.' : 'These are the reusable proof cards tied to the most judge-facing submission.')}
+  `;
+}
+
+async function renderHackathonPage(page, requestUrl) {
+  const publicMode = isPublicPageMode(requestUrl);
+  const requestedBounty = readOptionalString(requestUrl.searchParams.get('bounty'), '');
+  const normalizedBounty = HACKATHON_PAGE_FALLBACK.find((item) => item.id === requestedBounty) ? requestedBounty : '';
+  const overviewRes = await fetchJsonSafe('/hackathon/overview');
+  const proofsRes = await fetchJsonSafe(
+    `/proofs?limit=8${normalizedBounty ? `&bounty=${encodeURIComponent(normalizedBounty)}` : ''}`
+  );
+
+  const overview = overviewRes.ok
+    ? overviewRes.payload
+    : {
+        integrations: [],
+        bounties: HACKATHON_PAGE_FALLBACK,
+        routes: [
+          { id: 'demo', label: 'Judge Demo', path: '/demo' },
+          { id: 'hackathon', label: 'Hackathon Hub', path: '/hackathon' },
+          { id: 'buddy', label: 'Buddy Mode', path: '/buddy' },
+          { id: 'deck', label: 'Pitch Deck', path: '/deck' },
+        ],
+        proofsPreview: [],
+      };
+  const bounties = Array.isArray(overview.bounties) && overview.bounties.length ? overview.bounties : HACKATHON_PAGE_FALLBACK;
+  const proofs = proofsRes.ok ? proofsRes.payload.proofs || [] : overview.proofsPreview || [];
+  const integrations = Array.isArray(overview.integrations) ? overview.integrations : [];
+
+  return `
+    ${renderHero(
+      page,
+      [
+        renderMetric(String(bounties.length), 'active bounties'),
+        renderMetric(String(integrations.filter((item) => item.configured).length), 'configured integrations'),
+        renderMetric(String(proofs.length), 'proof cards'),
+        renderMetric(readOptionalString(overview.mode, 'repo-native'), 'mode'),
+      ].join(''),
+      `<div class="info-card"><strong>One product, five angles</strong><p>SocialOS stays one product narrative. The bounty layer only changes the proof frame, not the core architecture.</p></div>`
+    )}
+    ${publicMode ? renderPublicProofNotice('Read-only public bounty hub', 'This page is the stable public proof layer for judges. The live interactive workflow remains localhost-only in the recorded demo.') : ''}
+    ${renderPanel('Bounty Map', renderHackathonBountyCards(bounties, normalizedBounty, { publicMode }), publicMode ? 'Use these cards to jump between the public proof sections or download the stable proof JSON.' : 'Use this hub to choose the right story before recording a bounty-specific demo.')}
+    <div class="grid two-up">
+      ${renderPanel(
+        'Integration Hub',
+        integrations.length
+          ? `<div class="stack">${integrations
+              .map(
+                (integration) => `
+                  <article class="stack-card compact-card">
+                    <div class="stack-meta">
+                      <strong>${escapeHtml(integration.label || integration.id)}</strong>
+                      ${renderPill(readOptionalString(integration.status, 'ready'), toneForHackathonStatus(integration.status))}
+                    </div>
+                    <p>${escapeHtml(truncate(integration.summary || '', 180))}</p>
+                    <div class="inline-actions">
+                      ${integration.route ? `<a class="mini-link" href="${escapeHtml(integration.route)}">Open</a>` : ''}
+                      ${integration.model ? renderPill(integration.model, 'soft') : ''}
+                    </div>
+                  </article>
+                `
+              )
+              .join('')}</div>`
+          : renderEmptyState('Integration status is unavailable right now.'),
+        'GLM and FLock stay optional until keys are present, while the rest of the product remains demo-ready.'
+      )}
+      ${renderPanel(
+        'Submission Pack',
+        `
+          <div class="stack">
+            <article class="stack-card compact-card">
+              <div class="stack-meta"><strong>1. Pitch / Demo Video</strong>${renderPill('5-10 min', 'accent')}</div>
+              <p>Record one master demo using localhost and /demo, then swap the 45-60 second bounty section for each submission.</p>
+            </article>
+            <article class="stack-card compact-card">
+              <div class="stack-meta"><strong>2. Public GitHub Repo</strong>${renderPill('README', 'soft')}</div>
+              <p>Point judges to the shared README, the public /hackathon page, and proof JSON for integration evidence.</p>
+            </article>
+            <article class="stack-card compact-card">
+              <div class="stack-meta"><strong>3. Pitch Deck</strong>${renderPill('appendix', 'soft')}</div>
+              <p>The public deck stays shared at the top, then adds one appendix slide per bounty angle.</p>
+            </article>
+          </div>
+        `,
+        'This keeps the submission work reusable instead of rebuilding assets for every bounty.'
+      )}
+    </div>
+    ${renderPanel('Proof Cards', renderHackathonProofCards(proofs, { publicMode }), publicMode ? 'This public page carries the shared proof catalog; use the JSON links when a submission form asks for concrete integration evidence.' : normalizedBounty ? `Filtered for ${normalizedBounty}.` : 'Filter by bounty with ?bounty=<id> when you want a tighter review path.')}
+  `;
+}
+
+async function renderBuddyPage(page, requestUrl) {
+  const publicMode = isPublicPageMode(requestUrl);
+  const [bootstrapRes, runtimeRes, proofsRes] = await Promise.all([
+    fetchJsonSafe('/workspace/bootstrap'),
+    fetchJsonSafe('/settings/runtime'),
+    fetchJsonSafe('/proofs?bounty=human-for-claw&limit=6'),
+  ]);
+  const bootstrap = bootstrapRes.ok
+    ? bootstrapRes.payload
+    : { recentContacts: [], latestMirror: null };
+  const runtime = runtimeRes.ok ? runtimeRes.payload : { publishMode: 'dry-run' };
+  const proofs = proofsRes.ok ? proofsRes.payload.proofs || [] : [];
+  const buddyTasks = [
+    {
+      title: '认识新朋友',
+      body: 'Write one simple note about someone new, and let SocialOS turn it into a contact you can remember later.',
+      href: '/quick-capture?prefill=%E6%88%91%E4%BB%8A%E5%A4%A9%E8%AE%A4%E8%AF%86%E4%BA%86%E4%B8%80%E4%B8%AA%E6%96%B0%E6%9C%8B%E5%8F%8B%EF%BC%8C%E4%BB%96%E5%96%9C%E6%AC%A2%E7%94%BB%E7%94%BB%EF%BC%8C%E6%88%91%E6%83%B3%E8%AE%B0%E4%BD%8F%E4%BB%96%E3%80%82',
+    },
+    {
+      title: '记住人和场景',
+      body: 'Capture where you met, what you talked about, and one kind follow-up you want to do next.',
+      href: '/quick-capture?prefill=I%20met%20a%20new%20friend%20at%20the%20library%20club%20and%20we%20both%20liked%20building%20games.',
+    },
+    {
+      title: '生成感谢或活动跟进',
+      body: 'Turn one event or friendship moment into a thank-you message or a warm follow-up note.',
+      href: '/quick-capture?prefill=%E5%B8%AE%E6%88%91%E5%86%99%E4%B8%80%E6%AE%B5%E8%B0%A2%E8%B0%A2%E4%BB%8A%E5%A4%A9%E9%99%AA%E6%88%91%E5%81%9A%E6%B4%BB%E5%8A%A8%E7%9A%84%E6%9C%8B%E5%8F%8B%E7%9A%84%E8%AF%9D%E3%80%82',
+    },
+    {
+      title: '安全反思',
+      body: 'Use Mirror to notice what made you feel good, tired, brave, or nervous after a day with people.',
+      href: '/self-mirror',
+    },
+  ];
+
+  return `
+    ${renderHero(
+      page,
+      [
+        renderMetric(String(buddyTasks.length), 'safe tasks'),
+        renderMetric(String((bootstrap.recentContacts || []).length), 'recent people'),
+        renderMetric(runtime.publishMode === 'dry-run' ? 'safe' : 'warn', 'publish mode'),
+      ].join(''),
+      `<div class="info-card"><strong>Friendship & Gratitude Coach</strong><p>Buddy mode is the Human for Claw angle: simpler language, only kind tasks, and no pressure to publish or configure anything complicated.</p></div>`
+    )}
+    ${publicMode ? renderPublicProofNotice('Read-only public Buddy page', 'Buddy mode is recorded locally. This public page keeps the safe-task framing and Human for Claw proof cards accessible to judges.') : ''}
+    <div class="grid two-up">
+      ${renderPanel(
+        'Choose a Kind Task',
+        `<div class="stack">${buddyTasks
+          .map(
+            (task) => `
+              <article class="stack-card compact-card">
+                <div class="stack-meta">
+                  <strong>${escapeHtml(task.title)}</strong>
+                  ${renderPill('Buddy-safe', 'good')}
+                </div>
+                <p>${escapeHtml(task.body)}</p>
+                ${
+                  publicMode
+                    ? '<div class="inline-actions"><small>Recorded locally during the demo.</small></div>'
+                    : `<div class="inline-actions"><a class="mini-link" href="${escapeHtml(task.href)}">Start</a></div>`
+                }
+              </article>
+            `
+          )
+          .join('')}</div>`,
+        'Buddy keeps the surface narrow on purpose so children, families, or first-time users are not overwhelmed.'
+      )}
+      ${renderPanel(
+        'Safety Rails',
+        `
+          <div class="stack">
+            <article class="stack-card compact-card">
+              <div class="stack-meta"><strong>No open publish lane</strong>${renderPill('dry-run', 'soft')}</div>
+              <p>Buddy mode never asks the user to approve a live post or manage platform credentials.</p>
+            </article>
+            <article class="stack-card compact-card">
+              <div class="stack-meta"><strong>Simple language only</strong>${renderPill('low cognitive load', 'soft')}</div>
+              <p>The tasks are framed around friendship, gratitude, remembering people, and calm reflection.</p>
+            </article>
+            <article class="stack-card compact-card">
+              <div class="stack-meta"><strong>Trust-first defaults</strong>${renderPill('loopback-only', 'accent')}</div>
+              <p>The product stays local-first and explainable so an adult can review what happened and why.</p>
+            </article>
+          </div>
+        `,
+        'This is the proof frame for Human for Claw: visible boundaries, not just a cheerful skin.'
+      )}
+    </div>
+    ${
+      publicMode
+        ? ''
+        : renderPanel('People You Already Care About', renderPeopleCards((bootstrap.recentContacts || []).slice(0, 4)), 'Buddy still reuses the same real relationship memory under the hood.')
+    }
+    ${renderPanel('Human for Claw Proofs', renderHackathonProofCards(proofs, { publicMode }), publicMode ? 'These proof cards are safe to share publicly and map directly to the Buddy-mode story.' : 'Use these proof cards when you want to tighten the Human for Claw story for a judge.')}
   `;
 }
 
@@ -3370,6 +3895,36 @@ function renderDeckSlide({ eyebrow = '', title, bodyHtml = '', visualHtml = '', 
   `;
 }
 
+function renderDeckHackathonAppendixSlide(bounty) {
+  const proofCopyById = {
+    'claw-for-human': 'Use /demo to show the full judge loop and how Claw becomes a usable relationship workspace.',
+    animoca: 'Use /hackathon?bounty=animoca to frame SocialOS as persistent identity plus multi-agent memory.',
+    'human-for-claw': 'Use /buddy to keep the flow kid-friendly, guided, and clearly bounded.',
+    'z-ai-general': 'Use /hackathon?bounty=z-ai-general to show GLM routing inside multilingual product flows.',
+    'ai-agents-for-good': 'Use /hackathon?bounty=ai-agents-for-good to show SDG triage feeding follow-up and coordination.',
+  };
+
+  return renderDeckSlide({
+    eyebrow: `Appendix · ${bounty.label}`,
+    title: bounty.label,
+    bodyHtml: `
+      <p class="deck-lead">${escapeHtml(bounty.uniqueAngle || '')}</p>
+      <ul class="deck-check-list">
+        <li>${escapeHtml(proofCopyById[bounty.id] || 'Use the hackathon hub to present the matching proof layer.')}</li>
+        <li>${escapeHtml((bounty.integrations || []).join(' · '))}</li>
+        <li>${escapeHtml(readOptionalString(bounty.route, '/hackathon'))}</li>
+      </ul>
+    `,
+    visualHtml: `
+      <div class="deck-proof-grid">
+        ${renderDeckMetric('Status', readOptionalString(bounty.status, 'ready'))}
+        ${renderDeckMetric('Route', readOptionalString(bounty.route, '/hackathon'))}
+        ${renderDeckMetric('Angle', bounty.id)}
+      </div>
+    `,
+  });
+}
+
 function renderDeckDocument(requestUrl) {
   const mode = readOptionalString(requestUrl.searchParams.get('mode'), '');
   const rehearsalMode = mode === 'rehearsal';
@@ -3497,7 +4052,7 @@ function renderDeckDocument(requestUrl) {
               <span class="deck-real-chip">X</span>
               <span class="deck-real-chip">Instagram</span>
               <span class="deck-real-chip">Zhihu</span>
-              <span class="deck-real-chip">Xiaohongshu</span>
+              <span class="deck-real-chip">Rednote</span>
               <span class="deck-real-chip">WeChat</span>
             </div>
             <p>English and Chinese outputs are prepared from the same event, with dry-run queueing by default.</p>
@@ -3521,106 +4076,110 @@ function renderDeckDocument(requestUrl) {
     }),
     renderDeckSlide({
       eyebrow: 'Slide 5 · What works today',
-      title: 'The core loop already works.',
-      shellClass: 'deck-slide-shell-compact deck-slide-shell-proof',
+      title: 'One real note becomes memory, 7 drafts, and a safe queue.',
+      shellClass: 'deck-slide-shell-compact deck-slide-shell-proof deck-slide-shell-proof-reframe',
       bodyHtml: `
-        <ul class="deck-check-list">
-          <li>Real named contacts with linked identities, interactions, and event context already seeded into the demo</li>
-          <li>Fuzzy recall across people, events, drafts, and self signals</li>
-          <li>Linked people and events through a graph-backed relationship layer</li>
-          <li>Seven platform-native drafts with per-platform language defaults</li>
-          <li>Trust-first queue handoff instead of reckless auto-posting</li>
-          <li>Daily and weekly mirror summaries grounded in evidence</li>
-        </ul>
-      `,
-      footerHtml: `
-        <div class="deck-proof-badge-row">
-          <span class="deck-proof-badge">Contacts memory</span>
-          <span class="deck-proof-badge">Draft generation</span>
-          <span class="deck-proof-badge">Trust-first queue</span>
+        <p class="deck-lead">One seeded relationship note already fans out into contacts, drafts, and a human approval step.</p>
+        <div class="deck-proof-copy-stack">
+          <article class="deck-proof-copy-card">
+            <span class="deck-proof-copy-step">01 · Contacts memory</span>
+            <strong>Real named contacts already live in the graph.</strong>
+          </article>
+          <article class="deck-proof-copy-card">
+            <span class="deck-proof-copy-step">02 · Draft generation</span>
+            <strong>One London organiser thread already produces 7 drafts.</strong>
+          </article>
+          <article class="deck-proof-copy-card">
+            <span class="deck-proof-copy-step">03 · Approval queue</span>
+            <strong>Dry-run and approval stay visible before anything posts.</strong>
+          </article>
         </div>
-        <p>One seeded graph now powers every visible proof surface in the demo.</p>
       `,
       visualHtml: `
-        <div class="deck-proof-gallery deck-proof-gallery-curated">
-          <article class="deck-proof-visual-card deck-proof-visual-card-tall">
-            <div class="deck-proof-visual-head">
-              <span>Relationship OS</span>
+        <div class="deck-proof-reframe">
+          <div class="deck-proof-flowbar">
+            <span class="deck-proof-flow-pill">
+              <span class="deck-proof-flow-kicker">Input</span>
+              <strong>Real note</strong>
+            </span>
+            <span class="deck-proof-flow-connector">→</span>
+            <span class="deck-proof-flow-pill">
+              <span class="deck-proof-flow-kicker">1</span>
               <strong>Contacts</strong>
-            </div>
-            <div class="deck-proof-visual-frame deck-proof-visual-frame-tall deck-proof-visual-frame-clean">
+            </span>
+            <span class="deck-proof-flow-connector">→</span>
+            <span class="deck-proof-flow-pill">
+              <span class="deck-proof-flow-kicker">2</span>
+              <strong>7 drafts</strong>
+            </span>
+            <span class="deck-proof-flow-connector">→</span>
+            <span class="deck-proof-flow-pill">
+              <span class="deck-proof-flow-kicker">3</span>
+              <strong>Approval queue</strong>
+            </span>
+          </div>
+          <div class="deck-proof-stage-grid">
+            <article class="deck-proof-stage-card deck-proof-stage-card-large">
+              <div class="deck-proof-stage-meta">
+                <span class="deck-proof-stage-step">01</span>
+                <span class="deck-proof-stage-label">Contacts memory</span>
+              </div>
+              <strong class="deck-proof-stage-title">Minghan Xiao, Candice Tang, James Wu</strong>
+              <p class="deck-proof-stage-subtitle">Already visible with notes, tags, and next follow-up timing.</p>
               ${contactsImage ? `
-                <div class="deck-proof-shot-surface deck-proof-shot-surface-tall">
-                  <img class="deck-shot-proof deck-shot-proof-contain" src="${contactsImage}" alt="Contacts with real named network" />
+                <div class="deck-proof-shot-surface deck-proof-shot-surface-stage deck-proof-shot-surface-stage-large">
+                  <img class="deck-shot-proof deck-shot-proof-contacts deck-shot-proof-stage" src="${contactsImage}" alt="Contacts with real named network" />
                 </div>
               ` : `<div class="deck-placeholder">Contacts screenshot unavailable</div>`}
-              <div class="deck-proof-callout">
-                <span>Visible proof</span>
-                <strong>Minghan Xiao, Candice Tang, James Wu</strong>
-                <p>Real names, notes, tags, and follow-up timing are already visible in the seeded contact memory.</p>
+              <div class="deck-proof-token-row">
+                <span class="deck-proof-token">X + LinkedIn</span>
+                <span class="deck-proof-token">follow-up date</span>
+                <span class="deck-proof-token">linked event</span>
               </div>
-            </div>
-            <div class="deck-proof-visual-caption">Real named people, linked identities, notes, and follow-up timing in one view.</div>
-          </article>
-          <div class="deck-proof-visual-stack">
-            <article class="deck-proof-visual-card">
-              <div class="deck-proof-visual-head">
-                <span>Content OS</span>
-                <strong>Drafts</strong>
-              </div>
-              <div class="deck-proof-visual-frame deck-proof-visual-frame-clean">
-                <div class="deck-proof-split">
-                  ${draftsImage ? `
-                    <div class="deck-proof-shot-surface">
-                      <img class="deck-shot-proof deck-shot-proof-contain" src="${draftsImage}" alt="Draft generation flow" />
-                    </div>
-                  ` : `<div class="deck-placeholder">Drafts screenshot unavailable</div>`}
-                  <div class="deck-proof-highlight">
-                    <span class="deck-proof-highlight-kicker">What is visible</span>
-                    <strong>7 drafts from one event</strong>
-                    <div class="deck-proof-token-row">
-                      <span class="deck-proof-token">LinkedIn</span>
-                      <span class="deck-proof-token">X</span>
-                      <span class="deck-proof-token">Instagram</span>
-                      <span class="deck-proof-token">Zhihu</span>
-                    </div>
-                    <p>Platform-native packages stay tied to the same London organiser thread instead of drifting apart.</p>
-                  </div>
-                </div>
-              </div>
-              <div class="deck-proof-visual-caption">Seven platform-native packages from the same event context.</div>
+              <p class="deck-proof-stage-foot">This is already real people memory, not a placeholder list or CRM mock.</p>
             </article>
-            <article class="deck-proof-visual-card">
-              <div class="deck-proof-visual-head">
-                <span>Trust layer</span>
-                <strong>Queue</strong>
+            <article class="deck-proof-stage-card">
+              <div class="deck-proof-stage-meta">
+                <span class="deck-proof-stage-step">02</span>
+                <span class="deck-proof-stage-label">Draft generation</span>
               </div>
-              <div class="deck-proof-visual-frame deck-proof-visual-frame-clean">
-                <div class="deck-proof-split">
-                  ${queueImage ? `
-                    <div class="deck-proof-shot-surface">
-                      <img class="deck-shot-proof deck-shot-proof-contain" src="${queueImage}" alt="Queue and recall flow" />
-                    </div>
-                  ` : `<div class="deck-placeholder">Queue screenshot unavailable</div>`}
-                  <div class="deck-proof-highlight">
-                    <span class="deck-proof-highlight-kicker">What is visible</span>
-                    <strong>Safe rehearsal before publish</strong>
-                    <div class="deck-proof-token-row">
-                      <span class="deck-proof-token">dry-run</span>
-                      <span class="deck-proof-token">manual step</span>
-                      <span class="deck-proof-token">approval gate</span>
-                    </div>
-                    <p>The queue makes the handoff legible, so nothing jumps straight from draft to public posting.</p>
-                  </div>
+              <strong class="deck-proof-stage-title">7 drafts from one event</strong>
+              <p class="deck-proof-stage-subtitle">The same relationship thread already fans out across channels.</p>
+              ${draftsImage ? `
+                <div class="deck-proof-shot-surface deck-proof-shot-surface-stage">
+                  <img class="deck-shot-proof deck-shot-proof-drafts deck-shot-proof-stage" src="${draftsImage}" alt="Draft generation flow" />
                 </div>
+              ` : `<div class="deck-placeholder">Drafts screenshot unavailable</div>`}
+              <div class="deck-proof-token-row">
+                <span class="deck-proof-token">LinkedIn</span>
+                <span class="deck-proof-token">X</span>
+                <span class="deck-proof-token">Instagram</span>
+                <span class="deck-proof-token">Zhihu</span>
               </div>
-              <div class="deck-proof-visual-caption">Dry-run by default, with clear approval gates before anything goes live.</div>
+            </article>
+            <article class="deck-proof-stage-card">
+              <div class="deck-proof-stage-meta">
+                <span class="deck-proof-stage-step">03</span>
+                <span class="deck-proof-stage-label">Approval queue</span>
+              </div>
+              <strong class="deck-proof-stage-title">Dry-run before publish</strong>
+              <p class="deck-proof-stage-subtitle">Human approval stays explicit before anything posts.</p>
+              ${queueImage ? `
+                <div class="deck-proof-shot-surface deck-proof-shot-surface-stage">
+                  <img class="deck-shot-proof deck-shot-proof-queue deck-shot-proof-stage" src="${queueImage}" alt="Queue and recall flow" />
+                </div>
+              ` : `<div class="deck-placeholder">Queue screenshot unavailable</div>`}
+              <div class="deck-proof-token-row">
+                <span class="deck-proof-token">dry-run</span>
+                <span class="deck-proof-token">manual approval</span>
+              </div>
             </article>
           </div>
         </div>
       `,
       notesHtml: `
-        <p>This is the “not a concept deck” slide. Make the product proof tangible and point to the Contacts, Drafts, and Queue visuals on screen.</p>
+        <p>This is the proof slide. Walk left-to-right: one real note, then contacts memory, then seven drafts, then the approval queue.</p>
+        <p>Do not describe features one by one. Treat the whole page as one evidence chain.</p>
       `,
     }),
     renderDeckSlide({
@@ -3708,7 +4267,10 @@ function renderDeckDocument(requestUrl) {
         <p>Close on design partners and intros, not a formal priced round.</p>
       `,
     }),
-  ].join('');
+    ...HACKATHON_PAGE_FALLBACK.map((bounty) => renderDeckHackathonAppendixSlide(bounty)),
+  ];
+  const slideCount = slideSections.length;
+  const slideMarkup = slideSections.join('');
 
   return `<!doctype html>
 <html lang="en" data-print-pdf="${printPdf ? 'true' : 'false'}">
@@ -4327,9 +4889,188 @@ function renderDeckDocument(requestUrl) {
         border-radius: 999px;
         background: rgba(21, 111, 106, 0.1);
         border: 1px solid rgba(21, 111, 106, 0.12);
-        font-size: 14px;
+        font-size: 13px;
         line-height: 1.2;
         color: var(--deck-accent);
+      }
+      .deck-slide-shell.deck-slide-shell-proof-reframe {
+        padding: 56px 58px 52px;
+        grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.02fr);
+        gap: 24px;
+      }
+      .deck-slide-shell.deck-slide-shell-proof-reframe .deck-slide-copy {
+        gap: 12px;
+      }
+      .deck-slide-shell.deck-slide-shell-proof-reframe h2 {
+        font-size: clamp(42px, 4.1vw, 62px);
+        max-width: none;
+      }
+      .deck-slide-shell.deck-slide-shell-proof-reframe .deck-lead {
+        max-width: 24em;
+        font-size: 21px;
+        line-height: 1.38;
+      }
+      .deck-proof-copy-stack {
+        display: grid;
+        gap: 10px;
+      }
+      .deck-proof-copy-card {
+        display: grid;
+        gap: 8px;
+        padding: 14px 18px;
+        border-radius: var(--deck-radius-lg);
+        border: 1px solid var(--deck-line);
+        background: linear-gradient(180deg, rgba(255, 251, 245, 0.98) 0%, rgba(246, 240, 231, 0.96) 100%);
+        box-shadow: var(--deck-shadow);
+      }
+      .deck-proof-copy-step {
+        font-size: 12px;
+        line-height: 1.2;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--deck-accent);
+      }
+      .deck-proof-copy-card strong {
+        font-size: 19px;
+        line-height: 1.02;
+        font-family: var(--deck-display);
+        color: var(--deck-ink);
+      }
+      .deck-proof-copy-card p {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.45;
+        color: var(--deck-ink-soft);
+      }
+      .deck-proof-reframe {
+        display: grid;
+        gap: 12px;
+        align-content: start;
+        min-height: 0;
+        height: 100%;
+      }
+      .deck-proof-flowbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .deck-proof-flow-pill {
+        display: grid;
+        gap: 4px;
+        min-width: 0;
+        padding: 10px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(23, 33, 49, 0.1);
+        background: rgba(255, 251, 245, 0.92);
+        box-shadow: var(--deck-shadow);
+      }
+      .deck-proof-flow-kicker {
+        font-size: 10px;
+        line-height: 1.2;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--deck-accent);
+      }
+      .deck-proof-flow-pill strong {
+        font-size: 18px;
+        line-height: 1;
+        font-family: var(--deck-display);
+        color: var(--deck-ink);
+      }
+      .deck-proof-flow-connector {
+        font-size: 22px;
+        line-height: 1;
+        color: var(--deck-accent);
+      }
+      .deck-proof-stage-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+        grid-template-rows: minmax(0, 0.94fr) minmax(0, 1.06fr);
+        gap: 12px;
+        min-height: 0;
+        height: 100%;
+      }
+      .deck-proof-stage-card {
+        display: grid;
+        align-content: start;
+        gap: 7px;
+        min-height: 0;
+        padding: 14px;
+        border-radius: calc(var(--deck-radius-xl) + 2px);
+        border: 1px solid var(--deck-line);
+        background: linear-gradient(180deg, rgba(255, 251, 245, 0.98) 0%, rgba(246, 240, 231, 0.97) 100%);
+        box-shadow: var(--deck-shadow);
+      }
+      .deck-proof-stage-card-large {
+        grid-row: span 2;
+      }
+      .deck-proof-stage-card:not(.deck-proof-stage-card-large) {
+        padding: 13px;
+        gap: 6px;
+      }
+      .deck-proof-stage-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .deck-proof-stage-step {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        background: rgba(21, 111, 106, 0.12);
+        color: var(--deck-accent);
+        font-size: 14px;
+        line-height: 1;
+        font-weight: 700;
+      }
+      .deck-proof-stage-label {
+        font-size: 11px;
+        line-height: 1.2;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--deck-accent);
+      }
+      .deck-proof-stage-title {
+        font-family: var(--deck-display);
+        font-size: 33px;
+        line-height: 0.98;
+        color: var(--deck-ink);
+      }
+      .deck-proof-stage-card:not(.deck-proof-stage-card-large) .deck-proof-stage-title {
+        font-size: 23px;
+      }
+      .deck-proof-stage-card:not(.deck-proof-stage-card-large) .deck-proof-stage-subtitle {
+        font-size: 12px;
+        line-height: 1.3;
+      }
+      .deck-proof-stage-subtitle,
+      .deck-proof-stage-foot {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.36;
+        color: var(--deck-ink-soft);
+      }
+      .deck-proof-stage-card:not(.deck-proof-stage-card-large) .deck-proof-shot-surface-stage {
+        min-height: 98px;
+      }
+      .deck-proof-stage-card:not(.deck-proof-stage-card-large) .deck-proof-token {
+        padding: 6px 8px;
+        font-size: 11px;
+      }
+      .deck-proof-shot-surface-stage {
+        margin: 0;
+        min-height: 116px;
+      }
+      .deck-proof-shot-surface-stage-large {
+        min-height: 270px;
+      }
+      .deck-shot-proof-stage {
+        object-fit: cover;
       }
       .deck-slide-shell.deck-slide-shell-proof .deck-proof-gallery {
         height: 100%;
@@ -4626,6 +5367,40 @@ function renderDeckDocument(requestUrl) {
         .deck-reference-card code {
           font-size: 12px;
         }
+        .deck-proof-copy-card {
+          padding: 16px 18px;
+        }
+        .deck-proof-copy-card strong {
+          font-size: 21px;
+        }
+        .deck-proof-copy-card p {
+          font-size: 14px;
+        }
+        .deck-proof-flow-pill {
+          padding: 8px 12px;
+        }
+        .deck-proof-flow-pill strong {
+          font-size: 16px;
+        }
+        .deck-proof-stage-card {
+          padding: 16px;
+        }
+        .deck-proof-stage-title {
+          font-size: 30px;
+        }
+        .deck-proof-stage-card:not(.deck-proof-stage-card-large) .deck-proof-stage-title {
+          font-size: 24px;
+        }
+        .deck-proof-stage-subtitle,
+        .deck-proof-stage-foot {
+          font-size: 13px;
+        }
+        .deck-proof-shot-surface-stage {
+          min-height: 126px;
+        }
+        .deck-proof-shot-surface-stage-large {
+          min-height: 276px;
+        }
         .deck-slide-shell.deck-slide-shell-proof .deck-shot.small,
         .deck-slide-shell.deck-slide-shell-proof .deck-shot.deck-shot-tall,
         .deck-slide-shell.deck-slide-shell-proof .deck-proof-visual-frame,
@@ -4734,6 +5509,56 @@ function renderDeckDocument(requestUrl) {
         .deck-reference-card code {
           font-size: 11px;
         }
+        .deck-slide-shell.deck-slide-shell-proof-reframe {
+          padding: 50px 48px 46px;
+          gap: 22px;
+        }
+        .deck-proof-copy-card {
+          padding: 14px 16px;
+        }
+        .deck-proof-copy-card strong {
+          font-size: 19px;
+        }
+        .deck-proof-copy-card p {
+          font-size: 13px;
+        }
+        .deck-proof-flowbar {
+          gap: 8px;
+        }
+        .deck-proof-flow-pill {
+          padding: 8px 11px;
+        }
+        .deck-proof-flow-pill strong {
+          font-size: 15px;
+        }
+        .deck-proof-flow-connector {
+          font-size: 18px;
+        }
+        .deck-proof-stage-card {
+          padding: 14px;
+          gap: 8px;
+        }
+        .deck-proof-stage-step {
+          width: 34px;
+          height: 34px;
+          font-size: 13px;
+        }
+        .deck-proof-stage-title {
+          font-size: 26px;
+        }
+        .deck-proof-stage-card:not(.deck-proof-stage-card-large) .deck-proof-stage-title {
+          font-size: 21px;
+        }
+        .deck-proof-stage-subtitle,
+        .deck-proof-stage-foot {
+          font-size: 12px;
+        }
+        .deck-proof-shot-surface-stage {
+          min-height: 104px;
+        }
+        .deck-proof-shot-surface-stage-large {
+          min-height: 214px;
+        }
         .deck-real-input,
         .deck-real-stage {
           padding: 14px 16px;
@@ -4772,12 +5597,42 @@ function renderDeckDocument(requestUrl) {
         .deck-real-chip-row {
           gap: 7px;
         }
+        .deck-slide-shell.deck-slide-shell-proof-reframe {
+          gap: 24px;
+        }
+        .deck-proof-stage-grid {
+          grid-template-columns: 1fr;
+          grid-template-rows: auto;
+          height: auto;
+        }
+        .deck-proof-stage-card-large {
+          grid-row: auto;
+        }
+        .deck-proof-flowbar {
+          gap: 8px;
+        }
+        .deck-proof-flow-connector {
+          display: none;
+        }
+        .deck-proof-copy-card strong {
+          font-size: 22px;
+        }
+        .deck-proof-stage-title {
+          font-size: 28px;
+        }
+        .deck-proof-stage-card:not(.deck-proof-stage-card-large) .deck-proof-stage-title {
+          font-size: 24px;
+        }
         .deck-proof-split {
           grid-template-columns: 1fr;
         }
         .deck-proof-shot-surface {
           margin: 14px 14px 8px;
           min-height: 132px;
+        }
+        .deck-proof-shot-surface-stage,
+        .deck-proof-shot-surface-stage-large {
+          min-height: 220px;
         }
         .deck-proof-shot-surface-tall {
           margin-bottom: 10px;
@@ -4901,12 +5756,46 @@ function renderDeckDocument(requestUrl) {
         .deck-proof-badge {
           justify-content: center;
         }
+        .deck-proof-flowbar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .deck-proof-flow-pill {
+          width: 100%;
+        }
+        .deck-proof-flow-connector {
+          display: none;
+        }
+        .deck-proof-stage-grid {
+          grid-template-columns: 1fr;
+          grid-template-rows: auto;
+          height: auto;
+        }
+        .deck-proof-stage-card-large {
+          grid-row: auto;
+        }
+        .deck-proof-copy-card strong {
+          font-size: 21px;
+        }
+        .deck-proof-copy-card p,
+        .deck-proof-stage-subtitle,
+        .deck-proof-stage-foot {
+          font-size: 14px;
+        }
+        .deck-proof-stage-title,
+        .deck-proof-stage-card:not(.deck-proof-stage-card-large) .deck-proof-stage-title {
+          font-size: 26px;
+        }
         .deck-proof-split {
           grid-template-columns: 1fr;
         }
         .deck-proof-shot-surface {
           margin: 14px 14px 8px;
           min-height: 132px;
+        }
+        .deck-proof-shot-surface-stage,
+        .deck-proof-shot-surface-stage-large {
+          min-height: 186px;
         }
         .deck-proof-shot-surface-tall {
           margin-bottom: 10px;
@@ -4993,12 +5882,12 @@ function renderDeckDocument(requestUrl) {
     </div>
     <div class="reveal">
       <div class="slides">
-        ${slideSections}
+        ${slideMarkup}
       </div>
     </div>
     <nav class="deck-mobile-pager" aria-label="Mobile deck navigation">
       <button type="button" data-deck-mobile-prev aria-label="Previous slide">‹</button>
-      <span class="deck-mobile-pager-output" data-deck-mobile-current>1 / 8</span>
+      <span class="deck-mobile-pager-output" data-deck-mobile-current>1 / ${slideCount}</span>
       <button type="button" data-deck-mobile-next aria-label="Next slide">›</button>
     </nav>
     ${
@@ -5184,6 +6073,12 @@ async function renderPageBody(page, requestUrl) {
       return renderCockpitPage(page);
     case 'quick-capture':
       return renderQuickCapturePage(page, requestUrl);
+    case 'demo':
+      return renderDemoPage(page, requestUrl);
+    case 'hackathon':
+      return renderHackathonPage(page, requestUrl);
+    case 'buddy':
+      return renderBuddyPage(page, requestUrl);
     case 'ask':
       return renderAskPage(page, requestUrl);
     case 'deck':
@@ -5223,7 +6118,7 @@ async function renderPageBody(page, requestUrl) {
 function renderClientScript() {
   return `
     <script>
-      const apiBase = ${JSON.stringify(DEFAULT_API_BASE_URL)};
+      const apiBase = ${JSON.stringify(resolveApiBaseUrl())};
       const flashKey = 'socialos.dashboard.flash';
       const captureState = {
         assets: [],
@@ -6563,9 +7458,9 @@ function renderClientScript() {
   `;
 }
 
-function renderLayout({ currentPath, title, body }) {
+function renderLayout({ currentPath, title, body, publicMode = false }) {
   return `<!doctype html>
-<html lang="en">
+<html lang="en" data-public-mode="${publicMode ? 'true' : 'false'}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7479,6 +8374,18 @@ function renderLayout({ currentPath, title, body }) {
         border-color: rgba(21, 111, 106, 0.18);
         box-shadow: 0 18px 36px rgba(18, 33, 49, 0.08);
       }
+      .hackathon-card-selected {
+        border-color: rgba(21, 111, 106, 0.28);
+        box-shadow: 0 20px 42px rgba(21, 111, 106, 0.12);
+      }
+      .hackathon-shot {
+        width: 100%;
+        display: block;
+        margin: 10px 0 12px;
+        border-radius: 18px;
+        border: 1px solid rgba(22, 33, 50, 0.08);
+        box-shadow: var(--shadow-soft);
+      }
       .queue-card > small {
         display: block;
         margin-top: 2px;
@@ -7798,14 +8705,14 @@ function renderLayout({ currentPath, title, body }) {
   <body>
     <div class="shell">
       <nav>
-        <p class="brand">Local-first social operating system</p>
+        <p class="brand">${publicMode ? 'Judge-ready public proof surface' : 'Local-first social operating system'}</p>
         <h2 class="brand-title">SocialOS</h2>
         <div class="nav-links">
-          ${renderNavigation(currentPath)}
+          ${renderNavigation(currentPath, { publicMode })}
         </div>
         <div class="nav-footer">
-          <p>Local-first by default, calm by design.</p>
-          <p>Memory, follow-up, and content stay in one loop.</p>
+          <p>${publicMode ? 'Read-only proof pages for judges and reviewers.' : 'Local-first by default, calm by design.'}</p>
+          <p>${publicMode ? 'The full interactive demo remains localhost-only.' : 'Memory, follow-up, and content stay in one loop.'}</p>
         </div>
       </nav>
       <main>
@@ -7814,7 +8721,7 @@ function renderLayout({ currentPath, title, body }) {
         <footer>Relationship memory, follow-up, content, and reflection — in one local-first workspace.</footer>
       </main>
     </div>
-    ${renderClientScript()}
+    ${publicMode ? '' : renderClientScript()}
   </body>
 </html>`;
 }
@@ -7889,6 +8796,7 @@ async function routeRequest(req, res) {
   }
 
   if (page) {
+    const publicMode = isPublicPageMode(requestUrl);
     const body = await renderPageBody(page, requestUrl);
     sendHtml(
       res,
@@ -7897,6 +8805,7 @@ async function routeRequest(req, res) {
         currentPath: page.path,
         title: page.title,
         body,
+        publicMode,
       })
     );
     return;
@@ -7934,7 +8843,8 @@ export function createWebServer() {
   return { server };
 }
 
-export async function startWebServer({ port = DEFAULT_PORT, quiet = false } = {}) {
+export async function startWebServer({ port = DEFAULT_PORT, quiet = false, apiBaseUrl = '' } = {}) {
+  setApiBaseUrlOverride(apiBaseUrl);
   const { server } = createWebServer();
 
   await new Promise((resolve, reject) => {
@@ -7962,6 +8872,7 @@ export async function startWebServer({ port = DEFAULT_PORT, quiet = false } = {}
       }
       server.close((error) => (error ? reject(error) : resolve()));
     });
+    setApiBaseUrlOverride('');
   };
 
   return {
@@ -7982,6 +8893,9 @@ Usage:
 Routes:
   /cockpit
   /quick-capture
+  /demo
+  /hackathon
+  /buddy
   /ask
   /people
   /events

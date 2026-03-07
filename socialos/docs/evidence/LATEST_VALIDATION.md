@@ -7,10 +7,22 @@
 
 ## Current Health Snapshot
 - Demo healthy: true
-- socialos-api: healthy=true alive=true
-- socialos-web: healthy=true alive=true
+- socialos-api: ready=true healthy=true pidAlive=true stalePid=false
+- socialos-web: ready=true healthy=true pidAlive=true stalePid=false
 
 ## Evidence Pointers
+- `socialos/docs/evidence/hackathon-drafts-zai.json`
+- `socialos/docs/evidence/hackathon-flock-triage.json`
+- `socialos/docs/evidence/hackathon-glm-generate.json`
+- `socialos/docs/evidence/hackathon-overview.json`
+- `socialos/docs/evidence/hackathon-proof-summary.md`
+- `socialos/docs/evidence/hackathon-proofs-ai-agents-for-good.json`
+- `socialos/docs/evidence/hackathon-proofs-all.json`
+- `socialos/docs/evidence/hackathon-proofs-animoca.json`
+- `socialos/docs/evidence/hackathon-proofs-claw-for-human.json`
+- `socialos/docs/evidence/hackathon-proofs-human-for-claw.json`
+- `socialos/docs/evidence/hackathon-proofs-z-ai-general.json`
+- `socialos/docs/evidence/hackathon-workspace-zai.json`
 - `socialos/docs/evidence/sample-digest.md`
 - `socialos/docs/evidence/sample-run-report.json`
 - `socialos/docs/evidence/sample-run-report.md`

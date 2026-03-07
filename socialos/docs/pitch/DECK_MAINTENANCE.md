@@ -48,16 +48,20 @@ node scripts/refresh_public_docs.mjs
 
 That refresh updates `DECK_STATUS.json` together with the existing generated public docs.
 
-## How To Export The Public Deck
+## How To Export The Public Deck And Proof Pages
 ```bash
-bash scripts/demo.sh
-node scripts/export_vc_deck.mjs
+bash scripts/hackathon_preflight.sh
 ```
 
 That export writes a static site artifact into `.deck-site/` with:
 - `index.html`
 - `deck/index.html`
 - `deck/print/index.html`
+- `demo/index.html`
+- `hackathon/index.html`
+- `buddy/index.html`
+- `data/hackathon-overview.json`
+- `data/proofs/*.json`
 - `CNAME`
 
 The GitHub Pages workflow publishes that artifact for the public domain.
@@ -72,6 +76,9 @@ Manual checks:
 - open `/deck`
 - open `/deck?mode=rehearsal`
 - open `/deck?print-pdf`
+- open `/demo?mode=public`
+- open `/hackathon?mode=public`
+- open `/buddy?mode=public`
 - verify that public mode does not expose localhost-only links
 - run `node scripts/export_vc_deck.mjs` and verify `.deck-site/index.html` exists
 

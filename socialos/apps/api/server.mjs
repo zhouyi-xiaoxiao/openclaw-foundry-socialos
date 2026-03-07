@@ -115,28 +115,28 @@ const PLATFORM_COMPLIANCE_RULES = Object.freeze({
   }),
   zhihu: Object.freeze({
     id: 'zhihu',
-    label: '知乎',
+    label: 'Zhihu',
     maxLength: 20000,
     maxHashtags: 10,
     forbiddenFormats: ['markdown_link', 'fenced_code', 'html_tag'],
   }),
   xiaohongshu: Object.freeze({
     id: 'xiaohongshu',
-    label: '小红书',
+    label: 'Rednote',
     maxLength: 1000,
     maxHashtags: 20,
     forbiddenFormats: ['markdown_link', 'fenced_code', 'html_tag'],
   }),
   wechat_moments: Object.freeze({
     id: 'wechat_moments',
-    label: '微信朋友圈',
+    label: 'WeChat Moments',
     maxLength: 2000,
     maxHashtags: 10,
     forbiddenFormats: ['markdown_link', 'fenced_code', 'html_tag'],
   }),
   wechat_official: Object.freeze({
     id: 'wechat_official',
-    label: '微信公众号',
+    label: 'WeChat Official Account',
     maxLength: 20000,
     maxHashtags: 10,
     forbiddenFormats: ['markdown_link', 'fenced_code', 'html_tag'],
@@ -215,7 +215,7 @@ const PLATFORM_PRODUCT_CAPABILITIES = Object.freeze({
   xiaohongshu: Object.freeze({
     supportLevel: 'L1 Assisted+',
     lane: 'publish-package',
-    entryTarget: 'Xiaohongshu mobile composer',
+    entryTarget: 'Rednote mobile composer',
     liveEligible: false,
     blockedBy: 'manual media + final publish step',
   }),
@@ -255,6 +255,108 @@ const PLATFORM_ENTRY_URLS = Object.freeze({
   wechat_official: 'https://mp.weixin.qq.com/',
 });
 
+const MODEL_PROVIDER_AUTO = 'auto';
+const MODEL_PROVIDER_OPENAI = 'openai';
+const MODEL_PROVIDER_GLM = 'glm';
+const MODEL_PROVIDER_FLOCK = 'flock';
+const MODEL_PROVIDER_LOCAL = 'local';
+const SUPPORTED_MODEL_PROVIDERS = new Set([
+  MODEL_PROVIDER_AUTO,
+  MODEL_PROVIDER_OPENAI,
+  MODEL_PROVIDER_GLM,
+  MODEL_PROVIDER_LOCAL,
+]);
+
+const DEFAULT_GLM_MODEL_ID = 'glm-4.7';
+const DEFAULT_FLOCK_MODEL_ID = 'qwen3-30b-a3b-instruct-2507';
+
+const HACKATHON_BOUNTIES = Object.freeze([
+  Object.freeze({
+    id: 'claw-for-human',
+    label: 'Claw for Human',
+    prize: '$500 USD',
+    route: '/demo',
+    audience: 'judges who want a human-ready product surface',
+    hook: 'Bring Claw out of the shell and into a guided relationship workspace.',
+    fit: 'SocialOS already turns OpenClaw-powered agent orchestration into a calm interface with memory, drafts, queue, and reflection.',
+    uniqueAngle: 'Explainable relationship OS instead of a generic assistant shell.',
+    integrations: ['openclaw', 'workspace', 'deck'],
+    proofKinds: ['openclaw', 'ui', 'deck'],
+    demoSteps: ['Open /demo', 'Launch /quick-capture', 'Show agent trace + evidence cards'],
+  }),
+  Object.freeze({
+    id: 'animoca',
+    label: 'Animoca Bounty',
+    prize: '$1,000 USD',
+    route: '/hackathon?bounty=animoca',
+    audience: 'judges looking for identity, memory, and multi-agent coordination',
+    hook: 'Position SocialOS as an identity-rich agent system for creator and community ops.',
+    fit: 'The repo already has persistent people memory, linked identities, and explicit agent lanes for memory, compliance, and publishing.',
+    uniqueAngle: 'Persistent identity and long-horizon memory instead of a one-shot agent demo.',
+    integrations: ['openclaw', 'workspace', 'deck'],
+    proofKinds: ['openclaw', 'memory', 'ui'],
+    demoSteps: ['Open /hackathon', 'Inspect Animoca card', 'Jump into Contacts and Studio agents'],
+  }),
+  Object.freeze({
+    id: 'human-for-claw',
+    label: 'Human for Claw',
+    prize: '$500 USD',
+    route: '/buddy',
+    audience: 'judges evaluating kid-friendly or family-friendly Claw experiences',
+    hook: 'Offer a friendship and gratitude coach with guardrails instead of an unrestricted agent.',
+    fit: 'SocialOS already captures people, follow-up, and reflection. Buddy mode narrows that loop to safe, supportive actions.',
+    uniqueAngle: 'Positive social coaching with explicit boundaries and no risky publishing surface.',
+    integrations: ['openclaw', 'buddy', 'workspace'],
+    proofKinds: ['ui', 'safety', 'memory'],
+    demoSteps: ['Open /buddy', 'Pick a safe task card', 'Jump into a prefilled Workspace flow'],
+  }),
+  Object.freeze({
+    id: 'z-ai-general',
+    label: 'Z.AI General',
+    prize: '$4,000 USD',
+    route: '/hackathon?bounty=z-ai-general',
+    audience: 'judges who want a real GLM-powered prototype',
+    hook: 'Use GLM in the core multilingual SocialOS workflow, not as a side widget.',
+    fit: 'Workspace responses, bilingual summarization, and draft generation all map naturally onto the current product loop.',
+    uniqueAngle: 'Chinese + English creator workflow where GLM is a core path, not a decorative provider option.',
+    integrations: ['glm', 'workspace', 'deck'],
+    proofKinds: ['glm', 'ui', 'deck'],
+    demoSteps: ['Open /hackathon', 'Call GLM router', 'Show GLM-tagged Workspace or Draft flow'],
+  }),
+  Object.freeze({
+    id: 'ai-agents-for-good',
+    label: 'AI Agents for Good',
+    prize: '$5,000 USDT',
+    route: '/hackathon?bounty=ai-agents-for-good',
+    audience: 'judges looking for impact-focused agent workflows',
+    hook: 'Turn SocialOS into a community support and volunteer coordination operating system.',
+    fit: 'Contacts, events, follow-up drafts, and evidence-backed coordination already exist; FLock adds SDG triage and urgency scoring.',
+    uniqueAngle: 'Long-term relationship memory and follow-through for impact work, not a one-turn charity chatbot.',
+    integrations: ['openclaw', 'flock', 'workspace'],
+    proofKinds: ['flock', 'openclaw', 'memory'],
+    demoSteps: ['Open /hackathon', 'Run SDG triage', 'Promote the result into follow-up actions and drafts'],
+  }),
+]);
+
+const HACKATHON_BOUNTY_ALIAS_TO_ID = (() => {
+  const aliasMap = new Map();
+
+  for (const bounty of HACKATHON_BOUNTIES) {
+    aliasMap.set(bounty.id, bounty.id);
+    aliasMap.set(bounty.label.toLowerCase(), bounty.id);
+  }
+
+  aliasMap.set('human for claw', 'human-for-claw');
+  aliasMap.set('claw for human', 'claw-for-human');
+  aliasMap.set('animoca bounty', 'animoca');
+  aliasMap.set('z.ai', 'z-ai-general');
+  aliasMap.set('z ai', 'z-ai-general');
+  aliasMap.set('z.ai general', 'z-ai-general');
+  aliasMap.set('ai agents for good', 'ai-agents-for-good');
+
+  return aliasMap;
+})();
+
 function loadDotEnvFile(filePath) {
   let raw = '';
   try {
@@ -284,40 +386,40 @@ function loadDotEnvFile(filePath) {
 const FOUNDRY_AGENT_RESPONSIBILITIES = Object.freeze({
   forge_orchestrator: Object.freeze({
     title: 'Orchestrator',
-    responsibility: '拆目标、排优先级、把产品任务拆成 coder/tester/reviewer 可执行单元',
+    responsibility: 'Break product work into prioritized, executable units for orchestrator, coder, tester, and reviewer lanes.',
   }),
   forge_coder: Object.freeze({
     title: 'Coder',
-    responsibility: '实现 API、UI、runtime、docs 等代码变更',
+    responsibility: 'Implement API, UI, runtime, and documentation changes.',
   }),
   forge_tester: Object.freeze({
     title: 'Tester',
-    responsibility: '跑 smoke/e2e/reviewer gate，确认功能闭环没断',
+    responsibility: 'Run smoke, e2e, and review gates to confirm the product loop still holds.',
   }),
   forge_reviewer: Object.freeze({
     title: 'Reviewer',
-    responsibility: '检查策略、安全边界、回归风险和质量门',
+    responsibility: 'Review policy, safety boundaries, regression risk, and quality gates.',
   }),
 });
 
 const CODEX_PARTICIPATION = Object.freeze({
   canOwn: [
-    '跨文件架构重构',
-    'UI 工作台产品化',
-    'API 设计与实现',
-    'Foundry 编排与控制面接入',
-    '测试补齐与回归定位',
-    'blocked 根因分析与 dry-run 解锁',
+    'Cross-file architecture refactors',
+    'Workspace UI productization',
+    'API design and implementation',
+    'Foundry orchestration and control-plane integration',
+    'Test completion and regression debugging',
+    'Blocked-task root cause analysis and dry-run unlocks',
   ],
   goodAt: [
-    '把模糊需求拆成可执行 backlog',
-    '在不破坏现有闭环的前提下增量改造',
-    '补 runtime / UI / docs / tests 的整链路一致性',
+    'Turning ambiguous asks into executable backlog items',
+    'Making incremental changes without breaking the working loop',
+    'Keeping runtime, UI, docs, and tests consistent end to end',
   ],
   stillNeedsHuman: [
-    '真实平台凭据与登录态',
-    '是否允许 live publish 的业务决策',
-    '需要你拍板的品牌表达和最终内容判断',
+    'Real platform credentials and active login sessions',
+    'Business decisions about whether live publish is allowed',
+    'Final brand voice and publication judgment calls',
   ],
 });
 
@@ -423,6 +525,66 @@ function normalizeStringList(value, fallback = []) {
   return [...fallback];
 }
 
+function normalizeModelProvider(value, fallback = MODEL_PROVIDER_AUTO) {
+  if (typeof value !== 'string') return fallback;
+  const normalized = value.trim().toLowerCase();
+  return SUPPORTED_MODEL_PROVIDERS.has(normalized) ? normalized : fallback;
+}
+
+function normalizeBountyMode(value) {
+  if (typeof value !== 'string') return '';
+  return HACKATHON_BOUNTY_ALIAS_TO_ID.get(value.trim().toLowerCase()) || '';
+}
+
+function readHackathonMode() {
+  return readOptionalString(process.env.HACKATHON_MODE, 'off').toLowerCase();
+}
+
+function hasConfiguredOpenAi() {
+  return Boolean(readOptionalString(process.env.OPENAI_API_KEY, ''));
+}
+
+function hasConfiguredGlm() {
+  return Boolean(readOptionalString(process.env.GLM_API_KEY, ''));
+}
+
+function hasConfiguredFlock() {
+  return Boolean(readOptionalString(process.env.FLOCK_API_KEY, ''));
+}
+
+function resolveRequestedModelProvider({ requestedProvider = MODEL_PROVIDER_AUTO, bountyMode = '' } = {}) {
+  const normalizedBounty = normalizeBountyMode(bountyMode);
+  const explicitProvider = normalizeModelProvider(requestedProvider);
+  const preferredProvider =
+    explicitProvider !== MODEL_PROVIDER_AUTO
+      ? explicitProvider
+      : normalizedBounty === 'z-ai-general'
+        ? MODEL_PROVIDER_GLM
+        : MODEL_PROVIDER_AUTO;
+
+  if (preferredProvider === MODEL_PROVIDER_GLM) {
+    return hasConfiguredGlm()
+      ? { requested: explicitProvider, effective: MODEL_PROVIDER_GLM, configured: true, fallbackUsed: false, reason: 'glm-configured' }
+      : { requested: explicitProvider, effective: MODEL_PROVIDER_LOCAL, configured: false, fallbackUsed: true, reason: 'glm-not-configured' };
+  }
+
+  if (preferredProvider === MODEL_PROVIDER_OPENAI) {
+    return hasConfiguredOpenAi()
+      ? { requested: explicitProvider, effective: MODEL_PROVIDER_OPENAI, configured: true, fallbackUsed: false, reason: 'openai-configured' }
+      : { requested: explicitProvider, effective: MODEL_PROVIDER_LOCAL, configured: false, fallbackUsed: true, reason: 'openai-not-configured' };
+  }
+
+  if (hasConfiguredOpenAi()) {
+    return { requested: explicitProvider, effective: MODEL_PROVIDER_OPENAI, configured: true, fallbackUsed: false, reason: 'auto-openai' };
+  }
+
+  if (hasConfiguredGlm()) {
+    return { requested: explicitProvider, effective: MODEL_PROVIDER_GLM, configured: true, fallbackUsed: false, reason: 'auto-glm' };
+  }
+
+  return { requested: explicitProvider, effective: MODEL_PROVIDER_LOCAL, configured: false, fallbackUsed: true, reason: 'local-fallback' };
+}
+
 function formatPlatformLabel(platformId) {
   return PLATFORM_COMPLIANCE_RULES[platformId]?.label || platformId;
 }
@@ -433,7 +595,7 @@ function formatPlatformShellLabel(platformId) {
     x: 'X',
     linkedin: 'LinkedIn',
     zhihu: 'Zhihu',
-    xiaohongshu: 'Xiaohongshu',
+    xiaohongshu: 'Rednote',
     wechat_moments: 'WeChat Moments',
     wechat_official: 'WeChat Official Account',
   };
@@ -463,41 +625,7 @@ function runSchemaMigrations(db) {
 }
 
 function localizeCapability(capability, platformId, language) {
-  if (language !== 'zh') return capability;
-
-  const supportLevelMap = {
-    'L0 Draft': 'L0 草稿',
-    'L1 Assisted': 'L1 辅助发布',
-    'L1 Assisted+': 'L1 增强辅助发布',
-    'L1.5 Rich Article Package': 'L1.5 图文稿包',
-    'L2 Auto Publish (credentials gated)': 'L2 自动发布（需凭据）',
-  };
-
-  const entryTargetMap = {
-    instagram: 'Instagram 发布器',
-    x: 'X 发布入口',
-    linkedin: 'LinkedIn 发布入口',
-    zhihu: '知乎编辑器',
-    xiaohongshu: '小红书移动端发布页',
-    wechat_moments: '微信朋友圈发布页',
-    wechat_official: '微信公众号后台',
-  };
-
-  const blockedByMap = {
-    'final publish stays manual': '最终发布仍需手动完成',
-    'requires live mode + credentials': '需要开启 live 模式并提供凭据',
-    'manual media + final publish step': '需要手动处理素材并完成最终发布',
-    'manual mobile-only publish': '仅支持手机端手动发布',
-    'manual article assembly + final publish': '需要手动组装图文并完成最终发布',
-    'manual completion required': '需要手动完成发布',
-  };
-
-  return {
-    ...capability,
-    supportLevel: supportLevelMap[capability.supportLevel] || capability.supportLevel,
-    entryTarget: entryTargetMap[platformId] || capability.entryTarget,
-    blockedBy: blockedByMap[capability.blockedBy] || capability.blockedBy,
-  };
+  return capability;
 }
 
 function truncateText(value, maxLength) {
@@ -1348,6 +1476,91 @@ function buildDraftContent(platformRule, event, language, options = {}) {
   })();
 
   return truncateText(lines.join('\n'), platformRule.maxLength);
+}
+
+async function buildDraftContentWithProvider(platformRule, event, language, options = {}) {
+  const fallbackContent = buildDraftContent(platformRule, event, language, options);
+  const requestedProvider = normalizeModelProvider(readOptionalString(options.provider, MODEL_PROVIDER_AUTO));
+  const bountyMode = normalizeBountyMode(options.bountyMode);
+  const shouldUseModelGeneration =
+    requestedProvider !== MODEL_PROVIDER_AUTO || bountyMode === 'z-ai-general';
+
+  if (!shouldUseModelGeneration) {
+    return {
+      content: fallbackContent,
+      provider: MODEL_PROVIDER_LOCAL,
+      model: '',
+      fallbackUsed: false,
+      reason: 'template-default',
+    };
+  }
+
+  const providerSelection = resolveRequestedModelProvider({
+    requestedProvider,
+    bountyMode,
+  });
+  if (providerSelection.effective === MODEL_PROVIDER_LOCAL) {
+    return {
+      content: fallbackContent,
+      provider: MODEL_PROVIDER_LOCAL,
+      model: '',
+      fallbackUsed: true,
+      reason: providerSelection.reason,
+    };
+  }
+
+  const prompt = [
+    'You are writing one platform-native SocialOS post.',
+    'Return compact JSON only.',
+    'Schema:',
+    '{"content":"","language":"","reasoning":"","cta":""}',
+    'Rules:',
+    '- Match the requested platform and language.',
+    '- Keep the content grounded in the event details and current SocialOS product loop.',
+    '- Do not use markdown links, code fences, or HTML.',
+    '- Keep the answer publication-ready.',
+  ].join('\n');
+
+  const response = await runStructuredModelTask({
+    provider: providerSelection.effective,
+    systemPrompt: prompt,
+    userPayload: {
+      platform: platformRule.id,
+      platformLabel: formatPlatformLabel(platformRule.id),
+      language,
+      bountyMode,
+      audience: readOptionalString(options.audience, ''),
+      tone: readOptionalString(options.tone, ''),
+      angle: readOptionalString(options.angle, ''),
+      cta: readOptionalString(options.cta, ''),
+      event: {
+        title: readOptionalString(event.title, ''),
+        payload: safeParseJsonObject(event.payload, {}),
+      },
+      fallbackContent,
+    },
+    openAiModelEnvKey: 'OPENAI_WORKSPACE_RESPONSE_MODEL',
+    openAiModelFallback: 'gpt-5.4',
+  });
+
+  const generatedContent = cleanText(response.parsed?.content || response.parsed?.answer || '');
+  if (!response.ok || !generatedContent) {
+    return {
+      content: fallbackContent,
+      provider: MODEL_PROVIDER_LOCAL,
+      model: '',
+      fallbackUsed: true,
+      reason: response.error || 'provider-empty',
+    };
+  }
+
+  return {
+    content: truncateText(generatedContent, platformRule.maxLength),
+    provider: response.provider,
+    model: response.model,
+    fallbackUsed: false,
+    reason: 'provider-generated',
+  };
 }
 
 function buildPlatformPackageAdditions(platformRule, event, language, sections) {
@@ -2683,6 +2896,461 @@ function buildOpsStatus() {
   };
 }
 
+function buildHackathonIntegrationStates() {
+  const foundry = buildFoundryClusterSummary();
+  const ops = buildOpsStatus();
+
+  return {
+    openclaw: {
+      id: 'openclaw',
+      label: 'OpenClaw Runtime',
+      configured: Boolean(foundry.enabled),
+      status: foundry.enabled ? 'ready' : 'partial',
+      summary: foundry.enabled
+        ? `${(foundry.agents || []).length} lanes active for orchestrator, memory, compliance, and publishing.`
+        : 'Runtime lanes are not available yet.',
+      model: '',
+      route: '/studio?panel=agents',
+    },
+    workspace: {
+      id: 'workspace',
+      label: 'Workspace UI',
+      configured: true,
+      status: 'ready',
+      summary: 'Judge-facing capture, memory, drafts, queue, and mirror loop.',
+      model: '',
+      route: '/demo',
+    },
+    buddy: {
+      id: 'buddy',
+      label: 'Buddy Guardrails',
+      configured: true,
+      status: ops.publishMode === DEFAULT_PUBLISH_MODE ? 'ready' : 'warn',
+      summary: 'Friendship and gratitude mode keeps the experience narrow and trust-first.',
+      model: '',
+      route: '/buddy',
+    },
+    deck: {
+      id: 'deck',
+      label: 'Pitch Deck',
+      configured: true,
+      status: 'ready',
+      summary: 'Public deck now carries the shared story plus bounty-specific appendix slides.',
+      model: '',
+      route: '/deck',
+    },
+    glm: {
+      id: 'glm',
+      label: 'Z.AI GLM',
+      configured: hasConfiguredGlm(),
+      status: hasConfiguredGlm() ? 'ready' : 'pending',
+      summary: hasConfiguredGlm()
+        ? `Configured for GLM-backed chat and draft generation using ${readOptionalString(process.env.GLM_MODEL_ID, DEFAULT_GLM_MODEL_ID)}.`
+        : 'Add GLM_API_KEY to activate Z.AI routing for Workspace and Drafts.',
+      model: hasConfiguredGlm() ? readOptionalString(process.env.GLM_MODEL_ID, DEFAULT_GLM_MODEL_ID) : '',
+      route: '/hackathon?bounty=z-ai-general',
+    },
+    flock: {
+      id: 'flock',
+      label: 'FLock',
+      configured: hasConfiguredFlock(),
+      status: hasConfiguredFlock() ? 'ready' : 'pending',
+      summary: hasConfiguredFlock()
+        ? `Configured for SDG triage using ${readOptionalString(process.env.FLOCK_MODEL_ID, DEFAULT_FLOCK_MODEL_ID)}.`
+        : 'Add FLOCK_API_KEY to activate SDG triage for AI Agents for Good.',
+      model: hasConfiguredFlock() ? readOptionalString(process.env.FLOCK_MODEL_ID, DEFAULT_FLOCK_MODEL_ID) : '',
+      route: '/hackathon?bounty=ai-agents-for-good',
+    },
+  };
+}
+
+function buildHackathonStaticProofs() {
+  const integrations = buildHackathonIntegrationStates();
+  const foundry = buildFoundryClusterSummary();
+  const ops = buildOpsStatus();
+
+  return [
+    {
+      id: 'proof-openclaw-runtime',
+      kind: 'openclaw',
+      status: integrations.openclaw.status,
+      title: 'OpenClaw runtime powers the product lanes',
+      summary: integrations.openclaw.summary,
+      bounties: ['claw-for-human', 'animoca', 'ai-agents-for-good', 'human-for-claw'],
+      route: integrations.openclaw.route,
+      source: 'socialos/openclaw/runtime.openclaw.json5',
+    },
+    {
+      id: 'proof-workspace-loop',
+      kind: 'ui',
+      status: 'ready',
+      title: 'Judge-ready Workspace loop already exists',
+      summary: 'Quick Capture, Contacts, Drafts, Queue, and Mirror already operate inside one loopback-only product surface.',
+      bounties: ['claw-for-human', 'animoca', 'z-ai-general'],
+      route: '/demo',
+      source: 'socialos/apps/web/server.mjs',
+    },
+    {
+      id: 'proof-memory-identity',
+      kind: 'memory',
+      status: 'ready',
+      title: 'Persistent identity and relationship memory are first-class',
+      summary: 'Person, Identity, Interaction, Event, SelfCheckin, Mirror, and MirrorEvidence rows already power recall and follow-up.',
+      bounties: ['animoca', 'human-for-claw', 'ai-agents-for-good'],
+      route: '/people',
+      source: 'infra/db/schema.sql',
+    },
+    {
+      id: 'proof-buddy-guardrails',
+      kind: 'safety',
+      status: ops.publishMode === DEFAULT_PUBLISH_MODE ? 'ready' : 'warn',
+      title: 'Buddy mode keeps the experience safe and narrow',
+      summary: 'The product stays loopback-only, dry-run by default, and Buddy mode funnels users into four friendly tasks.',
+      bounties: ['human-for-claw', 'claw-for-human'],
+      route: '/buddy',
+      source: 'socialos/apps/web/server.mjs',
+    },
+    {
+      id: 'proof-glm-router',
+      kind: 'glm',
+      status: integrations.glm.status,
+      title: 'GLM router is wired into Workspace and Draft generation',
+      summary: integrations.glm.summary,
+      bounties: ['z-ai-general'],
+      route: integrations.glm.route,
+      source: 'socialos/apps/api/server.mjs',
+    },
+    {
+      id: 'proof-flock-triage',
+      kind: 'flock',
+      status: integrations.flock.status,
+      title: 'FLock SDG triage is ready for impact workflows',
+      summary: integrations.flock.summary,
+      bounties: ['ai-agents-for-good'],
+      route: integrations.flock.route,
+      source: 'socialos/apps/api/server.mjs',
+    },
+    {
+      id: 'proof-pitch-pack',
+      kind: 'deck',
+      status: 'ready',
+      title: 'Deck and public evidence stay submission-ready',
+      summary: `The shared pitch pack stays repo-native, with ${(foundry.agents || []).length || 0} runtime lanes and public evidence snapshots available for judges.`,
+      bounties: HACKATHON_BOUNTIES.map((bounty) => bounty.id),
+      route: '/deck',
+      source: 'socialos/docs/pitch/VC_DECK_SPEC.md',
+    },
+  ];
+}
+
+function buildRecentHackathonProofs(statements, limit = 12) {
+  if (!statements?.listRecentAudits) return [];
+
+  return statements.listRecentAudits
+    .all(limit)
+    .filter((row) => /^hackathon_/u.test(readOptionalString(row.action, '')))
+    .map((row) => {
+      const payload = safeParseJsonObject(row.payload, {});
+      const bounty = normalizeBountyMode(payload.bounty);
+      const kind = readOptionalString(payload.proofKind, readOptionalString(payload.provider, 'proof'));
+      return {
+        id: row.id,
+        kind,
+        status: payload.fallbackUsed ? 'fallback' : 'captured',
+        title: readOptionalString(payload.title, `${kind.toUpperCase()} evidence captured`),
+        summary: readOptionalString(payload.summary, truncateText(JSON.stringify(payload.output || {}), 200)),
+        bounties: bounty ? [bounty] : [],
+        route: readOptionalString(payload.route, '/hackathon'),
+        source: `Audit ${row.id}`,
+        createdAt: row.created_at,
+      };
+    });
+}
+
+function buildHackathonProofCatalog(statements) {
+  return [...buildHackathonStaticProofs(), ...buildRecentHackathonProofs(statements, 16)];
+}
+
+function buildHackathonOverviewPayload(statements) {
+  const integrations = buildHackathonIntegrationStates();
+  const proofs = buildHackathonProofCatalog(statements);
+  const routes = [
+    { id: 'demo', label: 'Judge Demo', path: '/demo' },
+    { id: 'hackathon', label: 'Hackathon Hub', path: '/hackathon' },
+    { id: 'buddy', label: 'Buddy Mode', path: '/buddy' },
+    { id: 'deck', label: 'Pitch Deck', path: '/deck' },
+  ];
+
+  const bountyCards = HACKATHON_BOUNTIES.map((bounty) => {
+    const requiredIntegrations = bounty.integrations.map((id) => integrations[id]).filter(Boolean);
+    const blockingIntegrations = requiredIntegrations.filter(
+      (integration) => !integration.configured && !new Set(['workspace', 'buddy', 'deck']).has(integration.id)
+    );
+    const bountyProofs = proofs.filter((proof) => proof.bounties.includes(bounty.id));
+    return {
+      ...bounty,
+      status: blockingIntegrations.length ? 'partial' : 'ready',
+      requiredIntegrations,
+      proofCount: bountyProofs.length,
+      recommendedRoute: bounty.route,
+      proofs: bountyProofs.slice(0, 4),
+    };
+  });
+
+  return {
+    mode: readHackathonMode(),
+    generatedAt: nowIso(),
+    integrations: Object.values(integrations),
+    routes,
+    bounties: bountyCards,
+    proofsPreview: proofs.slice(0, 8),
+  };
+}
+
+function recordHackathonEvidence(
+  statements,
+  { action, bounty = '', provider = '', proofKind = '', title = '', summary = '', route = '/hackathon', input = {}, output = {}, fallbackUsed = false }
+) {
+  const createdAt = nowIso();
+  const auditId = makeId('audit');
+  const digestId = makeId('digest');
+  const payload = {
+    bounty: normalizeBountyMode(bounty),
+    provider,
+    proofKind,
+    title,
+    summary,
+    route,
+    fallbackUsed,
+    input,
+    output,
+  };
+
+  statements.insertAudit.run(auditId, action, JSON.stringify(payload), createdAt);
+  statements.insertDigest.run(
+    digestId,
+    `hackathon:${normalizeBountyMode(bounty) || action}`,
+    title || action,
+    'Capture reusable bounty proof in repo-native evidence surfaces.',
+    fallbackUsed ? 'External provider fell back to local heuristics.' : 'Low risk: proof captured successfully.',
+    `GET /proofs?bounty=${encodeURIComponent(normalizeBountyMode(bounty) || '')}`,
+    `Open ${route} to present the latest proof.`,
+    createdAt
+  );
+
+  return { auditId, digestId, createdAt };
+}
+
+function normalizeUrgency(value) {
+  const normalized = readOptionalString(value, '').toLowerCase();
+  if (['critical', 'high', 'medium', 'low'].includes(normalized)) return normalized;
+  return 'medium';
+}
+
+function buildHeuristicSdgTriage(text, { person = null, event = null } = {}) {
+  const haystack = cleanText(
+    [
+      text,
+      readOptionalString(person?.name, ''),
+      readOptionalString(person?.notes, ''),
+      readOptionalString(event?.title, ''),
+      typeof event?.payload === 'string' ? event.payload : '',
+    ].join(' ')
+  ).toLowerCase();
+
+  if (/(clinic|health|wellbeing|mental|care|support group|caregiver)/u.test(haystack)) {
+    return {
+      sdg: 'SDG 3: Good Health and Well-being',
+      urgency: /urgent|asap|today|immediately/u.test(haystack) ? 'high' : 'medium',
+      suggestedAction: 'Create a follow-up event, tag the relevant contact, and draft a supportive outreach message within SocialOS.',
+      reasoning: 'The request centers on health or wellbeing support, so the impact workflow aligns with SDG 3.',
+    };
+  }
+
+  if (/(student|school|teach|education|mentor|learning|workshop)/u.test(haystack)) {
+    return {
+      sdg: 'SDG 4: Quality Education',
+      urgency: /deadline|tomorrow|today|urgent/u.test(haystack) ? 'high' : 'medium',
+      suggestedAction: 'Capture the learner or volunteer context, create an event, and generate a bilingual follow-up pack for coordination.',
+      reasoning: 'The request points to mentoring, workshops, or learning access, which maps best to SDG 4.',
+    };
+  }
+
+  if (/(community|neighbourhood|housing|local|city|volunteer|mutual aid)/u.test(haystack)) {
+    return {
+      sdg: 'SDG 11: Sustainable Cities and Communities',
+      urgency: /urgent|today|shelter/u.test(haystack) ? 'high' : 'medium',
+      suggestedAction: 'Use SocialOS to record the organiser network, log the community event, and prepare follow-up drafts for partners.',
+      reasoning: 'This looks like local community coordination, which fits SDG 11.',
+    };
+  }
+
+  if (/(job|creator|income|employment|small business|founder)/u.test(haystack)) {
+    return {
+      sdg: 'SDG 8: Decent Work and Economic Growth',
+      urgency: 'medium',
+      suggestedAction: 'Turn the request into a coordination event and generate a clear opportunity-sharing draft package.',
+      reasoning: 'The workflow is tied to livelihoods, founder support, or economic participation.',
+    };
+  }
+
+  return {
+    sdg: 'SDG 17: Partnerships for the Goals',
+    urgency: /urgent|today|critical/u.test(haystack) ? 'high' : 'medium',
+    suggestedAction: 'Create a partnership follow-up event, link the relevant contacts, and keep the next action visible in the queue.',
+    reasoning: 'The request is collaborative and multi-party, so partnership coordination is the safest default.',
+  };
+}
+
+async function buildFlockSdgTriage(statements, { text, personId = '', eventId = '' } = {}) {
+  const safeText = cleanText(text || '');
+  if (!safeText) {
+    throw new HttpError(400, 'text is required');
+  }
+
+  const person = personId ? statements.selectPersonById.get(personId) : null;
+  const event = eventId ? statements.selectEventDetailById.get(eventId) : null;
+  if (personId && !person) throw new HttpError(404, 'personId not found');
+  if (eventId && !event) throw new HttpError(404, 'eventId not found');
+
+  const fallback = buildHeuristicSdgTriage(safeText, { person, event });
+  if (!hasConfiguredFlock()) {
+    return {
+      ...fallback,
+      proof: {
+        provider: MODEL_PROVIDER_LOCAL,
+        requestedProvider: MODEL_PROVIDER_FLOCK,
+        model: '',
+        fallbackUsed: true,
+        reason: 'flock-not-configured',
+      },
+    };
+  }
+
+  const prompt = [
+    'You are an SDG triage assistant for SocialOS.',
+    'Return compact JSON only.',
+    'Schema:',
+    '{"sdg":"","urgency":"medium","suggestedAction":"","reasoning":"","proofNotes":[]}',
+    'Rules:',
+    '- Pick the best-fit SDG label.',
+    '- Urgency must be one of critical, high, medium, low.',
+    '- Keep the suggested action grounded in relationship memory, event creation, and follow-up coordination.',
+  ].join('\n');
+
+  const response = await runStructuredModelTask({
+    provider: MODEL_PROVIDER_FLOCK,
+    systemPrompt: prompt,
+    userPayload: {
+      text: safeText,
+      person: person ? formatPersonRow(person) : null,
+      event: event ? formatEventRow(event) : null,
+      fallback,
+    },
+  });
+
+  const triage = response.ok && response.parsed
+    ? {
+        sdg: readOptionalString(response.parsed.sdg, fallback.sdg),
+        urgency: normalizeUrgency(response.parsed.urgency),
+        suggestedAction: cleanText(response.parsed.suggestedAction || fallback.suggestedAction),
+        reasoning: cleanText(response.parsed.reasoning || fallback.reasoning),
+      }
+    : fallback;
+
+  return {
+    ...triage,
+    proof: {
+      provider: response.ok ? response.provider : MODEL_PROVIDER_LOCAL,
+      requestedProvider: MODEL_PROVIDER_FLOCK,
+      model: response.ok ? response.model : '',
+      fallbackUsed: !response.ok,
+      reason: response.ok ? 'flock-generated' : response.error || 'local-fallback',
+    },
+  };
+}
+
+function buildLocalGlmFallback(taskType, prompt, context = {}) {
+  const normalizedType = readOptionalString(taskType, 'generation').toLowerCase();
+  const safePrompt = cleanText(prompt || '');
+  const contextText = cleanText(
+    typeof context === 'string'
+      ? context
+      : context && typeof context === 'object' && !Array.isArray(context)
+        ? JSON.stringify(context)
+        : ''
+  );
+
+  if (normalizedType === 'bilingual-summary') {
+    return `EN: ${safePrompt || 'SocialOS keeps relationships, drafts, and reflection in one loop.'}\nZH: ${contextText || 'SocialOS 把人脉记忆、内容跟进和反思放进同一条工作流。'}`;
+  }
+
+  if (normalizedType === 'reasoning') {
+    return `SocialOS should route this through its trust-first loop: capture context, recover the right people/event memory, then produce the smallest next action. ${safePrompt}`.trim();
+  }
+
+  if (normalizedType === 'coding') {
+    return `Use the existing Workspace -> Event -> Draft -> Queue path first, then layer the bounty-specific provider proof on top. ${safePrompt}`.trim();
+  }
+
+  return `SocialOS generation fallback: ${safePrompt || contextText || 'Turn one relationship note into a reusable next action.'}`;
+}
+
+async function buildGlmGenerationResult({ taskType = 'generation', prompt = '', context = {}, bountyMode = '' } = {}) {
+  const safePrompt = cleanText(prompt || '');
+  if (!safePrompt) {
+    throw new HttpError(400, 'prompt is required');
+  }
+
+  const fallbackAnswer = buildLocalGlmFallback(taskType, safePrompt, context);
+  if (!hasConfiguredGlm()) {
+    return {
+      answer: fallbackAnswer,
+      proof: {
+        provider: MODEL_PROVIDER_LOCAL,
+        requestedProvider: MODEL_PROVIDER_GLM,
+        model: '',
+        fallbackUsed: true,
+        reason: 'glm-not-configured',
+      },
+    };
+  }
+
+  const response = await runStructuredModelTask({
+    provider: MODEL_PROVIDER_GLM,
+    systemPrompt: [
+      'You are the GLM routing layer inside SocialOS.',
+      'Return compact JSON only.',
+      'Schema:',
+      '{"answer":"","reasoning":"","language":"","proofNotes":[]}',
+      'Rules:',
+      '- Keep the answer concise and practical.',
+      '- Respect the taskType and available context.',
+      '- If the taskType is bilingual-summary, include both English and Chinese inside answer.',
+    ].join('\n'),
+    userPayload: {
+      taskType,
+      prompt: safePrompt,
+      context,
+      bountyMode: normalizeBountyMode(bountyMode),
+      fallbackAnswer,
+    },
+    openAiModelEnvKey: 'OPENAI_WORKSPACE_RESPONSE_MODEL',
+    openAiModelFallback: 'gpt-5.4',
+  });
+
+  return {
+    answer: cleanText(response.parsed?.answer || '') || fallbackAnswer,
+    proof: {
+      provider: response.ok ? response.provider : MODEL_PROVIDER_LOCAL,
+      requestedProvider: MODEL_PROVIDER_GLM,
+      model: response.ok ? response.model : '',
+      fallbackUsed: !response.ok,
+      reason: response.ok ? 'glm-generated' : response.error || 'local-fallback',
+    },
+  };
+}
+
 function normalizeOrigin(originHeader) {
   if (typeof originHeader !== 'string') return null;
   const origin = originHeader.trim();
@@ -2766,7 +3434,7 @@ function inferEmotionTags(text) {
 
 function summarizeMirror(checkins) {
   if (!checkins.length) {
-    return '本周暂无足够 check-in 数据。建议至少完成 3 次 Quick Capture 后再生成 Self Mirror。';
+    return 'There is not enough recent check-in data yet. Add at least three Quick Captures before generating a Self Mirror.';
   }
 
   const avgEnergy =
@@ -2802,6 +3470,9 @@ function summarizeMirror(checkins) {
     '- Schedule one high-energy outreach block and one recovery block this week.',
   ].join('\n');
 }
+
+// Intentional Chinese strings below are limited to Chinese-platform draft generation
+// and Chinese-input parsing support. Review-facing UI chrome stays English.
 
 function parseDynamicId(match) {
   if (!match?.[1]) return '';
@@ -3258,6 +3929,7 @@ function normalizeWorkspaceActionId(value) {
 async function buildWorkspaceModelAssist({
   text,
   source,
+  provider = MODEL_PROVIDER_AUTO,
   preferredChinese,
   captureDraft,
   relatedPeople,
@@ -3270,14 +3942,13 @@ async function buildWorkspaceModelAssist({
   minimalPresentationHint,
 }) {
   if (!shouldUseModelWorkspaceAssist(source)) {
-    return { method: 'heuristic', model: '', plan: null };
+    return { method: 'heuristic', model: '', provider: MODEL_PROVIDER_LOCAL, plan: null };
   }
 
-  const apiKey = readOptionalString(process.env.OPENAI_API_KEY, '');
-  const model = readOptionalString(process.env.OPENAI_WORKSPACE_RESPONSE_MODEL, 'gpt-5.4');
   const combinedText = cleanText(captureDraft?.combinedText || text);
-  if (!apiKey || !combinedText) {
-    return { method: 'heuristic', model: '', plan: null };
+  const providerSelection = resolveRequestedModelProvider({ requestedProvider: provider });
+  if (!combinedText || providerSelection.effective === MODEL_PROVIDER_LOCAL) {
+    return { method: 'heuristic', model: '', provider: MODEL_PROVIDER_LOCAL, plan: null };
   }
 
   const prompt = [
@@ -3356,51 +4027,24 @@ async function buildWorkspaceModelAssist({
     },
   };
 
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${apiKey}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: prompt },
-          { role: 'user', content: JSON.stringify(userPayload) },
-        ],
-      }),
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      return { method: 'heuristic', model: '', plan: null };
-    }
-    const rawContent = payload?.choices?.[0]?.message?.content;
-    const parsed = parseLooseJsonObject(
-      typeof rawContent === 'string'
-        ? rawContent
-        : Array.isArray(rawContent)
-          ? rawContent
-              .map((item) =>
-                typeof item === 'string'
-                  ? item
-                  : typeof item?.text === 'string'
-                    ? item.text
-                    : typeof item?.content === 'string'
-                      ? item.content
-                      : ''
-              )
-              .join('\n')
-          : ''
-    );
-    if (!parsed) {
-      return { method: 'heuristic', model: '', plan: null };
-    }
-    return { method: 'model', model, plan: parsed };
-  } catch {
-    return { method: 'heuristic', model: '', plan: null };
+  const response = await runStructuredModelTask({
+    provider: providerSelection.effective,
+    systemPrompt: prompt,
+    userPayload,
+    openAiModelEnvKey: 'OPENAI_WORKSPACE_RESPONSE_MODEL',
+    openAiModelFallback: 'gpt-5.4',
+  });
+
+  if (!response.ok || !response.parsed) {
+    return { method: 'heuristic', model: '', provider: MODEL_PROVIDER_LOCAL, plan: null };
   }
+
+  return {
+    method: 'model',
+    model: response.model,
+    provider: response.provider,
+    plan: response.parsed,
+  };
 }
 
 function buildWorkspacePresentation({
@@ -3576,6 +4220,16 @@ function buildWorkspacePresentation({
 async function buildWorkspaceChatPayload(statements, body = {}) {
   const source = readOptionalString(body.source, 'workspace-chat');
   const text = cleanText(body.text || '');
+  const bountyMode = normalizeBountyMode(body.bountyMode);
+  const requestedProvider = normalizeModelProvider(
+    bountyMode === 'z-ai-general' && !readOptionalString(body.provider, '')
+      ? MODEL_PROVIDER_GLM
+      : readOptionalString(body.provider, MODEL_PROVIDER_AUTO)
+  );
+  const providerSelection = resolveRequestedModelProvider({
+    requestedProvider,
+    bountyMode,
+  });
   const assetIds = cleanList(body.assetIds);
   const sourceAssetIds = cleanList(body.sourceAssetIds);
   const visibleAssets = selectCaptureAssetsByIds(statements, assetIds);
@@ -3583,7 +4237,7 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
     (asset) => !visibleAssets.some((visibleAsset) => visibleAsset.assetId === asset.assetId)
   );
   const assets = [...visibleAssets, ...hiddenSourceAssets];
-  const captureDraft = await buildCaptureDraftWithModelAssist({ text, source, assets });
+  const captureDraft = await buildCaptureDraftWithModelAssist({ text, source, assets, provider: requestedProvider });
   const combinedText = cleanText(captureDraft.combinedText || text);
   const audioAssets = assets.filter((asset) => asset.kind === 'audio');
   const imageAssets = assets.filter((asset) => asset.kind === 'image');
@@ -3591,7 +4245,9 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
   const hasUntypedVoiceOnly = !cleanText(text) && audioAssets.length > 0 && !hasTranscribedAudio;
   const intent = inferWorkspaceIntent(combinedText, assets);
   const personSearchAssist = intent === 'search'
-    ? await buildPersonSearchAssist({ query: combinedText, source: 'workspace-search', captureDraft })
+    ? providerSelection.effective === MODEL_PROVIDER_GLM
+      ? null
+      : await buildPersonSearchAssist({ query: combinedText, source: 'workspace-search', captureDraft })
     : null;
   const relatedPeople = searchPeopleMatches(statements, combinedText, 4, captureDraft, personSearchAssist);
   const relatedEvents = searchEventMatches(statements, combinedText, 4);
@@ -3621,6 +4277,7 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
   const modelAssist = await buildWorkspaceModelAssist({
     text,
     source,
+    provider: requestedProvider,
     preferredChinese,
     captureDraft,
     relatedPeople,
@@ -3701,10 +4358,36 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
     modelAssist,
     minimalPresentationHint,
   });
+  const evidence = bountyMode
+    ? recordHackathonEvidence(statements, {
+        action: 'hackathon_workspace_chat',
+        bounty: bountyMode,
+        provider: modelAssist?.provider || captureDraft?.extraction?.provider || MODEL_PROVIDER_LOCAL,
+        proofKind: bountyMode === 'z-ai-general' ? 'glm' : 'ui',
+        title: 'Workspace hackathon run',
+        summary: truncateText(answer, 180),
+        route: bountyMode === 'human-for-claw' ? '/buddy' : bountyMode === 'claw-for-human' ? '/demo' : '/hackathon',
+        input: {
+          text,
+          requestedProvider,
+        },
+        output: {
+          intent,
+          routing: {
+            captureProvider: captureDraft?.extraction?.provider || MODEL_PROVIDER_LOCAL,
+            workspaceProvider: modelAssist?.provider || MODEL_PROVIDER_LOCAL,
+          },
+        },
+        fallbackUsed:
+          captureDraft?.extraction?.provider === MODEL_PROVIDER_LOCAL ||
+          modelAssist?.provider === MODEL_PROVIDER_LOCAL,
+      })
+    : null;
 
   return {
     responseId: makeId('workspace'),
     intent,
+    bountyMode,
     summary: answer,
     presentation,
     text,
@@ -3713,7 +4396,7 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
     extraction:
       (intent === 'search' ? personSearchAssist?.extraction : null) ||
       captureDraft.extraction ||
-      { method: 'heuristic', model: '' },
+      { method: 'heuristic', model: '', provider: MODEL_PROVIDER_LOCAL },
     relatedPeople,
     relatedEvents,
     relatedDrafts,
@@ -3726,6 +4409,30 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
       events: compactEvents,
       coordination,
     },
+    modelRouting: {
+      requestedProvider,
+      effectiveProvider: modelAssist?.provider || captureDraft?.extraction?.provider || MODEL_PROVIDER_LOCAL,
+      captureProvider: captureDraft?.extraction?.provider || MODEL_PROVIDER_LOCAL,
+      workspaceProvider: modelAssist?.provider || MODEL_PROVIDER_LOCAL,
+      captureModel: captureDraft?.extraction?.model || '',
+      workspaceModel: modelAssist?.model || '',
+      fallbackUsed:
+        captureDraft?.extraction?.provider === MODEL_PROVIDER_LOCAL ||
+        modelAssist?.provider === MODEL_PROVIDER_LOCAL ||
+        providerSelection.fallbackUsed,
+      reason: providerSelection.reason,
+    },
+    proofs: [
+      {
+        id: 'workspace-routing',
+        bountyMode: bountyMode || 'core',
+        provider: modelAssist?.provider || captureDraft?.extraction?.provider || MODEL_PROVIDER_LOCAL,
+        summary:
+          bountyMode === 'z-ai-general'
+            ? 'Workspace routing is ready for GLM-backed capture and answer shaping.'
+            : 'Workspace routing stays aligned to the hackathon mode and available providers.',
+      },
+    ],
     commitPayload: {
       text,
       source,
@@ -3734,11 +4441,15 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
       personDraft: captureDraft.personDraft,
       selfCheckinDraft: captureDraft.selfCheckinDraft,
       interactionDraft: captureDraft.interactionDraft,
+      provider: requestedProvider,
+      bountyMode,
     },
-      recommendedDraftRequest: {
+    recommendedDraftRequest: {
       platforms: [...SUPPORTED_QUEUE_PLATFORMS],
       languages: ['platform-native'],
       cta: '',
+      provider: requestedProvider,
+      bountyMode,
     },
     transcription,
     agentLanes: buildWorkspaceAgentLanes({
@@ -3754,6 +4465,8 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
           topThemes: Array.isArray(latestMirror.themes) ? latestMirror.themes.slice(0, 3) : [],
         }
       : null,
+    auditId: evidence?.auditId || '',
+    digestId: evidence?.digestId || '',
   };
 }
 
@@ -5103,6 +5816,153 @@ function parseLooseJsonObject(value) {
   return null;
 }
 
+function extractChatCompletionText(payload) {
+  const rawContent = payload?.choices?.[0]?.message?.content;
+  if (typeof rawContent === 'string') return rawContent;
+  if (!Array.isArray(rawContent)) return '';
+  return rawContent
+    .map((item) =>
+      typeof item === 'string'
+        ? item
+        : typeof item?.text === 'string'
+          ? item.text
+          : typeof item?.content === 'string'
+            ? item.content
+            : ''
+    )
+    .join('\n');
+}
+
+function resolveStructuredProviderRequest(provider, { openAiModelEnvKey = '', openAiModelFallback = 'gpt-5.4' } = {}) {
+  const normalizedProvider = normalizeModelProvider(provider, MODEL_PROVIDER_LOCAL);
+
+  if (normalizedProvider === MODEL_PROVIDER_OPENAI) {
+    const apiKey = readOptionalString(process.env.OPENAI_API_KEY, '');
+    if (!apiKey) return null;
+    return {
+      provider: MODEL_PROVIDER_OPENAI,
+      model: readOptionalString(process.env[openAiModelEnvKey], openAiModelFallback),
+      endpoint: 'https://api.openai.com/v1/chat/completions',
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        'content-type': 'application/json',
+      },
+    };
+  }
+
+  if (normalizedProvider === MODEL_PROVIDER_GLM) {
+    const apiKey = readOptionalString(process.env.GLM_API_KEY, '');
+    if (!apiKey) return null;
+    return {
+      provider: MODEL_PROVIDER_GLM,
+      model: readOptionalString(process.env.GLM_MODEL_ID, DEFAULT_GLM_MODEL_ID),
+      endpoint: 'https://api.z.ai/api/paas/v4/chat/completions',
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        'content-type': 'application/json',
+      },
+    };
+  }
+
+  if (normalizedProvider === MODEL_PROVIDER_FLOCK) {
+    const apiKey = readOptionalString(process.env.FLOCK_API_KEY, '');
+    if (!apiKey) return null;
+    return {
+      provider: MODEL_PROVIDER_FLOCK,
+      model: readOptionalString(process.env.FLOCK_MODEL_ID, DEFAULT_FLOCK_MODEL_ID),
+      endpoint: 'https://api.flock.io/v1/chat/completions',
+      headers: {
+        'x-litellm-api-key': apiKey,
+        'content-type': 'application/json',
+      },
+    };
+  }
+
+  return null;
+}
+
+async function runStructuredModelTask({
+  provider,
+  systemPrompt,
+  userPayload,
+  openAiModelEnvKey = '',
+  openAiModelFallback = 'gpt-5.4',
+}) {
+  const requestConfig = resolveStructuredProviderRequest(provider, {
+    openAiModelEnvKey,
+    openAiModelFallback,
+  });
+
+  if (!requestConfig) {
+    return {
+      ok: false,
+      provider: MODEL_PROVIDER_LOCAL,
+      model: '',
+      parsed: null,
+      rawContent: '',
+      error: `${provider} not configured`,
+    };
+  }
+
+  try {
+    const response = await fetch(requestConfig.endpoint, {
+      method: 'POST',
+      headers: requestConfig.headers,
+      body: JSON.stringify({
+        model: requestConfig.model,
+        temperature: 0.2,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: JSON.stringify(userPayload) },
+        ],
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    const rawContent = extractChatCompletionText(payload);
+    const parsed = parseLooseJsonObject(rawContent);
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        provider: requestConfig.provider,
+        model: requestConfig.model,
+        parsed,
+        rawContent,
+        error: readOptionalString(payload?.error?.message, `status ${response.status}`),
+      };
+    }
+
+    if (!parsed) {
+      return {
+        ok: false,
+        provider: requestConfig.provider,
+        model: requestConfig.model,
+        parsed: null,
+        rawContent,
+        error: 'provider returned non-JSON content',
+      };
+    }
+
+    return {
+      ok: true,
+      provider: requestConfig.provider,
+      model: requestConfig.model,
+      parsed,
+      rawContent,
+      error: '',
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      provider: requestConfig.provider,
+      model: requestConfig.model,
+      parsed: null,
+      rawContent: '',
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 function normalizeModelIdentityList(value, fallback = []) {
   const normalized = Array.isArray(value) ? value : [];
   const output = [];
@@ -5172,6 +6032,7 @@ function mergeModelCaptureDraft(fallbackDraft, parsed = {}, providerMeta = {}) {
     extraction: {
       method: providerMeta.method || 'heuristic',
       model: providerMeta.model || '',
+      provider: providerMeta.provider || MODEL_PROVIDER_LOCAL,
     },
     personDraft: {
       ...fallbackPersonDraft,
@@ -5206,17 +6067,16 @@ function mergeModelCaptureDraft(fallbackDraft, parsed = {}, providerMeta = {}) {
   };
 }
 
-async function buildCaptureDraftWithModelAssist({ text, source = 'manual', assets = [] }) {
+async function buildCaptureDraftWithModelAssist({ text, source = 'manual', assets = [], provider = MODEL_PROVIDER_AUTO }) {
   const fallbackDraft = buildCaptureDraft({ text, source, assets });
   if (!shouldUseModelCaptureAssist(source)) {
-    return mergeModelCaptureDraft(fallbackDraft, {}, { method: 'heuristic', model: '' });
+    return mergeModelCaptureDraft(fallbackDraft, {}, { method: 'heuristic', model: '', provider: MODEL_PROVIDER_LOCAL });
   }
 
-  const apiKey = readOptionalString(process.env.OPENAI_API_KEY, '');
-  const model = readOptionalString(process.env.OPENAI_CAPTURE_DRAFT_MODEL, 'gpt-5.4');
   const combinedText = cleanText(fallbackDraft.combinedText || text);
-  if (!apiKey || !combinedText) {
-    return mergeModelCaptureDraft(fallbackDraft, {}, { method: 'heuristic', model: '' });
+  const providerSelection = resolveRequestedModelProvider({ requestedProvider: provider });
+  if (!combinedText || providerSelection.effective === MODEL_PROVIDER_LOCAL) {
+    return mergeModelCaptureDraft(fallbackDraft, {}, { method: 'heuristic', model: '', provider: MODEL_PROVIDER_LOCAL });
   }
 
   const prompt = [
@@ -5232,65 +6092,31 @@ async function buildCaptureDraftWithModelAssist({ text, source = 'manual', asset
     '{"name":"","requiresNameConfirmation":true,"tags":[],"notes":"","interactionSummary":"","interactionEvidence":"","followUpSuggestion":"","nextFollowUpAt":"","identities":[],"energy":0,"emotions":[]}',
   ].join('\n');
 
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${apiKey}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: prompt },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              text: combinedText,
-              source,
-              assets: assets.map((asset) => ({
-                kind: asset.kind,
-                fileName: asset.fileName,
-                extractedText: cleanText(asset.extractedText || asset.previewText || ''),
-              })),
-            }),
-          },
-        ],
-      }),
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      return mergeModelCaptureDraft(fallbackDraft, {}, { method: 'heuristic', model: '' });
-    }
+  const response = await runStructuredModelTask({
+    provider: providerSelection.effective,
+    systemPrompt: prompt,
+    userPayload: {
+      text: combinedText,
+      source,
+      assets: assets.map((asset) => ({
+        kind: asset.kind,
+        fileName: asset.fileName,
+        extractedText: cleanText(asset.extractedText || asset.previewText || ''),
+      })),
+    },
+    openAiModelEnvKey: 'OPENAI_CAPTURE_DRAFT_MODEL',
+    openAiModelFallback: 'gpt-5.4',
+  });
 
-    const rawContent = payload?.choices?.[0]?.message?.content;
-    const parsed = parseLooseJsonObject(
-      typeof rawContent === 'string'
-        ? rawContent
-        : Array.isArray(rawContent)
-          ? rawContent
-              .map((item) =>
-                typeof item === 'string'
-                  ? item
-                  : typeof item?.text === 'string'
-                    ? item.text
-                    : typeof item?.content === 'string'
-                      ? item.content
-                      : ''
-              )
-              .join('\n')
-          : ''
-    );
-
-    if (!parsed) {
-      return mergeModelCaptureDraft(fallbackDraft, {}, { method: 'heuristic', model: '' });
-    }
-
-    return mergeModelCaptureDraft(fallbackDraft, parsed, { method: 'model', model });
-  } catch {
-    return mergeModelCaptureDraft(fallbackDraft, {}, { method: 'heuristic', model: '' });
+  if (!response.ok || !response.parsed) {
+    return mergeModelCaptureDraft(fallbackDraft, {}, { method: 'heuristic', model: '', provider: MODEL_PROVIDER_LOCAL });
   }
+
+  return mergeModelCaptureDraft(fallbackDraft, response.parsed, {
+    method: 'model',
+    model: response.model,
+    provider: response.provider,
+  });
 }
 
 function normalizeTimestampInput(value, fallback = null) {
@@ -5769,6 +6595,12 @@ function buildStatements(db) {
       ORDER BY created_at DESC
       LIMIT ?
     `),
+    listRecentAudits: db.prepare(`
+      SELECT id, action, payload, created_at
+      FROM Audit
+      ORDER BY created_at DESC
+      LIMIT ?
+    `),
 
     insertCaptureAsset: db.prepare(`
       INSERT INTO CaptureAsset(id, kind, mime_type, file_name, local_path, extracted_text, metadata, created_at)
@@ -6236,6 +7068,29 @@ async function routeRequest(req, res, statements) {
     return;
   }
 
+  if (method === 'GET' && pathname === '/hackathon/overview') {
+    sendJson(res, 200, buildHackathonOverviewPayload(statements));
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/proofs') {
+    const bounty = normalizeBountyMode(requestUrl.searchParams.get('bounty'));
+    const kind = readOptionalString(requestUrl.searchParams.get('kind'), '').toLowerCase();
+    const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 20, 100);
+    const proofs = buildHackathonProofCatalog(statements)
+      .filter((proof) => !bounty || proof.bounties.includes(bounty))
+      .filter((proof) => !kind || proof.kind === kind)
+      .slice(0, limit);
+    sendJson(res, 200, {
+      bounty,
+      kind,
+      limit,
+      count: proofs.length,
+      proofs,
+    });
+    return;
+  }
+
   if (method === 'GET' && pathname === '/captures') {
     const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 12, 50);
     const captures = statements.listRecentCaptures.all(limit).map(formatCaptureRow);
@@ -6700,6 +7555,8 @@ async function routeRequest(req, res, statements) {
     const body = await readJsonBody(req);
     const cadence = readOptionalString(body.cadence, body.range === 'today' ? 'daily' : 'weekly') || 'weekly';
     const periodKey = readOptionalString(body.periodKey, cadence === 'daily' ? toDateKey() : toDateKey());
+    const bountyMode = normalizeBountyMode(body.bountyMode);
+    const requestedProvider = normalizeModelProvider(readOptionalString(body.provider, MODEL_PROVIDER_AUTO));
     let checkins = statements.listRecentSelfCheckins.all(12);
 
     if (checkins.length === 0) {
@@ -6758,10 +7615,8 @@ async function routeRequest(req, res, statements) {
       throw error;
     }
 
-    sendJson(
-      res,
-      201,
-      formatMirrorPayload(
+    sendJson(res, 201, {
+      ...formatMirrorPayload(
         {
           id: mirrorId,
           range_label: mirrorPayload.window.rangeLabel,
@@ -6771,8 +7626,14 @@ async function routeRequest(req, res, statements) {
           created_at: createdAt,
         },
         statements.listMirrorEvidenceByMirrorId.all(mirrorId)
-      )
-    );
+      ),
+      bountyMode,
+      modelRouting: {
+        requestedProvider,
+        effectiveProvider: MODEL_PROVIDER_LOCAL,
+        fallbackUsed: requestedProvider !== MODEL_PROVIDER_AUTO,
+      },
+    });
     return;
   }
 
@@ -6969,6 +7830,73 @@ async function routeRequest(req, res, statements) {
     return;
   }
 
+  if (method === 'POST' && pathname === '/integrations/glm/generate') {
+    const body = await readJsonBody(req);
+    const result = await buildGlmGenerationResult({
+      taskType: readOptionalString(body.taskType, 'generation'),
+      prompt: body.prompt,
+      context: body.context,
+      bountyMode: body.bountyMode,
+    });
+    const evidence = recordHackathonEvidence(statements, {
+      action: 'hackathon_glm_generate',
+      bounty: 'z-ai-general',
+      provider: result.proof.provider,
+      proofKind: 'glm',
+      title: 'GLM generation run',
+      summary: cleanText(result.answer).slice(0, 180),
+      route: '/hackathon?bounty=z-ai-general',
+      input: {
+        taskType: readOptionalString(body.taskType, 'generation'),
+        prompt: cleanText(body.prompt || ''),
+      },
+      output: {
+        answer: result.answer,
+        proof: result.proof,
+      },
+      fallbackUsed: result.proof.fallbackUsed,
+    });
+    sendJson(res, 200, {
+      ...result,
+      auditId: evidence.auditId,
+      digestId: evidence.digestId,
+      createdAt: evidence.createdAt,
+    });
+    return;
+  }
+
+  if (method === 'POST' && pathname === '/integrations/flock/sdg-triage') {
+    const body = await readJsonBody(req);
+    const result = await buildFlockSdgTriage(statements, {
+      text: body.text,
+      personId: readOptionalString(body.personId, ''),
+      eventId: readOptionalString(body.eventId, ''),
+    });
+    const evidence = recordHackathonEvidence(statements, {
+      action: 'hackathon_flock_triage',
+      bounty: 'ai-agents-for-good',
+      provider: result.proof.provider,
+      proofKind: 'flock',
+      title: 'FLock SDG triage run',
+      summary: `${result.sdg} · ${result.urgency} · ${result.suggestedAction}`,
+      route: '/hackathon?bounty=ai-agents-for-good',
+      input: {
+        text: cleanText(body.text || ''),
+        personId: readOptionalString(body.personId, ''),
+        eventId: readOptionalString(body.eventId, ''),
+      },
+      output: result,
+      fallbackUsed: result.proof.fallbackUsed,
+    });
+    sendJson(res, 200, {
+      ...result,
+      auditId: evidence.auditId,
+      digestId: evidence.digestId,
+      createdAt: evidence.createdAt,
+    });
+    return;
+  }
+
   if (method === 'POST' && pathname === '/capture/parse') {
     const body = await readJsonBody(req);
     const source = readOptionalString(body.source, 'manual');
@@ -7007,13 +7935,25 @@ async function routeRequest(req, res, statements) {
 
     const platforms = normalizePlatformList(body.platforms);
     const languageStrategy = body.languages || body.language || body.languageStrategy || 'platform-native';
+    const bountyMode = normalizeBountyMode(body.bountyMode);
+    const requestedProvider = normalizeModelProvider(
+      bountyMode === 'z-ai-general' && !readOptionalString(body.provider, '')
+        ? MODEL_PROVIDER_GLM
+        : readOptionalString(body.provider, MODEL_PROVIDER_AUTO)
+    );
     const generatedDrafts = [];
+    const generationProofs = [];
 
     for (const platformId of platforms) {
       const platformRule = resolvePlatformRule(platformId);
       const languages = resolveDraftLanguagesForPlatform(platformRule.id, languageStrategy);
       for (const language of languages) {
-        const content = buildDraftContent(platformRule, event, language, body);
+        const generation = await buildDraftContentWithProvider(platformRule, event, language, {
+          ...body,
+          provider: requestedProvider,
+          bountyMode,
+        });
+        const content = generation.content;
         const capability = getPlatformCapability(platformRule.id);
         const publishPackage = buildPublishPackage(platformRule, event, language, content, body);
         const draftId = makeId('draft');
@@ -7025,6 +7965,11 @@ async function routeRequest(req, res, statements) {
           variants: cleanList(body.variants),
           validation: null,
           generation: {
+            provider: generation.provider,
+            model: generation.model,
+            bountyMode,
+            fallbackUsed: generation.fallbackUsed,
+            reason: generation.reason,
             tone: readOptionalString(body.tone, ''),
             angle: readOptionalString(body.angle, ''),
             audience: readOptionalString(body.audience, ''),
@@ -7056,13 +8001,56 @@ async function routeRequest(req, res, statements) {
             created_at: createdAt,
           })
         );
+
+        generationProofs.push({
+          draftId,
+          platform: platformRule.id,
+          language,
+          provider: generation.provider,
+          model: generation.model,
+          fallbackUsed: generation.fallbackUsed,
+          reason: generation.reason,
+        });
       }
     }
+    const evidence = bountyMode
+      ? recordHackathonEvidence(statements, {
+          action: 'hackathon_draft_generate',
+          bounty: bountyMode,
+          provider:
+            generationProofs.find((item) => item.provider && item.provider !== MODEL_PROVIDER_LOCAL)?.provider ||
+            MODEL_PROVIDER_LOCAL,
+          proofKind: bountyMode === 'z-ai-general' ? 'glm' : 'ui',
+          title: 'Hackathon draft package generated',
+          summary: `${generatedDrafts.length} drafts generated for ${event.title}.`,
+          route: bountyMode === 'z-ai-general' ? '/hackathon?bounty=z-ai-general' : '/drafts',
+          input: {
+            eventId,
+            requestedProvider,
+            platforms,
+          },
+          output: {
+            count: generatedDrafts.length,
+            generations: generationProofs,
+          },
+          fallbackUsed: generationProofs.every((item) => item.provider === MODEL_PROVIDER_LOCAL),
+        })
+      : null;
 
     sendJson(res, 201, {
       eventId,
+      bountyMode,
+      provider: requestedProvider,
       count: generatedDrafts.length,
       drafts: generatedDrafts,
+      auditId: evidence?.auditId || '',
+      digestId: evidence?.digestId || '',
+      proof: {
+        requestedProvider,
+        bountyMode,
+        routes: bountyMode === 'z-ai-general' ? ['/hackathon?bounty=z-ai-general', '/drafts'] : ['/drafts'],
+        generations: generationProofs,
+      },
     });
     return;
   }

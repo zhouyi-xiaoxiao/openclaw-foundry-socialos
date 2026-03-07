@@ -50,6 +50,7 @@ async function main() {
     const deckHtml = await deck.text();
     assert(deck.status === 200, `/deck should render the VC deck (got ${deck.status})`);
     assert(deckHtml.includes('SocialOS VC Deck'), '/deck should render the deck title');
+    assert(deckHtml.includes('Appendix · Claw for Human'), '/deck should include the bounty appendix slides');
     assert(!deckHtml.includes('href="/quick-capture"'), '/deck should not reuse the dashboard shell nav');
 
     for (const page of DASHBOARD_PAGES) {
@@ -65,9 +66,48 @@ async function main() {
     assert(!workspaceHtml.includes('href="/cockpit"'), 'primary nav should not keep a cockpit link');
     assert(!workspaceHtml.includes('href="/ask"'), 'primary nav should not keep an ask link');
     assert(!workspaceHtml.includes('href="/dev-digest"'), 'primary nav should not keep a dev digest link');
-    for (const path of ['/quick-capture', '/people', '/events', '/drafts', '/queue', '/self-mirror', '/studio']) {
+    for (const path of ['/quick-capture', '/demo', '/hackathon', '/buddy', '/people', '/events', '/drafts', '/queue', '/self-mirror', '/studio']) {
       assert(workspaceHtml.includes(`href="${path}"`), `workspace nav should include ${path}`);
     }
+
+    const demo = await fetch(`${web.baseUrl}/demo`, { redirect: 'manual' });
+    const demoHtml = await demo.text();
+    assert(demo.status === 200, `/demo should render the judge demo route (got ${demo.status})`);
+    assert(demoHtml.includes('Judge Flow'), '/demo should expose the judge flow panel');
+    assert(demoHtml.includes('Claw for Human Proofs'), '/demo should expose claw-for-human proof cards');
+
+    const demoPublic = await fetch(`${web.baseUrl}/demo?mode=public`, { redirect: 'manual' });
+    const demoPublicHtml = await demoPublic.text();
+    assert(demoPublic.status === 200, `/demo?mode=public should render public proof mode (got ${demoPublic.status})`);
+    assert(demoPublicHtml.includes('Read-only public proof page'), '/demo?mode=public should expose the public proof notice');
+    assert(!demoPublicHtml.includes('127.0.0.1'), '/demo?mode=public should not expose localhost links');
+    assert(!demoPublicHtml.includes('data-api-form'), '/demo?mode=public should not expose interactive forms');
+
+    const hackathon = await fetch(`${web.baseUrl}/hackathon`, { redirect: 'manual' });
+    const hackathonHtml = await hackathon.text();
+    assert(hackathon.status === 200, `/hackathon should render the bounty hub (got ${hackathon.status})`);
+    assert(hackathonHtml.includes('Bounty Map'), '/hackathon should expose the bounty map');
+    assert(hackathonHtml.includes('Submission Pack'), '/hackathon should expose the submission pack panel');
+
+    const hackathonPublic = await fetch(`${web.baseUrl}/hackathon?mode=public`, { redirect: 'manual' });
+    const hackathonPublicHtml = await hackathonPublic.text();
+    assert(hackathonPublic.status === 200, `/hackathon?mode=public should render public proof mode (got ${hackathonPublic.status})`);
+    assert(hackathonPublicHtml.includes('Read-only public bounty hub'), '/hackathon?mode=public should expose the public proof notice');
+    assert(hackathonPublicHtml.includes('/data/proofs/'), '/hackathon?mode=public should link to static proof JSON');
+    assert(!hackathonPublicHtml.includes('127.0.0.1'), '/hackathon?mode=public should not expose localhost links');
+
+    const buddy = await fetch(`${web.baseUrl}/buddy`, { redirect: 'manual' });
+    const buddyHtml = await buddy.text();
+    assert(buddy.status === 200, `/buddy should render the safer buddy mode (got ${buddy.status})`);
+    assert(buddyHtml.includes('Friendship & Gratitude Coach'), '/buddy should expose the friendship coach framing');
+    assert(buddyHtml.includes('Choose a Kind Task'), '/buddy should render the four safe task cards');
+
+    const buddyPublic = await fetch(`${web.baseUrl}/buddy?mode=public`, { redirect: 'manual' });
+    const buddyPublicHtml = await buddyPublic.text();
+    assert(buddyPublic.status === 200, `/buddy?mode=public should render public proof mode (got ${buddyPublic.status})`);
+    assert(buddyPublicHtml.includes('Read-only public Buddy page'), '/buddy?mode=public should expose the public proof notice');
+    assert(!buddyPublicHtml.includes('127.0.0.1'), '/buddy?mode=public should not expose localhost links');
+    assert(!buddyPublicHtml.includes('data-api-form'), '/buddy?mode=public should not expose interactive forms');
 
     const peopleIndex = await fetch(`${web.baseUrl}/people`, { redirect: 'manual' });
     const peopleIndexHtml = await peopleIndex.text();

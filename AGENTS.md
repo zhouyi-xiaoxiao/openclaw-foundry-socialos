@@ -102,10 +102,12 @@ Authoritative file:
 ## Canonical Commands
 - `bash scripts/demo.sh`
 - `bash scripts/demo_status.sh`
+- `bash scripts/hackathon_preflight.sh`
 - `bash scripts/stop_demo.sh`
 - `bash scripts/overnight_supervisor.sh`
 - `bash scripts/studio.sh status`
 - `bash scripts/studio.sh run-once`
+- `node scripts/capture_hackathon_proofs.mjs`
 - `node scripts/refresh_public_docs.mjs`
 - `node scripts/export_vc_deck.mjs`
 - `bash scripts/test.sh`

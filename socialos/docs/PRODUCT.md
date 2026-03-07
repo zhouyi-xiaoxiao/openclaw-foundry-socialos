@@ -53,10 +53,10 @@ SocialOS is a local-first relationship + identity operating system with a chat-f
   - `X`
   - `Instagram`
 - Chinese platforms:
-  - `知乎`
-  - `小红书`
-  - `微信朋友圈`
-  - `微信公众号`
+  - `Zhihu`
+  - `Rednote`
+  - `WeChat Moments`
+  - `WeChat Official Account`
 - Draft cards expose:
   - editable content
   - validation result
@@ -73,7 +73,7 @@ SocialOS is a local-first relationship + identity operating system with a chat-f
   - `failed`
 - `P1` behavior:
   - `X / LinkedIn`: credentials-gated preflight + assisted handoff only
-  - `Instagram / 知乎 / 小红书 / 微信朋友圈 / 微信公众号`: assisted handoff
+  - `Instagram / Zhihu / Rednote / WeChat Moments / WeChat Official Account`: assisted handoff
 - Publish behavior writes:
   - `PublishTask`
   - `Audit`
@@ -116,10 +116,10 @@ SocialOS is a local-first relationship + identity operating system with a chat-f
 - `LinkedIn`: L2 Auto Publish (credentials gated, `P1` preflight only)
 - `X`: L2 Auto Publish (credentials gated, `P1` preflight only)
 - `Instagram`: L1 Assisted
-- `知乎`: L1 Assisted
-- `小红书`: L1 Assisted+
-- `微信朋友圈`: L1 Assisted+
-- `微信公众号`: L1.5 Rich Article Package
+- `Zhihu`: L1 Assisted
+- `Rednote`: L1 Assisted+
+- `WeChat Moments`: L1 Assisted+
+- `WeChat Official Account`: L1.5 Rich Article Package
 
 ## Runtime Split
 ### Product runtime agents

@@ -4,12 +4,21 @@ For slide-by-slide deck reading, see `socialos/docs/pitch/DECK_PAGE_SCRIPT.md`.
 
 ## URLs To Open
 - Workspace: `http://127.0.0.1:4173/quick-capture`
+- Demo: `http://127.0.0.1:4173/demo`
+- Hackathon: `http://127.0.0.1:4173/hackathon`
+- Buddy: `http://127.0.0.1:4173/buddy`
 - Contacts: `http://127.0.0.1:4173/people`
 - Logbook: `http://127.0.0.1:4173/events`
 - Drafts: `http://127.0.0.1:4173/drafts`
 - Queue: `http://127.0.0.1:4173/queue`
 - Mirror: `http://127.0.0.1:4173/self-mirror`
 - Settings: `http://127.0.0.1:4173/settings`
+
+Public proof pages:
+- `https://zhouyixiaoxiao.org/`
+- `https://zhouyixiaoxiao.org/demo/`
+- `https://zhouyixiaoxiao.org/hackathon/`
+- `https://zhouyixiaoxiao.org/buddy/`
 
 ## Recommended Sequence
 ### 1. Workspace capture
@@ -34,7 +43,7 @@ Say:
 
 Open `Drafts` for the event and show:
 - LinkedIn / X / Instagram in English
-- Zhihu / Xiaohongshu / WeChat Moments / WeChat Official Account in Chinese
+- Zhihu / Rednote / WeChat Moments / WeChat Official Account in Chinese
 
 ### 4. Queue handoff
 Say:
@@ -53,6 +62,15 @@ Open `Mirror` and show:
 - Daily reflection
 - Weekly synthesis
 - one evidence-backed insight
+
+### 6. Public proof handoff
+Say:
+"After the recording, judges can reopen the public proof site without needing access to the localhost runtime."
+
+Open:
+- public `/`
+- public `/hackathon/`
+- public `/demo/` or `/buddy/` depending on the target bounty
 
 ## Likely Judge Questions
 ### Why local-first?

@@ -1,0 +1,16 @@
+{
+  "sdg": "SDG 4: Quality Education",
+  "urgency": "medium",
+  "suggestedAction": "Capture the learner or volunteer context, create an event, and generate a bilingual follow-up pack for coordination.",
+  "reasoning": "The request points to mentoring, workshops, or learning access, which maps best to SDG 4.",
+  "proof": {
+    "provider": "local",
+    "requestedProvider": "flock",
+    "model": "",
+    "fallbackUsed": true,
+    "reason": "flock-not-configured"
+  },
+  "auditId": "audit_5b94ba3de82a4ed9826cd8f4ce804554",
+  "digestId": "digest_46b06b615d264532bb4037c6606163b5",
+  "createdAt": "2026-03-07T21:08:02.463Z"
+}

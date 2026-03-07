@@ -26,6 +26,11 @@
     "socialos/docs/pitch/DECK_STATUS.json"
   ],
   "deckRoute": "/deck",
+  "publicProofRoutes": [
+    "/demo",
+    "/hackathon",
+    "/buddy"
+  ],
   "deckSpec": "socialos/docs/pitch/VC_DECK_SPEC.md",
   "deckMaintenance": "socialos/docs/pitch/DECK_MAINTENANCE.md",
   "deckStatusFile": "socialos/docs/pitch/DECK_STATUS.json",
@@ -98,6 +103,30 @@
         "/dev-digest"
       ],
       "role": "secondary"
+    },
+    {
+      "id": "demo",
+      "label": "Demo",
+      "routes": [
+        "/demo"
+      ],
+      "role": "public"
+    },
+    {
+      "id": "hackathon",
+      "label": "Hackathon",
+      "routes": [
+        "/hackathon"
+      ],
+      "role": "public"
+    },
+    {
+      "id": "buddy",
+      "label": "Buddy",
+      "routes": [
+        "/buddy"
+      ],
+      "role": "public"
     },
     {
       "id": "deck",
@@ -186,6 +215,10 @@
     "POST /publish/queue",
     "POST /publish/approve",
     "POST /publish/complete",
+    "GET /hackathon/overview",
+    "GET /proofs",
+    "POST /integrations/glm/generate",
+    "POST /integrations/flock/sdg-triage",
     "GET /self-mirror",
     "GET /self-mirror/evidence",
     "GET /graph/overview",
@@ -214,9 +247,19 @@
       "purpose": "refresh generated public docs and evidence status after a safe run"
     },
     {
+      "path": "scripts/hackathon_preflight.sh",
+      "command": "bash scripts/hackathon_preflight.sh",
+      "purpose": "verify record-ready demo state, capture proof snapshots, and export the public proof site"
+    },
+    {
+      "path": "scripts/capture_hackathon_proofs.mjs",
+      "command": "node scripts/capture_hackathon_proofs.mjs",
+      "purpose": "write stable bounty proof snapshots into public evidence files"
+    },
+    {
       "path": "scripts/export_vc_deck.mjs",
       "command": "node scripts/export_vc_deck.mjs",
-      "purpose": "export the public VC deck as a static site artifact for GitHub Pages"
+      "purpose": "export the public deck plus proof pages as a static site artifact for GitHub Pages"
     },
     {
       "path": "scripts/stop_demo.sh",

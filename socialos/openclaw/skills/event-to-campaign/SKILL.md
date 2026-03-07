@@ -6,10 +6,10 @@ Platforms:
 - Instagram
 - X
 - LinkedIn
-- 知乎
-- 小红书
-- 微信朋友圈
-- 微信公众号
+- Zhihu
+- Rednote
+- WeChat Moments
+- WeChat Official Account
 
 Levels:
 - L0 draft

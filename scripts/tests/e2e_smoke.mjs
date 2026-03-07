@@ -4,6 +4,9 @@ import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { LOOPBACK_HOST, startApiServer } from '../../socialos/apps/api/server.mjs';
 
+// This end-to-end smoke keeps review-facing copy English. Chinese fixtures remain
+// in dedicated parser and Chinese-platform coverage tests only.
+
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
@@ -119,7 +122,7 @@ async function main() {
     db = new DatabaseSync(dbPath);
 
     const capture = await postJson(api.baseUrl, '/capture', {
-      text: `今天认识了李雷，聊了增长和内容分发。quick capture ${tag}`,
+      text: `I met Li Lei today and we talked about growth and distribution. quick capture ${tag}`,
       source: 'e2e_smoke',
     });
     assert(typeof capture.captureId === 'string', 'captureId missing');
@@ -135,8 +138,8 @@ async function main() {
       { input: 'instagram', normalized: 'instagram', content: `IG pass ${tag} #ok` },
       { input: 'twitter', normalized: 'x', content: `X pass ${tag} #ok` },
       { input: 'linkedin', normalized: 'linkedin', content: `LinkedIn pass ${tag} #career` },
-      { input: 'zhihu', normalized: 'zhihu', content: `知乎 pass ${tag} #知识` },
-      { input: 'xhs', normalized: 'xiaohongshu', content: `小红书 pass ${tag} #生活` },
+      { input: 'zhihu', normalized: 'zhihu', content: `Zhihu pass ${tag} #knowledge` },
+      { input: 'xhs', normalized: 'xiaohongshu', content: `Rednote pass ${tag} #routine` },
       { input: 'wechat-moments', normalized: 'wechat_moments', content: `Moments pass ${tag} #daily` },
       {
         input: 'official-account',

@@ -98,22 +98,44 @@ function parseDemoStatus(output) {
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const match = line.match(/^(socialos-(api|web)): healthy=(true|false) pid=([^ ]+) alive=(true|false) health=(.+)$/);
-      if (!match) return null;
+      const nextMatch = line.match(
+        /^(socialos-(api|web)): ready=(true|false) healthy=(true|false) pid=([^ ]+) pidAlive=(true|false) stalePid=(true|false) listeningPid=([^ ]+) unmanagedHealthy=(true|false) health=(.+)$/
+      );
+      if (nextMatch) {
+        return {
+          label: nextMatch[1],
+          id: nextMatch[2],
+          ready: nextMatch[3] === 'true',
+          healthy: nextMatch[4] === 'true',
+          pid: nextMatch[5],
+          pidAlive: nextMatch[6] === 'true',
+          stalePid: nextMatch[7] === 'true',
+          listeningPid: nextMatch[8],
+          unmanagedHealthy: nextMatch[9] === 'true',
+          healthUrl: nextMatch[10],
+        };
+      }
+
+      const legacyMatch = line.match(/^(socialos-(api|web)): healthy=(true|false) pid=([^ ]+) alive=(true|false) health=(.+)$/);
+      if (!legacyMatch) return null;
       return {
-        label: match[1],
-        id: match[2],
-        healthy: match[3] === 'true',
-        pid: match[4],
-        alive: match[5] === 'true',
-        healthUrl: match[6],
+        label: legacyMatch[1],
+        id: legacyMatch[2],
+        ready: legacyMatch[3] === 'true' && legacyMatch[5] === 'true',
+        healthy: legacyMatch[3] === 'true',
+        pid: legacyMatch[4],
+        pidAlive: legacyMatch[5] === 'true',
+        stalePid: false,
+        listeningPid: 'none',
+        unmanagedHealthy: false,
+        healthUrl: legacyMatch[6],
       };
     })
     .filter(Boolean);
 
   return {
     services,
-    allHealthy: services.length >= 2 && services.every((service) => service.healthy && service.alive),
+    allHealthy: services.length >= 2 && services.every((service) => service.ready),
   };
 }
 
@@ -287,7 +309,9 @@ function writeReports(report) {
   ];
 
   for (const service of report.demo.services) {
-    lines.push(`- ${service.label}: healthy=${service.healthy} alive=${service.alive} url=${service.healthUrl}`);
+    lines.push(
+      `- ${service.label}: ready=${service.ready} healthy=${service.healthy} pidAlive=${service.pidAlive} stalePid=${service.stalePid} url=${service.healthUrl}`
+    );
   }
 
   lines.push(

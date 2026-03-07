@@ -11,6 +11,6 @@ mkdir -p "${REPO_ROOT}/infra/db" "${REPO_ROOT}/reports/runs" "${REPO_ROOT}/.foun
 
 sqlite3 "${DB_PATH}" < "${REPO_ROOT}/infra/db/schema.sql"
 
-node "${REPO_ROOT}/scripts/seed_demo_data.mjs"
+node "${REPO_ROOT}/scripts/seed_demo_data.mjs" --reset-review-demo
 
 echo "Install complete. DB initialized at ${DB_PATH}"

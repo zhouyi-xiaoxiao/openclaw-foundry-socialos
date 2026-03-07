@@ -19,6 +19,7 @@ It connects all three loops:
 - Event to 7-platform draft generation
 - Trust-first queue handoff
 - Daily and weekly mirror grounded in evidence
+- Public proof routes at `/demo`, `/hackathon`, and `/buddy`
 
 ## Why Local-First Matters
 The most valuable data in this product is personal:
@@ -44,3 +45,8 @@ The multi-agent layer exists so each responsibility can stay narrow, safer, and 
 - Import Inbox for real historical data
 - Multi-entity capture from one raw note
 - Suggested LinkedIn mentions from linked people and identities
+
+## Honest Demo Status
+- The live interactive demo is localhost-only by design.
+- The public site is a read-only proof surface for judges.
+- `GLM` and `FLock` are shown in fallback mode until live keys are configured.
