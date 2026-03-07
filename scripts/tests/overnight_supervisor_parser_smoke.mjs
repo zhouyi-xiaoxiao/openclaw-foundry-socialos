@@ -60,6 +60,7 @@ Latest digest:
 No digest yet.`;
 const parsedWithNoBlocked = parseFoundryStatus(outputWithNoBlocked);
 assert(parsedWithNoBlocked.blockedHead.length === 0, '"none" blocked marker should normalize to an empty list');
+assert(parsedWithNoBlocked.latestDigest.length === 0, '"No digest yet." marker should normalize to an empty digest list');
 const parsedCommandFailure = parseFoundryStatus('', { commandOk: false });
 assert(parsedCommandFailure.commandOk === false, 'commandOk should reflect failed status probe');
 

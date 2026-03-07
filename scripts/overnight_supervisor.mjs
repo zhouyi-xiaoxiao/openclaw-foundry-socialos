@@ -83,7 +83,7 @@ export function parseFoundryStatus(output, options = {}) {
     ? digestMatch[1]
         .split('\n')
         .map((line) => line.trim())
-        .filter(Boolean)
+        .filter((line) => Boolean(line) && !/^none(?:\b|$)/iu.test(line) && !/^no digest yet\.?$/iu.test(line))
     : [];
 
   return {
