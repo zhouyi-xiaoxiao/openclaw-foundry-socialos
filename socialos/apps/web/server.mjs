@@ -3438,13 +3438,6 @@ function renderDeckDocument(requestUrl) {
       title: 'Built for high-context people, and already grounded in a real network.',
       bodyHtml: `
         <p class="deck-lead">The wedge is not “everyone.” It starts with people who constantly turn conversations into opportunities, follow-up, and public expression. The demo now carries a real relationship graph across London, Bristol, Chengdu, and San Francisco.</p>
-        <div class="deck-persona-grid">
-          <div class="deck-persona-card"><strong>Founders</strong><span>track people, momentum, and narrative</span></div>
-          <div class="deck-persona-card"><strong>Investors</strong><span>remember who matters and why</span></div>
-          <div class="deck-persona-card"><strong>Operators</strong><span>bridge relationships into execution</span></div>
-          <div class="deck-persona-card"><strong>Researchers</strong><span>hold context across meetings and ideas</span></div>
-          <div class="deck-persona-card"><strong>Community builders</strong><span>turn encounters into long-term loops</span></div>
-        </div>
       `,
       visualHtml: `
         <div class="deck-network-grid">
@@ -3460,17 +3453,9 @@ function renderDeckDocument(requestUrl) {
       title: 'One loop: capture, recall, express, hand off, reflect.',
       bodyHtml: `
         <p class="deck-lead">Instead of separate tools, one input can move through the full product loop.</p>
-        <div class="deck-flow">
-          <div class="deck-flow-step"><strong>Workspace</strong><span>capture naturally</span></div>
-          <div class="deck-flow-arrow">→</div>
-          <div class="deck-flow-step"><strong>Contacts / Logbook</strong><span>recall people and events</span></div>
-          <div class="deck-flow-arrow">→</div>
-          <div class="deck-flow-step"><strong>Drafts</strong><span>generate platform-native content</span></div>
-          <div class="deck-flow-arrow">→</div>
-          <div class="deck-flow-step"><strong>Queue</strong><span>prepare the next real action</span></div>
-          <div class="deck-flow-arrow">→</div>
-          <div class="deck-flow-step"><strong>Mirror</strong><span>close the loop with reflection</span></div>
-        </div>
+      `,
+      footerHtml: `
+        <p><strong>Loop:</strong> Workspace → Contacts / Logbook → Drafts → Queue → Mirror</p>
       `,
       visualHtml: `
         <div class="deck-proof-strip">
@@ -3684,12 +3669,14 @@ function renderDeckDocument(requestUrl) {
         overflow-wrap: anywhere;
       }
       .deck-slide-shell {
-        min-height: 100vh;
+        min-height: 100%;
+        height: 100%;
+        box-sizing: border-box;
         padding: 72px 68px;
         display: grid;
         grid-template-columns: minmax(0, 1.04fr) minmax(360px, 0.86fr);
         gap: 42px;
-        align-items: center;
+        align-items: start;
       }
       .deck-slide-copy,
       .deck-slide-visual {
@@ -3697,12 +3684,12 @@ function renderDeckDocument(requestUrl) {
       }
       .deck-slide-copy {
         display: grid;
-        align-content: center;
+        align-content: start;
         gap: 24px;
       }
       .deck-slide-visual {
         display: grid;
-        align-content: center;
+        align-content: start;
       }
       .deck-eyebrow {
         margin: 0;
@@ -3726,6 +3713,7 @@ function renderDeckDocument(requestUrl) {
       }
       .deck-check-list li,
       .deck-idea-pill,
+      .deck-inline-pill,
       .deck-loop-card,
       .deck-problem-card,
       .deck-persona-card,
@@ -3750,8 +3738,29 @@ function renderDeckDocument(requestUrl) {
       .deck-bullet-stack {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
+      .deck-chip-row,
+      .deck-inline-flow {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
       .deck-idea-pill {
         padding: 18px 20px;
+      }
+      .deck-inline-pill {
+        padding: 14px 18px;
+        display: inline-grid;
+        gap: 6px;
+        min-width: 0;
+      }
+      .deck-inline-pill strong {
+        font-size: 21px;
+        font-family: var(--deck-display);
+      }
+      .deck-inline-pill span {
+        font-size: 17px;
+        color: var(--deck-ink-soft);
       }
       .deck-problem-grid,
       .deck-persona-grid,
@@ -3829,21 +3838,33 @@ function renderDeckDocument(requestUrl) {
         font-size: 26px;
       }
       .deck-flow {
-        display: grid;
-        grid-template-columns: repeat(9, minmax(0, 1fr));
-        gap: 10px;
-        align-items: center;
+        display: flex;
+        gap: 12px;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        align-items: stretch;
+      }
+      .deck-flow > * {
+        min-width: 0;
+      }
+      .deck-flow-step,
+      .deck-flow-arrow {
+        flex: 0 0 auto;
       }
       .deck-flow-step {
-        grid-column: span 1;
+        flex: 1 1 0;
+        gap: 10px;
+      }
+      .deck-flow-step {
         padding: 18px 16px;
         border-radius: var(--deck-radius-md);
         border: 1px solid var(--deck-line);
         background: var(--deck-panel);
         box-shadow: var(--deck-shadow);
-        min-height: 132px;
+        min-height: 120px;
         display: grid;
         gap: 8px;
+        align-content: start;
       }
       .deck-flow-step strong {
         font-size: 23px;
@@ -3855,6 +3876,9 @@ function renderDeckDocument(requestUrl) {
         color: var(--deck-ink-soft);
       }
       .deck-flow-arrow {
+        flex: 0 0 28px;
+        display: grid;
+        place-items: center;
         text-align: center;
         font-size: 34px;
       }
@@ -4004,6 +4028,128 @@ function renderDeckDocument(requestUrl) {
       .reveal .controls {
         color: var(--deck-accent);
       }
+      @media (min-width: 921px) {
+        .reveal h2 {
+          font-size: clamp(42px, 4.1vw, 74px);
+        }
+        .reveal p,
+        .reveal li,
+        .reveal span {
+          font-size: 24px;
+          line-height: 1.36;
+        }
+        .deck-slide-shell {
+          padding: 54px 56px 44px;
+          gap: 28px;
+        }
+        .deck-slide-copy {
+          gap: 18px;
+        }
+        .deck-problem-card,
+        .deck-persona-card,
+        .deck-network-card,
+        .deck-loop-card,
+        .deck-credibility-card,
+        .deck-cta-card {
+          padding: 18px 20px;
+        }
+        .deck-problem-card strong,
+        .deck-persona-card strong,
+        .deck-network-card strong,
+        .deck-loop-card strong,
+        .deck-credibility-card strong,
+        .deck-cta-card strong,
+        .deck-final-card h3 {
+          font-size: 24px;
+        }
+        .deck-problem-card span,
+        .deck-persona-card span,
+        .deck-network-card span,
+        .deck-loop-card span,
+        .deck-credibility-card span,
+        .deck-cta-card span,
+        .deck-final-card p {
+          font-size: 18px;
+        }
+        .deck-network-card small,
+        .deck-proof-card span {
+          font-size: 13px;
+        }
+        .deck-proof-card strong {
+          font-size: 23px;
+        }
+        .deck-flow-step {
+          min-height: 104px;
+          padding: 14px 12px;
+          gap: 6px;
+        }
+        .deck-flow-step strong {
+          font-size: 20px;
+        }
+        .deck-flow-step span,
+        .deck-flow-arrow {
+          font-size: 15px;
+        }
+        .deck-flow-arrow {
+          flex-basis: 22px;
+        }
+        .deck-shot.small {
+          height: 236px;
+        }
+        .deck-shot.deck-shot-tall {
+          min-height: 460px;
+        }
+        .deck-ribbon {
+          top: 14px;
+          right: 16px;
+          padding: 9px 14px;
+        }
+      }
+      @media (min-width: 921px) and (max-height: 980px) {
+        .deck-slide-shell {
+          padding: 44px 48px 34px;
+          gap: 22px;
+        }
+        .reveal h2 {
+          font-size: clamp(38px, 3.7vw, 64px);
+        }
+        .reveal p,
+        .reveal li,
+        .reveal span {
+          font-size: 21px;
+        }
+        .deck-check-list,
+        .deck-bullet-stack,
+        .deck-chip-row,
+        .deck-inline-flow,
+        .deck-problem-grid,
+        .deck-persona-grid,
+        .deck-proof-grid,
+        .deck-three-column,
+        .deck-cta-grid,
+        .deck-network-grid,
+        .deck-proof-strip,
+        .deck-shot-stack,
+        .deck-proof-gallery {
+          gap: 12px;
+        }
+        .deck-problem-card,
+        .deck-inline-pill,
+        .deck-persona-card,
+        .deck-network-card,
+        .deck-loop-card,
+        .deck-credibility-card,
+        .deck-cta-card,
+        .deck-proof-card {
+          padding: 14px 16px;
+        }
+        .deck-shot.small {
+          height: 210px;
+        }
+        .deck-shot.deck-shot-tall {
+          min-height: 408px;
+        }
+      }
       @media (max-width: 1180px) {
         .deck-slide-shell {
           grid-template-columns: 1fr;
@@ -4020,10 +4166,14 @@ function renderDeckDocument(requestUrl) {
           grid-template-columns: 1fr;
         }
         .deck-flow {
-          grid-template-columns: 1fr;
+          flex-direction: column;
+        }
+        .deck-inline-flow {
+          gap: 10px;
         }
         .deck-flow-arrow {
           transform: rotate(90deg);
+          min-height: 26px;
         }
         .deck-rehearsal-panel {
           position: static;
@@ -4065,6 +4215,7 @@ function renderDeckDocument(requestUrl) {
         }
         .deck-slide-shell {
           min-height: 100vh;
+          height: auto;
           padding: 104px 20px 42px;
           gap: 20px;
         }
@@ -4088,6 +4239,11 @@ function renderDeckDocument(requestUrl) {
         .deck-shot.deck-shot-tall {
           min-height: 300px;
           height: 300px;
+        }
+        .deck-chip-row,
+        .deck-inline-flow {
+          flex-direction: column;
+          align-items: stretch;
         }
         .reveal .controls,
         .reveal .progress,
@@ -4153,8 +4309,8 @@ function renderDeckDocument(requestUrl) {
           slideNumber: 'c/t',
           transition: 'fade',
           margin: 0.05,
-          width: 1600,
-          height: 900,
+          width: 1920,
+          height: 1080,
           center: false,
           plugins: [ window.RevealNotes ].filter(Boolean)
         });

@@ -37,7 +37,7 @@ And this demo is no longer seeded with placeholders. It already carries real nam
 
 “The product story is one loop: capture, recall, express, hand off, reflect.
 
-In Workspace I capture naturally. In Contacts and Logbook I recall people and events. In Drafts I generate platform-native content. In Queue I prepare the next real action instead of auto-posting recklessly. In Mirror I close the loop with evidence-backed reflection.”
+On screen, the loop is simple: Workspace, Contacts or Logbook, Drafts, Queue, then Mirror. In other words, one input can move from capture, to memory, to expression, to a trust-first handoff, and finally into evidence-backed reflection.”
 
 换页点：
 - 把五个节点完整走完后换页。
