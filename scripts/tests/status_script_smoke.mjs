@@ -160,6 +160,10 @@ try {
     'indented queue markers should be counted in queue totals',
   );
   assert(
+    indentedQueueResult.stdout.includes('current_task: Nested in-progress task'),
+    'in-progress items should be preferred as current task over pending items',
+  );
+  assert(
     indentedQueueResult.stdout.includes('Blocked queue head:\nDeep blocked task'),
     'indented blocked tasks should be listed in blocked queue head',
   );
