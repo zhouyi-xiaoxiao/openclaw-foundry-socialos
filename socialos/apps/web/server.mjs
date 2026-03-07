@@ -3452,22 +3452,69 @@ function renderDeckDocument(requestUrl) {
     }),
     renderDeckSlide({
       eyebrow: 'Slide 4 · Product loop',
-      title: 'One loop: capture, recall, express, hand off, reflect.',
+      title: 'One real note becomes memory, drafts, queue, and reflection.',
       bodyHtml: `
-        <p class="deck-lead">Instead of separate tools, one input can move through the full product loop.</p>
+        <p class="deck-lead">This is the core proof: one natural note about a real relationship already moves through the whole product loop instead of dying inside a chat thread.</p>
+        <div class="deck-inline-flow">
+          <div class="deck-inline-pill">
+            <strong>Real network</strong>
+            <span>Minghan Xiao · Candice Tang · James Wu · Xiyue Zhang</span>
+          </div>
+          <div class="deck-inline-pill">
+            <strong>Real output</strong>
+            <span>contacts · linked event · 7 drafts · queue · mirror</span>
+          </div>
+        </div>
       `,
       footerHtml: `
-        <p><strong>Loop:</strong> Workspace → Contacts / Logbook → Drafts → Queue → Mirror</p>
+        <p><strong>Loop:</strong> capture → recall → express → hand off → reflect</p>
       `,
       visualHtml: `
-        <div class="deck-proof-strip">
-          ${renderDeckMetric('Relationship OS', 'People + events')}
-          ${renderDeckMetric('Content OS', '7 platform-native drafts')}
-          ${renderDeckMetric('Self OS', 'Daily and weekly mirror')}
+        <div class="deck-real-loop">
+          <article class="deck-real-input">
+            <span class="deck-real-kicker">Capture in Workspace</span>
+            <strong>“Met Minghan Xiao in the London hackathon organiser circle at Imperial College...”</strong>
+            <p>One natural note goes in. No CRM form. No manual copy-paste across tools.</p>
+          </article>
+          <article class="deck-real-stage">
+            <span class="deck-real-kicker">Recall</span>
+            <strong>Minghan Xiao + Shafi Maahe + London organiser follow-up</strong>
+            <div class="deck-real-chip-row">
+              <span class="deck-real-chip">Imperial</span>
+              <span class="deck-real-chip">Tianjin</span>
+              <span class="deck-real-chip">X profile</span>
+              <span class="deck-real-chip">LinkedIn</span>
+            </div>
+            <p>The same input becomes contact memory, linked identities, and a reusable event thread.</p>
+          </article>
+          <article class="deck-real-stage">
+            <span class="deck-real-kicker">Express + hand off</span>
+            <strong>7 platform-native drafts, then a trust-first queue</strong>
+            <div class="deck-real-chip-row">
+              <span class="deck-real-chip">LinkedIn</span>
+              <span class="deck-real-chip">X</span>
+              <span class="deck-real-chip">Instagram</span>
+              <span class="deck-real-chip">Zhihu</span>
+              <span class="deck-real-chip">Xiaohongshu</span>
+              <span class="deck-real-chip">WeChat</span>
+            </div>
+            <p>English and Chinese outputs are prepared from the same event, with dry-run queueing by default.</p>
+          </article>
+          <article class="deck-real-stage">
+            <span class="deck-real-kicker">Reflect</span>
+            <strong>Mirror closes the loop with next-action judgment</strong>
+            <div class="deck-real-chip-row">
+              <span class="deck-real-chip deck-real-chip-accent">Follow up with Xiyue Zhang</span>
+              <span class="deck-real-chip deck-real-chip-accent">Candice Tang partner thread</span>
+              <span class="deck-real-chip deck-real-chip-accent">Bristol teaching circle</span>
+            </div>
+            <p>The system ends with a recommendation and evidence-backed reflection, not a dead note.</p>
+          </article>
         </div>
       `,
       notesHtml: `
-        <p>Walk the product in one breath. This is the core demo arc.</p>
+        <p>Walk the audience through one concrete relationship note, not an abstract pipeline.</p>
+        <p>Name Minghan Xiao out loud, then show how the same note becomes memory, content, queue, and mirror.</p>
       `,
     }),
     renderDeckSlide({
@@ -3908,6 +3955,73 @@ function renderDeckDocument(requestUrl) {
         display: grid;
         gap: 14px;
       }
+      .deck-real-loop {
+        display: grid;
+        gap: 14px;
+        align-content: start;
+      }
+      .deck-real-input,
+      .deck-real-stage {
+        border: 1px solid var(--deck-line);
+        border-radius: var(--deck-radius-lg);
+        box-shadow: var(--deck-shadow);
+      }
+      .deck-real-input {
+        display: grid;
+        gap: 10px;
+        padding: 20px 22px;
+        background:
+          linear-gradient(135deg, rgba(21, 111, 106, 0.12), rgba(255, 251, 245, 0.98)),
+          var(--deck-panel-strong);
+      }
+      .deck-real-stage {
+        display: grid;
+        gap: 10px;
+        padding: 18px 20px;
+        background: var(--deck-panel);
+      }
+      .deck-real-kicker {
+        font-size: 13px;
+        line-height: 1.2;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--deck-accent);
+      }
+      .deck-real-input strong,
+      .deck-real-stage strong {
+        font-size: 26px;
+        line-height: 1.08;
+        font-family: var(--deck-display);
+        color: var(--deck-ink);
+      }
+      .deck-real-input p,
+      .deck-real-stage p {
+        margin: 0;
+        font-size: 17px;
+        line-height: 1.45;
+        color: var(--deck-ink-soft);
+      }
+      .deck-real-chip-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .deck-real-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 7px 11px;
+        border-radius: 999px;
+        background: rgba(23, 33, 49, 0.06);
+        border: 1px solid rgba(23, 33, 49, 0.08);
+        font-size: 14px;
+        line-height: 1.2;
+        color: var(--deck-ink-soft);
+      }
+      .deck-real-chip-accent {
+        background: var(--deck-accent-soft);
+        border-color: rgba(21, 111, 106, 0.12);
+        color: var(--deck-accent);
+      }
       .deck-proof-card {
         padding: 18px 20px;
         display: grid;
@@ -4057,6 +4171,9 @@ function renderDeckDocument(requestUrl) {
         letter-spacing: 0.06em;
         text-transform: uppercase;
       }
+      .deck-mobile-pager {
+        display: none;
+      }
       .reveal .progress {
         color: var(--deck-accent);
       }
@@ -4118,6 +4235,25 @@ function renderDeckDocument(requestUrl) {
           padding: 14px 12px;
           gap: 6px;
         }
+        .deck-real-loop {
+          gap: 10px;
+        }
+        .deck-real-input,
+        .deck-real-stage {
+          padding: 14px 16px;
+        }
+        .deck-real-input strong,
+        .deck-real-stage strong {
+          font-size: 21px;
+        }
+        .deck-real-input p,
+        .deck-real-stage p,
+        .deck-real-chip {
+          font-size: 14px;
+        }
+        .deck-real-kicker {
+          font-size: 11px;
+        }
         .deck-flow-step strong {
           font-size: 20px;
         }
@@ -4169,6 +4305,7 @@ function renderDeckDocument(requestUrl) {
         .deck-cta-grid,
         .deck-network-grid,
         .deck-proof-strip,
+        .deck-real-loop,
         .deck-shot-stack,
         .deck-proof-gallery {
           gap: 12px;
@@ -4194,6 +4331,19 @@ function renderDeckDocument(requestUrl) {
           height: 100%;
           min-height: 0;
         }
+        .deck-real-input,
+        .deck-real-stage {
+          padding: 14px 16px;
+        }
+        .deck-real-input strong,
+        .deck-real-stage strong {
+          font-size: 20px;
+        }
+        .deck-real-input p,
+        .deck-real-stage p,
+        .deck-real-chip {
+          font-size: 14px;
+        }
       }
       @media (max-width: 1180px) {
         .deck-slide-shell {
@@ -4216,6 +4366,9 @@ function renderDeckDocument(requestUrl) {
         .deck-inline-flow {
           gap: 10px;
         }
+        .deck-real-chip-row {
+          gap: 7px;
+        }
         .deck-slide-shell.deck-slide-shell-proof .deck-proof-gallery,
         .deck-slide-shell.deck-slide-shell-proof .deck-shot-stack {
           height: auto;
@@ -4235,12 +4388,24 @@ function renderDeckDocument(requestUrl) {
         }
       }
       @media (max-width: 920px) {
+        html,
+        body {
+          height: auto !important;
+          min-height: 100%;
+          overflow-x: hidden !important;
+          overflow-y: auto !important;
+          overscroll-behavior-y: contain;
+          -webkit-overflow-scrolling: touch;
+          scroll-behavior: smooth;
+          touch-action: pan-y;
+        }
         .reveal-viewport,
         .reveal {
           width: 100% !important;
           min-height: 100% !important;
           height: auto !important;
           overflow: visible !important;
+          touch-action: pan-y !important;
         }
         .reveal .slides {
           width: 100% !important;
@@ -4252,6 +4417,7 @@ function renderDeckDocument(requestUrl) {
           overflow: visible !important;
           display: block !important;
           perspective: none !important;
+          pointer-events: auto !important;
         }
         .reveal .slides > section {
           position: relative !important;
@@ -4265,6 +4431,7 @@ function renderDeckDocument(requestUrl) {
           top: auto !important;
           margin: 0 !important;
           page-break-after: always;
+          scroll-snap-align: start;
         }
         .deck-slide-shell {
           min-height: 100vh;
@@ -4294,14 +4461,57 @@ function renderDeckDocument(requestUrl) {
           height: 300px;
         }
         .deck-chip-row,
-        .deck-inline-flow {
+        .deck-inline-flow,
+        .deck-real-chip-row {
           flex-direction: column;
           align-items: stretch;
+        }
+        .deck-real-chip {
+          justify-content: center;
         }
         .reveal .controls,
         .reveal .progress,
         .deck-ribbon {
           display: none;
+        }
+        .deck-mobile-pager {
+          position: fixed;
+          right: 14px;
+          bottom: 14px;
+          z-index: 25;
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 12px;
+          border-radius: 999px;
+          border: 1px solid var(--deck-line);
+          background: rgba(255, 252, 246, 0.96);
+          box-shadow: var(--deck-shadow);
+          backdrop-filter: blur(10px);
+        }
+        .deck-mobile-pager button {
+          width: 38px;
+          height: 38px;
+          border: 1px solid var(--deck-line);
+          border-radius: 999px;
+          background: var(--deck-panel);
+          color: var(--deck-ink);
+          font: inherit;
+          font-size: 18px;
+          line-height: 1;
+          display: inline-grid;
+          place-items: center;
+          padding: 0;
+          touch-action: manipulation;
+        }
+        .deck-mobile-pager button[disabled] {
+          opacity: 0.38;
+        }
+        .deck-mobile-pager-output {
+          min-width: 52px;
+          text-align: center;
+          font-size: 14px;
+          color: var(--deck-ink-soft);
         }
       }
       @media print {
@@ -4331,6 +4541,11 @@ function renderDeckDocument(requestUrl) {
         ${slideSections}
       </div>
     </div>
+    <nav class="deck-mobile-pager" aria-label="Mobile deck navigation">
+      <button type="button" data-deck-mobile-prev aria-label="Previous slide">‹</button>
+      <span class="deck-mobile-pager-output" data-deck-mobile-current>1 / 8</span>
+      <button type="button" data-deck-mobile-next aria-label="Next slide">›</button>
+    </nav>
     ${
       rehearsalMode
         ? `<aside class="deck-rehearsal-panel">
@@ -4369,6 +4584,104 @@ function renderDeckDocument(requestUrl) {
         };
       };
       document.documentElement.setAttribute('data-deck-mobile', useMobileStack ? 'true' : 'false');
+      const mobileSections = Array.from(document.querySelectorAll('.reveal .slides > section'));
+      const mobilePager = document.querySelector('.deck-mobile-pager');
+      const mobilePrevButton = document.querySelector('[data-deck-mobile-prev]');
+      const mobileNextButton = document.querySelector('[data-deck-mobile-next]');
+      const mobileCurrentOutput = document.querySelector('[data-deck-mobile-current]');
+      const readMobileHashIndex = () => {
+        const hash = String(window.location.hash || '');
+        if (!hash.startsWith('#/')) return 0;
+        const index = Number(hash.slice(2));
+        if (!Number.isFinite(index)) return 0;
+        return Math.min(Math.max(index, 0), Math.max(mobileSections.length - 1, 0));
+      };
+      const writeMobileHashIndex = (index) => {
+        const nextHash = '#/' + index;
+        if (window.location.hash !== nextHash) {
+          window.history.replaceState(null, '', nextHash);
+        }
+      };
+      const initMobileDeck = () => {
+        if (!mobileSections.length) {
+          return;
+        }
+        let mobileCurrentIndex = 0;
+        let mobileSyncFrame = null;
+        let mobileProgrammaticScroll = false;
+        const updateMobilePager = () => {
+          if (mobileCurrentOutput) {
+            mobileCurrentOutput.textContent = String(mobileCurrentIndex + 1) + ' / ' + String(mobileSections.length);
+          }
+          if (mobilePrevButton) {
+            mobilePrevButton.disabled = mobileCurrentIndex <= 0;
+          }
+          if (mobileNextButton) {
+            mobileNextButton.disabled = mobileCurrentIndex >= mobileSections.length - 1;
+          }
+        };
+        const syncMobileIndexFromScroll = () => {
+          const viewportAnchor = window.scrollY + window.innerHeight * 0.35;
+          let bestIndex = 0;
+          let bestDistance = Number.POSITIVE_INFINITY;
+          mobileSections.forEach((section, index) => {
+            const distance = Math.abs(section.offsetTop - viewportAnchor);
+            if (distance < bestDistance) {
+              bestDistance = distance;
+              bestIndex = index;
+            }
+          });
+          mobileCurrentIndex = bestIndex;
+          updateMobilePager();
+          if (!mobileProgrammaticScroll) {
+            writeMobileHashIndex(mobileCurrentIndex);
+          }
+        };
+        const scrollToMobileIndex = (index, behavior = 'smooth', shouldWriteHash = true) => {
+          const nextIndex = Math.min(Math.max(index, 0), mobileSections.length - 1);
+          mobileCurrentIndex = nextIndex;
+          mobileProgrammaticScroll = true;
+          updateMobilePager();
+          window.scrollTo({
+            top: mobileSections[nextIndex].offsetTop,
+            behavior,
+          });
+          if (shouldWriteHash) {
+            writeMobileHashIndex(nextIndex);
+          }
+          window.setTimeout(() => {
+            mobileProgrammaticScroll = false;
+            syncMobileIndexFromScroll();
+          }, behavior === 'smooth' ? 420 : 0);
+        };
+        if (mobilePager) {
+          mobilePager.hidden = false;
+        }
+        if (mobilePrevButton) {
+          mobilePrevButton.addEventListener('click', () => scrollToMobileIndex(mobileCurrentIndex - 1));
+        }
+        if (mobileNextButton) {
+          mobileNextButton.addEventListener('click', () => scrollToMobileIndex(mobileCurrentIndex + 1));
+        }
+        window.addEventListener(
+          'scroll',
+          () => {
+            if (mobileSyncFrame) {
+              cancelAnimationFrame(mobileSyncFrame);
+            }
+            mobileSyncFrame = requestAnimationFrame(syncMobileIndexFromScroll);
+          },
+          { passive: true }
+        );
+        window.addEventListener('hashchange', () => {
+          scrollToMobileIndex(readMobileHashIndex(), 'smooth', false);
+        });
+        scrollToMobileIndex(readMobileHashIndex(), 'auto', false);
+        updateMobilePager();
+      };
+      if (useMobileStack && !usePrintDeck) {
+        initMobileDeck();
+      }
       if (!useMobileStack || usePrintDeck) {
         const revealInit = Reveal.initialize({
           hash: true,
