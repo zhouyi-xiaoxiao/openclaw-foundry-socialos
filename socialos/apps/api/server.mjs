@@ -32,6 +32,7 @@ const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(process.env.SOCIALOS_REPO_ROOT || path.resolve(__dirname, '../../..'));
 const DOTENV_PATH = path.join(REPO_ROOT, '.env');
 const SCHEMA_PATH = path.join(REPO_ROOT, 'infra/db/schema.sql');
+const ASSET_STORAGE_DIR = path.join(REPO_ROOT, 'infra/assets');
 const QUEUE_PATH = path.join(REPO_ROOT, 'QUEUE.md');
 const RUN_REPORT_DIR = path.join(REPO_ROOT, 'reports/runs');
 const LATEST_DIGEST_PATH = path.join(REPO_ROOT, 'reports/LATEST.md');
@@ -455,6 +456,7 @@ function ensureColumn(db, tableName, columnName, definition) {
 function runSchemaMigrations(db) {
   ensureColumn(db, 'Mirror', 'cadence', "TEXT NOT NULL DEFAULT 'weekly'");
   ensureColumn(db, 'Mirror', 'period_key', "TEXT NOT NULL DEFAULT ''");
+  ensureColumn(db, 'CaptureAsset', 'local_path', "TEXT NOT NULL DEFAULT ''");
 }
 
 function localizeCapability(capability, platformId, language) {
@@ -3525,7 +3527,12 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
   const source = readOptionalString(body.source, 'workspace-chat');
   const text = cleanText(body.text || '');
   const assetIds = cleanList(body.assetIds);
-  const assets = selectCaptureAssetsByIds(statements, assetIds);
+  const sourceAssetIds = cleanList(body.sourceAssetIds);
+  const visibleAssets = selectCaptureAssetsByIds(statements, assetIds);
+  const hiddenSourceAssets = selectCaptureAssetsByIds(statements, sourceAssetIds).filter(
+    (asset) => !visibleAssets.some((visibleAsset) => visibleAsset.assetId === asset.assetId)
+  );
+  const assets = [...visibleAssets, ...hiddenSourceAssets];
   const captureDraft = await buildCaptureDraftWithModelAssist({ text, source, assets });
   const combinedText = cleanText(captureDraft.combinedText || text);
   const audioAssets = assets.filter((asset) => asset.kind === 'audio');
@@ -3672,7 +3679,7 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
     commitPayload: {
       text,
       source,
-      assetIds,
+      assetIds: [...new Set([...assetIds, ...sourceAssetIds])],
       combinedText: captureDraft.combinedText,
       personDraft: captureDraft.personDraft,
       selfCheckinDraft: captureDraft.selfCheckinDraft,
@@ -4733,6 +4740,187 @@ function decodeDataUrl(dataUrl) {
   return Buffer.from(normalized.split(',').pop() || '', 'base64');
 }
 
+function inferAssetExtension(mimeType = '', fileName = '', kind = 'asset') {
+  const requestedExtension = path.extname(readOptionalString(fileName, '')).replace(/[^.a-z0-9]/giu, '');
+  if (requestedExtension) return requestedExtension.toLowerCase();
+
+  const normalized = readOptionalString(mimeType, '').toLowerCase();
+  if (normalized.includes('webm')) return '.webm';
+  if (normalized.includes('mpeg') || normalized.includes('mp3')) return '.mp3';
+  if (normalized.includes('wav')) return '.wav';
+  if (normalized.includes('m4a') || normalized.includes('mp4')) return '.m4a';
+  if (normalized.includes('png')) return '.png';
+  if (normalized.includes('jpeg') || normalized.includes('jpg')) return '.jpg';
+  if (normalized.includes('gif')) return '.gif';
+  if (normalized.includes('pdf')) return '.pdf';
+  return kind === 'audio' ? '.webm' : '.bin';
+}
+
+function sanitizeAssetBaseName(fileName = '', fallback = 'asset') {
+  const rawBase = path.basename(readOptionalString(fileName, ''), path.extname(readOptionalString(fileName, ''))) || fallback;
+  const sanitized = rawBase
+    .normalize('NFKD')
+    .replace(/[^\w.-]+/gu, '-')
+    .replace(/-+/gu, '-')
+    .replace(/^-|-$/gu, '')
+    .slice(0, 48);
+  return sanitized || fallback;
+}
+
+function persistCaptureAssetOriginal({ assetId, kind, mimeType, fileName, contentBase64 }) {
+  const buffer = decodeDataUrl(contentBase64);
+  if (!buffer.length) return '';
+
+  const targetDir = path.join(ASSET_STORAGE_DIR, kind || 'asset');
+  fs.mkdirSync(targetDir, { recursive: true });
+
+  const extension = inferAssetExtension(mimeType, fileName, kind);
+  const baseName = sanitizeAssetBaseName(fileName, kind === 'audio' ? 'voice-note' : 'capture-asset');
+  const localPath = path.join(targetDir, `${assetId}-${baseName}${extension}`);
+  fs.writeFileSync(localPath, buffer);
+  return localPath;
+}
+
+function buildImageUnderstandingFallbackText(parsed = {}) {
+  const summary = cleanText(parsed.summary || '');
+  const extractedText = cleanText(parsed.extractedText || '');
+  const people = Array.isArray(parsed.people) ? parsed.people : [];
+  const identities = Array.isArray(parsed.identities) ? parsed.identities : [];
+  const topics = Array.isArray(parsed.topics) ? parsed.topics : [];
+  const parts = [
+    extractedText,
+    summary,
+    people
+      .map((person) => {
+        const values = [
+          cleanText(person.name || ''),
+          cleanText(person.role || ''),
+          cleanText(person.company || ''),
+          Array.isArray(person.handles) ? person.handles.map((handle) => cleanText(handle)).filter(Boolean).join(' ') : '',
+        ].filter(Boolean);
+        return values.join(' ');
+      })
+      .filter(Boolean)
+      .join(' '),
+    identities
+      .map((identity) => {
+        const values = [
+          cleanText(identity.platform || ''),
+          cleanText(identity.handle || ''),
+          cleanText(identity.url || ''),
+        ].filter(Boolean);
+        return values.join(' ');
+      })
+      .filter(Boolean)
+      .join(' '),
+    topics.map((topic) => cleanText(topic)).filter(Boolean).join(' '),
+    cleanText(parsed.place || ''),
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return cleanText(parts);
+}
+
+async function runOpenAiImageUnderstanding({ mimeType, contentBase64 }) {
+  const apiKey = readOptionalString(process.env.OPENAI_API_KEY, '');
+  if (!apiKey || !contentBase64) {
+    return { text: '', provider: apiKey ? 'openai-skipped' : 'disabled', parsed: null };
+  }
+
+  const model = readOptionalString(
+    process.env.OPENAI_IMAGE_UNDERSTAND_MODEL,
+    readOptionalString(process.env.OPENAI_CAPTURE_DRAFT_MODEL, 'gpt-5.4')
+  );
+
+  const prompt = [
+    'You are reading a personal capture asset such as a business card, contact screenshot, event flyer, or note image.',
+    'Extract useful relationship and event clues, not just OCR text.',
+    'Return compact JSON only.',
+    'Schema:',
+    '{"summary":"","extractedText":"","people":[{"name":"","role":"","company":"","handles":[]}],"identities":[{"platform":"","handle":"","url":""}],"topics":[],"place":"","confidence":"medium"}',
+    'Rules:',
+    '- Prefer concise factual extraction.',
+    '- If this looks like a business card, capture person name, role, company, and handles.',
+    '- If this is not a card, still summarize the useful relationship or event context.',
+    '- Do not invent details.',
+  ].join('\n');
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: prompt },
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Read this image and extract the useful relationship, contact, and event details.',
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: contentBase64,
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return {
+        text: '',
+        provider: 'openai-error',
+        error: readOptionalString(payload?.error?.message, `status ${response.status}`),
+        parsed: null,
+      };
+    }
+
+    const rawContent = payload?.choices?.[0]?.message?.content;
+    const parsed = parseLooseJsonObject(
+      typeof rawContent === 'string'
+        ? rawContent
+        : Array.isArray(rawContent)
+          ? rawContent
+              .map((item) =>
+                typeof item === 'string'
+                  ? item
+                  : typeof item?.text === 'string'
+                    ? item.text
+                    : typeof item?.content === 'string'
+                      ? item.content
+                      : ''
+              )
+              .join('\n')
+          : ''
+    );
+
+    const text = parsed ? buildImageUnderstandingFallbackText(parsed) : '';
+    return {
+      text,
+      provider: parsed ? 'openai-vision' : 'openai-empty-image',
+      parsed,
+    };
+  } catch (error) {
+    return {
+      text: '',
+      provider: 'openai-error',
+      error: error instanceof Error ? error.message : String(error),
+      parsed: null,
+    };
+  }
+}
+
 function runLocalImageOcr({ mimeType, contentBase64 }) {
   const tesseractAvailable = (() => {
     try {
@@ -5516,17 +5704,17 @@ function buildStatements(db) {
     `),
 
     insertCaptureAsset: db.prepare(`
-      INSERT INTO CaptureAsset(id, kind, mime_type, file_name, extracted_text, metadata, created_at)
-      VALUES(?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO CaptureAsset(id, kind, mime_type, file_name, local_path, extracted_text, metadata, created_at)
+      VALUES(?, ?, ?, ?, ?, ?, ?, ?)
     `),
     selectCaptureAssetById: db.prepare(`
-      SELECT id, kind, mime_type, file_name, extracted_text, metadata, created_at
+      SELECT id, kind, mime_type, file_name, local_path, extracted_text, metadata, created_at
       FROM CaptureAsset
       WHERE id = ?
       LIMIT 1
     `),
     listRecentCaptureAssets: db.prepare(`
-      SELECT id, kind, mime_type, file_name, extracted_text, metadata, created_at
+      SELECT id, kind, mime_type, file_name, local_path, extracted_text, metadata, created_at
       FROM CaptureAsset
       ORDER BY created_at DESC
       LIMIT ?
@@ -5814,10 +6002,15 @@ function formatCaptureAssetRow(row) {
     kind: row.kind,
     mimeType: readOptionalString(row.mime_type, ''),
     fileName: readOptionalString(row.file_name, ''),
+    localPath: readOptionalString(row.local_path, ''),
     extractedText: readOptionalString(row.extracted_text, ''),
     metadata,
     previewText: readOptionalString(metadata.previewText, ''),
     status: readOptionalString(metadata.status, 'parsed'),
+    deliveryMode: readOptionalString(metadata.deliveryMode, row.kind === 'audio' ? 'voice' : 'asset'),
+    analysisMethod: readOptionalString(metadata.analysisMethod, ''),
+    hasOriginalFile: Boolean(readOptionalString(row.local_path, '')),
+    originalUrl: readOptionalString(row.local_path, '') ? `/capture/assets/${encodeURIComponent(row.id)}/original` : '',
     createdAt: row.created_at,
   };
 }
@@ -5987,6 +6180,28 @@ async function routeRequest(req, res, statements) {
     const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 12, 50);
     const assets = statements.listRecentCaptureAssets.all(limit).map(formatCaptureAssetRow);
     sendJson(res, 200, { limit, count: assets.length, assets });
+    return;
+  }
+
+  const captureAssetOriginalMatch = pathname.match(/^\/capture\/assets\/([^/]+)\/original$/u);
+  if (method === 'GET' && captureAssetOriginalMatch) {
+    const assetId = decodeURIComponent(captureAssetOriginalMatch[1] || '');
+    const asset = statements.selectCaptureAssetById.get(assetId);
+    if (!asset) throw new HttpError(404, 'asset not found');
+    const localPath = readOptionalString(asset.local_path, '');
+    if (!localPath || !fs.existsSync(localPath)) throw new HttpError(404, 'original asset file not found');
+
+    res.writeHead(200, {
+      'content-type': readOptionalString(asset.mime_type, 'application/octet-stream'),
+      'content-disposition': `inline; filename="${encodeURIComponent(
+        readOptionalString(
+          asset.file_name,
+          `${assetId}${inferAssetExtension(readOptionalString(asset.mime_type, ''), '', readOptionalString(asset.kind, 'asset'))}`
+        )
+      )}"`,
+      'cache-control': 'private, max-age=0, must-revalidate',
+    });
+    res.end(fs.readFileSync(localPath));
     return;
   }
 
@@ -6466,21 +6681,53 @@ async function routeRequest(req, res, statements) {
     const kind = readOptionalString(body.kind, '').toLowerCase() || (readOptionalString(body.mimeType, '').startsWith('audio/') ? 'audio' : 'image');
     const mimeType = readOptionalString(body.mimeType, kind === 'audio' ? 'audio/webm' : 'image/png');
     const fileName = readOptionalString(body.fileName, `${kind}-${Date.now()}`);
+    const deliveryMode = readOptionalString(
+      body.deliveryMode,
+      kind === 'audio'
+        ? cleanText(body.transcript || body.extractedText || body.previewText)
+          ? 'transcript'
+          : 'voice'
+        : 'asset'
+    );
     const inlineText = cleanText(body.extractedText || body.transcript || body.previewText || '');
     const contentBase64 = readOptionalString(body.contentBase64, '') || readOptionalString(body.dataUrl, '');
+    const assetId = makeId('asset');
+    const createdAt = nowIso();
+    const localPath = persistCaptureAssetOriginal({ assetId, kind, mimeType, fileName, contentBase64 });
     const openAiTranscription =
       !inlineText && kind === 'audio'
         ? await runOpenAiAudioTranscription({ mimeType, contentBase64 })
         : { text: '', provider: 'skipped' };
+    const openAiImageUnderstanding =
+      !inlineText && kind === 'image'
+        ? await runOpenAiImageUnderstanding({ mimeType, contentBase64 })
+        : { text: '', provider: 'skipped', parsed: null };
+    const fallbackOcrText =
+      !inlineText && kind === 'image' && !cleanText(openAiImageUnderstanding.text)
+        ? runLocalImageOcr({ mimeType, contentBase64 })
+        : '';
     const extractedText =
       inlineText ||
       (kind === 'audio' ? openAiTranscription.text : '') ||
-      (kind === 'image' ? runLocalImageOcr({ mimeType, contentBase64 }) : '');
+      (kind === 'image' ? openAiImageUnderstanding.text || fallbackOcrText : '');
     const status = extractedText ? 'parsed' : 'manual_review';
-    const assetId = makeId('asset');
-    const createdAt = nowIso();
+    const analysisMethod =
+      kind === 'audio'
+        ? extractedText
+          ? openAiTranscription.provider === 'openai'
+            ? 'openai-transcription'
+            : 'browser-or-manual-transcript'
+          : 'manual-required'
+        : extractedText
+          ? cleanText(openAiImageUnderstanding.text)
+            ? 'openai-vision'
+            : fallbackOcrText
+              ? 'local-ocr'
+              : 'manual-provided'
+          : 'manual-required';
     const metadata = {
       source: readOptionalString(body.source, 'dashboard'),
+      deliveryMode,
       transcriptMethod:
         kind === 'audio'
           ? extractedText
@@ -6488,12 +6735,20 @@ async function routeRequest(req, res, statements) {
               ? 'openai-transcription'
               : 'browser_or_manual'
             : 'manual_required'
-          : readOptionalString(body.ocrMethod, extractedText ? 'local-ocr' : 'manual_required'),
+          : readOptionalString(
+              body.ocrMethod,
+              analysisMethod === 'openai-vision' ? 'openai-vision' : extractedText ? 'local-ocr' : 'manual_required'
+            ),
+      analysisMethod,
       previewText: truncateText(extractedText, 280),
       status,
       transcriptionProvider: kind === 'audio' ? openAiTranscription.provider : null,
       transcriptionError: kind === 'audio' ? readOptionalString(openAiTranscription.error, '') : '',
-      contentBytes: contentBase64 ? Buffer.byteLength(contentBase64, 'utf8') : 0,
+      imageUnderstandingProvider: kind === 'image' ? openAiImageUnderstanding.provider : null,
+      imageUnderstandingError: kind === 'image' ? readOptionalString(openAiImageUnderstanding.error, '') : '',
+      imageUnderstanding: kind === 'image' ? normalizeRecord(openAiImageUnderstanding.parsed) : {},
+      originalStoredLocally: Boolean(localPath),
+      contentBytes: decodeDataUrl(contentBase64).length,
     };
 
     statements.insertCaptureAsset.run(
@@ -6501,6 +6756,7 @@ async function routeRequest(req, res, statements) {
       kind,
       mimeType,
       fileName,
+      localPath,
       extractedText,
       JSON.stringify(metadata),
       createdAt
@@ -6512,6 +6768,7 @@ async function routeRequest(req, res, statements) {
         kind,
         mime_type: mimeType,
         file_name: fileName,
+        local_path: localPath,
         extracted_text: extractedText,
         metadata: JSON.stringify(metadata),
         created_at: createdAt,

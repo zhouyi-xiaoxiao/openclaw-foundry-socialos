@@ -2190,6 +2190,7 @@ async function renderQuickCapturePage(page, requestUrl) {
           <form class="workspace-composer" data-workspace-chat-form data-openai-transcription-ready="${openAiReady ? 'true' : 'false'}" data-initial-query="${escapeHtml(autoQuery)}">
             <input type="hidden" name="source" value="workspace-chat" />
             <input type="hidden" name="assetIds" value="" data-capture-asset-ids />
+            <input type="hidden" name="sourceAssetIds" value="" data-source-asset-ids />
             <input type="hidden" name="voiceLang" value="" />
             <input type="file" data-workspace-file accept="image/*,audio/*" multiple hidden />
             <button type="button" class="secondary-button workspace-icon-button workspace-attach-button" data-workspace-attach>+</button>
@@ -2210,6 +2211,7 @@ async function renderQuickCapturePage(page, requestUrl) {
             </div>
           </form>
           <div class="workspace-transcript-preview" data-transcript-preview hidden></div>
+          <div class="workspace-voice-source-actions" data-voice-source-actions hidden></div>
           <div class="workspace-composer-note" data-audio-status>Type, attach, or record. Transcripts stay editable before send.</div>
         </div>
         <div class="form-result" data-form-result hidden></div>
@@ -3133,6 +3135,7 @@ function renderClientScript() {
       const flashKey = 'socialos.dashboard.flash';
       const captureState = {
         assets: [],
+        sourceAssets: [],
         workspaceResponses: new Map(),
         recorder: null,
         recordChunks: [],
@@ -3331,8 +3334,12 @@ function renderClientScript() {
 
       function updateCaptureAssetInputs() {
         const value = captureState.assets.map((asset) => asset.assetId).join(',');
+        const sourceValue = captureState.sourceAssets.map((asset) => asset.assetId).join(',');
         for (const input of document.querySelectorAll('[data-capture-asset-ids]')) {
           input.value = value;
+        }
+        for (const input of document.querySelectorAll('[data-source-asset-ids]')) {
+          input.value = sourceValue;
         }
         renderWorkspaceAssets();
       }
@@ -3345,9 +3352,47 @@ function renderClientScript() {
         updateCaptureAssetInputs();
       }
 
+      function appendSourceAsset(asset) {
+        if (!asset || !asset.assetId) return;
+        if (!captureState.sourceAssets.some((entry) => entry.assetId === asset.assetId)) {
+          captureState.sourceAssets.push(asset);
+        }
+        updateCaptureAssetInputs();
+      }
+
       function removeCaptureAsset(assetId) {
         captureState.assets = captureState.assets.filter((asset) => asset.assetId !== assetId);
         updateCaptureAssetInputs();
+      }
+
+      function removeSourceAsset(assetId) {
+        captureState.sourceAssets = captureState.sourceAssets.filter((asset) => asset.assetId !== assetId);
+        updateCaptureAssetInputs();
+      }
+
+      function findStoredSourceAsset(assetId) {
+        return captureState.sourceAssets.find((asset) => asset.assetId === assetId) || null;
+      }
+
+      function renderVoiceSourceActions(asset = null) {
+        const node = document.querySelector('[data-voice-source-actions]');
+        if (!node) return;
+        if (!asset || !asset.assetId) {
+          node.hidden = true;
+          node.innerHTML = '';
+          return;
+        }
+
+        node.hidden = false;
+        node.innerHTML =
+          '<div class="voice-source-note">' +
+            '<strong>Original voice saved locally.</strong>' +
+            '<span>The transcript will send as text. Add the voice attachment only if you want to send the audio itself.</span>' +
+            '<div class="voice-source-note-actions">' +
+              '<button type="button" class="secondary-button" data-attach-source-voice="' + escapeHtml(asset.assetId) + '">Attach voice</button>' +
+              '<button type="button" class="ghost-button" data-dismiss-source-voice="' + escapeHtml(asset.assetId) + '">Keep transcript only</button>' +
+            '</div>' +
+          '</div>';
       }
 
       function renderWorkspaceAssets() {

@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS CaptureAsset (
   kind TEXT NOT NULL,
   mime_type TEXT,
   file_name TEXT,
+  local_path TEXT DEFAULT '',
   extracted_text TEXT DEFAULT '',
   metadata TEXT DEFAULT '{}',
   created_at TEXT NOT NULL

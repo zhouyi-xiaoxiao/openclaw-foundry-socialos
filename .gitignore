@@ -16,5 +16,6 @@ foundry/WORKSPACE_FOUNDY/*/USER.md
 .env.local
 .openclaw/
 infra/db/*.db
+infra/assets/
 *.log
 *.pid
