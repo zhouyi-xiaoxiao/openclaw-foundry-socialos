@@ -85,6 +85,13 @@ function extractFirstJsonObject(raw) {
   return null;
 }
 
+function normalizeFoundryMode(value) {
+  const mode = safeTrim(value).toUpperCase();
+  if (!mode) return 'unknown';
+  if (mode === 'RUNNING') return 'ACTIVE';
+  return mode;
+}
+
 function parseDemoStatus(output) {
   const services = output
     .split('\n')
@@ -133,7 +140,7 @@ function parseFoundryStatusJson(output, commandOk) {
 
   return {
     commandOk,
-    mode: typeof parsed.mode === 'string' ? parsed.mode : 'unknown',
+    mode: normalizeFoundryMode(typeof parsed.mode === 'string' ? parsed.mode : 'unknown'),
     lock: lock.present === true ? 'present' : lock.present === false ? 'none' : 'unknown',
     queue: {
       pending: normalizeCount(queue.pending),
@@ -194,7 +201,7 @@ export function parseFoundryStatus(output, options = {}) {
 
   return {
     commandOk,
-    mode: modeMatch ? modeMatch[1].trim() : 'unknown',
+    mode: normalizeFoundryMode(modeMatch ? modeMatch[1] : 'unknown'),
     lock: lockMatch ? lockMatch[1].trim() : 'unknown',
     queue: {
       pending: queueMatch ? Number(queueMatch[1]) : 0,

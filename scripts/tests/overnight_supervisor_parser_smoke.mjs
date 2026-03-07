@@ -26,6 +26,7 @@ Task B blocked`;
 
 const parsedWithoutDigest = parseFoundryStatus(outputWithoutDigest);
 assert(parsedWithoutDigest.commandOk === true, 'commandOk should default true');
+assert(parsedWithoutDigest.mode === 'ACTIVE', 'RUNNING mode should normalize to ACTIVE');
 assert(parsedWithoutDigest.queue.blocked === 2, 'blocked count should still parse');
 assert(parsedWithoutDigest.blockedHead.length === 2, 'blocked queue head should parse without Latest digest section');
 assert(parsedWithoutDigest.blockedHead[0] === 'Task A blocked', 'first blocked item should stay intact');
@@ -59,6 +60,7 @@ none
 Latest digest:
 No digest yet.`;
 const parsedWithNoBlocked = parseFoundryStatus(outputWithNoBlocked);
+assert(parsedWithNoBlocked.mode === 'ACTIVE', 'RUNNING mode should normalize to ACTIVE in no-blocked path');
 assert(parsedWithNoBlocked.blockedHead.length === 0, '"none" blocked marker should normalize to an empty list');
 assert(parsedWithNoBlocked.latestDigest.length === 0, '"No digest yet." marker should normalize to an empty digest list');
 const parsedCommandFailure = parseFoundryStatus('', { commandOk: false });
