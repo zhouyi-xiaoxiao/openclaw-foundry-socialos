@@ -1,11 +1,11 @@
 # Public Status
 
-- Generated: 2026-03-07T08:11:29.608Z
+- Generated: 2026-03-07T08:12:46.317Z
 - Product posture: local-first
 - Network exposure: loopback-only
 - Publish mode: Safe rehearsal
 - Demo healthy: true
-- Git head: 325ce0c
+- Git head: ed7e060
 
 ## Current Readout
 - The repo is currently healthy enough to present as a judge-facing local-first package.
