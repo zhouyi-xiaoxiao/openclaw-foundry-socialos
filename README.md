@@ -4,6 +4,7 @@
 [![Demo Docs](https://img.shields.io/badge/docs-demo-blue)](socialos/docs/DEMO_SCRIPT.md)
 [![Architecture](https://img.shields.io/badge/docs-architecture-blue)](socialos/docs/ARCHITECTURE.md)
 [![Evidence](https://img.shields.io/badge/docs-evidence-blue)](socialos/docs/EVIDENCE.md)
+[![Pitch Pack](https://img.shields.io/badge/docs-pitch-blue)](socialos/docs/pitch/PITCH_5_MIN.md)
 
 SocialOS is a local-first relationship + identity operating system. It turns raw notes, voice memos, screenshots, and business cards into structured people memory, event context, self signals, and platform-native draft packages.
 
@@ -95,6 +96,18 @@ Agent-facing entrypoints:
 - [Repo Agent Handoff](AGENTS.md)
 - [Agent Playbook](socialos/docs/AGENT_PLAYBOOK.md)
 - [System Manifest](socialos/docs/SYSTEM_MANIFEST.json)
+- [Docs Index](socialos/docs/DOCS_INDEX.md)
+
+## Judge Pitch Pack
+- [5-Minute Pitch](socialos/docs/pitch/PITCH_5_MIN.md)
+- [Judge Brief](socialos/docs/pitch/JUDGE_BRIEF.md)
+- [Demo Talk Track](socialos/docs/pitch/DEMO_TALK_TRACK.md)
+
+The pitch is product-led on purpose:
+- start with the user problem
+- show the product loop
+- use multi-agent/OpenClaw/Foundry as the enabling architecture
+- close with the next implementation layer for real-data onboarding
 
 ## Public Evidence
 Curated public evidence lives in [socialos/docs/EVIDENCE.md](socialos/docs/EVIDENCE.md).
@@ -103,6 +116,19 @@ Included evidence:
 - demo GIF and screenshots
 - representative Foundry run report snapshots
 - stable evidence files copied out of volatile local runtime paths
+- generated validation snapshot: `socialos/docs/evidence/LATEST_VALIDATION.md`
+
+## Generated Public Status
+- [Docs Index](socialos/docs/DOCS_INDEX.md)
+- [Public Status](socialos/docs/STATUS.md)
+- [Agent Repo State](socialos/docs/agent/REPO_STATE.md)
+- [Latest Validation](socialos/docs/evidence/LATEST_VALIDATION.md)
+
+Refresh generated docs safely with:
+
+```bash
+node scripts/refresh_public_docs.mjs
+```
 
 ## Current Product Capabilities
 - Capture and commit people memory with explicit human confirmation
@@ -131,6 +157,13 @@ Included evidence:
 - [Agent Playbook](socialos/docs/AGENT_PLAYBOOK.md)
 - [Evidence](socialos/docs/EVIDENCE.md)
 - [System Manifest](socialos/docs/SYSTEM_MANIFEST.json)
+- [Docs Index](socialos/docs/DOCS_INDEX.md)
+- [5-Minute Pitch](socialos/docs/pitch/PITCH_5_MIN.md)
+- [Judge Brief](socialos/docs/pitch/JUDGE_BRIEF.md)
+- [Demo Talk Track](socialos/docs/pitch/DEMO_TALK_TRACK.md)
+- [Public Status](socialos/docs/STATUS.md)
+- [Agent Repo State](socialos/docs/agent/REPO_STATE.md)
+- [Latest Validation](socialos/docs/evidence/LATEST_VALIDATION.md)
 
 ## Operational Commands
 ```bash
@@ -138,6 +171,7 @@ bash scripts/demo.sh
 bash scripts/demo_status.sh
 bash scripts/stop_demo.sh
 bash scripts/overnight_supervisor.sh
+node scripts/refresh_public_docs.mjs
 bash scripts/test.sh
 bash scripts/status.sh
 bash scripts/foundry_dispatch.sh STATUS
@@ -159,6 +193,7 @@ It does not mutate product state by itself. It is the outer-loop guard that:
 - confirms `dry-run` publish posture
 - restarts local demo services if they dropped
 - writes a concise morning-review summary into `reports/overnight/`
+- refreshes generated public docs and evidence status snapshots
 - exits in stop mode when the repo becomes unstable or unsafe for unattended edits
 
 ## Repo Hygiene

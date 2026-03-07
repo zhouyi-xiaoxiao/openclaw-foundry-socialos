@@ -10,8 +10,21 @@
     "human": "README.md",
     "agent": "AGENTS.md",
     "playbook": "socialos/docs/AGENT_PLAYBOOK.md",
-    "machine": "socialos/docs/SYSTEM_MANIFEST.json"
+    "machine": "socialos/docs/SYSTEM_MANIFEST.json",
+    "docsIndex": "socialos/docs/DOCS_INDEX.md"
   },
+  "pitchPack": [
+    "socialos/docs/pitch/PITCH_5_MIN.md",
+    "socialos/docs/pitch/JUDGE_BRIEF.md",
+    "socialos/docs/pitch/DEMO_TALK_TRACK.md"
+  ],
+  "generatedStatusFiles": [
+    "socialos/docs/STATUS.md",
+    "socialos/docs/agent/REPO_STATE.md",
+    "socialos/docs/evidence/LATEST_VALIDATION.md"
+  ],
+  "refreshScript": "scripts/refresh_public_docs.mjs",
+  "automationHook": "bash scripts/overnight_supervisor.sh && node scripts/refresh_public_docs.mjs",
   "surfaces": [
     {
       "id": "workspace",
@@ -169,6 +182,11 @@
       "path": "scripts/overnight_supervisor.sh",
       "command": "bash scripts/overnight_supervisor.sh",
       "purpose": "run the unattended outer-loop guard and write a morning-review summary"
+    },
+    {
+      "path": "scripts/refresh_public_docs.mjs",
+      "command": "node scripts/refresh_public_docs.mjs",
+      "purpose": "refresh generated public docs and evidence status after a safe run"
     },
     {
       "path": "scripts/stop_demo.sh",

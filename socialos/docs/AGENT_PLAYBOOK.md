@@ -60,15 +60,24 @@ Authoritative task logic:
 ## 5. Curate public evidence
 - Copy representative evidence into `socialos/docs/evidence/`
 - Update `socialos/docs/EVIDENCE.md`
+- Refresh generated public status docs with `node scripts/refresh_public_docs.mjs`
 - Do not commit:
   - live DB files
   - rolling run reports
   - auth profiles
   - local logs/pids
 
+## 5a. Find the right docs fast
+- Product demo story: `socialos/docs/pitch/`
+- Full docs map: `socialos/docs/DOCS_INDEX.md`
+- Generated public repo state: `socialos/docs/STATUS.md`
+- Generated agent handoff snapshot: `socialos/docs/agent/REPO_STATE.md`
+- Generated validation snapshot: `socialos/docs/evidence/LATEST_VALIDATION.md`
+
 ## 6. Before you finish
 ```bash
 bash scripts/test.sh
+node scripts/refresh_public_docs.mjs
 ```
 
 If automation was paused:

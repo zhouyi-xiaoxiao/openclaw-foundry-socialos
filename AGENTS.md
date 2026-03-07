@@ -87,12 +87,16 @@ Authoritative file:
 - Public architecture: `socialos/docs/ARCHITECTURE.md`
 - Agent operator playbook: `socialos/docs/AGENT_PLAYBOOK.md`
 - Machine-readable system map: `socialos/docs/SYSTEM_MANIFEST.json`
+- Full doc map: `socialos/docs/DOCS_INDEX.md`
+- Pitch pack: `socialos/docs/pitch/`
+- Generated repo state: `socialos/docs/STATUS.md`, `socialos/docs/agent/REPO_STATE.md`, `socialos/docs/evidence/LATEST_VALIDATION.md`
 
 ## Canonical Commands
 - `bash scripts/demo.sh`
 - `bash scripts/demo_status.sh`
 - `bash scripts/stop_demo.sh`
 - `bash scripts/overnight_supervisor.sh`
+- `node scripts/refresh_public_docs.mjs`
 - `bash scripts/test.sh`
 
 ## Overnight Supervisor
@@ -103,5 +107,15 @@ Authoritative file:
 - It writes a concise local morning-review summary to:
   - `reports/overnight/latest.md`
   - `reports/overnight/latest.json`
+- It also refreshes generated public docs so future agents can read the current repo state from Git-tracked files.
 - If the demo is unhealthy it attempts a local restart.
 - If publish mode is not `dry-run` or Foundry has 2+ consecutive failures, it switches to stop/stabilize mode and leaves a status summary instead of guessing.
+
+## Generated Docs Refresh
+- `node scripts/refresh_public_docs.mjs` updates generated public docs only.
+- It must not rewrite curated contract docs such as:
+  - `README.md`
+  - `AGENTS.md`
+  - `socialos/docs/PRODUCT.md`
+  - `socialos/docs/ARCHITECTURE.md`
+- Generated docs are additive handoff surfaces, not the primary product spec.
