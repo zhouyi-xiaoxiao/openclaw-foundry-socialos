@@ -338,16 +338,16 @@ async function main() {
       'queued task for posted completion sample should appear in queue list history'
     );
 
-    const cluster = await getJson(api.baseUrl, '/ops/cluster');
-    assert(Array.isArray(cluster.foundry?.agents), 'ops/cluster should expose foundry agents');
-    assert(Array.isArray(cluster.codex?.canOwn), 'ops/cluster should expose codex responsibilities');
-    assert(Array.isArray(cluster.foundry?.supportedScopes), 'ops/cluster should expose supported scopes');
-    assert(typeof cluster.foundry?.defaultAutonomyMode === 'string', 'ops/cluster should expose autonomy mode');
+    const agents = await getJson(api.baseUrl, '/studio/agents');
+    assert(Array.isArray(agents.cluster?.agents), 'studio/agents should expose agent cluster');
+    assert(Array.isArray(agents.codex?.canOwn), 'studio/agents should expose codex responsibilities');
+    assert(Array.isArray(agents.cluster?.supportedScopes), 'studio/agents should expose supported scopes');
+    assert(typeof agents.cluster?.defaultAutonomyMode === 'string', 'studio/agents should expose autonomy mode');
 
-    const runtime = await getJson(api.baseUrl, '/settings/runtime');
-    assert(runtime.publishMode === 'dry-run' || runtime.publishMode === 'live', 'settings/runtime should include publish mode');
-    assert(runtime.foundry?.agents?.length >= 1, 'settings/runtime should include foundry cluster summary');
-    assert(runtime.foundry?.llmTaskHealth, 'settings/runtime should expose llm-task health');
+    const studioSettings = await getJson(api.baseUrl, '/studio/settings');
+    assert(studioSettings.publishMode === 'dry-run' || studioSettings.publishMode === 'live', 'studio/settings should include publish mode');
+    assert(studioSettings.cluster?.agents?.length >= 1, 'studio/settings should include studio cluster summary');
+    assert(studioSettings.cluster?.llmTaskHealth, 'studio/settings should expose llm-task health');
 
     const cockpit = await getJson(api.baseUrl, '/cockpit/summary');
     assert(typeof cockpit.summaryText === 'string' && cockpit.summaryText.length > 0, 'cockpit should expose an action summary');
@@ -411,14 +411,12 @@ async function main() {
     assert(Array.isArray(ask.people) && ask.people.some((entry) => entry.name === 'Product Workspace Tester'), 'ask/search should surface matched people');
     assert(Array.isArray(ask.actions), 'ask/search should return suggested actions');
 
-    const tasks = await getJson(api.baseUrl, '/ops/tasks?limit=10');
-    assert(Array.isArray(tasks.tasks), 'ops/tasks should return a task list');
+    const tasks = await getJson(api.baseUrl, '/studio/tasks?limit=10');
+    assert(Array.isArray(tasks.tasks), 'studio/tasks should return a task list');
 
-    const dispatch = await postJson(api.baseUrl, '/ops/dispatch', {
-      command: 'STATUS',
-    });
-    assert(dispatch.command === 'STATUS', 'ops/dispatch should execute the requested status command');
-    assert(dispatch.cluster?.agents?.length >= 1, 'ops/dispatch should return cluster summary after execution');
+    const command = await postJson(api.baseUrl, '/studio/commands/notify', {}, 200);
+    assert(command.command === 'notify', 'studio command endpoint should execute the requested command');
+    assert(command.latestRun || typeof command.output === 'string', 'studio command endpoint should return output context');
 
     console.log('product_workspace_smoke: PASS');
   } finally {

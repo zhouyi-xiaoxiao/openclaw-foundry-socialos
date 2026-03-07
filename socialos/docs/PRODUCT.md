@@ -6,7 +6,7 @@ SocialOS is a local-first relationship + identity operating system with a chat-f
 ## Product Goals
 - Demo-ready: a judge can clone the repo, run `bash scripts/demo.sh`, and see a non-empty product.
 - Reproducible: the public repo is enough to understand setup, safety defaults, and the product loop.
-- Extensible: publishing can move from `L1 assisted` to `L2 gated`; embeddings can switch providers; Foundry can execute structured product tasks.
+- Extensible: publishing can move from `L1 assisted` to `L2 gated`; embeddings can switch providers; Studio can execute structured product tasks from a DB-backed control plane.
 - Explainable: search results, mirror conclusions, and publish handoffs all expose evidence, preflight, or audit trails.
 
 ## Current Stable P1 Surfaces
@@ -92,8 +92,8 @@ SocialOS is a local-first relationship + identity operating system with a chat-f
 
 ### 7. Settings
 - Runtime controls
-- Foundry task intake
-- execution split between product runtime and Foundry
+- Studio handoff into tasks, runs, agents, and policies
+- execution split between product runtime and Studio
 - publish mode visibility
 
 ## Capture Model
@@ -129,7 +129,7 @@ SocialOS is a local-first relationship + identity operating system with a chat-f
 - `compliance`
 - `publisher`
 
-### Foundry agents
+### Studio agents
 - `forge_orchestrator`
 - `forge_coder`
 - `forge_tester`

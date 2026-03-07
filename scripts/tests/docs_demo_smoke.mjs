@@ -26,6 +26,10 @@ assert(readme.includes('socialos/docs/SYSTEM_MANIFEST.json'), 'README should lin
 assert(readme.includes('socialos/docs/EVIDENCE.md'), 'README should link to curated evidence');
 assert(readme.includes('socialos/docs/DOCS_INDEX.md'), 'README should link to the docs index');
 assert(readme.includes('socialos/docs/pitch/PITCH_5_MIN.md'), 'README should link to the 5-minute pitch');
+assert(readme.includes('socialos/docs/pitch/VC_DECK_SPEC.md'), 'README should link to the VC deck spec');
+assert(readme.includes('socialos/docs/pitch/DECK_MAINTENANCE.md'), 'README should link to the deck maintenance doc');
+assert(readme.includes('/deck'), 'README should mention the deck route');
+assert(readme.includes('node scripts/export_vc_deck.mjs'), 'README should expose the deck export command');
 assert(readme.includes('socialos/docs/STATUS.md'), 'README should link to generated public status');
 assert(readme.includes('node scripts/refresh_public_docs.mjs'), 'README should expose the public docs refresh command');
 

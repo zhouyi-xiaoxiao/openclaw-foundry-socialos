@@ -122,3 +122,80 @@ CREATE TABLE IF NOT EXISTS MirrorEvidence (
   snippet TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS StudioTask (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  goal TEXT NOT NULL,
+  scope TEXT NOT NULL DEFAULT 'socialos',
+  repo_targets TEXT NOT NULL DEFAULT '[]',
+  acceptance_criteria TEXT NOT NULL DEFAULT '[]',
+  constraints TEXT NOT NULL DEFAULT '[]',
+  preferred_tests TEXT NOT NULL DEFAULT '[]',
+  status TEXT NOT NULL DEFAULT 'queued',
+  priority INTEGER NOT NULL DEFAULT 3,
+  source TEXT NOT NULL DEFAULT 'studio.manual',
+  metadata TEXT NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS StudioRun (
+  id TEXT PRIMARY KEY,
+  task_id TEXT DEFAULT '',
+  pipeline TEXT NOT NULL DEFAULT 'studio-multi-agent',
+  status TEXT NOT NULL,
+  summary TEXT NOT NULL DEFAULT '',
+  why TEXT NOT NULL DEFAULT '',
+  risk TEXT NOT NULL DEFAULT 'low',
+  verify TEXT NOT NULL DEFAULT '',
+  next TEXT NOT NULL DEFAULT '',
+  started_at TEXT NOT NULL,
+  finished_at TEXT NOT NULL,
+  duration_ms INTEGER NOT NULL DEFAULT 0,
+  metadata TEXT NOT NULL DEFAULT '{}'
+);
+
+CREATE TABLE IF NOT EXISTS StudioRunStep (
+  id TEXT PRIMARY KEY,
+  run_id TEXT NOT NULL,
+  step_name TEXT NOT NULL,
+  lane TEXT NOT NULL,
+  status TEXT NOT NULL,
+  started_at TEXT NOT NULL,
+  finished_at TEXT NOT NULL,
+  output TEXT NOT NULL DEFAULT '',
+  error TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS StudioAgentState (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  role_title TEXT NOT NULL DEFAULT '',
+  responsibility TEXT NOT NULL DEFAULT '',
+  model TEXT NOT NULL DEFAULT '',
+  workspace TEXT NOT NULL DEFAULT '',
+  tool_profile TEXT NOT NULL DEFAULT '',
+  health_status TEXT NOT NULL DEFAULT 'unknown',
+  last_seen_at TEXT DEFAULT '',
+  capabilities TEXT NOT NULL DEFAULT '[]',
+  metadata TEXT NOT NULL DEFAULT '{}'
+);
+
+CREATE TABLE IF NOT EXISTS StudioSetting (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS StudioArtifact (
+  id TEXT PRIMARY KEY,
+  run_id TEXT NOT NULL DEFAULT '',
+  task_id TEXT NOT NULL DEFAULT '',
+  kind TEXT NOT NULL,
+  path TEXT NOT NULL,
+  content_type TEXT NOT NULL DEFAULT '',
+  label TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL,
+  metadata TEXT NOT NULL DEFAULT '{}'
+);

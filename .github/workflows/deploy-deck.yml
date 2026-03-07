@@ -1,0 +1,88 @@
+name: Deploy VC Deck
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/deploy-deck.yml'
+      - 'AGENTS.md'
+      - 'README.md'
+      - 'scripts/demo.sh'
+      - 'scripts/demo_status.sh'
+      - 'scripts/export_vc_deck.mjs'
+      - 'scripts/refresh_public_docs.mjs'
+      - 'scripts/stop_demo.sh'
+      - 'scripts/test.sh'
+      - 'scripts/tests/deck_route_smoke.mjs'
+      - 'socialos/apps/web/server.mjs'
+      - 'socialos/apps/web/vendor/reveal/**'
+      - 'socialos/docs/DOCS_INDEX.md'
+      - 'socialos/docs/SYSTEM_MANIFEST.json'
+      - 'socialos/docs/evidence/**'
+      - 'socialos/docs/pitch/**'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Install sqlite3
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sqlite3
+
+      - name: Bootstrap local demo
+        run: bash scripts/demo.sh
+
+      - name: Verify demo health
+        run: bash scripts/demo_status.sh
+
+      - name: Run full validation
+        run: bash scripts/test.sh
+
+      - name: Refresh public docs
+        run: node scripts/refresh_public_docs.mjs --validation-passed --source github-pages-deploy
+
+      - name: Export VC deck
+        run: node scripts/export_vc_deck.mjs
+
+      - name: Stop local demo
+        if: always()
+        run: bash scripts/stop_demo.sh
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .deck-site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

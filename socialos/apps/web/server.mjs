@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,6 +10,23 @@ export const DEFAULT_API_BASE_URL = readOptionalString(
   process.env.SOCIALOS_API_BASE_URL,
   `http://${LOOPBACK_HOST}:${DEFAULT_API_PORT}`
 );
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
+const DOCS_DIR = path.join(REPO_ROOT, 'socialos', 'docs');
+const EVIDENCE_DIR = path.join(DOCS_DIR, 'evidence');
+const PITCH_DIR = path.join(DOCS_DIR, 'pitch');
+const VENDOR_DIR = path.join(__dirname, 'vendor', 'reveal');
+const REVEAL_CSS_PATH = path.join(VENDOR_DIR, 'reveal.min.css');
+const REVEAL_JS_PATH = path.join(VENDOR_DIR, 'reveal.min.js');
+const REVEAL_NOTES_PATH = path.join(VENDOR_DIR, 'notes.min.js');
+const DECK_STATUS_PATH = path.join(PITCH_DIR, 'DECK_STATUS.json');
+const EVIDENCE_STEP_ONE_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step01.png');
+const EVIDENCE_STEP_FOUR_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step04.png');
+const EVIDENCE_STEP_EIGHT_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step08.png');
+const PUBLIC_REPO_URL = 'https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos';
+const fileTextCache = new Map();
+const dataUriCache = new Map();
 
 const PAGE_DEFINITIONS = [
   {
@@ -29,6 +47,13 @@ const PAGE_DEFINITIONS = [
     title: 'Ask',
     path: '/ask',
     summary: 'Natural-language recall across contacts, events, drafts, and your recent self mirror.',
+    nav: false,
+  },
+  {
+    id: 'deck',
+    title: 'Deck',
+    path: '/deck',
+    summary: 'VC-facing microsite deck for the public SocialOS pitch.',
     nav: false,
   },
   {
@@ -69,10 +94,17 @@ const PAGE_DEFINITIONS = [
     nav: false,
   },
   {
+    id: 'studio',
+    title: 'Studio',
+    path: '/studio',
+    summary: 'Operate the Studio control plane for tasks, runs, agents, and policies.',
+  },
+  {
     id: 'settings',
     title: 'Settings',
     path: '/settings',
-    summary: 'Operate Foundry, inspect the first-layer cluster, and see exactly where Codex can help.',
+    summary: 'Legacy shell that now hands off to Studio policies.',
+    nav: false,
   },
 ];
 
@@ -86,6 +118,48 @@ function readOptionalString(value, fallback) {
   if (typeof value !== 'string') return fallback;
   const trimmed = value.trim();
   return trimmed || fallback;
+}
+
+function readFileTextCached(filePath, fallback = '') {
+  if (fileTextCache.has(filePath)) return fileTextCache.get(filePath);
+  try {
+    const value = fs.readFileSync(filePath, 'utf8');
+    fileTextCache.set(filePath, value);
+    return value;
+  } catch {
+    fileTextCache.set(filePath, fallback);
+    return fallback;
+  }
+}
+
+function readJsonFileSafe(filePath, fallback = {}) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch {
+    return fallback;
+  }
+}
+
+function detectMimeType(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext === '.png') return 'image/png';
+  if (ext === '.jpg' || ext === '.jpeg') return 'image/jpeg';
+  if (ext === '.gif') return 'image/gif';
+  if (ext === '.svg') return 'image/svg+xml';
+  return 'application/octet-stream';
+}
+
+function readDataUriCached(filePath) {
+  if (dataUriCache.has(filePath)) return dataUriCache.get(filePath);
+  try {
+    const buffer = fs.readFileSync(filePath);
+    const value = `data:${detectMimeType(filePath)};base64,${buffer.toString('base64')}`;
+    dataUriCache.set(filePath, value);
+    return value;
+  } catch {
+    dataUriCache.set(filePath, '');
+    return '';
+  }
 }
 
 function escapeHtml(value) {
@@ -561,7 +635,7 @@ function renderWorkspaceSystemStatus(bootstrap = {}) {
           ${renderPill(status.loopbackOnly ? 'loopback only' : 'network exposed', status.loopbackOnly ? 'good' : 'warn')}
         </article>
         <article class="workspace-status-item">
-          <span class="workspace-status-label">Foundry</span>
+          <span class="workspace-status-label">Studio</span>
           ${renderPill(status.foundryEnabled ? 'ready' : 'offline', foundryTone)}
         </article>
         <article class="workspace-status-item">
@@ -1563,7 +1637,7 @@ function renderQueueCards(queueTasks, publishMode) {
             : 'This handoff is closed and the latest outcome is recorded below.';
       const liveControlsMessage = liveApprovalEnabled
         ? 'Only open live controls when you truly intend to post and the credentials are ready.'
-        : 'Live publish stays gated until you switch Settings out of Safe rehearsal.';
+        : 'Live publish stays gated until you switch Studio policies out of Safe rehearsal.';
       return `
         <article class="stack-card queue-card">
           <div class="stack-meta">
@@ -1917,7 +1991,7 @@ function renderBlockedList(blocked) {
 
 function renderClusterCards(cluster) {
   const agents = Array.isArray(cluster?.agents) ? cluster.agents : [];
-  if (!agents.length) return renderEmptyState('Foundry cluster is not configured.');
+  if (!agents.length) return renderEmptyState('Studio agent cluster is not configured.');
   return `<div class="cluster-grid">${agents
     .map(
       (agent) => `
@@ -1937,7 +2011,7 @@ function renderClusterCards(cluster) {
 }
 
 function renderFoundryTaskCards(tasks) {
-  if (!tasks.length) return renderEmptyState('No structured Foundry tasks yet.');
+  if (!tasks.length) return renderEmptyState('No Studio tasks yet.');
   return `<div class="stack">${tasks
     .map(
       (task) => `
@@ -1959,6 +2033,40 @@ function renderFoundryTaskCards(tasks) {
     .join('')}</div>`;
 }
 
+function renderStudioTaskCards(tasks) {
+  if (!tasks.length) return renderEmptyState('No Studio tasks yet.');
+  return `<div class="stack">${tasks
+    .map((task) => {
+      const canRun = ['draft', 'queued', 'blocked'].includes(String(task.status || '').toLowerCase());
+      const statusTone =
+        task.status === 'done' ? 'good' : task.status === 'blocked' ? 'warn' : ['planning', 'coding', 'testing', 'review'].includes(task.status) ? 'accent' : 'soft';
+      return `
+        <article class="stack-card">
+          <div class="stack-meta">
+            <strong>${escapeHtml(task.title || task.taskId)}</strong>
+            <span>${escapeHtml(formatDateTime(task.updatedAt || task.createdAt))}</span>
+          </div>
+          <div class="chip-row">
+            ${renderPill(task.status || 'queued', statusTone)}
+            ${renderPill(task.scope || 'socialos', 'accent')}
+            ${renderPill(String(task.priority || 3), 'soft')}
+          </div>
+          <p>${escapeHtml(task.goal || task.title || '')}</p>
+          <small>${escapeHtml((task.preferredTests || []).join(' | ') || 'bash scripts/test.sh')}</small>
+          ${canRun ? `
+            <form class="api-form compact-form" data-api-form="true" data-endpoint="/studio/tasks/${encodeURIComponent(task.taskId)}/run">
+              <div class="inline-actions">
+                <button type="submit">Run now</button>
+              </div>
+              <div class="form-result" data-form-result></div>
+            </form>
+          ` : ''}
+        </article>
+      `;
+    })
+    .join('')}</div>`;
+}
+
 function renderFoundryExecutionSurface(cluster) {
   const llmTaskHealth = cluster?.llmTaskHealth || {};
   const supportedScopes = Array.isArray(cluster?.supportedScopes) ? cluster.supportedScopes : [];
@@ -1975,13 +2083,13 @@ function renderFoundryExecutionSurface(cluster) {
       <article class="panel inset-panel">
         <div class="panel-head">
           <div>
-            <h3>Foundry Responsibilities</h3>
+            <h3>Studio Responsibilities</h3>
           </div>
         </div>
         <ul class="compact-list">
-          <li>接收 quick / structured 产品任务</li>
-          <li>生成 PlanSpec 并驱动 orchestrator/coder/tester/reviewer</li>
-          <li>持续巡检、写 run report、同步 digest</li>
+          <li>接收统一任务并把它们收口到 SQLite 控制面</li>
+          <li>驱动 orchestrator/coder/tester/reviewer 多 lane 执行链</li>
+          <li>导出 queue、run report、digest 作为公开证据</li>
         </ul>
       </article>
       <article class="panel inset-panel">
@@ -2880,241 +2988,292 @@ async function renderDevDigestPage(page) {
   `;
 }
 
-async function renderSettingsPage(page, requestUrl) {
-  const [runtimeRes, clusterRes, tasksRes, statusRes, runsRes, blockedOpsRes, digestRes] = await Promise.all([
-    fetchJsonSafe('/settings/runtime'),
-    fetchJsonSafe('/ops/cluster'),
-    fetchJsonSafe('/ops/tasks?limit=8'),
-    fetchJsonSafe('/ops/status'),
-    fetchJsonSafe('/ops/runs?limit=8'),
-    fetchJsonSafe('/ops/blocked'),
+async function renderStudioPage(page, requestUrl) {
+  const [bootstrapRes, tasksRes, runsRes, agentsRes, settingsRes, digestRes] = await Promise.all([
+    fetchJsonSafe('/studio/bootstrap'),
+    fetchJsonSafe('/studio/tasks?limit=10'),
+    fetchJsonSafe('/studio/runs?limit=8'),
+    fetchJsonSafe('/studio/agents'),
+    fetchJsonSafe('/studio/settings'),
     fetchJsonSafe('/dev-digest?limit=8'),
   ]);
-  const runtime = runtimeRes.ok ? runtimeRes.payload : {};
-  const cluster = clusterRes.ok ? clusterRes.payload.foundry : runtime.foundry;
-  const codex = clusterRes.ok ? clusterRes.payload.codex : runtime.codex;
-  const blocked = clusterRes.ok ? clusterRes.payload.blocked || [] : [];
-  const embeddings = runtime.embeddings || {};
+
+  const bootstrap = bootstrapRes.ok ? bootstrapRes.payload : { counts: {}, recommendedActions: [], blockedTasks: [], summaryText: 'Studio data is unavailable right now.' };
   const tasks = tasksRes.ok ? tasksRes.payload.tasks || [] : [];
-  const healthStatus = cluster?.llmTaskHealth?.status || 'unknown';
-  const status = statusRes.ok ? statusRes.payload : {};
   const runs = runsRes.ok ? runsRes.payload.runs || [] : [];
-  const digestBlocked = blockedOpsRes.ok ? blockedOpsRes.payload.blockedTasks || [] : [];
+  const agentsPayload = agentsRes.ok ? agentsRes.payload : {};
+  const settings = settingsRes.ok ? settingsRes.payload : {};
+  const cluster = settings.cluster || agentsPayload.cluster || {};
+  const codex = settings.codex || agentsPayload.codex || {};
   const digests = digestRes.ok ? digestRes.payload.digests || [] : [];
-  const latestRun = status.latestRun || runs[0] || null;
-  const rawPanel = readOptionalString(requestUrl?.searchParams?.get('panel'), 'basics').toLowerCase();
-  const activePanel = ['automation', 'advanced', 'ops'].includes(rawPanel)
-    ? rawPanel === 'ops'
-      ? 'advanced'
-      : rawPanel
-    : 'basics';
+  const status = bootstrap.status || settings.status || {};
+  const latestRun = bootstrap.latestRun || runs[0] || null;
+  const rawPanel = readOptionalString(requestUrl?.searchParams?.get('panel'), 'overview').toLowerCase();
+  const activePanel = ['overview', 'tasks', 'runs', 'agents', 'policies'].includes(rawPanel) ? rawPanel : 'overview';
   const panelTabs = [
-    { id: 'basics', label: 'Basics' },
-    { id: 'automation', label: 'Automation' },
-    { id: 'advanced', label: 'Advanced' },
+    { id: 'overview', label: 'Overview' },
+    { id: 'tasks', label: 'Tasks' },
+    { id: 'runs', label: 'Runs' },
+    { id: 'agents', label: 'Agents' },
+    { id: 'policies', label: 'Policies' },
   ];
-  const basicsBody = `
+
+  const actionCards = Array.isArray(bootstrap.recommendedActions) && bootstrap.recommendedActions.length
+    ? `<div class="stack">${bootstrap.recommendedActions
+        .map((action) => `
+          <article class="stack-card compact-card">
+            <div class="stack-meta">
+              <strong>${escapeHtml(action.title || 'Action')}</strong>
+              ${renderPill(action.tone || 'soft', action.tone === 'warn' ? 'warn' : action.tone === 'accent' ? 'accent' : 'soft')}
+            </div>
+            <p>${escapeHtml(action.description || '')}</p>
+            ${action.command ? `
+              <form class="api-form compact-form" data-api-form="true" data-endpoint="/studio/commands/${encodeURIComponent(action.command)}">
+                <div class="inline-actions">
+                  <button type="submit">${escapeHtml(action.title || 'Run')}</button>
+                </div>
+                <div class="form-result" data-form-result></div>
+              </form>
+            ` : action.href ? `<div class="inline-actions"><a class="mini-link" href="${escapeHtml(action.href)}">Open</a></div>` : ''}
+          </article>
+        `)
+        .join('')}</div>`
+    : renderEmptyState('No recommended Studio actions right now.');
+
+  const overviewBody = `
     <div class="grid two-up">
       ${renderPanel(
-        'Publish safety',
+        'Control Plane',
         `
           <div class="stack">
             <article class="stack-card">
               <div class="stack-meta">
-                <strong>${escapeHtml(formatHumanPublishMode(runtime.publishMode))}</strong>
-                ${renderPill(runtime.publishMode === 'dry-run' ? 'default' : 'gated', runtime.publishMode === 'dry-run' ? 'good' : 'warn')}
+                <strong>${escapeHtml(bootstrap.summaryText || 'Studio is ready.')}</strong>
+                ${renderPill(readOptionalString(status.mode, 'ACTIVE'), readOptionalString(status.mode, 'ACTIVE') === 'PAUSED' ? 'warn' : 'good')}
               </div>
               <p>${escapeHtml(
-                runtime.publishMode === 'dry-run'
-                  ? 'Safe rehearsal prepares copy, queue state, and platform handoff, but never posts automatically.'
-                  : 'Live publish can post for real, but it still requires explicit credentials and operator intent.'
+                settings.publishMode === 'live'
+                  ? 'Studio is allowed to hand work into live-gated flows, but operator intent still matters.'
+                  : 'Studio stays dry-run safe by default while it manages tasks, runs, and evidence exports.'
               )}</p>
-            </article>
-            <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
-              <input type="hidden" name="command" value="SET_PUBLISH_MODE" />
-              ${renderFormField(
-                'Mode',
-                `<select name="mode">
-                  <option value="dry-run"${runtime.publishMode === 'dry-run' ? ' selected' : ''}>Safe rehearsal</option>
-                  <option value="live"${runtime.publishMode === 'live' ? ' selected' : ''}>Live publish</option>
-                </select>`,
-                'Safe rehearsal is the default. It keeps handoff visible without pushing anything live.'
-              )}
-              <div class="inline-actions">
-                <button type="submit">Update mode</button>
+              <div class="chip-row">
+                ${renderPill(formatHumanPublishMode(settings.publishMode || 'dry-run'), settings.publishMode === 'live' ? 'warn' : 'soft')}
+                ${renderPill(settings.executionPolicy || 'multi-agent', 'accent')}
+                ${renderPill(`queued ${String(status.queue?.pending ?? 0)}`, 'soft')}
+                ${renderPill(`blocked ${String(status.queue?.blocked ?? 0)}`, (status.queue?.blocked ?? 0) > 0 ? 'warn' : 'good')}
               </div>
-              <div class="form-result" data-form-result></div>
-            </form>
+            </article>
+            <article class="stack-card compact-card">
+              <div class="stack-meta">
+                <strong>Latest run</strong>
+                <span>${escapeHtml(formatDateTime(latestRun?.finishedAt || latestRun?.startedAt))}</span>
+              </div>
+              <p>${escapeHtml(latestRun?.summary || 'No Studio run yet.')}</p>
+              <small>${escapeHtml(latestRun?.next || 'Create or run a task to seed the evidence trail.')}</small>
+            </article>
           </div>
         `,
-        'Make the publish posture understandable before you touch automation.'
+        'Studio now owns task, run, agent, and policy visibility in one place.'
+      )}
+      ${renderPanel('Recommended Actions', actionCards, 'Use this panel when you want the next best Studio move, not a wall of controls.')}
+    </div>
+    <div class="grid two-up">
+      ${renderPanel('Blocked Surface', renderBlockedList((bootstrap.blockedTasks || []).map((item, index) => ({ line: index + 1, task: `${item.taskId} ${item.title}` }))), 'These are the items currently blocked inside the Studio queue.')}
+      ${renderPanel('Recent Runs', renderDigestRunList(runs.slice(0, 4)), 'Run reports stay visible, but they no longer define the runtime source of truth.')}
+    </div>
+  `;
+
+  const tasksBody = `
+    <div class="grid two-up">
+      ${renderPanel(
+        'Create Studio Task',
+        `
+          <form class="api-form compact-form" data-api-form="true" data-endpoint="/studio/tasks">
+            ${renderFormField('Task', '<input name="taskText" type="text" placeholder="Polish the Studio run detail surface for blocked tasks" />', 'Start with one sentence. Expand into goal/tests only when you need precision.')}
+            ${renderFormField('Goal', '<textarea name="goal" rows="3" placeholder="Describe the user-facing or operator-facing outcome you want."></textarea>')}
+            <details class="details-shell">
+              <summary>Advanced Fields</summary>
+              ${renderFormField('Acceptance Criteria', '<textarea name="acceptanceCriteria" rows="4" placeholder="One line per criterion"></textarea>')}
+              ${renderFormField('Constraints', '<textarea name="constraints" rows="3" placeholder="One line per constraint"></textarea>')}
+              ${renderFormField(
+                'Scope',
+                `<select name="scope">
+                  <option value="socialos">socialos</option>
+                  <option value="openclaw">openclaw</option>
+                  <option value="multi-repo">multi-repo</option>
+                </select>`,
+                'Only explicit scope allows cross-repo work.'
+              )}
+              ${renderFormField('Repo Targets', '<textarea name="repoTargets" rows="3" placeholder="socialos&#10;openclaw"></textarea>')}
+              ${renderFormField('Preferred Tests', '<textarea name="preferredTests" rows="3" placeholder="bash scripts/test.sh&#10;node scripts/tests/product_workspace_smoke.mjs"></textarea>')}
+            </details>
+            <div class="inline-actions">
+              <button type="submit">Create task</button>
+            </div>
+            <div class="form-result" data-form-result></div>
+          </form>
+        `,
+        'One task flow replaces the old quick-vs-structured split.'
       )}
       ${renderPanel(
-        'System basics',
-        `
-          <ul class="compact-list">
-            <li><strong>Memory:</strong> local-first</li>
-            <li><strong>Network:</strong> loopback only</li>
-            <li><strong>Voice:</strong> ${escapeHtml(cluster?.llmTaskHealth?.status === 'ok' || cluster?.llmTaskHealth?.status === 'mock' ? 'server-ready or browser fallback available' : 'browser fallback only')}</li>
-            <li><strong>Embeddings:</strong> ${escapeHtml(embeddings.effectiveProvider || 'local')}</li>
-          </ul>
-          <div class="chip-row">
-            ${renderPill(formatHumanPublishMode(runtime.publishMode), runtime.publishMode === 'dry-run' ? 'soft' : 'warn')}
-            ${renderPill('loopback only', 'good')}
-            ${renderPill(cluster?.enabled ? 'Foundry ready' : 'Foundry unavailable', cluster?.enabled ? 'good' : 'warn')}
-          </div>
-        `,
-        'The basics panel answers how safe and automatic the system is in plain language.'
+        'Task Queue',
+        renderStudioTaskCards(tasks),
+        'Queued, active, blocked, and done items all live in the same Studio task model.'
       )}
     </div>
   `;
-  const automationBody = `
+
+  const runsBody = `
     <div class="grid two-up">
       ${renderPanel(
-        'Runtime controls',
+        'Run Controls',
         `
           <div class="control-stack">
-            <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
-              <input type="hidden" name="command" value="RUN_DEVLOOP_ONCE" />
-              <button type="submit">Run once</button>
+            <form class="api-form compact-form" data-api-form="true" data-endpoint="/studio/commands/run-once">
+              <button type="submit">Run next queued task</button>
               <div class="form-result" data-form-result></div>
             </form>
+            <form class="api-form compact-form" data-api-form="true" data-endpoint="/studio/commands/notify">
+              <button type="submit">Send digest notification</button>
+              <div class="form-result" data-form-result></div>
+            </form>
+          </div>
+        `,
+        'Studio commands are now first-class control-plane actions.'
+      )}
+      ${renderPanel(
+        'Latest Digest',
+        latestRun
+          ? `
+              <article class="stack-card">
+                <div class="stack-meta">
+                  <code>${escapeHtml(latestRun.runId || 'unknown')}</code>
+                  <span>${escapeHtml(latestRun.status || 'unknown')}</span>
+                </div>
+                <p>${escapeHtml(latestRun.summary || 'No summary yet.')}</p>
+                <small>${escapeHtml(latestRun.verify || 'No verify path yet.')}</small>
+              </article>
+            `
+          : renderEmptyState('No Studio run digest yet.'),
+        'The markdown digest is exported evidence. Studio itself reads from SQLite.'
+      )}
+    </div>
+    <div class="grid two-up">
+      ${renderPanel('Recent Runs', renderDigestRunList(runs), 'Recent runs show the execution trail without treating report files as the runtime source of truth.')}
+      ${renderPanel(
+        'Digest Feed',
+        digests.length
+          ? `<div class="stack">${digests
+              .slice(0, 6)
+              .map(
+                (item) => `
+                  <article class="stack-card compact-card">
+                    <div class="stack-meta">
+                      <strong>${escapeHtml(item.what)}</strong>
+                      <span>${escapeHtml(formatDateTime(item.created_at || item.createdAt))}</span>
+                    </div>
+                    <p>${escapeHtml(item.why || '')}</p>
+                  </article>
+                `
+              )
+              .join('')}</div>`
+          : renderEmptyState('No digest feed rows yet.'),
+        'Legacy digest rows remain useful as a readable export layer.'
+      )}
+    </div>
+  `;
+
+  const agentsBody = `
+    <div class="grid two-up">
+      ${renderPanel(
+        'Studio Execution Surface',
+        renderFoundryExecutionSurface(cluster),
+        'Studio keeps the multi-agent pipeline visible without scattering it across Settings and /ops.'
+      )}
+      ${renderPanel(
+        'Agent Lanes',
+        renderClusterCards(cluster),
+        'Each lane keeps a narrow responsibility so the control plane stays understandable.'
+      )}
+    </div>
+    ${renderCodexSummary(codex)}
+  `;
+
+  const policiesBody = `
+    <div class="grid two-up">
+      ${renderPanel(
+        'Policies',
+        `
+          <form class="api-form compact-form" data-api-form="true" data-method="PATCH" data-endpoint="/studio/settings">
+            ${renderFormField(
+              'Publish Mode',
+              `<select name="publishMode">
+                <option value="dry-run"${settings.publishMode === 'dry-run' ? ' selected' : ''}>Safe rehearsal</option>
+                <option value="live"${settings.publishMode === 'live' ? ' selected' : ''}>Live publish</option>
+              </select>`,
+              'Dry-run remains the default and recommended posture.'
+            )}
+            ${renderFormField(
+              'Loop Mode',
+              `<select name="loopMode">
+                <option value="active"${settings.loopMode === 'active' ? ' selected' : ''}>Active</option>
+                <option value="paused"${settings.loopMode === 'paused' ? ' selected' : ''}>Paused</option>
+              </select>`
+            )}
+            ${renderFormField(
+              'Embeddings',
+              `<select name="embeddingsProvider">
+                <option value="auto"${settings.embeddingsProvider === 'auto' ? ' selected' : ''}>Auto</option>
+                <option value="local"${settings.embeddingsProvider === 'local' ? ' selected' : ''}>Local</option>
+                <option value="openai"${settings.embeddingsProvider === 'openai' ? ' selected' : ''}>OpenAI</option>
+              </select>`
+            )}
+            ${renderFormField(
+              'Execution Policy',
+              `<select name="executionPolicy">
+                <option value="multi-agent"${settings.executionPolicy === 'multi-agent' ? ' selected' : ''}>Multi-agent</option>
+              </select>`
+            )}
+            ${renderFormField(
+              'Notification Policy',
+              `<select name="notificationPolicy">
+                <option value="digest"${settings.notificationPolicy === 'digest' ? ' selected' : ''}>Digest</option>
+                <option value="silent"${settings.notificationPolicy === 'silent' ? ' selected' : ''}>Silent</option>
+              </select>`
+            )}
+            <div class="inline-actions">
+              <button type="submit">Update policies</button>
+            </div>
+            <div class="form-result" data-form-result></div>
+          </form>
+        `,
+        'Policy updates write back into the Studio DB, not ad hoc file reads.'
+      )}
+      ${renderPanel(
+        'Commands',
+        `
+          <div class="control-stack">
             <div class="inline-actions stretch">
-              <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
-                <input type="hidden" name="command" value="PAUSE_DEVLOOP" />
+              <form class="api-form compact-form" data-api-form="true" data-endpoint="/studio/commands/pause">
                 <button type="submit">Pause loop</button>
                 <div class="form-result" data-form-result></div>
               </form>
-              <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
-                <input type="hidden" name="command" value="RESUME_DEVLOOP" />
+              <form class="api-form compact-form" data-api-form="true" data-endpoint="/studio/commands/resume">
                 <button type="submit">Resume loop</button>
                 <div class="form-result" data-form-result></div>
               </form>
             </div>
-            <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/dispatch">
-              <input type="hidden" name="command" value="STATUS" />
-              <button type="submit">Refresh status</button>
+            <form class="api-form compact-form" data-api-form="true" data-endpoint="/studio/commands/run-once">
+              <button type="submit">Run once</button>
+              <div class="form-result" data-form-result></div>
+            </form>
+            <form class="api-form compact-form" data-api-form="true" data-endpoint="/studio/commands/notify">
+              <button type="submit">Notify</button>
               <div class="form-result" data-form-result></div>
             </form>
           </div>
         `,
-        'Use automation here when you want the loop to keep moving without leaving the product shell.'
-      )}
-      ${renderPanel(
-        'Foundry task intake',
-        `
-          <div class="control-stack">
-            <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/tasks">
-              <input type="hidden" name="intakeMode" value="quick" />
-              ${renderFormField(
-                'Quick task',
-                '<input name="taskText" type="text" placeholder="Polish the queue handoff for demo mode" />',
-                'Use one sentence when you want the cluster to pick up a product-facing improvement.'
-              )}
-              <div class="inline-actions">
-                <button type="submit">Create quick task</button>
-              </div>
-              <div class="form-result" data-form-result></div>
-            </form>
-            <details class="details-shell">
-              <summary>Structured Task Intake</summary>
-              <form class="api-form compact-form" data-api-form="true" data-endpoint="/ops/tasks">
-                <input type="hidden" name="intakeMode" value="structured" />
-                ${renderFormField('Title', '<input name="title" type="text" placeholder="Improve contact-event graph clarity" />')}
-                ${renderFormField('Goal', '<textarea name="goal" rows="3" placeholder="Describe the user-facing outcome you want."></textarea>')}
-                ${renderFormField('Acceptance Criteria', '<textarea name="acceptanceCriteria" rows="4" placeholder="One line per criterion"></textarea>')}
-                ${renderFormField('Constraints', '<textarea name="constraints" rows="3" placeholder="One line per constraint"></textarea>')}
-                ${renderFormField(
-                  'Scope',
-                  `<select name="scope">
-                    <option value="socialos">socialos</option>
-                    <option value="openclaw">openclaw</option>
-                    <option value="multi-repo">multi-repo</option>
-                  </select>`,
-                  'Only an explicit scope allows cross-repo work.'
-                )}
-                ${renderFormField('Repo Targets', '<textarea name="repoTargets" rows="3" placeholder="socialos&#10;openclaw"></textarea>')}
-                ${renderFormField('Preferred Tests', '<textarea name="preferredTests" rows="3" placeholder="bash scripts/test.sh&#10;node scripts/tests/product_workspace_smoke.mjs"></textarea>')}
-                <div class="inline-actions">
-                  <button type="submit">Create structured task</button>
-                </div>
-                <div class="form-result" data-form-result></div>
-              </form>
-            </details>
-          </div>
-        `,
-        'Quick mode is the fast lane. Structured mode gives Foundry enough detail to execute directly.'
-      )}
-    </div>
-    ${renderPanel('Recent Structured Tasks', renderFoundryTaskCards(tasks), 'These are the tasks the generic executor can act on right now.')}
-  `;
-  const advancedBody = `
-    <div class="grid two-up">
-      ${renderPanel(
-        'Foundry Execution Surface',
-        renderFoundryExecutionSurface(cluster),
-        'The first-layer cluster can now act as an execution surface, not just a background loop.'
-      )}
-      ${renderPanel(
-        'Foundry Cluster',
-        renderClusterCards(cluster),
-        'Each lane keeps a narrow role so the product can stay understandable while the system stays automated.'
-      )}
-    </div>
-    ${renderCodexSummary(codex)}
-    ${renderPanel('Blocked Surface', renderBlockedList(blocked), 'These are the items still blocked by credentials, rollout decisions, or platform limits.')}
-    <div class="grid two-up">
-      ${renderPanel(
-        'Ops Digest',
-        latestRun
-          ? `
-              <div class="stack">
-                <article class="stack-card">
-                  <div class="stack-meta">
-                    <code>${escapeHtml(latestRun.runId || 'unknown')}</code>
-                    <span>${escapeHtml(latestRun.status || 'unknown')}</span>
-                  </div>
-                  <p>${escapeHtml(latestRun.summary || 'No latest run summary yet.')}</p>
-                  <small>${escapeHtml(latestRun.next || 'No next step recorded.')}</small>
-                </article>
-                <article class="stack-card compact-card">
-                  <div class="chip-row">
-                    ${renderPill(readOptionalString(status.mode, 'unknown'), 'soft')}
-                    ${renderPill(`blocked ${String(status.queue?.blocked ?? digestBlocked.length)}`, digestBlocked.length ? 'warn' : 'good')}
-                    ${renderPill(formatDuration(status.health?.latestRunDurationMs), 'soft')}
-                  </div>
-                  <p>${escapeHtml(readOptionalString(status.latestDigest, 'No digest snapshot yet.'))}</p>
-                </article>
-              </div>
-            `
-          : renderEmptyState('No ops digest snapshot yet.'),
-        'Ops Digest now lives here instead of competing with the product shell.'
-      )}
-      ${renderPanel(
-        'Recent Runs + Digest Feed',
-        `
-          ${renderDigestRunList(runs.slice(0, 4))}
-          ${renderPanel(
-            'Digest feed',
-            digests.length
-              ? `<div class="stack">${digests
-                  .slice(0, 4)
-                  .map(
-                    (item) => `
-                      <article class="stack-card compact-card">
-                        <div class="stack-meta">
-                          <strong>${escapeHtml(item.what)}</strong>
-                          <span>${escapeHtml(formatDateTime(item.created_at || item.createdAt))}</span>
-                        </div>
-                        <p>${escapeHtml(item.why || '')}</p>
-                      </article>
-                    `
-                  )
-                  .join('')}</div>`
-              : renderEmptyState('No digest feed rows yet.')
-          )}
-        `,
-        'Advanced keeps the dense operational detail available without making the product itself feel like a console.'
+        'Commands and policies now live together instead of being split across Settings and /ops.'
       )}
     </div>
   `;
@@ -3123,23 +3282,763 @@ async function renderSettingsPage(page, requestUrl) {
     ${renderHero(
       page,
       [
-        renderMetric(formatHumanPublishMode(runtime.publishMode), 'publish mode'),
-        renderMetric(embeddings.effectiveProvider || 'local', 'embeddings'),
-        renderMetric(String((cluster?.agents || []).length), 'foundry lanes'),
-        renderMetric(String(tasks.length), 'structured tasks'),
+        renderMetric(formatHumanPublishMode(settings.publishMode || 'dry-run'), 'publish mode'),
+        renderMetric(String((cluster?.agents || []).length), 'studio lanes'),
+        renderMetric(String(status.queue?.pending ?? 0), 'queued tasks'),
+        renderMetric(String(runs.length), 'recent runs'),
       ].join(''),
-      `<div class="info-card"><strong>Settings</strong><p>Understand how safe the system is first, then decide how much automation you actually want to expose.</p></div>`
+      `<div class="info-card"><strong>Studio</strong><p>Studio is the unified control plane for tasks, runs, agents, and policies. The DB is authoritative; files are exported evidence.</p></div>`
     )}
     <div class="workspace-rail-tabs">
       ${panelTabs
         .map((tab) => {
           const active = tab.id === activePanel ? 'workspace-rail-tab active' : 'workspace-rail-tab';
-          return `<a class="${active}" href="/settings?panel=${tab.id}">${tab.label}</a>`;
+          return `<a class="${active}" href="/studio?panel=${tab.id}">${tab.label}</a>`;
         })
         .join('')}
     </div>
-    ${activePanel === 'automation' ? automationBody : activePanel === 'advanced' ? advancedBody : basicsBody}
+    ${activePanel === 'tasks'
+      ? tasksBody
+      : activePanel === 'runs'
+        ? runsBody
+        : activePanel === 'agents'
+          ? agentsBody
+          : activePanel === 'policies'
+            ? policiesBody
+            : overviewBody}
   `;
+}
+
+function buildDeckStatusFallback() {
+  return {
+    generatedAt: null,
+    latestGreenValidationAt: null,
+    repoHead: 'unknown',
+    demo: {
+      healthy: false,
+      summary: 'Local demo status not refreshed yet.',
+    },
+    evidence: {
+      screenshots: [
+        'socialos/docs/evidence/socialos-demo-step01.png',
+        'socialos/docs/evidence/socialos-demo-step04.png',
+        'socialos/docs/evidence/socialos-demo-step08.png',
+      ],
+    },
+    publicRepoUrl: PUBLIC_REPO_URL,
+  };
+}
+
+function renderDeckMetric(label, value) {
+  return `
+    <div class="deck-proof-card">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+    </div>
+  `;
+}
+
+function renderDeckSlide({ eyebrow = '', title, bodyHtml = '', visualHtml = '', footerHtml = '', notesHtml = '' }) {
+  return `
+    <section>
+      <div class="deck-slide-shell">
+        <div class="deck-slide-copy">
+          ${eyebrow ? `<p class="deck-eyebrow">${escapeHtml(eyebrow)}</p>` : ''}
+          <h2>${escapeHtml(title)}</h2>
+          ${bodyHtml}
+          ${footerHtml ? `<div class="deck-footer-note">${footerHtml}</div>` : ''}
+        </div>
+        ${visualHtml ? `<div class="deck-slide-visual">${visualHtml}</div>` : ''}
+      </div>
+      ${notesHtml ? `<aside class="notes">${notesHtml}</aside>` : ''}
+    </section>
+  `;
+}
+
+function renderDeckDocument(requestUrl) {
+  const mode = readOptionalString(requestUrl.searchParams.get('mode'), '');
+  const rehearsalMode = mode === 'rehearsal';
+  const printPdf = requestUrl.searchParams.has('print-pdf');
+  const revealCss = readFileTextCached(REVEAL_CSS_PATH);
+  const revealJs = readFileTextCached(REVEAL_JS_PATH);
+  const revealNotesJs = readFileTextCached(REVEAL_NOTES_PATH);
+  const deckStatus = readJsonFileSafe(DECK_STATUS_PATH, buildDeckStatusFallback());
+  const workspaceImage = readDataUriCached(EVIDENCE_STEP_ONE_PATH);
+  const draftsImage = readDataUriCached(EVIDENCE_STEP_FOUR_PATH);
+  const queueImage = readDataUriCached(EVIDENCE_STEP_EIGHT_PATH);
+  const latestValidation = readOptionalString(deckStatus.latestGreenValidationAt, 'Validation pending');
+  const repoHead = readOptionalString(deckStatus.repoHead, 'unknown');
+  const demoSummary = readOptionalString(deckStatus.demo?.summary, 'Local demo status not refreshed yet.');
+  const repoUrl = readOptionalString(deckStatus.publicRepoUrl, PUBLIC_REPO_URL);
+  const deckStatusLabel = deckStatus.demo?.healthy ? 'ready' : 'degraded';
+  const slideSections = [
+    renderDeckSlide({
+      eyebrow: 'Slide 1 · Problem',
+      title: 'People, context, content, and self-understanding drift apart.',
+      bodyHtml: `
+        <p class="deck-lead">High-context people do not struggle because they lack tools. They struggle because relationships, conversations, follow-up, content, and reflection fracture across chats, notes, screenshots, and memory.</p>
+        <div class="deck-bullet-stack">
+          <div class="deck-idea-pill">Meet someone important</div>
+          <div class="deck-idea-pill">Promise to follow up</div>
+          <div class="deck-idea-pill">Turn it into content</div>
+          <div class="deck-idea-pill">Forget what it meant two days later</div>
+        </div>
+      `,
+      visualHtml: `
+        <div class="deck-problem-grid">
+          <div class="deck-problem-card"><strong>Chats</strong><span>important details disappear into threads</span></div>
+          <div class="deck-problem-card"><strong>Notes</strong><span>context lives in fragments</span></div>
+          <div class="deck-problem-card"><strong>Content</strong><span>expression is disconnected from relationships</span></div>
+          <div class="deck-problem-card"><strong>Reflection</strong><span>self-insight rarely becomes action</span></div>
+        </div>
+      `,
+      notesHtml: `
+        <p>Open with the pain. Do not mention agents yet.</p>
+        <p>Frame the problem as fragmentation across relationships, content, and self-understanding.</p>
+      `,
+    }),
+    renderDeckSlide({
+      eyebrow: 'Slide 2 · What SocialOS is',
+      title: 'A local-first relationship and identity operating system.',
+      bodyHtml: `
+        <p class="deck-lead">SocialOS turns messy daily input into structured people memory, event context, platform-native drafts, and daily or weekly mirror loops.</p>
+        <ul class="deck-check-list">
+          <li>One conversational workspace</li>
+          <li>Structured people and event memory</li>
+          <li>Content handoff instead of scattered follow-up</li>
+          <li>Reflection that stays grounded in evidence</li>
+        </ul>
+      `,
+      visualHtml: workspaceImage
+        ? `<img class="deck-shot" src="${workspaceImage}" alt="Workspace capture view" />`
+        : `<div class="deck-placeholder">Workspace screenshot unavailable</div>`,
+      notesHtml: `
+        <p>Give the one-line definition here.</p>
+        <p>Stress local-first and calm product surface before any technical explanation.</p>
+      `,
+    }),
+    renderDeckSlide({
+      eyebrow: 'Slide 3 · Who it is for',
+      title: 'Built for high-context people whose work runs on relationships.',
+      bodyHtml: `
+        <p class="deck-lead">The wedge is not “everyone.” It starts with people who constantly turn conversations into opportunities, follow-up, and public expression.</p>
+        <div class="deck-persona-grid">
+          <div class="deck-persona-card"><strong>Founders</strong><span>track people, momentum, and narrative</span></div>
+          <div class="deck-persona-card"><strong>Investors</strong><span>remember who matters and why</span></div>
+          <div class="deck-persona-card"><strong>Operators</strong><span>bridge relationships into execution</span></div>
+          <div class="deck-persona-card"><strong>Researchers</strong><span>hold context across meetings and ideas</span></div>
+          <div class="deck-persona-card"><strong>Community builders</strong><span>turn encounters into long-term loops</span></div>
+        </div>
+      `,
+      visualHtml: `
+        <div class="deck-quote-card">
+          <p>“If your job depends on remembering people, context, and next steps, SocialOS is meant to become your default operating surface.”</p>
+        </div>
+      `,
+      notesHtml: `
+        <p>VCs need a clear wedge. Explain high-context people in plain language.</p>
+      `,
+    }),
+    renderDeckSlide({
+      eyebrow: 'Slide 4 · Product loop',
+      title: 'One loop: capture, recall, express, hand off, reflect.',
+      bodyHtml: `
+        <p class="deck-lead">Instead of separate tools, one input can move through the full product loop.</p>
+        <div class="deck-flow">
+          <div class="deck-flow-step"><strong>Workspace</strong><span>capture naturally</span></div>
+          <div class="deck-flow-arrow">→</div>
+          <div class="deck-flow-step"><strong>Contacts / Logbook</strong><span>recall people and events</span></div>
+          <div class="deck-flow-arrow">→</div>
+          <div class="deck-flow-step"><strong>Drafts</strong><span>generate platform-native content</span></div>
+          <div class="deck-flow-arrow">→</div>
+          <div class="deck-flow-step"><strong>Queue</strong><span>prepare the next real action</span></div>
+          <div class="deck-flow-arrow">→</div>
+          <div class="deck-flow-step"><strong>Mirror</strong><span>close the loop with reflection</span></div>
+        </div>
+      `,
+      visualHtml: `
+        <div class="deck-proof-strip">
+          ${renderDeckMetric('Relationship OS', 'People + events')}
+          ${renderDeckMetric('Content OS', '7 platform-native drafts')}
+          ${renderDeckMetric('Self OS', 'Daily and weekly mirror')}
+        </div>
+      `,
+      notesHtml: `
+        <p>Walk the product in one breath. This is the core demo arc.</p>
+      `,
+    }),
+    renderDeckSlide({
+      eyebrow: 'Slide 5 · What works today',
+      title: 'The core loop already works.',
+      bodyHtml: `
+        <ul class="deck-check-list">
+          <li>Fuzzy recall across people, events, drafts, and self signals</li>
+          <li>Linked people and events through a graph-backed relationship layer</li>
+          <li>Seven platform-native drafts with per-platform language defaults</li>
+          <li>Trust-first queue handoff instead of reckless auto-posting</li>
+          <li>Daily and weekly mirror summaries grounded in evidence</li>
+        </ul>
+      `,
+      visualHtml: `
+        <div class="deck-shot-stack">
+          ${draftsImage ? `<img class="deck-shot small" src="${draftsImage}" alt="Draft generation flow" />` : ''}
+          ${queueImage ? `<img class="deck-shot small" src="${queueImage}" alt="Queue and recall flow" />` : ''}
+        </div>
+      `,
+      notesHtml: `
+        <p>This is the “not a concept deck” slide. Make the product proof tangible.</p>
+      `,
+    }),
+    renderDeckSlide({
+      eyebrow: 'Slide 6 · Why it is different',
+      title: 'It combines Relationship OS, Content OS, and Self OS in one loop.',
+      bodyHtml: `
+        <p class="deck-lead">Most products optimize one layer. SocialOS connects the full cycle between who matters, what happened, what should be expressed, and what that says about the user.</p>
+        <div class="deck-three-column">
+          <div class="deck-loop-card"><strong>Relationship OS</strong><span>people memory, follow-up, linked events</span></div>
+          <div class="deck-loop-card"><strong>Content OS</strong><span>platform-native drafts and queue handoff</span></div>
+          <div class="deck-loop-card"><strong>Self OS</strong><span>daily and weekly mirror grounded in evidence</span></div>
+        </div>
+      `,
+      visualHtml: `
+        <div class="deck-contrast-card">
+          <strong>Not just CRM</strong>
+          <strong>Not just AI writer</strong>
+          <strong>Not just journaling</strong>
+        </div>
+      `,
+      notesHtml: `
+        <p>Position the category here, not as a feature bundle.</p>
+      `,
+    }),
+    renderDeckSlide({
+      eyebrow: 'Slide 7 · Why this is credible',
+      title: 'Trust-first product, real proof, expandable architecture.',
+      bodyHtml: `
+        <p class="deck-lead">The multi-agent layer matters because capture, people memory, reflection, validation, and publishing are different jobs. The user still experiences one calm product surface.</p>
+        <div class="deck-proof-grid">
+          ${renderDeckMetric('Public repo', 'live')}
+          ${renderDeckMetric('Validation', latestValidation)}
+          ${renderDeckMetric('Repo head', repoHead)}
+          ${renderDeckMetric('Product posture', 'local-first · safe rehearsal')}
+        </div>
+      `,
+      footerHtml: `
+        <p><strong>Current status:</strong> ${escapeHtml(demoSummary)}</p>
+        <p><strong>Repo:</strong> <a href="${escapeHtml(repoUrl)}">${escapeHtml(repoUrl)}</a></p>
+      `,
+      visualHtml: `
+        <div class="deck-credibility-stack">
+          <div class="deck-credibility-card"><strong>Trust boundary</strong><span>local-first, loopback-only, safe by default</span></div>
+          <div class="deck-credibility-card"><strong>Capture</strong><span>model-first understanding with structured review flows</span></div>
+          <div class="deck-credibility-card"><strong>Linking</strong><span>people and events connected through graph-backed relationships</span></div>
+        </div>
+      `,
+      notesHtml: `
+        <p>Now you can mention the multi-agent runtime, but only as enabling architecture.</p>
+      `,
+    }),
+    renderDeckSlide({
+      eyebrow: 'Slide 8 · What I want now',
+      title: 'Design partners and intros for the next unlock.',
+      bodyHtml: `
+        <p class="deck-lead">This is already a working loop. The next unlock is real-data onboarding and low-friction daily use.</p>
+        <div class="deck-cta-grid">
+          <div class="deck-cta-card"><strong>What I want now</strong><span>Design partners and intros to high-context users who feel this pain today.</span></div>
+          <div class="deck-cta-card"><strong>What comes next</strong><span>Import Inbox, multi-entity capture, and LinkedIn mention suggestions.</span></div>
+        </div>
+      `,
+      footerHtml: `
+        <p><strong>Ask:</strong> If this resonates, I want to talk to people who live across relationships, notes, and content every day.</p>
+      `,
+      visualHtml: `
+        <div class="deck-final-card">
+          <h3>SocialOS</h3>
+          <p>A local-first relationship and identity operating system for high-context people.</p>
+          <a class="deck-cta-link" href="${escapeHtml(repoUrl)}">View public repo</a>
+        </div>
+      `,
+      notesHtml: `
+        <p>Close on design partners and intros, not a formal priced round.</p>
+      `,
+    }),
+  ].join('');
+
+  return `<!doctype html>
+<html lang="en" data-print-pdf="${printPdf ? 'true' : 'false'}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SocialOS VC Deck</title>
+    <meta name="description" content="VC-facing SocialOS deck: a local-first relationship and identity operating system." />
+    <style>${revealCss}</style>
+    <style>
+      :root {
+        --deck-bg: #f6f0e5;
+        --deck-panel: rgba(255, 251, 245, 0.94);
+        --deck-panel-strong: rgba(255, 250, 244, 0.98);
+        --deck-ink: #172131;
+        --deck-ink-soft: #4f6075;
+        --deck-line: rgba(23, 33, 49, 0.12);
+        --deck-accent: #156f6a;
+        --deck-accent-soft: rgba(21, 111, 106, 0.12);
+        --deck-coral: #b55d34;
+        --deck-coral-soft: rgba(181, 93, 52, 0.14);
+        --deck-shadow: 0 24px 70px rgba(17, 30, 46, 0.12);
+        --deck-radius-xl: 34px;
+        --deck-radius-lg: 24px;
+        --deck-radius-md: 18px;
+        --deck-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+        --deck-body: "Avenir Next", "IBM Plex Sans", "Noto Sans SC", sans-serif;
+      }
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background:
+          radial-gradient(circle at top left, rgba(21, 111, 106, 0.12), transparent 24%),
+          radial-gradient(circle at bottom right, rgba(181, 93, 52, 0.16), transparent 28%),
+          linear-gradient(180deg, #fbf7ef 0%, #f1ebdf 100%);
+        color: var(--deck-ink);
+        font-family: var(--deck-body);
+      }
+      body.deck-mode {
+        overflow-x: hidden;
+      }
+      .deck-ribbon {
+        position: fixed;
+        top: 22px;
+        right: 24px;
+        z-index: 20;
+        display: inline-flex;
+        gap: 10px;
+        align-items: center;
+        padding: 10px 16px;
+        border-radius: 999px;
+        background: rgba(255, 252, 246, 0.92);
+        border: 1px solid var(--deck-line);
+        box-shadow: var(--deck-shadow);
+        font-size: 13px;
+        color: var(--deck-ink-soft);
+      }
+      .deck-ribbon strong {
+        color: var(--deck-ink);
+      }
+      .reveal {
+        color: var(--deck-ink);
+        font-family: var(--deck-body);
+      }
+      .reveal .slides {
+        text-align: left;
+      }
+      .reveal h1,
+      .reveal h2,
+      .reveal h3,
+      .reveal h4 {
+        margin: 0;
+        font-family: var(--deck-display);
+        color: var(--deck-ink);
+        letter-spacing: -0.03em;
+      }
+      .reveal h2 {
+        font-size: clamp(50px, 4.7vw, 84px);
+        line-height: 0.94;
+        max-width: 9.4em;
+      }
+      .reveal p,
+      .reveal li,
+      .reveal span {
+        font-size: 28px;
+        line-height: 1.45;
+      }
+      .deck-slide-shell {
+        min-height: 100vh;
+        padding: 72px 68px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.04fr) minmax(360px, 0.86fr);
+        gap: 42px;
+        align-items: center;
+      }
+      .deck-slide-copy,
+      .deck-slide-visual {
+        align-self: stretch;
+      }
+      .deck-slide-copy {
+        display: grid;
+        align-content: center;
+        gap: 24px;
+      }
+      .deck-slide-visual {
+        display: grid;
+        align-content: center;
+      }
+      .deck-eyebrow {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.3;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--deck-accent);
+      }
+      .deck-lead {
+        max-width: 28em;
+        color: var(--deck-ink-soft);
+      }
+      .deck-check-list,
+      .deck-bullet-stack {
+        display: grid;
+        gap: 14px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .deck-check-list li,
+      .deck-idea-pill,
+      .deck-loop-card,
+      .deck-problem-card,
+      .deck-persona-card,
+      .deck-proof-card,
+      .deck-credibility-card,
+      .deck-cta-card,
+      .deck-quote-card,
+      .deck-final-card,
+      .deck-contrast-card {
+        border: 1px solid var(--deck-line);
+        background: var(--deck-panel);
+        border-radius: var(--deck-radius-lg);
+        box-shadow: var(--deck-shadow);
+      }
+      .deck-check-list li {
+        padding: 16px 18px 16px 22px;
+      }
+      .deck-check-list li::marker {
+        color: var(--deck-accent);
+      }
+      .deck-bullet-stack {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .deck-idea-pill {
+        padding: 18px 20px;
+      }
+      .deck-problem-grid,
+      .deck-persona-grid,
+      .deck-proof-grid,
+      .deck-three-column,
+      .deck-cta-grid {
+        display: grid;
+        gap: 16px;
+      }
+      .deck-problem-grid,
+      .deck-persona-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .deck-three-column {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .deck-proof-grid,
+      .deck-cta-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .deck-problem-card,
+      .deck-persona-card,
+      .deck-loop-card,
+      .deck-credibility-card,
+      .deck-cta-card {
+        padding: 22px 24px;
+        display: grid;
+        gap: 8px;
+      }
+      .deck-problem-card strong,
+      .deck-persona-card strong,
+      .deck-loop-card strong,
+      .deck-credibility-card strong,
+      .deck-cta-card strong,
+      .deck-final-card h3 {
+        font-size: 30px;
+        font-family: var(--deck-display);
+      }
+      .deck-problem-card span,
+      .deck-persona-card span,
+      .deck-loop-card span,
+      .deck-credibility-card span,
+      .deck-cta-card span,
+      .deck-final-card p {
+        font-size: 20px;
+        color: var(--deck-ink-soft);
+      }
+      .deck-quote-card,
+      .deck-contrast-card,
+      .deck-final-card {
+        padding: 30px 32px;
+      }
+      .deck-contrast-card {
+        display: grid;
+        gap: 14px;
+        background: linear-gradient(160deg, rgba(255,251,245,0.98) 0%, rgba(253,245,237,0.98) 100%);
+      }
+      .deck-contrast-card strong {
+        font-size: 26px;
+      }
+      .deck-flow {
+        display: grid;
+        grid-template-columns: repeat(9, minmax(0, 1fr));
+        gap: 10px;
+        align-items: center;
+      }
+      .deck-flow-step {
+        grid-column: span 1;
+        padding: 18px 16px;
+        border-radius: var(--deck-radius-md);
+        border: 1px solid var(--deck-line);
+        background: var(--deck-panel);
+        box-shadow: var(--deck-shadow);
+        min-height: 132px;
+        display: grid;
+        gap: 8px;
+      }
+      .deck-flow-step strong {
+        font-size: 23px;
+        font-family: var(--deck-display);
+      }
+      .deck-flow-step span,
+      .deck-flow-arrow {
+        font-size: 18px;
+        color: var(--deck-ink-soft);
+      }
+      .deck-flow-arrow {
+        text-align: center;
+        font-size: 34px;
+      }
+      .deck-proof-strip {
+        display: grid;
+        gap: 14px;
+      }
+      .deck-proof-card {
+        padding: 18px 20px;
+        display: grid;
+        gap: 4px;
+      }
+      .deck-proof-card span {
+        font-size: 15px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--deck-ink-soft);
+      }
+      .deck-proof-card strong {
+        font-size: 26px;
+      }
+      .deck-shot,
+      .deck-shot.small {
+        width: 100%;
+        height: auto;
+        border-radius: var(--deck-radius-xl);
+        border: 1px solid var(--deck-line);
+        box-shadow: var(--deck-shadow);
+        background: var(--deck-panel-strong);
+      }
+      .deck-shot-stack {
+        display: grid;
+        gap: 18px;
+      }
+      .deck-shot.small {
+        max-height: 280px;
+        object-fit: cover;
+      }
+      .deck-placeholder {
+        min-height: 320px;
+        display: grid;
+        place-items: center;
+        border-radius: var(--deck-radius-xl);
+        border: 1px dashed var(--deck-line);
+        color: var(--deck-ink-soft);
+        background: var(--deck-panel);
+      }
+      .deck-final-card {
+        display: grid;
+        gap: 16px;
+        align-content: center;
+        min-height: 100%;
+      }
+      .deck-cta-link {
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 18px;
+        border-radius: 999px;
+        background: var(--deck-accent);
+        color: #fff;
+        text-decoration: none;
+        font-size: 18px;
+      }
+      .deck-footer-note {
+        display: grid;
+        gap: 8px;
+      }
+      .deck-footer-note p {
+        margin: 0;
+        font-size: 20px;
+        color: var(--deck-ink-soft);
+      }
+      .deck-rehearsal-panel {
+        position: fixed;
+        left: 24px;
+        bottom: 24px;
+        z-index: 24;
+        width: min(420px, calc(100vw - 48px));
+        padding: 18px 20px;
+        border-radius: var(--deck-radius-lg);
+        background: rgba(255, 251, 246, 0.96);
+        border: 1px solid var(--deck-line);
+        box-shadow: var(--deck-shadow);
+        display: grid;
+        gap: 10px;
+      }
+      .deck-rehearsal-panel h3 {
+        margin: 0;
+        font-size: 22px;
+      }
+      .deck-rehearsal-panel p,
+      .deck-rehearsal-panel li,
+      .deck-rehearsal-panel a {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--deck-ink-soft);
+      }
+      .deck-rehearsal-panel ul {
+        margin: 0;
+        padding-left: 18px;
+      }
+      .deck-rehearsal-panel a {
+        color: var(--deck-accent);
+      }
+      .deck-status-pill {
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: ${deckStatusLabel === 'ready' ? 'rgba(46, 125, 81, 0.12)' : 'rgba(181, 93, 52, 0.14)'};
+        color: ${deckStatusLabel === 'ready' ? '#2e7d51' : '#b55d34'};
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .reveal .progress {
+        color: var(--deck-accent);
+      }
+      .reveal .controls {
+        color: var(--deck-accent);
+      }
+      @media (max-width: 1180px) {
+        .deck-slide-shell {
+          grid-template-columns: 1fr;
+          gap: 26px;
+          padding: 48px 34px 96px;
+        }
+        .deck-three-column,
+        .deck-proof-grid,
+        .deck-cta-grid,
+        .deck-problem-grid,
+        .deck-persona-grid {
+          grid-template-columns: 1fr;
+        }
+        .deck-flow {
+          grid-template-columns: 1fr;
+        }
+        .deck-flow-arrow {
+          transform: rotate(90deg);
+        }
+        .deck-rehearsal-panel {
+          position: static;
+          width: auto;
+          margin: 24px;
+        }
+      }
+      @media (max-width: 920px) {
+        .reveal .slides {
+          width: auto !important;
+          height: auto !important;
+          transform: none !important;
+          position: static !important;
+        }
+        .reveal .slides section {
+          position: relative !important;
+          display: block !important;
+          opacity: 1 !important;
+          min-height: auto !important;
+          page-break-after: always;
+        }
+        .reveal .controls,
+        .reveal .progress,
+        .deck-ribbon {
+          display: none;
+        }
+      }
+      @media print {
+        body {
+          background: #fff;
+        }
+        .deck-ribbon,
+        .deck-rehearsal-panel,
+        .reveal .controls,
+        .reveal .progress {
+          display: none !important;
+        }
+        .reveal .slides section {
+          page-break-after: always;
+        }
+      }
+    </style>
+  </head>
+  <body class="deck-mode">
+    <div class="deck-ribbon">
+      <strong>SocialOS VC Deck</strong>
+      <span class="deck-status-pill">${escapeHtml(deckStatusLabel)}</span>
+      <span>${escapeHtml(readOptionalString(deckStatus.generatedAt, 'generated status unavailable'))}</span>
+    </div>
+    <div class="reveal">
+      <div class="slides">
+        ${slideSections}
+      </div>
+    </div>
+    ${
+      rehearsalMode
+        ? `<aside class="deck-rehearsal-panel">
+            <h3>Rehearsal mode</h3>
+            <p>Use arrow keys or space to move through the deck. Press <strong>S</strong> for Reveal speaker notes if the browser allows a notes window.</p>
+            <p><strong>Local rehearsal URLs</strong></p>
+            <ul>
+              <li><a href="http://127.0.0.1:4173/quick-capture">Workspace</a></li>
+              <li><a href="http://127.0.0.1:4173/people">Contacts</a></li>
+              <li><a href="http://127.0.0.1:4173/events">Logbook</a></li>
+              <li><a href="http://127.0.0.1:4173/drafts">Drafts</a></li>
+              <li><a href="http://127.0.0.1:4173/queue">Queue</a></li>
+              <li><a href="http://127.0.0.1:4173/self-mirror">Mirror</a></li>
+            </ul>
+            <p><strong>Default ask:</strong> design partners + intros, not a priced round.</p>
+          </aside>`
+        : ''
+    }
+    <script>${revealJs}</script>
+    <script>${revealNotesJs}</script>
+    <script>
+      Reveal.initialize({
+        hash: true,
+        controls: true,
+        progress: true,
+        slideNumber: 'c/t',
+        transition: 'fade',
+        margin: 0.05,
+        width: 1600,
+        height: 900,
+        center: false,
+        plugins: [ window.RevealNotes ].filter(Boolean)
+      });
+    </script>
+  </body>
+</html>`;
 }
 
 async function renderPageBody(page, requestUrl) {
@@ -3150,6 +4049,8 @@ async function renderPageBody(page, requestUrl) {
       return renderQuickCapturePage(page, requestUrl);
     case 'ask':
       return renderAskPage(page, requestUrl);
+    case 'deck':
+      return '';
     case 'people':
       return renderPeoplePage(page, requestUrl);
     case 'events':
@@ -3160,10 +4061,20 @@ async function renderPageBody(page, requestUrl) {
       return renderQueuePage(page);
     case 'self-mirror':
       return renderSelfMirrorPage(page, requestUrl);
+    case 'studio':
+      return renderStudioPage(page, requestUrl);
     case 'dev-digest':
       return renderDevDigestPage(page);
     case 'settings':
-      return renderSettingsPage(page, requestUrl);
+      return renderStudioPage(
+        {
+          ...page,
+          id: 'studio',
+          title: 'Studio',
+          path: '/studio',
+        },
+        requestUrl
+      );
     default:
       return `
         ${renderHero(page)}
@@ -4629,6 +5540,9 @@ function renderLayout({ currentPath, title, body }) {
         border-color: rgba(181, 93, 52, 0.22);
         background: var(--warn-soft);
       }
+      .flash[hidden] {
+        display: none;
+      }
       .hero {
         display: grid;
         grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
@@ -5793,7 +6707,17 @@ async function routeRequest(req, res) {
   }
 
   if (pathname === '/dev-digest') {
-    sendRedirect(res, 302, '/settings?panel=ops');
+    sendRedirect(res, 302, '/studio?panel=runs');
+    return;
+  }
+
+  if (pathname === '/settings') {
+    sendRedirect(res, 302, '/studio?panel=policies');
+    return;
+  }
+
+  if (pathname === '/deck') {
+    sendHtml(res, 200, renderDeckDocument(requestUrl));
     return;
   }
 
@@ -5906,6 +6830,7 @@ Routes:
   /queue
   /self-mirror
   /dev-digest
+  /studio
   /settings
 
 Defaults:

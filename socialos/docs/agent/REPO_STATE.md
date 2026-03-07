@@ -1,8 +1,8 @@
 # Repo State Handoff
 
-- Generated: 2026-03-07T09:05:38.774Z
-- Branch: detached
-- Git head: e92ee8d
+- Generated: 2026-03-07T09:16:01.152Z
+- Branch: codex/deck-deploy
+- Git head: 7c154ca
 - Dirty working tree: true
 
 ## Canonical Chain
@@ -17,6 +17,11 @@
 - `socialos/docs/pitch/JUDGE_BRIEF.md`
 - `socialos/docs/pitch/DEMO_TALK_TRACK.md`
 
+## Deck Surface
+- Route: `/deck`
+- Deck spec: `socialos/docs/pitch/VC_DECK_SPEC.md`
+- Deck maintenance: `socialos/docs/pitch/DECK_MAINTENANCE.md`
+
 ## Authoritative Subsystems
 - ui: `socialos/apps/web/server.mjs`
 - api: `socialos/apps/api/server.mjs`
@@ -28,6 +33,7 @@
 - `socialos/docs/STATUS.md`
 - `socialos/docs/agent/REPO_STATE.md`
 - `socialos/docs/evidence/LATEST_VALIDATION.md`
+- `socialos/docs/pitch/DECK_STATUS.json`
 
 ## Refresh Flow
 - Manual: `node scripts/refresh_public_docs.mjs`
@@ -44,9 +50,18 @@
 - `socialos/docs/evidence/socialos-demo.gif`
 
 ## Dirty Summary
-- M socialos/docs/STATUS.md
--  M socialos/docs/agent/REPO_STATE.md
--  M socialos/docs/evidence/LATEST_VALIDATION.md
+- M  AGENTS.md
+- M  README.md
+- M  infra/db/schema.sql
+- M  scripts/refresh_public_docs.mjs
+- M  scripts/test.sh
+- M  scripts/tests/agent_repo_smoke.mjs
+- M  scripts/tests/docs_demo_smoke.mjs
+- M  scripts/tests/product_workspace_smoke.mjs
+- M  scripts/tests/refresh_public_docs_smoke.mjs
+- M  scripts/tests/web_routes_smoke.mjs
+- M  socialos/apps/api/server.mjs
+- M  socialos/apps/web/server.mjs
 
 ## Overnight Context
 - Next focus: workspace-usability-and-demo-trust
@@ -57,6 +72,7 @@
 - `bash scripts/demo_status.sh` -> report local demo service health
 - `bash scripts/overnight_supervisor.sh` -> run the unattended outer-loop guard and write a morning-review summary
 - `node scripts/refresh_public_docs.mjs` -> refresh generated public docs and evidence status after a safe run
+- `node scripts/export_vc_deck.mjs` -> export the public VC deck as a static site artifact for GitHub Pages
 - `bash scripts/stop_demo.sh` -> stop local demo services
 - `bash scripts/test.sh` -> run full public validation suite
 - `bash scripts/foundry_dispatch.sh STATUS` -> inspect and control Foundry automation

@@ -5,9 +5,10 @@
 - `socialos/apps/api`: loopback-only HTTP API
 - `infra/db/socialos.db`: SQLite-first persistence
 - `socialos/lib/product-core.mjs`: product heuristics for capture, validation, mirror
-- `socialos/lib/foundry-tasks.mjs`: structured task model + Foundry runtime paths
-- `scripts/foundry_generic_task.mjs`: generic task execution chain
-- `reports/`: markdown/json run outputs
+- `socialos/lib/studio-control-plane.mjs`: DB-backed Studio control plane for tasks, runs, agents, settings, and evidence export
+- `socialos/lib/foundry-tasks.mjs`: legacy task export helpers for Studio evidence
+- `scripts/foundry_generic_task.mjs`: multi-agent execution adapter used by Studio task runs
+- `reports/`: exported markdown/json evidence derived from Studio state
 
 ## Data model
 - `Person`
@@ -97,14 +98,15 @@ This keeps the main surface simple:
   - credentials ready
 - even when gates are open, P1 only performs preflight + operator handoff for `X / LinkedIn`
 
-## Foundry generic execution path
-1. Structured task lands in `foundry/tasks/*.json`
-2. devloop detects `TASK-*`
+## Studio control-plane execution path
+1. Task lands in SQLite-first `StudioTask`
+2. Studio exports task evidence into `foundry/tasks/*.json`
 3. generic runner checks `llm-task` health
 4. creates backup branch + `lkg/*` tag
 5. generates PlanSpec
 6. runs orchestrator/coder/tester/reviewer
-7. writes run report + digest + queue/task state
+7. writes run state back into `StudioRun` / `StudioRunStep`
+8. exports queue, run report, digest, and task evidence files
 
 ## Why SQLite still fits P1
 - deterministic local demo

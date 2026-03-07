@@ -11,7 +11,8 @@
     "agent": "AGENTS.md",
     "playbook": "socialos/docs/AGENT_PLAYBOOK.md",
     "machine": "socialos/docs/SYSTEM_MANIFEST.json",
-    "docsIndex": "socialos/docs/DOCS_INDEX.md"
+    "docsIndex": "socialos/docs/DOCS_INDEX.md",
+    "deckRoute": "/deck"
   },
   "pitchPack": [
     "socialos/docs/pitch/PITCH_5_MIN.md",
@@ -21,7 +22,19 @@
   "generatedStatusFiles": [
     "socialos/docs/STATUS.md",
     "socialos/docs/agent/REPO_STATE.md",
-    "socialos/docs/evidence/LATEST_VALIDATION.md"
+    "socialos/docs/evidence/LATEST_VALIDATION.md",
+    "socialos/docs/pitch/DECK_STATUS.json"
+  ],
+  "deckRoute": "/deck",
+  "deckSpec": "socialos/docs/pitch/VC_DECK_SPEC.md",
+  "deckMaintenance": "socialos/docs/pitch/DECK_MAINTENANCE.md",
+  "deckStatusFile": "socialos/docs/pitch/DECK_STATUS.json",
+  "deckExportScript": "scripts/export_vc_deck.mjs",
+  "pagesWorkflow": ".github/workflows/deploy-deck.yml",
+  "deckVendorAssets": [
+    "socialos/apps/web/vendor/reveal/reveal.min.css",
+    "socialos/apps/web/vendor/reveal/reveal.min.js",
+    "socialos/apps/web/vendor/reveal/notes.min.js"
   ],
   "refreshScript": "scripts/refresh_public_docs.mjs",
   "automationHook": "bash scripts/overnight_supervisor.sh && node scripts/refresh_public_docs.mjs",
@@ -85,6 +98,14 @@
         "/dev-digest"
       ],
       "role": "secondary"
+    },
+    {
+      "id": "deck",
+      "label": "Deck",
+      "routes": [
+        "/deck"
+      ],
+      "role": "public"
     }
   ],
   "runtimeAgents": [
@@ -191,6 +212,11 @@
       "path": "scripts/refresh_public_docs.mjs",
       "command": "node scripts/refresh_public_docs.mjs",
       "purpose": "refresh generated public docs and evidence status after a safe run"
+    },
+    {
+      "path": "scripts/export_vc_deck.mjs",
+      "command": "node scripts/export_vc_deck.mjs",
+      "purpose": "export the public VC deck as a static site artifact for GitHub Pages"
     },
     {
       "path": "scripts/stop_demo.sh",

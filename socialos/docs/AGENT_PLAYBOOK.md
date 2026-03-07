@@ -70,10 +70,14 @@ Authoritative task logic:
 
 ## 5a. Find the right docs fast
 - Product demo story: `socialos/docs/pitch/`
+- Public VC deck route: `/deck`
+- Deck source of truth: `socialos/docs/pitch/VC_DECK_SPEC.md`
+- Deck maintenance notes: `socialos/docs/pitch/DECK_MAINTENANCE.md`
 - Full docs map: `socialos/docs/DOCS_INDEX.md`
 - Generated public repo state: `socialos/docs/STATUS.md`
 - Generated agent handoff snapshot: `socialos/docs/agent/REPO_STATE.md`
 - Generated validation snapshot: `socialos/docs/evidence/LATEST_VALIDATION.md`
+- Generated deck status: `socialos/docs/pitch/DECK_STATUS.json`
 - Graph/linking contract: `infra/db/schema.sql` + `socialos/apps/api/server.mjs`
 
 ## 6. Before you finish
@@ -81,6 +85,12 @@ Authoritative task logic:
 bash scripts/test.sh
 node scripts/refresh_public_docs.mjs
 ```
+
+For deck work specifically:
+- edit copy in `socialos/docs/pitch/VC_DECK_SPEC.md`
+- keep `PITCH_5_MIN.md`, `JUDGE_BRIEF.md`, and `DEMO_TALK_TRACK.md` aligned
+- treat `socialos/docs/pitch/DECK_STATUS.json` as generated only
+- test the deck at `/deck`, `/deck?mode=rehearsal`, and `/deck?print-pdf`
 
 If automation was paused:
 ```bash

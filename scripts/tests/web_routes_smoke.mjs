@@ -15,10 +15,10 @@ async function expectPage(baseUrl, page) {
     assert(html.includes(`href="${navPage.path}"`), `${page.path} missing nav link ${navPage.path}`);
   }
 
-  if (page.path === '/settings') {
-    assert(html.includes('Basics'), 'settings page should render Basics tab');
-    assert(html.includes('Automation'), 'settings page should render Automation tab');
-    assert(html.includes('Advanced'), 'settings page should render Advanced tab');
+  if (page.path === '/studio') {
+    for (const label of ['Overview', 'Tasks', 'Runs', 'Agents', 'Policies']) {
+      assert(html.includes(label), `/studio should render ${label} tab`);
+    }
   }
 }
 
@@ -39,8 +39,18 @@ async function main() {
     assert(ask.headers.get('location') === '/quick-capture?q=who+is+alex', `/ask redirect mismatch: ${ask.headers.get('location')}`);
 
     const digest = await fetch(`${web.baseUrl}/dev-digest`, { redirect: 'manual' });
-    assert(digest.status === 302, `/dev-digest should redirect to settings (got ${digest.status})`);
-    assert(digest.headers.get('location') === '/settings?panel=ops', `/dev-digest redirect mismatch: ${digest.headers.get('location')}`);
+    assert(digest.status === 302, `/dev-digest should redirect to studio runs (got ${digest.status})`);
+    assert(digest.headers.get('location') === '/studio?panel=runs', `/dev-digest redirect mismatch: ${digest.headers.get('location')}`);
+
+    const settings = await fetch(`${web.baseUrl}/settings`, { redirect: 'manual' });
+    assert(settings.status === 302, `/settings should redirect to studio policies (got ${settings.status})`);
+    assert(settings.headers.get('location') === '/studio?panel=policies', `/settings redirect mismatch: ${settings.headers.get('location')}`);
+
+    const deck = await fetch(`${web.baseUrl}/deck`, { redirect: 'manual' });
+    const deckHtml = await deck.text();
+    assert(deck.status === 200, `/deck should render the VC deck (got ${deck.status})`);
+    assert(deckHtml.includes('SocialOS VC Deck'), '/deck should render the deck title');
+    assert(!deckHtml.includes('href="/quick-capture"'), '/deck should not reuse the dashboard shell nav');
 
     for (const page of DASHBOARD_PAGES) {
       await expectPage(web.baseUrl, page);
@@ -54,7 +64,7 @@ async function main() {
     assert(!workspaceHtml.includes('href="/cockpit"'), 'primary nav should not keep a cockpit link');
     assert(!workspaceHtml.includes('href="/ask"'), 'primary nav should not keep an ask link');
     assert(!workspaceHtml.includes('href="/dev-digest"'), 'primary nav should not keep a dev digest link');
-    for (const path of ['/quick-capture', '/people', '/events', '/drafts', '/queue', '/self-mirror', '/settings']) {
+    for (const path of ['/quick-capture', '/people', '/events', '/drafts', '/queue', '/self-mirror', '/studio']) {
       assert(workspaceHtml.includes(`href="${path}"`), `workspace nav should include ${path}`);
     }
 

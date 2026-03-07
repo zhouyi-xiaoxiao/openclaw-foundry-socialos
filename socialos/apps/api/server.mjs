@@ -26,6 +26,7 @@ import {
   resolveFoundryRuntimePaths,
   SUPPORTED_TASK_SCOPES,
 } from '../../lib/foundry-tasks.mjs';
+import { createStudioControlPlane, STUDIO_COMMANDS } from '../../lib/studio-control-plane.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -319,6 +320,8 @@ const CODEX_PARTICIPATION = Object.freeze({
     '需要你拍板的品牌表达和最终内容判断',
   ],
 });
+
+let ACTIVE_STUDIO = null;
 
 class HttpError extends Error {
   constructor(statusCode, message, details = undefined) {
@@ -1548,6 +1551,10 @@ function buildFoundryTaskCapabilities() {
 }
 
 function buildFoundryClusterSummary() {
+  if (ACTIVE_STUDIO) {
+    return ACTIVE_STUDIO.getClusterSummary();
+  }
+
   const config = readFoundryConfig();
   const agents = Array.isArray(config?.agents?.list) ? config.agents.list : [];
   const capabilities = buildFoundryTaskCapabilities();
@@ -1652,6 +1659,37 @@ function createOpsTaskFromBody(body) {
     );
   } catch (error) {
     throw new HttpError(400, error instanceof Error ? error.message : 'task creation failed');
+  }
+}
+
+function getStudioControlPlane() {
+  if (!ACTIVE_STUDIO) {
+    throw new HttpError(503, 'Studio control plane is unavailable');
+  }
+  return ACTIVE_STUDIO;
+}
+
+function createStudioTaskFromBody(body) {
+  const studio = getStudioControlPlane();
+  try {
+    return studio.createTask({
+      taskId: body.taskId,
+      title: body.title,
+      goal: body.goal,
+      taskText: body.taskText ?? body.text,
+      acceptanceCriteria: body.acceptanceCriteria,
+      constraints: body.constraints,
+      scope: body.scope,
+      repoTargets: body.repoTargets,
+      preferredTests: body.preferredTests,
+      priority: body.priority,
+      source: 'studio.api',
+      metadata: {
+        section: readOptionalString(body.section, 'Studio Ops'),
+      },
+    });
+  } catch (error) {
+    throw new HttpError(400, error instanceof Error ? error.message : 'studio task creation failed');
   }
 }
 
@@ -2495,6 +2533,10 @@ function normalizeOpsLimit(rawValue, fallback = 10, max = 100) {
 }
 
 function listRecentRunReports(limit = 10) {
+  if (ACTIVE_STUDIO) {
+    return ACTIVE_STUDIO.getRuns(limit);
+  }
+
   let files = [];
   try {
     files = fs
@@ -2594,6 +2636,10 @@ function readDigestPreview(maxLines = 6) {
 }
 
 function readMode() {
+  if (ACTIVE_STUDIO) {
+    return ACTIVE_STUDIO.getPublishMode();
+  }
+
   const override = readTextFileOrDefault(MODE_OVERRIDE_PATH, '').trim().toLowerCase();
   if (override === LIVE_PUBLISH_MODE || override === DEFAULT_PUBLISH_MODE) {
     return override;
@@ -2604,6 +2650,10 @@ function readMode() {
 }
 
 function buildOpsStatus() {
+  if (ACTIVE_STUDIO) {
+    return ACTIVE_STUDIO.getStatus();
+  }
+
   const queueMarkdown = readTextFileOrDefault(QUEUE_PATH, '');
   const queue = parseQueueSummary(queueMarkdown);
   const blockedTasks = parseBlockedTasks(queueMarkdown, 100);
@@ -4466,7 +4516,7 @@ function buildWorkspaceBootstrapPayload(statements) {
       summary: [
         publishMode === 'dry-run' ? 'Dry-run publish' : 'Live publish',
         'loopback only',
-        cluster.enabled ? 'Foundry ready' : 'Foundry unavailable',
+        cluster.enabled ? 'Studio ready' : 'Studio unavailable',
       ].join(' · '),
     },
     voiceReadiness: {
@@ -6412,6 +6462,128 @@ async function routeRequest(req, res, statements) {
     return;
   }
 
+  if (method === 'GET' && pathname === '/studio/bootstrap') {
+    sendJson(res, 200, getStudioControlPlane().buildBootstrap());
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/studio/tasks') {
+    const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 12, 100);
+    const statusFilter = readOptionalString(requestUrl.searchParams.get('status'), '');
+    const studio = getStudioControlPlane();
+    const tasks = studio.listTasks({ limit, status: statusFilter });
+    sendJson(res, 200, {
+      limit,
+      count: tasks.length,
+      tasks,
+      studio: studio.buildBootstrap(),
+    });
+    return;
+  }
+
+  if (method === 'POST' && pathname === '/studio/tasks') {
+    const body = await readJsonBody(req);
+    const task = createStudioTaskFromBody(body);
+    sendJson(res, 201, {
+      task,
+      studio: getStudioControlPlane().buildBootstrap(),
+    });
+    return;
+  }
+
+  const studioTaskDetailMatch = pathname.match(/^\/studio\/tasks\/([^/]+)$/u);
+  if (studioTaskDetailMatch && method === 'GET') {
+    const taskId = decodeURIComponent(studioTaskDetailMatch[1]);
+    const studio = getStudioControlPlane();
+    const task = studio.getTask(taskId);
+    if (!task) throw new HttpError(404, 'task not found');
+    sendJson(res, 200, {
+      task,
+      runs: studio.getRuns(20).filter((run) => run.taskId === taskId),
+    });
+    return;
+  }
+
+  if (studioTaskDetailMatch && method === 'PATCH') {
+    const taskId = decodeURIComponent(studioTaskDetailMatch[1]);
+    const body = await readJsonBody(req);
+    const task = getStudioControlPlane().updateTask(taskId, body);
+    sendJson(res, 200, { task });
+    return;
+  }
+
+  const studioTaskRunMatch = pathname.match(/^\/studio\/tasks\/([^/]+)\/run$/u);
+  if (studioTaskRunMatch && method === 'POST') {
+    const taskId = decodeURIComponent(studioTaskRunMatch[1]);
+    const execution = getStudioControlPlane().runTask(taskId);
+    sendJson(res, 200, execution);
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/studio/runs') {
+    const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 10, 100);
+    const runs = getStudioControlPlane().getRuns(limit);
+    sendJson(res, 200, { limit, count: runs.length, runs });
+    return;
+  }
+
+  const studioRunDetailMatch = pathname.match(/^\/studio\/runs\/([^/]+)$/u);
+  if (studioRunDetailMatch && method === 'GET') {
+    const runId = decodeURIComponent(studioRunDetailMatch[1]);
+    const run = getStudioControlPlane().getRun(runId);
+    if (!run) throw new HttpError(404, 'run not found');
+    sendJson(res, 200, run);
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/studio/agents') {
+    const studio = getStudioControlPlane();
+    sendJson(res, 200, {
+      agents: studio.getAgents(),
+      cluster: studio.getClusterSummary(),
+      codex: buildCodexLayerSummary(),
+    });
+    return;
+  }
+
+  if (method === 'GET' && pathname === '/studio/settings') {
+    const studio = getStudioControlPlane();
+    sendJson(res, 200, {
+      ...studio.getSettingsPayload(),
+      cluster: studio.getClusterSummary(),
+      status: studio.getStatus(),
+      codex: buildCodexLayerSummary(),
+      embeddings: resolveEmbeddingsSettings(),
+    });
+    return;
+  }
+
+  if (method === 'PATCH' && pathname === '/studio/settings') {
+    const body = await readJsonBody(req);
+    const settings = getStudioControlPlane().patchSettings(body);
+    sendJson(res, 200, {
+      ...settings,
+      cluster: buildFoundryClusterSummary(),
+      status: buildOpsStatus(),
+    });
+    return;
+  }
+
+  const studioCommandMatch = pathname.match(/^\/studio\/commands\/([^/]+)$/u);
+  if (studioCommandMatch && method === 'POST') {
+    const command = decodeURIComponent(studioCommandMatch[1]).toLowerCase();
+    if (!STUDIO_COMMANDS.includes(command)) {
+      throw new HttpError(400, `unsupported Studio command: ${command}`);
+    }
+    const result = getStudioControlPlane().executeCommand(command);
+    sendJson(res, 200, result);
+    return;
+  }
+
+  if (pathname.startsWith('/ops/')) {
+    throw new HttpError(410, 'legacy /ops endpoints were retired; use /studio/* instead');
+  }
+
   if (method === 'GET' && pathname === '/ops/status') {
     sendJson(res, 200, buildOpsStatus());
     return;
@@ -6458,11 +6630,13 @@ async function routeRequest(req, res, statements) {
   }
 
   if (method === 'GET' && pathname === '/settings/runtime') {
+    const studio = getStudioControlPlane();
     sendJson(res, 200, {
-      publishMode: readMode(),
+      publishMode: studio.getPublishMode(),
       liveEnvironmentEnabled: isLiveEnvironmentEnabled(),
       embeddings: resolveEmbeddingsSettings(),
       foundry: buildFoundryClusterSummary(),
+      studio: studio.buildBootstrap(),
       codex: buildCodexLayerSummary(),
       ops: buildOpsStatus(),
     });
@@ -7473,6 +7647,11 @@ async function routeRequest(req, res, statements) {
 export function createApiServer({ dbPath = DEFAULT_DB_PATH } = {}) {
   const db = initDb(dbPath);
   const statements = buildStatements(db);
+  ACTIVE_STUDIO = createStudioControlPlane({
+    db,
+    repoRoot: REPO_ROOT,
+    dbPath,
+  });
   const corsAllowlist = buildCorsAllowlist();
 
   const server = http.createServer((req, res) => {
@@ -7499,6 +7678,7 @@ export function createApiServer({ dbPath = DEFAULT_DB_PATH } = {}) {
   });
 
   server.on('close', () => {
+    ACTIVE_STUDIO = null;
     db.close();
   });
 
@@ -7561,10 +7741,14 @@ Endpoints:
   POST /capture/assets
   POST /capture/parse
   POST /capture/commit
-  GET  /ops/status          -> runtime mode/lock/queue/health snapshot
-  GET  /ops/runs?limit=N    -> recent devloop run JSON summaries
-  GET  /ops/blocked         -> blocked queue entries
-  GET  /ops/tasks?limit=N   -> structured Foundry task intake surface
+  GET  /studio/bootstrap    -> unified Studio overview
+  GET  /studio/tasks?limit=N -> Studio tasks
+  POST /studio/tasks        -> create a Studio task
+  POST /studio/tasks/:id/run -> execute one Studio task
+  GET  /studio/runs?limit=N -> recent Studio run summaries
+  GET  /studio/agents       -> Studio agent state + cluster summary
+  GET  /studio/settings     -> Studio policies and status
+  POST /studio/commands/:command -> run-once, pause, resume, notify
   GET  /settings/embeddings -> resolves embedding provider + retrieval mode
   GET  /dev-digest?limit=N  -> latest DevDigest rows
   GET  /self-mirror         -> latest mirror + recent checkins + structured evidence

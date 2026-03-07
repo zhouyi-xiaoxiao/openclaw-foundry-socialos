@@ -5,18 +5,24 @@
 [![Architecture](https://img.shields.io/badge/docs-architecture-blue)](socialos/docs/ARCHITECTURE.md)
 [![Evidence](https://img.shields.io/badge/docs-evidence-blue)](socialos/docs/EVIDENCE.md)
 [![Pitch Pack](https://img.shields.io/badge/docs-pitch-blue)](socialos/docs/pitch/PITCH_5_MIN.md)
+[![VC Deck](https://img.shields.io/badge/deck-vc_pitch-blue)](socialos/docs/pitch/VC_DECK_SPEC.md)
 
 SocialOS is a local-first relationship + identity operating system. It turns raw notes, voice memos, screenshots, and business cards into structured people memory, event context, self signals, and platform-native draft packages.
 
 The public repo is designed to be readable by judges, maintainers, and future AI/agents without any hidden context. It stays local-first, loopback-only, and `dry-run` by default.
 
+Public web deck target:
+- `zhouyixiaoxiao.org/deck`
+- Local route during development: `http://127.0.0.1:4173/deck`
+- Whole-site deck export target: `zhouyixiaoxiao.org/`
+
 ## Project Overview
 Current stable scope:
 - one unified `Workspace` home surface for capture, recall, and action suggestions
-- `Contacts`, `Logbook`, `Drafts`, `Queue`, `Self Mirror`, and `Settings` as secondary operating surfaces
+- `Contacts`, `Logbook`, `Drafts`, `Queue`, `Self Mirror`, and `Studio` as secondary operating surfaces
 - 7-platform draft generation with platform-native language defaults
 - assisted publishing with audit trails and manual outcome write-back
-- OpenClaw product runtime + Foundry execution cluster
+- OpenClaw product runtime + Studio control plane
 - structured public docs, agent handoff docs, and a machine-readable manifest
 
 What the current `P1` build already does:
@@ -61,7 +67,7 @@ Local URLs after boot:
 - API: local Node service in `socialos/apps/api`
 - Database: SQLite at `infra/db/socialos.db`
 - Runtime: OpenClaw product profile in `socialos/openclaw/runtime.openclaw.json5`
-- Automation: Foundry devloop + generic task executor in `foundry/` and `scripts/`
+- Control plane: Studio task/run/agent/policy layer in SQLite, exported into `foundry/` and `reports/` as evidence
 
 System design at a glance:
 1. A user sends a note, voice memo, or image into `Workspace`.
@@ -69,9 +75,9 @@ System design at a glance:
 3. The same memory powers contact recall, event creation, and self mirror synthesis.
 4. Events feed a 7-platform draft generator with platform-native language defaults.
 5. Drafts are edited, validated, queued, and handed into assisted publishing.
-6. Foundry keeps the repo validated, taskable, and evidence-backed.
+6. Studio keeps the repo validated, taskable, and evidence-backed.
 
-## OpenClaw / Foundry Integration
+## OpenClaw / Studio Integration
 SocialOS is not a static dashboard. It is backed by two coordinated multi-agent layers:
 
 - Product runtime agents:
@@ -80,7 +86,7 @@ SocialOS is not a static dashboard. It is backed by two coordinated multi-agent 
   - `self-model`
   - `compliance`
   - `publisher`
-- Foundry execution agents:
+- Studio execution agents:
   - `forge_orchestrator`
   - `forge_coder`
   - `forge_tester`
@@ -89,7 +95,7 @@ SocialOS is not a static dashboard. It is backed by two coordinated multi-agent 
 The integration matters because:
 - the product loop is real, not mocked
 - runtime isolation keeps publisher actions gated
-- generic product tasks can be executed and verified through Foundry
+- generic product tasks can be executed and verified through Studio
 - the repo exposes enough structured context for future AI/agents to continue safely
 
 Agent-facing entrypoints:
@@ -102,19 +108,27 @@ Agent-facing entrypoints:
 - [5-Minute Pitch](socialos/docs/pitch/PITCH_5_MIN.md)
 - [Judge Brief](socialos/docs/pitch/JUDGE_BRIEF.md)
 - [Demo Talk Track](socialos/docs/pitch/DEMO_TALK_TRACK.md)
+- [VC Deck Spec](socialos/docs/pitch/VC_DECK_SPEC.md)
+- [Deck Maintenance](socialos/docs/pitch/DECK_MAINTENANCE.md)
 
 The pitch is product-led on purpose:
 - start with the user problem
 - show the product loop
-- use multi-agent/OpenClaw/Foundry as the enabling architecture
+- use multi-agent/OpenClaw/Studio as the enabling architecture
 - close with the next implementation layer for real-data onboarding
+
+The public deck is served from:
+- `/deck`
+- `?mode=rehearsal` for speaker-only local notes
+- `?print-pdf` for print/PDF-friendly layout
+- Static export for GitHub Pages: `node scripts/export_vc_deck.mjs`
 
 ## Public Evidence
 Curated public evidence lives in [socialos/docs/EVIDENCE.md](socialos/docs/EVIDENCE.md).
 
 Included evidence:
 - demo GIF and screenshots
-- representative Foundry run report snapshots
+- representative Studio run report snapshots
 - stable evidence files copied out of volatile local runtime paths
 - generated validation snapshot: `socialos/docs/evidence/LATEST_VALIDATION.md`
 
@@ -161,9 +175,12 @@ node scripts/refresh_public_docs.mjs
 - [5-Minute Pitch](socialos/docs/pitch/PITCH_5_MIN.md)
 - [Judge Brief](socialos/docs/pitch/JUDGE_BRIEF.md)
 - [Demo Talk Track](socialos/docs/pitch/DEMO_TALK_TRACK.md)
+- [VC Deck Spec](socialos/docs/pitch/VC_DECK_SPEC.md)
+- [Deck Maintenance](socialos/docs/pitch/DECK_MAINTENANCE.md)
 - [Public Status](socialos/docs/STATUS.md)
 - [Agent Repo State](socialos/docs/agent/REPO_STATE.md)
 - [Latest Validation](socialos/docs/evidence/LATEST_VALIDATION.md)
+- [Deck Status](socialos/docs/pitch/DECK_STATUS.json)
 
 ## Operational Commands
 ```bash
@@ -173,11 +190,10 @@ bash scripts/stop_demo.sh
 bash scripts/overnight_supervisor.sh
 node scripts/refresh_public_docs.mjs
 bash scripts/test.sh
-bash scripts/status.sh
-bash scripts/foundry_dispatch.sh STATUS
-bash scripts/foundry_dispatch.sh RUN_DEVLOOP_ONCE
-bash scripts/foundry_dispatch.sh PAUSE_DEVLOOP
-bash scripts/foundry_dispatch.sh RESUME_DEVLOOP
+bash scripts/studio.sh status
+bash scripts/studio.sh run-once
+bash scripts/studio.sh pause
+bash scripts/studio.sh resume
 ```
 
 ## Overnight Iteration Guard
@@ -189,7 +205,7 @@ bash scripts/overnight_supervisor.sh
 
 It does not mutate product state by itself. It is the outer-loop guard that:
 - checks demo health
-- checks Foundry status
+- checks Studio status
 - confirms `dry-run` publish posture
 - restarts local demo services if they dropped
 - writes a concise morning-review summary into `reports/overnight/`

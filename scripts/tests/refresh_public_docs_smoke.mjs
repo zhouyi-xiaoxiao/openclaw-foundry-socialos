@@ -22,6 +22,7 @@ assert(result.status === 0, `refresh_public_docs should exit 0 (got ${result.sta
 const statusDoc = read('socialos/docs/STATUS.md');
 const repoStateDoc = read('socialos/docs/agent/REPO_STATE.md');
 const validationDoc = read('socialos/docs/evidence/LATEST_VALIDATION.md');
+const deckStatus = JSON.parse(read('socialos/docs/pitch/DECK_STATUS.json'));
 
 assert(statusDoc.includes('# Public Status'), 'STATUS.md should render a public status heading');
 assert(statusDoc.includes('Demo healthy:'), 'STATUS.md should include demo health');
@@ -34,5 +35,11 @@ assert(repoStateDoc.includes('Refresh Flow'), 'REPO_STATE.md should include refr
 assert(validationDoc.includes('# Latest Validation Snapshot'), 'LATEST_VALIDATION.md should render a validation heading');
 assert(validationDoc.includes('Latest green validation:'), 'LATEST_VALIDATION.md should include the latest green validation marker');
 assert(validationDoc.includes('This refresh followed a green validation path'), 'LATEST_VALIDATION.md should record green validation refreshes');
+assert(typeof deckStatus.generatedAt === 'string', 'DECK_STATUS.json should include generatedAt');
+assert(typeof deckStatus.latestGreenValidationAt === 'string', 'DECK_STATUS.json should include latestGreenValidationAt');
+assert(typeof deckStatus.repoHead === 'string', 'DECK_STATUS.json should include repoHead');
+assert(typeof deckStatus.demo?.healthy === 'boolean', 'DECK_STATUS.json should include demo health');
+assert(Array.isArray(deckStatus.evidence?.screenshots), 'DECK_STATUS.json should include screenshot pointers');
+assert(typeof deckStatus.publicRepoUrl === 'string', 'DECK_STATUS.json should include public repo URL');
 
 console.log('refresh_public_docs_smoke: PASS');

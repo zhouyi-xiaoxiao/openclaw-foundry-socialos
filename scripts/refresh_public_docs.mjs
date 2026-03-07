@@ -13,7 +13,10 @@ const AGENT_DIR = path.join(DOCS_DIR, 'agent');
 const STATUS_PATH = path.join(DOCS_DIR, 'STATUS.md');
 const REPO_STATE_PATH = path.join(AGENT_DIR, 'REPO_STATE.md');
 const VALIDATION_PATH = path.join(EVIDENCE_DIR, 'LATEST_VALIDATION.md');
+const PITCH_DIR = path.join(DOCS_DIR, 'pitch');
+const DECK_STATUS_PATH = path.join(PITCH_DIR, 'DECK_STATUS.json');
 const OVERNIGHT_JSON_PATH = path.join(REPO_ROOT, 'reports', 'overnight', 'latest.json');
+const PUBLIC_REPO_URL = 'https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos';
 
 function run(command, args) {
   const result = spawnSync(command, args, {
@@ -187,6 +190,9 @@ function buildRepoStateMarkdown({ generatedAt, manifest, git, overnightReport, e
   const generatedStatusFiles = Array.isArray(manifest.generatedStatusFiles) ? manifest.generatedStatusFiles : [];
   const scripts = Array.isArray(manifest.scripts) ? manifest.scripts : [];
   const refreshScript = manifest.refreshScript || 'scripts/refresh_public_docs.mjs';
+  const deckRoute = manifest.deckRoute || '/deck';
+  const deckSpec = manifest.deckSpec || 'socialos/docs/pitch/VC_DECK_SPEC.md';
+  const deckMaintenance = manifest.deckMaintenance || 'socialos/docs/pitch/DECK_MAINTENANCE.md';
 
   const lines = [
     '# Repo State Handoff',
@@ -209,6 +215,8 @@ function buildRepoStateMarkdown({ generatedAt, manifest, git, overnightReport, e
   for (const filePath of pitchPack) {
     lines.push(`- \`${filePath}\``);
   }
+
+  lines.push('', '## Deck Surface', `- Route: \`${deckRoute}\``, `- Deck spec: \`${deckSpec}\``, `- Deck maintenance: \`${deckMaintenance}\``);
 
   lines.push('', '## Authoritative Subsystems');
   for (const item of subsystemOwnership) {
@@ -305,6 +313,7 @@ function main() {
   const options = parseArgs(process.argv.slice(2));
   ensureDir(AGENT_DIR);
   ensureDir(EVIDENCE_DIR);
+  ensureDir(PITCH_DIR);
 
   const generatedAt = new Date().toISOString();
   const manifest = readJsonSafe(MANIFEST_PATH, {});
@@ -330,11 +339,44 @@ function main() {
   fs.writeFileSync(STATUS_PATH, statusMarkdown, 'utf8');
   fs.writeFileSync(REPO_STATE_PATH, repoStateMarkdown, 'utf8');
   fs.writeFileSync(VALIDATION_PATH, validationMarkdown, 'utf8');
+  fs.writeFileSync(
+    DECK_STATUS_PATH,
+    JSON.stringify(
+      {
+        generatedAt,
+        latestGreenValidationAt: options.validationPassed ? generatedAt : previousValidation.latestGreenAt,
+        repoHead: options.validationPassed ? git.head : previousValidation.latestGreenHead || git.head,
+        validationSource: options.source,
+        demo: {
+          healthy: demo.allHealthy,
+          summary: demo.allHealthy
+            ? 'Local demo services are healthy and ready for rehearsal.'
+            : 'Local demo services are degraded; use the deck with caution until the demo is healthy again.',
+          services: demo.services,
+        },
+        evidence: {
+          screenshots: evidenceFiles.filter((fileName) => /\.(png|jpg|jpeg)$/iu.test(fileName)).map((fileName) => `socialos/docs/evidence/${fileName}`),
+          animations: evidenceFiles.filter((fileName) => /\.gif$/iu.test(fileName)).map((fileName) => `socialos/docs/evidence/${fileName}`),
+          documents: evidenceFiles.filter((fileName) => /\.(md|json)$/iu.test(fileName)).map((fileName) => `socialos/docs/evidence/${fileName}`),
+        },
+        publicRepoUrl: PUBLIC_REPO_URL,
+        posture: {
+          localFirst: true,
+          loopbackOnly: true,
+          publishMode: publishMode,
+        },
+      },
+      null,
+      2
+    ) + '\n',
+    'utf8'
+  );
 
   console.log(`refresh_public_docs: PASS source=${options.source} validation=${options.validationPassed ? 'green' : 'carry-forward'}`);
   console.log(`status_md: ${STATUS_PATH}`);
   console.log(`repo_state_md: ${REPO_STATE_PATH}`);
   console.log(`validation_md: ${VALIDATION_PATH}`);
+  console.log(`deck_status_json: ${DECK_STATUS_PATH}`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

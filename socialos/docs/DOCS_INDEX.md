@@ -27,6 +27,10 @@ This index is the fastest way for a human reviewer or a future agent to understa
   Short judge-oriented product brief.
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DEMO_TALK_TRACK.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DEMO_TALK_TRACK.md)
   Exact talk track and URLs for the live demo.
+- [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/VC_DECK_SPEC.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/VC_DECK_SPEC.md)
+  VC-facing deck source of truth: slide order, copy, and visual intent.
+- [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DECK_MAINTENANCE.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DECK_MAINTENANCE.md)
+  How to maintain the public deck without drifting from the pitch docs.
 
 ## Evidence and Generated Status
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/EVIDENCE.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/EVIDENCE.md)
@@ -37,6 +41,8 @@ This index is the fastest way for a human reviewer or a future agent to understa
   Generated repo-state handoff for agents.
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/evidence/LATEST_VALIDATION.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/evidence/LATEST_VALIDATION.md)
   Generated latest validation snapshot.
+- [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DECK_STATUS.json`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DECK_STATUS.json)
+  Generated VC deck status payload: repo head, validation marker, demo summary, and curated evidence pointers.
 
 ## Future Implementation Specs
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/IMPORT_INBOX_SPEC.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/IMPORT_INBOX_SPEC.md)
@@ -53,6 +59,10 @@ This index is the fastest way for a human reviewer or a future agent to understa
 - Foundry task model: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/lib/foundry-tasks.mjs`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/lib/foundry-tasks.mjs)
 - Database schema: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/infra/db/schema.sql`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/infra/db/schema.sql)
 - Graph/linking layer: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/infra/db/schema.sql`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/infra/db/schema.sql) (`EventPersonLink`) and [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/apps/api/server.mjs`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/apps/api/server.mjs)
+- Public deck route and rendering shell: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/apps/web/server.mjs`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/apps/web/server.mjs) (`/deck`)
+- Deck runtime assets: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/apps/web/vendor/reveal/reveal.min.js`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/apps/web/vendor/reveal/reveal.min.js), [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/apps/web/vendor/reveal/reveal.min.css`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/apps/web/vendor/reveal/reveal.min.css)
+- Static deck export: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/scripts/export_vc_deck.mjs`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/scripts/export_vc_deck.mjs)
+- Pages deployment workflow: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/.github/workflows/deploy-deck.yml`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/.github/workflows/deploy-deck.yml)
 
 ## Static vs Generated
 - Curated static contracts:
@@ -71,4 +81,10 @@ Refresh generated docs safely with:
 
 ```bash
 node scripts/refresh_public_docs.mjs
+```
+
+Export the public deck as a static site artifact with:
+
+```bash
+node scripts/export_vc_deck.mjs
 ```
