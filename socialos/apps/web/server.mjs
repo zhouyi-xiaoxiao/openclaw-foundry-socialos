@@ -23,6 +23,7 @@ const REVEAL_JS_PATH = path.join(VENDOR_DIR, 'reveal.min.js');
 const REVEAL_NOTES_PATH = path.join(VENDOR_DIR, 'notes.min.js');
 const DECK_STATUS_PATH = path.join(PITCH_DIR, 'DECK_STATUS.json');
 const EVIDENCE_STEP_ONE_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step01.png');
+const EVIDENCE_STEP_TWO_CONTACTS_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step02-contacts.png');
 const EVIDENCE_STEP_FOUR_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step04.png');
 const EVIDENCE_STEP_EIGHT_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step08.png');
 const PUBLIC_REPO_URL = 'https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos';
@@ -3323,6 +3324,7 @@ function buildDeckStatusFallback() {
     evidence: {
       screenshots: [
         'socialos/docs/evidence/socialos-demo-step01.png',
+        'socialos/docs/evidence/socialos-demo-step02-contacts.png',
         'socialos/docs/evidence/socialos-demo-step04.png',
         'socialos/docs/evidence/socialos-demo-step08.png',
       ],
@@ -3376,6 +3378,7 @@ function renderDeckDocument(requestUrl) {
   const revealNotesJs = readFileTextCached(REVEAL_NOTES_PATH);
   const deckStatus = readJsonFileSafe(DECK_STATUS_PATH, buildDeckStatusFallback());
   const workspaceImage = readDataUriCached(EVIDENCE_STEP_ONE_PATH);
+  const contactsImage = readDataUriCached(EVIDENCE_STEP_TWO_CONTACTS_PATH);
   const draftsImage = readDataUriCached(EVIDENCE_STEP_FOUR_PATH);
   const queueImage = readDataUriCached(EVIDENCE_STEP_EIGHT_PATH);
   const latestValidation = readOptionalString(deckStatus.latestGreenValidationAt, 'Validation pending');
@@ -3493,14 +3496,20 @@ function renderDeckDocument(requestUrl) {
           <li>Daily and weekly mirror summaries grounded in evidence</li>
         </ul>
       `,
+      footerHtml: `
+        <p><strong>Proof surface:</strong> the deck now shows Contacts, Drafts, and Queue from the same real seeded demo.</p>
+      `,
       visualHtml: `
-        <div class="deck-shot-stack">
-          ${draftsImage ? `<img class="deck-shot small" src="${draftsImage}" alt="Draft generation flow" />` : ''}
-          ${queueImage ? `<img class="deck-shot small" src="${queueImage}" alt="Queue and recall flow" />` : ''}
+        <div class="deck-proof-gallery">
+          ${contactsImage ? `<img class="deck-shot deck-shot-tall" src="${contactsImage}" alt="Contacts with real named network" />` : ''}
+          <div class="deck-shot-stack">
+            ${draftsImage ? `<img class="deck-shot small" src="${draftsImage}" alt="Draft generation flow" />` : ''}
+            ${queueImage ? `<img class="deck-shot small" src="${queueImage}" alt="Queue and recall flow" />` : ''}
+          </div>
         </div>
       `,
       notesHtml: `
-        <p>This is the “not a concept deck” slide. Make the product proof tangible.</p>
+        <p>This is the “not a concept deck” slide. Make the product proof tangible and point to the Contacts, Drafts, and Queue visuals on screen.</p>
       `,
     }),
     renderDeckSlide({
@@ -3880,10 +3889,22 @@ function renderDeckDocument(requestUrl) {
         display: grid;
         gap: 18px;
       }
+      .deck-proof-gallery {
+        display: grid;
+        grid-template-columns: minmax(0, 1.08fr) minmax(260px, 0.92fr);
+        gap: 18px;
+        align-items: stretch;
+      }
       .deck-shot.small {
         height: 280px;
         object-fit: cover;
         object-position: center;
+      }
+      .deck-shot.deck-shot-tall {
+        height: 100%;
+        min-height: 578px;
+        object-fit: cover;
+        object-position: top;
       }
       .deck-placeholder {
         min-height: 320px;
@@ -3994,7 +4015,8 @@ function renderDeckDocument(requestUrl) {
         .deck-cta-grid,
         .deck-problem-grid,
         .deck-persona-grid,
-        .deck-network-grid {
+        .deck-network-grid,
+        .deck-proof-gallery {
           grid-template-columns: 1fr;
         }
         .deck-flow {
@@ -4062,6 +4084,10 @@ function renderDeckDocument(requestUrl) {
         }
         .deck-shot.small {
           height: 220px;
+        }
+        .deck-shot.deck-shot-tall {
+          min-height: 300px;
+          height: 300px;
         }
         .reveal .controls,
         .reveal .progress,

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-03-07T10:32:11.737Z",
-  "latestGreenValidationAt": "2026-03-07T10:32:11.737Z",
-  "repoHead": "7d2d49d",
+  "generatedAt": "2026-03-07T10:50:44.834Z",
+  "latestGreenValidationAt": "2026-03-07T10:50:44.834Z",
+  "repoHead": "2c18328",
   "validationSource": "scripts/test.sh",
   "demo": {
     "healthy": true,
@@ -28,6 +28,7 @@
   "evidence": {
     "screenshots": [
       "socialos/docs/evidence/socialos-demo-step01.png",
+      "socialos/docs/evidence/socialos-demo-step02-contacts.png",
       "socialos/docs/evidence/socialos-demo-step04.png",
       "socialos/docs/evidence/socialos-demo-step08.png"
     ],

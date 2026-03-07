@@ -1,11 +1,11 @@
 # Public Status
 
-- Generated: 2026-03-07T10:32:11.737Z
+- Generated: 2026-03-07T10:50:44.834Z
 - Product posture: local-first
 - Network exposure: loopback-only
 - Publish mode: Safe rehearsal
 - Demo healthy: true
-- Git head: 7d2d49d
+- Git head: 2c18328
 
 ## Current Readout
 - The repo is currently healthy enough to present as a judge-facing local-first package.
@@ -27,6 +27,7 @@
 - socialos/docs/evidence/sample-run-report.json
 - socialos/docs/evidence/sample-run-report.md
 - socialos/docs/evidence/socialos-demo-step01.png
+- socialos/docs/evidence/socialos-demo-step02-contacts.png
 - socialos/docs/evidence/socialos-demo-step04.png
 - socialos/docs/evidence/socialos-demo-step08.png
 - socialos/docs/evidence/socialos-demo.gif

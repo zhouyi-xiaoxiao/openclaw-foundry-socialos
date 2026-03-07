@@ -47,7 +47,7 @@ In Workspace I capture naturally. In Contacts and Logbook I recall people and ev
 
 “This is already more than a concept deck.
 
-Today the system already supports real named contacts, linked identities, linked events, fuzzy recall, seven platform-native drafts, trust-first queue handoff, and daily or weekly mirror summaries. So the story is not ‘imagine if this existed.’ The story is ‘the core loop already works, and now it needs better onboarding and more daily use.’”
+Today the system already supports real named contacts, linked identities, linked events, fuzzy recall, seven platform-native drafts, trust-first queue handoff, and daily or weekly mirror summaries. On screen, I can now literally show Contacts, Drafts, and Queue from the same seeded dataset. So the story is not ‘imagine if this existed.’ The story is ‘the core loop already works, and now it needs better onboarding and more daily use.’”
 
 换页点：
 - 说完 “the core loop already works” 以后换页。

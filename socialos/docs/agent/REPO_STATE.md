@@ -1,8 +1,8 @@
 # Repo State Handoff
 
-- Generated: 2026-03-07T10:32:11.737Z
+- Generated: 2026-03-07T10:50:44.834Z
 - Branch: main
-- Git head: 7d2d49d
+- Git head: 2c18328
 - Dirty working tree: true
 
 ## Canonical Chain
@@ -45,23 +45,23 @@
 - `socialos/docs/evidence/sample-run-report.json`
 - `socialos/docs/evidence/sample-run-report.md`
 - `socialos/docs/evidence/socialos-demo-step01.png`
+- `socialos/docs/evidence/socialos-demo-step02-contacts.png`
 - `socialos/docs/evidence/socialos-demo-step04.png`
 - `socialos/docs/evidence/socialos-demo-step08.png`
 - `socialos/docs/evidence/socialos-demo.gif`
 
 ## Dirty Summary
 - M QUEUE.md
--  M README.md
--  M scripts/seed_demo_data.mjs
 -  M scripts/tests/deck_route_smoke.mjs
 -  M socialos/apps/web/server.mjs
 -  M socialos/docs/STATUS.md
 -  M socialos/docs/agent/REPO_STATE.md
 -  M socialos/docs/evidence/LATEST_VALIDATION.md
--  M socialos/docs/evidence/socialos-demo-step01.png
--  M socialos/docs/evidence/socialos-demo-step04.png
--  M socialos/docs/evidence/socialos-demo-step08.png
+-  M socialos/docs/pitch/DECK_PAGE_SCRIPT.md
 -  M socialos/docs/pitch/DECK_STATUS.json
+-  M socialos/docs/pitch/VC_DECK_SPEC.md
+- ?? .deck-site/
+- ?? socialos/docs/evidence/socialos-demo-step02-contacts.png
 
 ## Overnight Context
 - Next focus: respect-foundry-queue

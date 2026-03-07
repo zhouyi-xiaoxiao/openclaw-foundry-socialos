@@ -5,11 +5,13 @@ This folder contains curated, stable evidence copied out of volatile local runti
 ## Demo Assets
 - Demo GIF: `socialos/docs/evidence/socialos-demo.gif`
 - Screenshot 1: `socialos/docs/evidence/socialos-demo-step01.png`
-- Screenshot 2: `socialos/docs/evidence/socialos-demo-step04.png`
-- Screenshot 3: `socialos/docs/evidence/socialos-demo-step08.png`
+- Screenshot 2: `socialos/docs/evidence/socialos-demo-step02-contacts.png`
+- Screenshot 3: `socialos/docs/evidence/socialos-demo-step04.png`
+- Screenshot 4: `socialos/docs/evidence/socialos-demo-step08.png`
 
 ### Preview
 ![Workspace capture flow](evidence/socialos-demo-step01.png)
+![Contacts with real named network](evidence/socialos-demo-step02-contacts.png)
 ![Draft generation flow](evidence/socialos-demo-step04.png)
 ![Queue and recall flow](evidence/socialos-demo-step08.png)
 

@@ -1,9 +1,9 @@
 # Latest Validation Snapshot
 
-- Generated: 2026-03-07T10:32:11.737Z
+- Generated: 2026-03-07T10:50:44.834Z
 - Refreshed by: scripts/test.sh
-- Latest green validation: 2026-03-07T10:32:11.737Z
-- Git head: 7d2d49d
+- Latest green validation: 2026-03-07T10:50:44.834Z
+- Git head: 2c18328
 
 ## Current Health Snapshot
 - Demo healthy: true
@@ -15,6 +15,7 @@
 - `socialos/docs/evidence/sample-run-report.json`
 - `socialos/docs/evidence/sample-run-report.md`
 - `socialos/docs/evidence/socialos-demo-step01.png`
+- `socialos/docs/evidence/socialos-demo-step02-contacts.png`
 - `socialos/docs/evidence/socialos-demo-step04.png`
 - `socialos/docs/evidence/socialos-demo-step08.png`
 - `socialos/docs/evidence/socialos-demo.gif`

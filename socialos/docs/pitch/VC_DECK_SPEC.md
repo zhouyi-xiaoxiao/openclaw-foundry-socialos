@@ -63,7 +63,7 @@ This document is the curated source of truth for the public VC deck served from 
 ### 5. What works today
 - Establish proof that this is more than a concept.
 - Mention real named contacts, fuzzy recall, linked people + events, drafts, queue handoff, daily/weekly mirror.
-- Visual source: `socialos/docs/evidence/socialos-demo-step04.png`, `socialos/docs/evidence/socialos-demo-step08.png`
+- Visual source: `socialos/docs/evidence/socialos-demo-step02-contacts.png`, `socialos/docs/evidence/socialos-demo-step04.png`, `socialos/docs/evidence/socialos-demo-step08.png`
 
 ### 6. Why it is different
 - Position SocialOS against isolated tools without a long comparison matrix.

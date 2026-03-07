@@ -17,6 +17,7 @@ async function main() {
     assert(html.includes('People, context, content, and self-understanding drift apart.'), '/deck should include the problem slide');
     assert(html.includes('A local-first relationship and identity operating system.'), '/deck should include the product definition slide');
     assert(html.includes('Minghan Xiao'), '/deck should include the real seeded contact network');
+    assert(html.includes('Contacts with real named network'), '/deck should include the contacts proof screenshot');
     assert(html.includes('Design partners and intros for the next unlock.'), '/deck should include the closing ask slide');
     assert(html.includes('https://zhouyixiaoxiao.org/'), '/deck should expose the public deck domain');
     assert(
