@@ -905,7 +905,7 @@ function renderCaptureAssetCards(assets) {
           </div>
           <strong>${escapeHtml(asset.fileName || asset.assetId)}</strong>
           <p>${escapeHtml(truncate(asset.extractedText || asset.previewText || 'No extracted text yet.', 220))}</p>
-          <small>${escapeHtml(asset.mimeType || 'n/a')} · ${escapeHtml(asset.assetId)}</small>
+          <small>${escapeHtml(asset.mimeType || 'n/a')} · ${escapeHtml(asset.analysisMethod || 'manual')} · ${asset.hasOriginalFile ? 'original saved locally' : 'no original file saved'}${asset.originalUrl ? ' · original available' : ''}</small>
         </article>
       `
     )
@@ -3717,14 +3717,16 @@ function renderClientScript() {
         '</article>';
       }
 
-      async function uploadWorkspaceAsset(file) {
+      async function uploadWorkspaceAsset(file, options = {}) {
         const composer = document.querySelector('[data-workspace-chat-form]');
         const statusNode = document.querySelector('[data-audio-status]');
         const resultNode = composer?.querySelector('[data-form-result]');
         if (!file || !composer) return null;
+        const attachToMessage = options.attachToMessage !== false;
+        const deliveryMode = options.deliveryMode || ((file.type || '').startsWith('audio/') ? 'voice' : 'asset');
         const transcriptText =
           (file.type || '').startsWith('audio/')
-            ? String(composer.elements.text?.value || captureState.liveTranscript || '').trim()
+            ? String(options.transcriptText || '').trim()
             : '';
 
         const payload = {
@@ -3733,6 +3735,7 @@ function renderClientScript() {
           fileName: file.name || 'upload.bin',
           contentBase64: await encodeFileAsDataUrl(file),
           source: 'workspace-chat',
+          deliveryMode,
         };
         if (transcriptText) payload.transcript = transcriptText;
 
@@ -3743,7 +3746,11 @@ function renderClientScript() {
         }
 
         if (response.payload.asset) {
-          appendCaptureAsset(response.payload.asset);
+          if (attachToMessage) {
+            appendCaptureAsset(response.payload.asset);
+          } else {
+            appendSourceAsset(response.payload.asset);
+          }
           if (statusNode) {
             statusNode.innerHTML = '<strong>Attached</strong><p>' +
               escapeHtml(response.payload.asset.fileName || response.payload.asset.assetId) +
@@ -3759,8 +3766,9 @@ function renderClientScript() {
         const resultNode = form.querySelector('[data-form-result]');
         const text = String(form.elements.text.value || '').trim();
         const assets = [...captureState.assets];
+        const sourceAssets = [...captureState.sourceAssets];
 
-        if (!text && !assets.length) {
+        if (!text && !assets.length && !sourceAssets.length) {
           renderWorkspaceComposerResult(resultNode, 'Type a message or attach a file first.', false);
           return;
         }
@@ -3778,6 +3786,7 @@ function renderClientScript() {
               text,
               source: form.elements.source.value || 'workspace-chat',
               assetIds: assets.map((asset) => asset.assetId),
+              sourceAssetIds: sourceAssets.map((asset) => asset.assetId),
             },
             'POST'
           );
@@ -3790,9 +3799,11 @@ function renderClientScript() {
             });
             form.reset();
             captureState.assets = [];
+            captureState.sourceAssets = [];
             captureState.liveTranscript = '';
             updateCaptureAssetInputs();
             setTranscriptPreview('');
+            renderVoiceSourceActions();
             renderWorkspaceComposerResult(resultNode, '');
             if (document.querySelector('[data-audio-status]')) {
               document.querySelector('[data-audio-status]').innerHTML =
@@ -4150,6 +4161,8 @@ function renderClientScript() {
         const workspaceAction = event.target.closest('[data-workspace-action]');
         const attachButton = event.target.closest('[data-workspace-attach]');
         const recordToggle = event.target.closest('[data-audio-record-toggle]');
+        const attachSourceVoiceButton = event.target.closest('[data-attach-source-voice]');
+        const dismissSourceVoiceButton = event.target.closest('[data-dismiss-source-voice]');
         if (copyButton) {
           event.preventDefault();
           const text = copyButton.getAttribute('data-copy-text') || '';
@@ -4178,6 +4191,32 @@ function renderClientScript() {
         if (removeAssetButton) {
           event.preventDefault();
           removeCaptureAsset(removeAssetButton.getAttribute('data-remove-asset') || '');
+          return;
+        }
+
+        if (attachSourceVoiceButton) {
+          event.preventDefault();
+          const assetId = attachSourceVoiceButton.getAttribute('data-attach-source-voice') || '';
+          const asset = findStoredSourceAsset(assetId);
+          if (asset) {
+            removeSourceAsset(assetId);
+            appendCaptureAsset(asset);
+            renderVoiceSourceActions();
+            const statusNode = document.querySelector('[data-audio-status]');
+            if (statusNode) {
+              statusNode.innerHTML = '<strong>Voice attached</strong><p>The transcript will send as text, and the original audio will go with this turn.</p>';
+            }
+          }
+          return;
+        }
+
+        if (dismissSourceVoiceButton) {
+          event.preventDefault();
+          renderVoiceSourceActions();
+          const statusNode = document.querySelector('[data-audio-status]');
+          if (statusNode) {
+            statusNode.innerHTML = '<strong>Transcript ready</strong><p>The text is in the composer. The original voice is still saved locally for later reference.</p>';
+          }
           return;
         }
 
@@ -4264,7 +4303,11 @@ function renderClientScript() {
                 captureState.recognitionWaiter = null;
               }
               statusNode.innerHTML = '<strong>Uploading voice note</strong><p>Saving the recording and drafting the transcript into the composer.</p>';
-              const asset = await uploadWorkspaceAsset(file);
+              const asset = await uploadWorkspaceAsset(file, {
+                attachToMessage: false,
+                deliveryMode: 'transcript',
+                transcriptText: captureState.liveTranscript,
+              });
               const finalTranscript = String(
                 asset?.extractedText ||
                 asset?.previewText ||
@@ -4275,24 +4318,30 @@ function renderClientScript() {
               if (finalTranscript && asset) {
                 mergeTranscriptIntoComposer(form, finalTranscript);
                 setTranscriptPreview(finalTranscript, 'ready');
-                statusNode.innerHTML = '<strong>Transcript ready</strong><p>Review or edit the text in the composer, then press send when you are happy with it.</p>';
+                renderVoiceSourceActions(asset);
+                statusNode.innerHTML = '<strong>Transcript ready</strong><p>Review or edit the text in the composer, then press send when you are happy with it. The original voice is saved locally.</p>';
                 renderWorkspaceComposerResult(
                   form?.querySelector('[data-form-result]'),
-                  'Voice note saved. The transcript is now in the composer for editing before send.'
+                  'The transcript is in the composer for editing. The original voice note is saved locally and can be attached if you want to send the audio too.'
                 );
               } else if (finalTranscript) {
                 mergeTranscriptIntoComposer(form, finalTranscript);
                 setTranscriptPreview(finalTranscript, 'ready');
+                renderVoiceSourceActions();
                 statusNode.innerHTML = '<strong>Transcript drafted, audio not saved</strong><p>The transcript is in the composer, but the voice attachment did not upload. You can still edit and send the text-only version.</p>';
               } else if (asset) {
+                removeSourceAsset(asset.assetId);
+                appendCaptureAsset(asset);
+                renderVoiceSourceActions();
                 setTranscriptPreview('', 'neutral');
-                statusNode.innerHTML = '<strong>Voice note saved</strong><p>I kept the recording as an attachment, but there is no transcript yet. You can type or edit before sending.</p>';
+                statusNode.innerHTML = '<strong>Voice note saved</strong><p>I kept the recording as the message attachment because there is no transcript yet. You can type or edit before sending.</p>';
                 renderWorkspaceComposerResult(
                   form?.querySelector('[data-form-result]'),
-                  'Voice note saved, but transcription is not ready yet. Edit the composer manually when you want to send.',
+                  'The voice note is attached. There is no transcript yet, so you can add text manually before sending.',
                   false
                 );
               } else {
+                renderVoiceSourceActions();
                 setTranscriptPreview('', 'neutral');
                 statusNode.innerHTML = '<strong>Voice note failed</strong><p>The recording was not saved and no transcript is available yet. Please try again.</p>';
               }
