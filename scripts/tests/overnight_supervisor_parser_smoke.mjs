@@ -64,4 +64,27 @@ assert(parsedWithNoBlocked.latestDigest.length === 0, '"No digest yet." marker s
 const parsedCommandFailure = parseFoundryStatus('', { commandOk: false });
 assert(parsedCommandFailure.commandOk === false, 'commandOk should reflect failed status probe');
 
+const outputWithCaseVariant = `== Foundry Status ==
+Mode: PAUSED
+Lock: present
+
+Queue:
+pending: 3, in progress: 1, blocked: 0, done: 9
+Current Task: TASK-123 Workspace polish
+
+Consecutive Failures: 2
+
+Latest run:
+run_id = RUN-999
+status = success
+summary = Completed safely`;
+const parsedWithCaseVariant = parseFoundryStatus(outputWithCaseVariant);
+assert(parsedWithCaseVariant.mode === 'PAUSED', 'mode should parse with case-insensitive labels');
+assert(parsedWithCaseVariant.lock === 'present', 'lock should parse with case-insensitive labels');
+assert(parsedWithCaseVariant.queue.pending === 3, 'pending should parse with colon-separated queue format');
+assert(parsedWithCaseVariant.queue.inProgress === 1, 'in progress should parse with spaced key format');
+assert(parsedWithCaseVariant.queue.currentTask === 'TASK-123 Workspace polish', 'current task should parse with spaced label');
+assert(parsedWithCaseVariant.consecutiveFailures === 2, 'consecutive failures should parse with case-insensitive label');
+assert(parsedWithCaseVariant.latestRun.runId === 'RUN-999', 'run id should parse with equals format');
+
 console.log('overnight_supervisor_parser_smoke: PASS');

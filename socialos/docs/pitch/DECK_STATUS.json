@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-03-07T09:16:01.152Z",
-  "latestGreenValidationAt": "2026-03-07T09:16:01.152Z",
-  "repoHead": "7c154ca",
+  "generatedAt": "2026-03-07T10:03:33.264Z",
+  "latestGreenValidationAt": "2026-03-07T10:03:33.264Z",
+  "repoHead": "9a3ffe2",
   "validationSource": "scripts/test.sh",
   "demo": {
     "healthy": true,
@@ -11,7 +11,7 @@
         "label": "socialos-api",
         "id": "api",
         "healthy": true,
-        "pid": "87472",
+        "pid": "none",
         "alive": true,
         "healthUrl": "http://127.0.0.1:8787/health"
       },
@@ -19,7 +19,7 @@
         "label": "socialos-web",
         "id": "web",
         "healthy": true,
-        "pid": "87473",
+        "pid": "none",
         "alive": true,
         "healthUrl": "http://127.0.0.1:4173/quick-capture"
       }

@@ -60,14 +60,16 @@ function parseDemoStatus(output) {
 
 export function parseFoundryStatus(output, options = {}) {
   const commandOk = options.commandOk !== false;
-  const queueMatch = output.match(/pending=(\d+) in_progress=(\d+) blocked=(\d+) done=(\d+)/);
-  const runIdMatch = output.match(/run_id: (.+)/);
-  const runStatusMatch = output.match(/status: (.+)/);
-  const runSummaryMatch = output.match(/summary: (.+)/);
-  const modeMatch = output.match(/mode: (.+)/);
-  const lockMatch = output.match(/lock: (.+)/);
-  const currentTaskMatch = output.match(/current_task: (.+)/);
-  const failureMatch = output.match(/Consecutive failures: (\d+)/);
+  const queueMatch = output.match(
+    /pending\s*[:=]\s*(\d+)\s*(?:,?\s*)in[_ ]progress\s*[:=]\s*(\d+)\s*(?:,?\s*)blocked\s*[:=]\s*(\d+)\s*(?:,?\s*)done\s*[:=]\s*(\d+)/iu
+  );
+  const runIdMatch = output.match(/run_id\s*[:=]\s*(.+)/iu);
+  const runStatusMatch = output.match(/status\s*[:=]\s*(.+)/iu);
+  const runSummaryMatch = output.match(/summary\s*[:=]\s*(.+)/iu);
+  const modeMatch = output.match(/mode\s*[:=]\s*(.+)/iu);
+  const lockMatch = output.match(/lock\s*[:=]\s*(.+)/iu);
+  const currentTaskMatch = output.match(/current[_ ]task\s*[:=]\s*(.+)/iu);
+  const failureMatch = output.match(/Consecutive failures\s*[:=]\s*(\d+)/iu);
   const blockedHeadMatch = output.match(
     /Blocked queue head:\n([\s\S]*?)(?:\nLatest digest:|\nrun_reports_dir:|\nLatest run:|\n== |$)/
   );

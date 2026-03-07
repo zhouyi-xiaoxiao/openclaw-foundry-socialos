@@ -1,8 +1,8 @@
 # Repo State Handoff
 
-- Generated: 2026-03-07T09:16:01.152Z
-- Branch: codex/deck-deploy
-- Git head: 7c154ca
+- Generated: 2026-03-07T10:03:33.264Z
+- Branch: detached
+- Git head: 9a3ffe2
 - Dirty working tree: true
 
 ## Canonical Chain
@@ -50,18 +50,13 @@
 - `socialos/docs/evidence/socialos-demo.gif`
 
 ## Dirty Summary
-- M  AGENTS.md
-- M  README.md
-- M  infra/db/schema.sql
-- M  scripts/refresh_public_docs.mjs
-- M  scripts/test.sh
-- M  scripts/tests/agent_repo_smoke.mjs
-- M  scripts/tests/docs_demo_smoke.mjs
-- M  scripts/tests/product_workspace_smoke.mjs
-- M  scripts/tests/refresh_public_docs_smoke.mjs
-- M  scripts/tests/web_routes_smoke.mjs
-- M  socialos/apps/api/server.mjs
-- M  socialos/apps/web/server.mjs
+- M scripts/overnight_supervisor.mjs
+-  M scripts/tests/overnight_supervisor_parser_smoke.mjs
+-  M socialos/docs/STATUS.md
+-  M socialos/docs/agent/REPO_STATE.md
+-  M socialos/docs/evidence/LATEST_VALIDATION.md
+-  M socialos/docs/pitch/DECK_STATUS.json
+- ?? .deck-site/
 
 ## Overnight Context
 - Next focus: workspace-usability-and-demo-trust
