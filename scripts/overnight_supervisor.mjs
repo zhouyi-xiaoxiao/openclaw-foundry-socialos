@@ -13,6 +13,7 @@ const JSON_PATH = path.join(REPORT_DIR, 'latest.json');
 const DEMO_STATUS_SCRIPT = path.join(REPO_ROOT, 'scripts', 'demo_status.sh');
 const FOUNDRY_DISPATCH_SCRIPT = path.join(REPO_ROOT, 'scripts', 'foundry_dispatch.sh');
 const DEMO_CONTROL_SCRIPT = path.join(REPO_ROOT, 'scripts', 'demo_service_control.mjs');
+const REFRESH_PUBLIC_DOCS_SCRIPT = path.join(REPO_ROOT, 'scripts', 'refresh_public_docs.mjs');
 const RUNTIME_FILE = path.join(REPO_ROOT, 'socialos', 'openclaw', 'runtime.openclaw.json5');
 const MODE_OVERRIDE_FILE = path.join(REPO_ROOT, '.foundry', 'PUBLISH_MODE');
 
@@ -333,6 +334,15 @@ function main() {
     actions,
   };
 
+  writeReports(report);
+  const refreshResult = run('node', [REFRESH_PUBLIC_DOCS_SCRIPT, '--source', 'overnight_supervisor']);
+  if (refreshResult.status === 0) {
+    report.actions.push('Refreshed generated public docs and evidence status.');
+  } else {
+    report.actions.push(
+      `Public docs refresh failed: ${safeTrim(refreshResult.stderr) || safeTrim(refreshResult.stdout) || 'unknown error'}`
+    );
+  }
   writeReports(report);
   printSummary(report);
 

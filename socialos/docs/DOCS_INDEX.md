@@ -52,6 +52,7 @@ This index is the fastest way for a human reviewer or a future agent to understa
 - Product heuristics: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/lib/product-core.mjs`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/lib/product-core.mjs)
 - Foundry task model: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/lib/foundry-tasks.mjs`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/lib/foundry-tasks.mjs)
 - Database schema: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/infra/db/schema.sql`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/infra/db/schema.sql)
+- Graph/linking layer: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/infra/db/schema.sql`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/infra/db/schema.sql) (`EventPersonLink`) and [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/apps/api/server.mjs`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/apps/api/server.mjs)
 
 ## Static vs Generated
 - Curated static contracts:

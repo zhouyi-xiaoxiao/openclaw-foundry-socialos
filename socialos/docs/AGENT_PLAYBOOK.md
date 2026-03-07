@@ -51,6 +51,7 @@ Authoritative task logic:
 - Authoritative file: `socialos/apps/api/server.mjs`
 - Preserve loopback-only posture
 - Keep `presentation.*` contract coherent for the unified workspace
+- Graph and linking logic live in the same API file and the `EventPersonLink` schema layer
 
 ### Runtime
 - Product runtime config: `socialos/openclaw/runtime.openclaw.json5`
@@ -73,6 +74,7 @@ Authoritative task logic:
 - Generated public repo state: `socialos/docs/STATUS.md`
 - Generated agent handoff snapshot: `socialos/docs/agent/REPO_STATE.md`
 - Generated validation snapshot: `socialos/docs/evidence/LATEST_VALIDATION.md`
+- Graph/linking contract: `infra/db/schema.sql` + `socialos/apps/api/server.mjs`
 
 ## 6. Before you finish
 ```bash

@@ -45,6 +45,7 @@ Authoritative file:
 - Foundry structured task model: `socialos/lib/foundry-tasks.mjs`
 - Generic task executor: `scripts/foundry_generic_task.mjs`
 - Database schema: `infra/db/schema.sql`
+- Graph/linking layer: `infra/db/schema.sql` (`EventPersonLink`) + `socialos/apps/api/server.mjs` (`/graph/overview`, event-person link handlers)
 - Public product docs: `socialos/docs/`
 - Public machine manifest: `socialos/docs/SYSTEM_MANIFEST.json`
 - Demo bootstrap and lifecycle: `scripts/demo.sh`, `scripts/demo_status.sh`, `scripts/stop_demo.sh`

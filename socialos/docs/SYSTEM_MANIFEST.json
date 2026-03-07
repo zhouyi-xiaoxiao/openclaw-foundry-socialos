@@ -141,6 +141,7 @@
     "Identity",
     "Interaction",
     "Event",
+    "EventPersonLink",
     "PostDraft",
     "PublishTask",
     "Audit",
@@ -165,7 +166,10 @@
     "POST /publish/approve",
     "POST /publish/complete",
     "GET /self-mirror",
-    "GET /self-mirror/evidence"
+    "GET /self-mirror/evidence",
+    "GET /graph/overview",
+    "POST /events/:id/people",
+    "DELETE /events/:id/people/:personId"
   ],
   "scripts": [
     {

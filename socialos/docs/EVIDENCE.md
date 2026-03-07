@@ -17,6 +17,7 @@ This folder contains curated, stable evidence copied out of volatile local runti
 - Sample run report (Markdown): `socialos/docs/evidence/sample-run-report.md`
 - Sample run report (JSON): `socialos/docs/evidence/sample-run-report.json`
 - Sample digest snapshot: `socialos/docs/evidence/sample-digest.md`
+- Generated validation snapshot: `socialos/docs/evidence/LATEST_VALIDATION.md`
 
 ## Why This Exists
 - Public reviewers need credible runtime proof.

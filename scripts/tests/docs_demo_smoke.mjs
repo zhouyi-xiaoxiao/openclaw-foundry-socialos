@@ -24,12 +24,17 @@ assert(
 assert(readme.includes('AGENTS.md'), 'README should link to repo-level AGENTS.md');
 assert(readme.includes('socialos/docs/SYSTEM_MANIFEST.json'), 'README should link to the system manifest');
 assert(readme.includes('socialos/docs/EVIDENCE.md'), 'README should link to curated evidence');
+assert(readme.includes('socialos/docs/DOCS_INDEX.md'), 'README should link to the docs index');
+assert(readme.includes('socialos/docs/pitch/PITCH_5_MIN.md'), 'README should link to the 5-minute pitch');
+assert(readme.includes('socialos/docs/STATUS.md'), 'README should link to generated public status');
+assert(readme.includes('node scripts/refresh_public_docs.mjs'), 'README should expose the public docs refresh command');
 
 const demoDoc = read('socialos/docs/DEMO_SCRIPT.md');
 for (const cmd of ['bash scripts/demo.sh', 'bash scripts/demo_status.sh', 'bash scripts/test.sh', 'bash scripts/stop_demo.sh']) {
   assert(demoDoc.includes(cmd), `DEMO_SCRIPT must include command: ${cmd}`);
 }
 assert(demoDoc.includes('socialos/docs/EVIDENCE.md'), 'DEMO_SCRIPT should point to curated evidence');
+assert(demoDoc.includes('5-10 minutes'), 'DEMO_SCRIPT should still explain the pitch-length demo arc');
 
 const demoScript = read('scripts/demo.sh');
 assert(demoScript.includes('runtime_policy_check.mjs'), 'demo.sh must run runtime policy smoke check');
