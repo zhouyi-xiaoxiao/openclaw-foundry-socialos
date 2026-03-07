@@ -22,6 +22,9 @@ assert(result.stdout.includes('overnight_supervisor:'), 'stdout must include ove
 assert(fs.existsSync(summaryPath), 'overnight summary markdown must exist');
 assert(fs.existsSync(jsonPath), 'overnight summary json must exist');
 assert(fs.existsSync(runReportsPath), 'run reports directory must be bootstrapped');
+const summaryMarkdown = fs.readFileSync(summaryPath, 'utf8');
+assert(summaryMarkdown.includes('listeningPid='), 'summary markdown should expose listeningPid for demo services');
+assert(summaryMarkdown.includes('unmanagedHealthy='), 'summary markdown should expose unmanagedHealthy for demo services');
 
 const report = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
 assert(typeof report.decision === 'string' && report.decision.length > 0, 'report.decision must exist');

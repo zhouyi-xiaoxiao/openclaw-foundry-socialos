@@ -310,7 +310,7 @@ function writeReports(report) {
 
   for (const service of report.demo.services) {
     lines.push(
-      `- ${service.label}: ready=${service.ready} healthy=${service.healthy} pidAlive=${service.pidAlive} stalePid=${service.stalePid} url=${service.healthUrl}`
+      `- ${service.label}: ready=${service.ready} healthy=${service.healthy} pidAlive=${service.pidAlive} stalePid=${service.stalePid} listeningPid=${service.listeningPid} unmanagedHealthy=${service.unmanagedHealthy} url=${service.healthUrl}`
     );
   }
 
