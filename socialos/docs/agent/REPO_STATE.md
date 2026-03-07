@@ -1,8 +1,8 @@
 # Repo State Handoff
 
-- Generated: 2026-03-07T22:03:35.878Z
+- Generated: 2026-03-07T22:04:59.565Z
 - Branch: detached
-- Git head: ae82ac1
+- Git head: a453aa9
 - Dirty working tree: true
 
 ## Canonical Chain
@@ -63,9 +63,7 @@
 - `socialos/docs/evidence/socialos-demo.gif`
 
 ## Dirty Summary
-- M scripts/overnight_supervisor.mjs
--  M scripts/tests/overnight_supervisor_smoke.mjs
--  M socialos/docs/STATUS.md
+- M socialos/docs/STATUS.md
 -  M socialos/docs/agent/REPO_STATE.md
 -  M socialos/docs/evidence/LATEST_VALIDATION.md
 -  M socialos/docs/evidence/hackathon-drafts-zai.json
