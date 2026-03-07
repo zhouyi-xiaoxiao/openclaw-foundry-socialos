@@ -38,74 +38,51 @@ function normalizeCount(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function normalizeStatusLines(value, { treatObjectsAsTask = false } = {}) {
-  const normalized = [];
-  const values = Array.isArray(value) ? value : [value];
+function extractFirstJsonObject(raw) {
+  if (typeof raw !== 'string' || !raw.includes('{')) return null;
 
-  for (const entry of values) {
-    if (typeof entry === 'string') {
-      for (const line of entry.split('\n')) {
-        const trimmed = line.trim();
-        if (trimmed) normalized.push(trimmed);
-      }
-      continue;
-    }
+  for (let start = 0; start < raw.length; start += 1) {
+    if (raw[start] !== '{') continue;
 
-    if (treatObjectsAsTask && entry && typeof entry === 'object' && typeof entry.task === 'string') {
-      const task = entry.task.trim();
-      if (task) normalized.push(task);
-    }
-  }
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
 
-  return normalized;
-}
-
-function extractJsonPayload(output) {
-  const trimmed = safeTrim(output);
-  if (!trimmed) return '';
-  if (trimmed.startsWith('{') && trimmed.endsWith('}')) return trimmed;
-
-  const firstBrace = trimmed.indexOf('{');
-  if (firstBrace < 0) return '';
-  const candidate = trimmed.slice(firstBrace);
-
-  let depth = 0;
-  let inString = false;
-  let escaped = false;
-  for (let index = 0; index < candidate.length; index += 1) {
-    const char = candidate[index];
-    if (inString) {
-      if (escaped) {
-        escaped = false;
+    for (let index = start; index < raw.length; index += 1) {
+      const char = raw[index];
+      if (inString) {
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+        if (char === '\\') {
+          escaped = true;
+          continue;
+        }
+        if (char === '"') {
+          inString = false;
+        }
         continue;
       }
-      if (char === '\\') {
-        escaped = true;
-        continue;
-      }
+
       if (char === '"') {
-        inString = false;
+        inString = true;
+        continue;
       }
-      continue;
-    }
-
-    if (char === '"') {
-      inString = true;
-      continue;
-    }
-    if (char === '{') {
-      depth += 1;
-      continue;
-    }
-    if (char === '}') {
-      depth -= 1;
-      if (depth === 0) {
-        return candidate.slice(0, index + 1);
+      if (char === '{') {
+        depth += 1;
+        continue;
+      }
+      if (char === '}') {
+        depth -= 1;
+        if (depth === 0) {
+          return raw.slice(start, index + 1);
+        }
       }
     }
   }
 
-  return '';
+  return null;
 }
 
 function parseDemoStatus(output) {
@@ -134,12 +111,14 @@ function parseDemoStatus(output) {
 }
 
 function parseFoundryStatusJson(output, commandOk) {
-  const jsonPayload = extractJsonPayload(output);
-  if (!jsonPayload) return null;
+  const trimmed = safeTrim(output);
+  const jsonCandidate =
+    trimmed.startsWith('{') && trimmed.endsWith('}') ? trimmed : extractFirstJsonObject(trimmed);
+  if (!jsonCandidate) return null;
 
   let parsed;
   try {
-    parsed = JSON.parse(jsonPayload);
+    parsed = JSON.parse(jsonCandidate);
   } catch {
     return null;
   }
@@ -149,8 +128,8 @@ function parseFoundryStatusJson(output, commandOk) {
   const lock = parsed.lock && typeof parsed.lock === 'object' ? parsed.lock : {};
   const latestRun = parsed.latestRun && typeof parsed.latestRun === 'object' ? parsed.latestRun : {};
   const health = parsed.health && typeof parsed.health === 'object' ? parsed.health : {};
-  const blockedHead = normalizeStatusLines(parsed.blockedHead, { treatObjectsAsTask: true });
-  const latestDigest = normalizeStatusLines(parsed.latestDigest);
+  const blockedHead = Array.isArray(parsed.blockedHead) ? parsed.blockedHead : [];
+  const latestDigest = Array.isArray(parsed.latestDigest) ? parsed.latestDigest : [];
 
   return {
     commandOk,
@@ -169,8 +148,14 @@ function parseFoundryStatusJson(output, commandOk) {
       status: typeof latestRun.status === 'string' && latestRun.status.trim() ? latestRun.status.trim() : 'unknown',
       summary: typeof latestRun.summary === 'string' && latestRun.summary.trim() ? latestRun.summary.trim() : 'unknown',
     },
-    blockedHead: blockedHead.filter((line) => !/^none(?:\b|$)/iu.test(line)),
-    latestDigest: latestDigest.filter((line) => !/^none(?:\b|$)/iu.test(line) && !/^no digest yet\.?$/iu.test(line)),
+    blockedHead: blockedHead
+      .map((entry) => {
+        if (typeof entry === 'string') return entry.trim();
+        if (entry && typeof entry === 'object' && typeof entry.task === 'string') return entry.task.trim();
+        return '';
+      })
+      .filter(Boolean),
+    latestDigest: latestDigest.map((line) => (typeof line === 'string' ? line.trim() : '')).filter(Boolean),
   };
 }
 
