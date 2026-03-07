@@ -39,6 +39,27 @@ Latest digest:
 const parsedWithDigest = parseFoundryStatus(outputWithDigest);
 assert(parsedWithDigest.latestDigest.length === 2, 'latest digest lines should still parse');
 assert(parsedWithDigest.latestDigest[0] === '- line 1', 'first digest line should parse');
+
+const outputWithNoBlocked = `== Foundry Status ==
+mode: RUNNING
+lock: none
+
+Queue:
+pending=0 in_progress=0 blocked=0 done=11
+current_task: none
+
+Consecutive failures: 0
+
+Latest run:
+No run report JSON found.
+
+Blocked queue head:
+none
+
+Latest digest:
+No digest yet.`;
+const parsedWithNoBlocked = parseFoundryStatus(outputWithNoBlocked);
+assert(parsedWithNoBlocked.blockedHead.length === 0, '"none" blocked marker should normalize to an empty list');
 const parsedCommandFailure = parseFoundryStatus('', { commandOk: false });
 assert(parsedCommandFailure.commandOk === false, 'commandOk should reflect failed status probe');
 

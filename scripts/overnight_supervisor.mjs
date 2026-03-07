@@ -76,7 +76,7 @@ export function parseFoundryStatus(output, options = {}) {
     ? blockedHeadMatch[1]
         .split('\n')
         .map((line) => line.trim())
-        .filter(Boolean)
+        .filter((line) => Boolean(line) && !/^none(?:\b|$)/iu.test(line))
     : [];
 
   const latestDigest = digestMatch
