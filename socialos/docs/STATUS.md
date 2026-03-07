@@ -1,16 +1,16 @@
 # Public Status
 
-- Generated: 2026-03-07T03:53:22.667Z
+- Generated: 2026-03-07T04:02:31.001Z
 - Product posture: local-first
 - Network exposure: loopback-only
 - Publish mode: Safe rehearsal
 - Demo healthy: true
-- Git head: 4952746
+- Git head: c78f120
 
 ## Current Readout
 - The repo is currently healthy enough to present as a judge-facing local-first package.
-- Overnight supervisor reason: Foundry already has active queue work; outer loop should bias to validation and repo trust.
-- Next focus: respect-foundry-queue
+- Overnight supervisor reason: Repo is healthy; continue aggressive product/core polish in Workspace, Contacts, Drafts, and Queue.
+- Next focus: workspace-usability-and-demo-trust
 
 ## Demo Endpoints
 - socialos-api: healthy=true alive=true url=http://127.0.0.1:8787/health

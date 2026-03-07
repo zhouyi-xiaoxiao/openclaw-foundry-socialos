@@ -42,13 +42,13 @@ done_count="0"
 current_task="none"
 queue_notice=""
 if [[ -f "${QUEUE_FILE}" ]]; then
-  pending_count="$(grep -cE '^- \[ \] ' "${QUEUE_FILE}" || true)"
-  in_progress_count="$(grep -cE '^- \[-\] ' "${QUEUE_FILE}" || true)"
-  blocked_count="$(grep -cE '^- \[!\] ' "${QUEUE_FILE}" || true)"
+  pending_count="$(grep -cE '^[[:space:]]*-[[:space:]]+\[ \][[:space:]]+' "${QUEUE_FILE}" || true)"
+  in_progress_count="$(grep -cE '^[[:space:]]*-[[:space:]]+\[-\][[:space:]]+' "${QUEUE_FILE}" || true)"
+  blocked_count="$(grep -cE '^[[:space:]]*-[[:space:]]+\[!\][[:space:]]+' "${QUEUE_FILE}" || true)"
   # Keep queue accounting aligned with API parsing, which treats both [x] and [X] as done.
-  done_count="$(grep -cE '^- \[[xX]\] ' "${QUEUE_FILE}" || true)"
+  done_count="$(grep -cE '^[[:space:]]*-[[:space:]]+\[[xX]\][[:space:]]+' "${QUEUE_FILE}" || true)"
   # Treat only pending/in-progress items as actionable current work; blocked entries are reported separately.
-  current_task="$(grep -E '^- \[( |\-)\] ' "${QUEUE_FILE}" | head -n 1 | sed -E 's/^- \[[^]]\] //' || true)"
+  current_task="$(grep -E '^[[:space:]]*-[[:space:]]+\[( |\-)\][[:space:]]+' "${QUEUE_FILE}" | head -n 1 | sed -E 's/^[[:space:]]*-[[:space:]]+\[[^]]\][[:space:]]+//' || true)"
   [[ -z "${current_task}" ]] && current_task="none"
 else
   queue_notice="missing (${QUEUE_FILE})"
