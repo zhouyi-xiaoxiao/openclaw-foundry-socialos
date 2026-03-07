@@ -6289,11 +6289,11 @@ function renderClientScript() {
           'contact',
           'person',
           'someone',
-          '新联系人',
-          '未确认联系人',
-          '联系人',
-          '某人',
-          '某位联系人',
+          '\\u65b0\\u8054\\u7cfb\\u4eba',
+          '\\u672a\\u786e\\u8ba4\\u8054\\u7cfb\\u4eba',
+          '\\u8054\\u7cfb\\u4eba',
+          '\\u67d0\\u4eba',
+          '\\u67d0\\u4f4d\\u8054\\u7cfb\\u4eba',
         ].includes(normalized);
       }
 

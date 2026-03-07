@@ -83,6 +83,12 @@ Optional hackathon provider env:
 - `FLOCK_API_KEY`
 - `FLOCK_MODEL_ID`
 
+Optional live-provider cutover:
+- `bash scripts/hackathon_live.sh env-check`
+- `bash scripts/hackathon_live.sh api`
+- `bash scripts/hackathon_live.sh proofs`
+- [Hackathon Live Provider Setup](socialos/docs/HACKATHON_LIVE_PROVIDER_SETUP.md)
+
 ## Architecture Overview
 - Frontend: loopback-only Node dashboard in `socialos/apps/web`
 - API: local Node service in `socialos/apps/api`
@@ -170,6 +176,7 @@ Agent-facing entrypoints:
 - [DoraHacks Bounty Swaps](socialos/docs/pitch/DORAHACKS_BOUNTY_SWAPS.md)
 - [Chinese Rehearsal Cues](socialos/docs/pitch/REHEARSAL_CUES_CN.md)
 - [Recording + Submission Runbook](socialos/docs/pitch/RECORDING_AND_SUBMISSION_RUNBOOK.md)
+- [Hackathon Live Provider Setup](socialos/docs/HACKATHON_LIVE_PROVIDER_SETUP.md)
 - [VC Deck Spec](socialos/docs/pitch/VC_DECK_SPEC.md)
 - [Deck Maintenance](socialos/docs/pitch/DECK_MAINTENANCE.md)
 
@@ -189,6 +196,7 @@ The public deck is served from:
 - `?print-pdf` for print/PDF-friendly layout
 - Static export for GitHub Pages: `node scripts/export_vc_deck.mjs`
 - Recording-day preflight + export: `bash scripts/hackathon_preflight.sh`
+- Live provider cutover for GLM + FLock: `bash scripts/hackathon_live.sh env-check`
 
 ## Public Evidence
 Curated public evidence lives in [socialos/docs/EVIDENCE.md](socialos/docs/EVIDENCE.md).

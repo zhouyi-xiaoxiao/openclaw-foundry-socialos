@@ -1,8 +1,8 @@
 # Repo State Handoff
 
-- Generated: 2026-03-07T21:06:23.165Z
-- Branch: automation/socialos-overnight-454e
-- Git head: a976cc3
+- Generated: 2026-03-07T21:22:24.731Z
+- Branch: main
+- Git head: 01808d5
 - Dirty working tree: true
 
 ## Canonical Chain
@@ -63,11 +63,18 @@
 - `socialos/docs/evidence/socialos-demo.gif`
 
 ## Dirty Summary
-- M socialos/docs/STATUS.md
+- M QUEUE.md
+-  M ROADMAP.md
+-  M scripts/devloop_once.sh
+-  M socialos/apps/web/server.mjs
+-  M socialos/docs/STATUS.md
 -  M socialos/docs/agent/REPO_STATE.md
 -  M socialos/docs/evidence/LATEST_VALIDATION.md
--  M socialos/docs/pitch/DECK_STATUS.json
-- ?? .deck-site/
+-  M socialos/docs/evidence/hackathon-drafts-zai.json
+-  M socialos/docs/evidence/hackathon-flock-triage.json
+-  M socialos/docs/evidence/hackathon-glm-generate.json
+-  M socialos/docs/evidence/hackathon-overview.json
+-  M socialos/docs/evidence/hackathon-proof-summary.md
 
 ## Overnight Context
 - Next focus: respect-foundry-queue

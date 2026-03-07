@@ -1,12 +1,12 @@
 {
-  "eventId": "event_bd830e3f21b4424ea16e63d1993cef75",
+  "eventId": "event_c2d6090cbeed4bdab4f2ed241be49296",
   "bountyMode": "z-ai-general",
   "provider": "glm",
   "count": 4,
   "drafts": [
     {
-      "draftId": "draft_5b1e9edfaf284868a6643483d02d8a45",
-      "eventId": "event_bd830e3f21b4424ea16e63d1993cef75",
+      "draftId": "draft_46134867e5fa455da3ef37f005803778",
+      "eventId": "event_c2d6090cbeed4bdab4f2ed241be49296",
       "eventTitle": "Community Mentor Follow-up",
       "platform": "linkedin",
       "platformLabel": "LinkedIn",
@@ -113,11 +113,11 @@
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T21:08:02.457Z"
+      "createdAt": "2026-03-07T21:22:14.652Z"
     },
     {
-      "draftId": "draft_f1b11fd718e14077a28f22928d2b1465",
-      "eventId": "event_bd830e3f21b4424ea16e63d1993cef75",
+      "draftId": "draft_376083b4bec44773915d92ed83528b86",
+      "eventId": "event_c2d6090cbeed4bdab4f2ed241be49296",
       "eventTitle": "Community Mentor Follow-up",
       "platform": "x",
       "platformLabel": "X",
@@ -222,11 +222,11 @@
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T21:08:02.458Z"
+      "createdAt": "2026-03-07T21:22:14.653Z"
     },
     {
-      "draftId": "draft_ac8c8b3d39f04b848321fc8f785e441b",
-      "eventId": "event_bd830e3f21b4424ea16e63d1993cef75",
+      "draftId": "draft_2ff074319e444259bf8792e4e96e9c99",
+      "eventId": "event_c2d6090cbeed4bdab4f2ed241be49296",
       "eventTitle": "Community Mentor Follow-up",
       "platform": "zhihu",
       "platformLabel": "Zhihu",
@@ -331,11 +331,11 @@
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T21:08:02.459Z"
+      "createdAt": "2026-03-07T21:22:14.654Z"
     },
     {
-      "draftId": "draft_bad5e73e023e4444ad181685be1e74ff",
-      "eventId": "event_bd830e3f21b4424ea16e63d1993cef75",
+      "draftId": "draft_0567554f11894d6db7b63f0f0694c416",
+      "eventId": "event_c2d6090cbeed4bdab4f2ed241be49296",
       "eventTitle": "Community Mentor Follow-up",
       "platform": "wechat_moments",
       "platformLabel": "WeChat Moments",
@@ -470,11 +470,11 @@
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T21:08:02.460Z"
+      "createdAt": "2026-03-07T21:22:14.654Z"
     }
   ],
-  "auditId": "audit_c3b96c774b884a218d979328ec16fb21",
-  "digestId": "digest_cd2c2bf71f884a11aa20b6d635b37dff",
+  "auditId": "audit_c85abf0c72b34a59a7689a27dcd416ab",
+  "digestId": "digest_0ed7fa9f653c48a8a9e67f702c9d439a",
   "proof": {
     "requestedProvider": "glm",
     "bountyMode": "z-ai-general",
@@ -484,7 +484,7 @@
     ],
     "generations": [
       {
-        "draftId": "draft_5b1e9edfaf284868a6643483d02d8a45",
+        "draftId": "draft_46134867e5fa455da3ef37f005803778",
         "platform": "linkedin",
         "language": "en",
         "provider": "local",
@@ -493,7 +493,7 @@
         "reason": "glm-not-configured"
       },
       {
-        "draftId": "draft_f1b11fd718e14077a28f22928d2b1465",
+        "draftId": "draft_376083b4bec44773915d92ed83528b86",
         "platform": "x",
         "language": "en",
         "provider": "local",
@@ -502,7 +502,7 @@
         "reason": "glm-not-configured"
       },
       {
-        "draftId": "draft_ac8c8b3d39f04b848321fc8f785e441b",
+        "draftId": "draft_2ff074319e444259bf8792e4e96e9c99",
         "platform": "zhihu",
         "language": "zh",
         "provider": "local",
@@ -511,7 +511,7 @@
         "reason": "glm-not-configured"
       },
       {
-        "draftId": "draft_bad5e73e023e4444ad181685be1e74ff",
+        "draftId": "draft_0567554f11894d6db7b63f0f0694c416",
         "platform": "wechat_moments",
         "language": "zh",
         "provider": "local",

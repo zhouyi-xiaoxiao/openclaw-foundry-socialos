@@ -103,6 +103,7 @@ Authoritative file:
 - `bash scripts/demo.sh`
 - `bash scripts/demo_status.sh`
 - `bash scripts/hackathon_preflight.sh`
+- `bash scripts/hackathon_live.sh env-check`
 - `bash scripts/stop_demo.sh`
 - `bash scripts/overnight_supervisor.sh`
 - `bash scripts/studio.sh status`
@@ -111,6 +112,7 @@ Authoritative file:
 - `node scripts/refresh_public_docs.mjs`
 - `node scripts/export_vc_deck.mjs`
 - `bash scripts/test.sh`
+- `socialos/docs/HACKATHON_LIVE_PROVIDER_SETUP.md`
 
 ## Overnight Supervisor
 - `bash scripts/overnight_supervisor.sh` is the safe outer-loop guard for unattended iteration.

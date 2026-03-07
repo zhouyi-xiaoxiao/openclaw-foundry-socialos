@@ -23,6 +23,8 @@ This index is the fastest way for a human reviewer or a future agent to understa
   Demo runbook and live flow.
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/HACKATHON_BOUNTIES.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/HACKATHON_BOUNTIES.md)
   Bounty-by-bounty fit, routes, proof surfaces, and honest integration status.
+- [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/HACKATHON_LIVE_PROVIDER_SETUP.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/HACKATHON_LIVE_PROVIDER_SETUP.md)
+  Optional live GLM + FLock provider cutover for judge-facing capture refreshes.
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/PITCH_5_MIN.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/PITCH_5_MIN.md)
   Five-minute pitch structure and timing.
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/JUDGE_BRIEF.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/JUDGE_BRIEF.md)
@@ -74,6 +76,7 @@ This index is the fastest way for a human reviewer or a future agent to understa
 - Static deck export: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/scripts/export_vc_deck.mjs`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/scripts/export_vc_deck.mjs)
 - Hackathon proof capture: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/scripts/capture_hackathon_proofs.mjs`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/scripts/capture_hackathon_proofs.mjs)
 - Recording preflight: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/scripts/hackathon_preflight.sh`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/scripts/hackathon_preflight.sh)
+- Live provider bootstrap: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/scripts/hackathon_live.sh`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/scripts/hackathon_live.sh)
 - Pages deployment workflow: [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/.github/workflows/deploy-deck.yml`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/.github/workflows/deploy-deck.yml)
 
 ## Static vs Generated
@@ -105,4 +108,10 @@ Refresh the hackathon proof snapshots with:
 
 ```bash
 node scripts/capture_hackathon_proofs.mjs
+```
+
+Switch into live GLM + FLock provider mode with:
+
+```bash
+bash scripts/hackathon_live.sh env-check
 ```
