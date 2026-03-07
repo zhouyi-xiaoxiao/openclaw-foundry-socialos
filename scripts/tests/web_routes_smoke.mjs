@@ -61,6 +61,7 @@ async function main() {
     assert((workspaceHtml.match(/<form[^>]+data-workspace-chat-form/gu) || []).length === 1, 'workspace should render exactly one main chat form');
     assert(workspaceHtml.includes('data-workspace-rail-tabs'), 'workspace should render a tabbed context rail');
     assert(workspaceHtml.includes('maybeRevealWorkspaceDrawer'), 'workspace should auto-reveal contact/event drawers when opened from in-page links');
+    assert(workspaceHtml.includes("submitter.dataset.locked === 'true'"), 'workspace contact review save should keep the submit button locked after success');
     assert(!workspaceHtml.includes('href="/cockpit"'), 'primary nav should not keep a cockpit link');
     assert(!workspaceHtml.includes('href="/ask"'), 'primary nav should not keep an ask link');
     assert(!workspaceHtml.includes('href="/dev-digest"'), 'primary nav should not keep a dev digest link');

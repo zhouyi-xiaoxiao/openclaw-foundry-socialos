@@ -4523,7 +4523,8 @@ function renderClientScript() {
           submitter.dataset.originalLabel = submitter.textContent;
           submitter.textContent = 'Working...';
         } else {
-          submitter.disabled = false;
+          const locked = submitter.dataset.locked === 'true';
+          submitter.disabled = locked;
           submitter.textContent = submitter.dataset.originalLabel || 'Submit';
         }
       }
@@ -5072,7 +5073,10 @@ function renderClientScript() {
             const responseId = form.dataset.responseId || '';
             const workspacePayload = captureState.workspaceResponses.get(responseId);
             updateWorkspaceContactReviewState(form);
-            if (submitter) submitter.disabled = true;
+            if (submitter) {
+              submitter.dataset.locked = 'true';
+              submitter.dataset.originalLabel = 'Saved';
+            }
             renderWorkspaceComposerResult(resultNode, 'Contact saved. You can open the detail page or create an event next.');
             appendWorkspaceSystemTurn(
               'Contact saved',
