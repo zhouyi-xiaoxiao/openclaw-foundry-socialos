@@ -38,8 +38,9 @@ function normalizeCount(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function extractFirstJsonObject(raw) {
-  if (typeof raw !== 'string' || !raw.includes('{')) return null;
+function extractJsonObjects(raw) {
+  if (typeof raw !== 'string' || !raw.includes('{')) return [];
+  const objects = [];
 
   for (let start = 0; start < raw.length; start += 1) {
     if (raw[start] !== '{') continue;
@@ -76,13 +77,29 @@ function extractFirstJsonObject(raw) {
       if (char === '}') {
         depth -= 1;
         if (depth === 0) {
-          return raw.slice(start, index + 1);
+          objects.push(raw.slice(start, index + 1));
+          start = index;
+          break;
         }
       }
     }
   }
 
-  return null;
+  return objects;
+}
+
+function statusShapeScore(value) {
+  if (!value || typeof value !== 'object') return 0;
+  let score = 0;
+  if (typeof value.mode === 'string') score += 1;
+  if (value.queue && typeof value.queue === 'object') score += 2;
+  if (value.lock && typeof value.lock === 'object') score += 1;
+  if (value.health && typeof value.health === 'object') score += 1;
+  if (value.latestRun && typeof value.latestRun === 'object') score += 1;
+  if (Array.isArray(value.blockedHead)) score += 1;
+  if (Array.isArray(value.latestDigest)) score += 1;
+  if (typeof value.consecutiveFailures === 'number') score += 1;
+  return score;
 }
 
 function normalizeFoundryMode(value) {
@@ -141,17 +158,28 @@ function parseDemoStatus(output) {
 
 function parseFoundryStatusJson(output, commandOk) {
   const trimmed = safeTrim(output);
-  const jsonCandidate =
-    trimmed.startsWith('{') && trimmed.endsWith('}') ? trimmed : extractFirstJsonObject(trimmed);
-  if (!jsonCandidate) return null;
+  const candidates = extractJsonObjects(trimmed);
+  if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+    candidates.unshift(trimmed);
+  }
+  if (!candidates.length) return null;
 
-  let parsed;
-  try {
-    parsed = JSON.parse(jsonCandidate);
-  } catch {
-    return null;
+  let parsed = null;
+  let bestScore = 0;
+  for (const candidate of candidates) {
+    try {
+      const next = JSON.parse(candidate);
+      const score = statusShapeScore(next);
+      if (score > bestScore) {
+        parsed = next;
+        bestScore = score;
+      }
+    } catch {
+      // ignore non-JSON braces from stderr wrappers and continue scanning
+    }
   }
 
+  if (!parsed || bestScore < 2) return null;
   if (!parsed || typeof parsed !== 'object') return null;
   const queue = parsed.queue && typeof parsed.queue === 'object' ? parsed.queue : {};
   const lock = parsed.lock && typeof parsed.lock === 'object' ? parsed.lock : {};

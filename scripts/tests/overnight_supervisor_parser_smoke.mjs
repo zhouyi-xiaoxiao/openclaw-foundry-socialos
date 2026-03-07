@@ -134,4 +134,11 @@ assert(parsedWarnedJsonStatus.mode === 'ACTIVE', 'json mode should parse when wa
 assert(parsedWarnedJsonStatus.queue.blocked === 3, 'json queue should parse when warnings wrap the payload');
 assert(parsedWarnedJsonStatus.consecutiveFailures === 5, 'json failures should parse when warnings wrap the payload');
 
+const jsonWithLeadingNoiseObject = `{"note":"non-status object from wrapper"}
+${jsonStatusOutput}`;
+const parsedJsonWithLeadingNoiseObject = parseFoundryStatus(jsonWithLeadingNoiseObject, { commandOk: true });
+assert(parsedJsonWithLeadingNoiseObject.mode === 'ACTIVE', 'parser should prefer the status-shaped JSON object');
+assert(parsedJsonWithLeadingNoiseObject.queue.inProgress === 2, 'parser should ignore leading non-status JSON objects');
+assert(parsedJsonWithLeadingNoiseObject.queue.blocked === 3, 'parser should keep queue metrics when leading JSON noise exists');
+
 console.log('overnight_supervisor_parser_smoke: PASS');
