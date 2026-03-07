@@ -7578,7 +7578,17 @@ async function routeRequest(req, res, statements) {
     }
     const task = statements.selectQueueTaskById.get(taskId);
     if (!task) throw new HttpError(404, 'taskId not found');
+    if (task.status === 'queued') {
+      throw new HttpError(409, 'task must be approved before completion');
+    }
     if (new Set(['posted', 'failed']).has(task.status) && task.status === outcome) {
+      sendJson(res, 200, { taskId, status: task.status, result: safeParseJsonObject(task.result) });
+      return;
+    }
+    if (new Set(['posted', 'failed']).has(task.status) && task.status !== outcome) {
+      throw new HttpError(409, `task is already terminal (status=${task.status})`);
+    }
+    if (task.status === 'manual_step_needed' && outcome === 'manual_step_needed') {
       sendJson(res, 200, { taskId, status: task.status, result: safeParseJsonObject(task.result) });
       return;
     }

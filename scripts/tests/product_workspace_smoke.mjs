@@ -306,6 +306,22 @@ async function main() {
       note: 'workspace smoke approval',
     });
     assert(approved.status === 'manual_step_needed', 'approved queue task should transition to manual step needed');
+    const approvedSecondDraft = await postJson(api.baseUrl, '/publish/approve', {
+      taskId: queuedSecondDraft.taskId,
+      note: 'workspace smoke approval for failed completion sample',
+    });
+    assert(
+      approvedSecondDraft.status === 'manual_step_needed',
+      'second draft queue task should require approval before manual completion'
+    );
+    const approvedPostedDraft = await postJson(api.baseUrl, '/publish/approve', {
+      taskId: queuedPostedDraft.taskId,
+      note: 'workspace smoke approval for posted completion sample',
+    });
+    assert(
+      approvedPostedDraft.status === 'manual_step_needed',
+      'posted completion sample should require approval before manual completion'
+    );
     const failed = await postJson(api.baseUrl, '/publish/complete', {
       taskId: queuedSecondDraft.taskId,
       outcome: 'failed',

@@ -38,6 +38,19 @@ async function main() {
       method: 'POST',
       body: { draftId: drafts.drafts[0].draftId, mode: 'dry-run' },
     });
+    const prematureCompletion = await fetch(`${api.baseUrl}/publish/complete`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        taskId: queued.taskId,
+        outcome: 'posted',
+        note: 'should not bypass approve',
+      }),
+    });
+    const prematurePayload = await prematureCompletion.json();
+    assert(prematureCompletion.status === 409, 'queued task should reject direct completion before approve');
+    assert(prematurePayload.error === 'task must be approved before completion', 'queued completion should explain guard');
+
     const approved = await requestJson(api.baseUrl, '/publish/approve', {
       method: 'POST',
       body: { taskId: queued.taskId, approvedBy: 'manual_publish_flow_smoke' },
@@ -55,6 +68,18 @@ async function main() {
       },
     });
     assert(posted.status === 'posted', 'manual completion should update queue to posted');
+    const terminalRewrite = await fetch(`${api.baseUrl}/publish/complete`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        taskId: queued.taskId,
+        outcome: 'failed',
+        note: 'should not rewrite terminal state',
+      }),
+    });
+    const terminalRewritePayload = await terminalRewrite.json();
+    assert(terminalRewrite.status === 409, 'terminal task should reject status rewrites');
+    assert(terminalRewritePayload.error === 'task is already terminal (status=posted)', 'terminal guard should be explicit');
 
     const queuedSecond = await requestJson(api.baseUrl, '/publish/queue', {
       method: 'POST',
