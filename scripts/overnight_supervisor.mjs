@@ -139,6 +139,10 @@ function detectGitState() {
   };
 }
 
+function gitStateDiffers(a, b) {
+  return JSON.stringify(a || {}) !== JSON.stringify(b || {});
+}
+
 function ensureReportDir() {
   fs.mkdirSync(REPORT_DIR, { recursive: true });
 }
@@ -316,7 +320,6 @@ function main() {
   }
   const foundry = parseFoundryStatus(foundryStatusResult.stdout, { commandOk: foundryCommandOk });
   const publishMode = detectPublishMode();
-  const git = detectGitState();
   const decision = determineDecision({ demo, foundry, publishMode });
 
   const report = {
@@ -330,11 +333,16 @@ function main() {
       publishMode,
       loopbackOnly: true,
     },
-    git,
+    git: {
+      branch: 'unknown',
+      detached: true,
+      head: 'unknown',
+      dirty: false,
+      dirtySummary: [],
+    },
     actions,
   };
 
-  writeReports(report);
   const refreshResult = run('node', [REFRESH_PUBLIC_DOCS_SCRIPT, '--source', 'overnight_supervisor']);
   if (refreshResult.status === 0) {
     report.actions.push('Refreshed generated public docs and evidence status.');
@@ -343,7 +351,15 @@ function main() {
       `Public docs refresh failed: ${safeTrim(refreshResult.stderr) || safeTrim(refreshResult.stdout) || 'unknown error'}`
     );
   }
+
+  // Capture git state as late as possible so summary trust matches the final run outcome.
+  report.git = detectGitState();
   writeReports(report);
+  const gitAfterReportWrite = detectGitState();
+  if (gitStateDiffers(report.git, gitAfterReportWrite)) {
+    report.git = gitAfterReportWrite;
+    writeReports(report);
+  }
   printSummary(report);
 
   if (report.decision === 'stop') {

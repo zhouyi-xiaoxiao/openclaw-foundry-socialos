@@ -29,5 +29,11 @@ assert(typeof report.nextFocus === 'string' && report.nextFocus.length > 0, 'rep
 assert(report.safety?.publishMode === 'dry-run', 'overnight supervisor must preserve dry-run publish mode');
 assert(report.demo?.services?.length >= 2, 'overnight supervisor must record demo services');
 assert(typeof report.foundry?.consecutiveFailures === 'number', 'overnight supervisor must capture Foundry failures');
+const gitStatus = spawnSync('git', ['status', '--short'], { cwd: root, encoding: 'utf8' });
+const actualDirty = Boolean((gitStatus.stdout || '').trim());
+assert(
+  report.git?.dirty === actualDirty,
+  `overnight supervisor git dirty flag must match repo state (reported=${report.git?.dirty}, actual=${actualDirty})`
+);
 
 console.log('overnight_supervisor_smoke: PASS');
