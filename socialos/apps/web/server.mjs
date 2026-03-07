@@ -452,17 +452,17 @@ function renderWorkspaceThreadSeed(captures) {
                 (capture) => `
                   <article class="workspace-context-note workspace-recent-note">
                     <div class="stack-meta">
-                      <strong>Recent context</strong>
+                      <strong>Recent note</strong>
                       <span>${escapeHtml(formatDateTime(capture.createdAt))}</span>
                     </div>
-                    <p>${escapeHtml(summarizeCardCopy(capture.text || capture.combinedText || '', 140, 'A recent note is already in this workspace.'))}</p>
+                    <p>${escapeHtml(summarizeCardCopy(capture.text || capture.combinedText || '', 110, 'A recent note is already in this workspace.'))}</p>
                   </article>
                 `
               )
               .join('')
           : `
             <article class="workspace-context-note workspace-context-note-empty">
-              <p>Start with one natural message. SocialOS stays light until you need a contact, event, draft, or mirror.</p>
+              <p>Start with one natural message. We will stay light until you need something more structured.</p>
             </article>
           `
       }
@@ -580,18 +580,17 @@ function renderWorkspaceSummaryStrip(bootstrap = {}, requestUrl) {
       <div class="workspace-summary-copy">
         <p class="eyebrow">Workspace</p>
         <h1>Workspace</h1>
-        <p class="workspace-home-title">Warm context. Clear next step.</p>
         <p>${escapeHtml(
           summarizeCardCopy(
             bootstrap.summaryText ||
             'Capture what just happened, recall the right person or event, and only then branch into drafts or follow-up.'
-          , 144)
+          , 118)
         )}</p>
         ${renderWorkspaceSystemStatus(bootstrap)}
       </div>
       <div class="workspace-summary-actions">
         <div class="stack-meta">
-          <strong>Next up</strong>
+          <strong>Today</strong>
           <span>${escapeHtml(formatDateTime(bootstrap.generatedAt))}</span>
         </div>
         ${renderWorkspaceTopActionCards(bootstrap.topActions || [], requestUrl)}
@@ -659,16 +658,16 @@ function renderWorkspaceRail(activePanel, bootstrap = {}, requestUrl) {
     { id: 'mirror', label: 'Mirror' },
   ];
   const titleByPanel = {
-    people: 'People nearby',
-    events: 'Event threads',
-    drafts: 'Draft momentum',
-    mirror: 'Mirror pulse',
+    people: 'People',
+    events: 'Events',
+    drafts: 'Drafts',
+    mirror: 'Mirror',
   };
   const subtitleByPanel = {
-    people: 'The strongest contact context stays one click away from the main conversation.',
-    events: 'Recent logbook entries stay close without pulling you into a separate workflow.',
-    drafts: 'Return to the latest platform-ready packages from the same shell.',
-    mirror: 'Self signal stays nearby, but never louder than the live conversation.',
+    people: 'Recent contacts stay close without taking over the conversation.',
+    events: 'Recent logbook entries stay close when you need context.',
+    drafts: 'The latest draft packages stay nearby when you need to review or hand off.',
+    mirror: 'Reflection stays nearby without getting louder than the conversation.',
   };
 
   return `
@@ -885,7 +884,7 @@ function renderCheckinCards(checkins) {
             ${renderPill(`energy ${checkin.energy}`, checkin.energy >= 0 ? 'good' : 'warn')}
             <span>${escapeHtml(formatDateTime(checkin.createdAt))}</span>
           </div>
-          <p>${escapeHtml(summarizeCardCopy(checkin.reflection, 148, 'Self reflection saved.'))}</p>
+          <p>${escapeHtml(summarizeCardCopy(checkin.reflection, 112, 'Self reflection saved.'))}</p>
           <small>${escapeHtml((checkin.emotions || []).join(', ') || 'neutral')}</small>
         </article>
       `
@@ -971,7 +970,7 @@ function renderPeopleCards(people, showScore = false, hrefBuilder = (person) => 
     .map((person) => {
       const tags = Array.isArray(person.tags) ? person.tags : [];
       const score = showScore && typeof person.score === 'number' ? person.score.toFixed(3) : null;
-      const summary = summarizeCardCopy(person.evidenceSnippet || person.notes || '', 112, 'No notes yet.');
+      const summary = summarizeCardCopy(person.evidenceSnippet || person.notes || '', 88, 'No notes yet.');
       const followUpLabel = readOptionalString(person.nextFollowUpAt, '')
         ? `follow-up ${formatDateTime(person.nextFollowUpAt)}`
         : '';
@@ -983,10 +982,12 @@ function renderPeopleCards(people, showScore = false, hrefBuilder = (person) => 
           </div>
           ${score ? `<p class="score">score ${escapeHtml(score)}</p>` : ''}
           <p>${escapeHtml(summary)}</p>
-          <div class="chip-row">
-            ${(tags.length ? tags : ['no-tags']).map((tag) => renderPill(tag, 'soft')).join('')}
+          ${(tags.length || followUpLabel)
+            ? `<div class="chip-row">
+            ${tags.slice(0, 3).map((tag) => renderPill(tag, 'soft')).join('')}
             ${followUpLabel ? renderPill(followUpLabel, 'accent') : ''}
-          </div>
+          </div>`
+            : ''}
           <div class="inline-actions">
             <a class="mini-link" href="${escapeHtml(hrefBuilder(person))}">Open Contact</a>
           </div>
@@ -1009,14 +1010,14 @@ function renderEventCards(events, hrefBuilder = (event) => buildWorkspaceHref({ 
           payload.description ||
           payload.audience ||
           summarizeStructuredValues(Object.values(details)),
-        168,
+        128,
         'Structured event details are ready for draft generation.'
       );
       const badges = [
         normalizeInlineText(payload.audience),
         normalizeInlineText(payload.languageStrategy || payload.language),
         normalizeInlineText(payload.tone),
-      ].filter(Boolean);
+      ].filter(Boolean).slice(0, 2);
       return `
         <article class="stack-card">
           <div class="stack-meta">
@@ -2242,6 +2243,8 @@ async function renderPeoplePage(page, requestUrl) {
   const recentPeople = recentRes?.ok ? recentRes.payload.people || [] : [];
   const detail = detailRes?.ok ? detailRes.payload : null;
   const visiblePeople = query ? commandPayload?.results || [] : recentPeople;
+  const visibleFollowUps = recentPeople.filter((person) => readOptionalString(person.nextFollowUpAt, '')).length;
+  const linkedEventCount = Array.isArray(detail?.relatedEvents) ? detail.relatedEvents.length : 0;
   const renderDetailBody = detail?.person?.personId
     ? `
         <div class="stack-card">
@@ -2344,35 +2347,35 @@ async function renderPeoplePage(page, requestUrl) {
       page,
       [
         renderMetric(String(recentPeople.length), 'contacts'),
-        renderMetric(query ? String(visiblePeople.length) : '0', 'matches'),
-        renderMetric(detail?.person?.name ? '1' : '0', 'detail open'),
+        renderMetric(String(visibleFollowUps), 'follow-ups'),
+        renderMetric(String(linkedEventCount), 'linked events'),
       ].join(''),
       `<div class="info-card"><strong>Contacts</strong><p>Keep the people you know searchable, scannable, and connected to the events they belong to.</p></div>`
     )}
     <div class="grid two-up">
       ${renderPanel(
-        'Command Bar',
+        'Find or draft naturally',
         `
           ${renderCommandBar({
             action: '/people',
             value: query,
             placeholder: 'Find Sam from Bristol, update Alex follow-up, or describe a new contact naturally.',
             hint: 'Search, create, or update a contact with one natural sentence.',
-            submitLabel: 'Run'
+            submitLabel: 'Search'
           })}
           ${commandPayload?.answer ? `<div class="info-callout"><strong>Contacts</strong><br />${escapeHtml(commandPayload.answer)}</div>` : ''}
           ${renderPeopleCards(visiblePeople, false, (person) => `/people/${encodeURIComponent(person.personId)}`)}
         `,
-        'Use one natural-language command to search, draft a new contact, or review an update.'
+        'Use one natural sentence to find someone, draft a new contact, or review an update.'
       )}
       ${renderPanel(
-        detail?.person?.personId ? 'Contact Detail' : commandPayload?.reviewDraft ? 'Review Contact' : 'Create Contact',
+        detail?.person?.personId ? 'Contact Detail' : commandPayload?.reviewDraft ? 'Review Contact' : 'Add Contact',
         renderDetailBody,
         detail?.person?.personId
-          ? 'A strong contact page shows the relationship summary first, then the connected event context, graph, and edit actions.'
+          ? 'The contact opens with the relationship summary, then the connected event context, graph, and edit actions.'
           : commandPayload?.reviewDraft
             ? 'Natural-language entry stays review-first until you confirm the contact details.'
-            : 'Manual cards make the People page useful immediately.'
+            : 'Add one contact directly if you do not want to start from the command bar.'
       )}
     </div>
   `;
@@ -2397,6 +2400,7 @@ async function renderEventsPage(page, requestUrl) {
   const events = eventsRes.ok ? eventsRes.payload.events || [] : [];
   const detail = detailRes?.ok ? detailRes.payload : null;
   const visibleEvents = query ? commandPayload?.results || [] : events;
+  const linkedPeopleCount = Array.isArray(detail?.relatedPeople) ? detail.relatedPeople.length : 0;
 
   const captureOptions = ['<option value="">No linked capture</option>']
     .concat(
@@ -2412,26 +2416,27 @@ async function renderEventsPage(page, requestUrl) {
   return `
     ${renderHero(
       page,
-      [renderMetric(String(events.length), 'recent events'), renderMetric(query ? String(visibleEvents.length) : String(captures.length), query ? 'matches' : 'capture candidates')].join('')
+      [renderMetric(String(events.length), 'recent events'), renderMetric(String(linkedPeopleCount), 'linked people')].join(''),
+      `<div class="info-card"><strong>Logbook</strong><p>Track what happened, who it involved, and which content threads grew from it.</p></div>`
     )}
     <div class="grid two-up">
       ${renderPanel(
-        'Command Bar',
+        'Find or draft naturally',
         `
           ${renderCommandBar({
             action: '/events',
             value: query,
             placeholder: 'Find the London meetup with Sam, or draft a new event naturally.',
             hint: 'Search, open, or draft an event with one natural sentence.',
-            submitLabel: 'Run'
+            submitLabel: 'Search'
           })}
           ${commandPayload?.answer ? `<div class="info-callout"><strong>Logbook</strong><br />${escapeHtml(commandPayload.answer)}</div>` : ''}
           ${renderEventCards(visibleEvents, (event) => `/events/${encodeURIComponent(event.eventId)}`)}
         `,
-        'Use one natural-language command to find an event, open the best match, or review a new event draft.'
+        'Use one natural sentence to find an event, open the best match, or review a new event draft.'
       )}
       ${renderPanel(
-        detail?.event?.eventId ? 'Event Detail' : commandPayload?.reviewDraft ? 'Review Event' : 'Create Event',
+        detail?.event?.eventId ? 'Event Detail' : commandPayload?.reviewDraft ? 'Review Event' : 'Add Event',
         detail?.event?.eventId
           ? `
               <div class="stack-card">
@@ -2461,9 +2466,8 @@ async function renderEventsPage(page, requestUrl) {
           : commandPayload?.reviewDraft
             ? renderEventCommandReview(commandPayload.reviewDraft)
           : `
-          <form class="api-form" data-api-form="true" data-endpoint="/events" data-json-fields="payload">
+          <form class="api-form" data-api-form="true" data-endpoint="/events">
             ${renderFormField('Title', '<input name="title" type="text" placeholder="OpenClaw SocialOS product push" />')}
-            ${renderFormField('Capture Seed', `<select name="captureId">${captureOptions}</select>`)}
             ${renderFormField('Audience', '<input name="audience" type="text" value="builders and collaborators" />')}
             ${renderFormField(
               'Language Strategy',
@@ -2474,13 +2478,14 @@ async function renderEventsPage(page, requestUrl) {
               </select>`
             )}
             ${renderFormField('Tone', '<input name="tone" type="text" value="clear, operational, warm" />')}
-            ${renderFormField('Links', '<textarea name="links" rows="3" placeholder="https://example.com\\nhttps://another-link"></textarea>', 'One link per line')}
-            ${renderFormField('Assets', '<textarea name="assets" rows="3" placeholder="hero-image.png\\nlaunch-screenshot.png"></textarea>', 'One asset note per line')}
-            ${renderFormField(
-              'Payload JSON',
-              '<textarea name="payload" rows="8">{\n  "audience": "builders and collaborators",\n  "goal": "ship a more operational dashboard",\n  "details": {\n    "focus": "ui + blocked unlocks + foundry workboard"\n  }\n}</textarea>',
-              'This becomes event context for draft generation.'
-            )}
+            <details class="draft-details">
+              <summary>Optional context</summary>
+              <div class="draft-details-body">
+                ${renderFormField('Capture Seed', `<select name="captureId">${captureOptions}</select>`)}
+                ${renderFormField('Links', '<textarea name="links" rows="3" placeholder="https://example.com\\nhttps://another-link"></textarea>', 'One link per line')}
+                ${renderFormField('Assets', '<textarea name="assets" rows="3" placeholder="hero-image.png\\nlaunch-screenshot.png"></textarea>', 'One asset note per line')}
+              </div>
+            </details>
             <div class="inline-actions">
               <button type="submit">Create Event</button>
             </div>
@@ -2491,10 +2496,10 @@ async function renderEventsPage(page, requestUrl) {
           ? 'Event detail ties together people, campaign strategy, and linked draft packages.'
           : commandPayload?.reviewDraft
             ? 'Natural-language event entry stays review-first until you confirm and save it.'
-            : 'Events are the handoff point from captures into campaigns.'
+            : 'Events are the handoff point from notes into campaigns.'
       )}
     </div>
-    ${renderPanel('Recent Captures', renderCaptureCards(captures.slice(0, 4)), 'Choose one as context if it helps')}
+    ${renderPanel('Recent Notes', renderCaptureFeed(captures.slice(0, 4)), 'Recent notes stay nearby when they help with event drafting.')}
   `;
 }
 
@@ -2518,7 +2523,7 @@ async function renderDraftsPage(page, requestUrl) {
     ${renderHero(
       page,
       [renderMetric(String(recentEvents.length), 'recent events'), renderMetric(String(drafts.length), 'drafts visible')].join(''),
-      `<div class="info-card"><strong>Simple draft mode</strong><p>One event, seven standard drafts. LinkedIn, X, Instagram stay in English. 中文平台 stays Chinese.</p></div>`
+      `<div class="info-card"><strong>Simple draft mode</strong><p>One event, seven standard drafts. LinkedIn, X, and Instagram stay in English. Zhihu, Xiaohongshu, WeChat Moments, and WeChat Official Account stay in Chinese.</p></div>`
     )}
     <div class="grid two-up">
       ${renderPanel(
@@ -2556,8 +2561,8 @@ async function renderDraftsPage(page, requestUrl) {
             <input type="hidden" name="platforms" value="wechat_official" />
             <div class="info-callout">
               <strong>Standard output</strong><br />
-              LinkedIn / X / Instagram use English only.<br />
-              知乎 / 小红书 / 朋友圈 / 公众号 use Chinese only.
+              LinkedIn, X, and Instagram use English only.<br />
+              Zhihu, Xiaohongshu, WeChat Moments, and WeChat Official Account use Chinese only.
             </div>
             ${selectedEvent ? `<div class="chip-row">${renderPill(selectedEvent.title, 'accent')}</div>` : renderEmptyState('Find or pick an event first.')}
             ${renderFormField('CTA', '<input name="cta" type="text" placeholder="Optional closing line if you want one." />')}
@@ -2610,13 +2615,13 @@ async function renderQueuePage(page) {
         renderMetric(String(runtime.ops?.queue?.blocked ?? 0), 'blocked product items'),
       ].join(''),
       `<div class="info-card"><strong>Queue posture</strong><p>${escapeHtml(
-        `${formatHumanPublishMode(publishMode)} keeps the next handoff clear. Live publish still needs explicit UI intent, credentials, and environment readiness.`
+        `${formatHumanPublishMode(publishMode)} keeps the next handoff clear. Live publish still stays gated until you deliberately open it.`
       )}</p></div>`
     )}
     <div class="grid three-up">
-      ${renderPanel('Ready', renderQueueCards(readyTasks, publishMode), 'Approved here first, still dry-run by default.')}
-      ${renderPanel('Manual Step', renderQueueCards(manualTasks, publishMode), 'Assistant prepares the handoff, you record the real outcome.')}
-      ${renderPanel('Done / Failed', renderQueueCards(doneTasks, publishMode), 'Closed tasks keep the audit trail visible without cluttering the live lane.')}
+      ${renderPanel('Ready', renderQueueCards(readyTasks, publishMode), 'These are the next packages ready for rehearsal or handoff.')}
+      ${renderPanel('Manual Step', renderQueueCards(manualTasks, publishMode), 'These cards hold the handoff while you capture the real outcome.')}
+      ${renderPanel('Done / Failed', renderQueueCards(doneTasks, publishMode), 'Closed items stay visible without crowding the live queue.')}
     </div>
   `;
 }
@@ -2738,7 +2743,7 @@ async function renderSelfMirrorPage(page, requestUrl) {
       )}
     </div>
     ${renderPanel(
-      'Generate or refresh',
+      'Refresh mirror',
         `
           <div class="control-stack">
             <form class="api-form compact-form" data-api-form="true" data-endpoint="/self-mirror/generate">
@@ -2757,7 +2762,7 @@ async function renderSelfMirrorPage(page, requestUrl) {
             </form>
           </div>
         `,
-        'Daily keeps today legible. Weekly turns repeated evidence into a higher-level pattern view.'
+        'Use this only when you want a newer pass. The reflection should stay the main thing to read.'
       )}
     ${renderPanel('Recent Check-ins', renderCheckinCards((payload.checkins || []).slice(0, 8)), 'These are the newest self signals feeding the mirror loop.')}
   `;
