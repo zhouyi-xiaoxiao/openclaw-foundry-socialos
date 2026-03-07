@@ -3352,10 +3352,11 @@ function renderDeckNetworkCluster(cluster) {
   `;
 }
 
-function renderDeckSlide({ eyebrow = '', title, bodyHtml = '', visualHtml = '', footerHtml = '', notesHtml = '' }) {
+function renderDeckSlide({ eyebrow = '', title, bodyHtml = '', visualHtml = '', footerHtml = '', notesHtml = '', shellClass = '' }) {
+  const shellClassName = ['deck-slide-shell', shellClass].filter(Boolean).join(' ');
   return `
     <section>
-      <div class="deck-slide-shell">
+      <div class="${shellClassName}">
         <div class="deck-slide-copy">
           ${eyebrow ? `<p class="deck-eyebrow">${escapeHtml(eyebrow)}</p>` : ''}
           <h2>${escapeHtml(title)}</h2>
@@ -3436,6 +3437,7 @@ function renderDeckDocument(requestUrl) {
     renderDeckSlide({
       eyebrow: 'Slide 3 · Who it is for',
       title: 'Built for high-context people, and already grounded in a real network.',
+      shellClass: 'deck-slide-shell-compact',
       bodyHtml: `
         <p class="deck-lead">The wedge is not “everyone.” It starts with people who constantly turn conversations into opportunities, follow-up, and public expression. The demo now carries a real relationship graph across London, Bristol, Chengdu, and San Francisco.</p>
       `,
@@ -3471,6 +3473,7 @@ function renderDeckDocument(requestUrl) {
     renderDeckSlide({
       eyebrow: 'Slide 5 · What works today',
       title: 'The core loop already works.',
+      shellClass: 'deck-slide-shell-compact deck-slide-shell-proof',
       bodyHtml: `
         <ul class="deck-check-list">
           <li>Real named contacts with linked identities, interactions, and event context already seeded into the demo</li>
@@ -3668,6 +3671,10 @@ function renderDeckDocument(requestUrl) {
       .reveal a {
         overflow-wrap: anywhere;
       }
+      .reveal .slides > section {
+        height: 100%;
+        min-height: 100%;
+      }
       .deck-slide-shell {
         min-height: 100%;
         height: 100%;
@@ -3676,7 +3683,7 @@ function renderDeckDocument(requestUrl) {
         display: grid;
         grid-template-columns: minmax(0, 1.04fr) minmax(360px, 0.86fr);
         gap: 42px;
-        align-items: start;
+        align-items: center;
       }
       .deck-slide-copy,
       .deck-slide-visual {
@@ -3684,12 +3691,27 @@ function renderDeckDocument(requestUrl) {
       }
       .deck-slide-copy {
         display: grid;
-        align-content: start;
-        gap: 24px;
+        align-content: space-between;
+        gap: 18px;
+        min-height: 0;
       }
       .deck-slide-visual {
         display: grid;
+        align-content: center;
+        min-height: 0;
+      }
+      .deck-slide-shell.deck-slide-shell-compact {
+        align-items: start;
+      }
+      .deck-slide-shell.deck-slide-shell-compact .deck-slide-copy,
+      .deck-slide-shell.deck-slide-shell-compact .deck-slide-visual {
+        align-self: stretch;
+      }
+      .deck-slide-shell.deck-slide-shell-compact .deck-slide-copy {
         align-content: start;
+      }
+      .deck-slide-shell.deck-slide-shell-compact .deck-slide-visual {
+        align-content: stretch;
       }
       .deck-eyebrow {
         margin: 0;
@@ -3919,6 +3941,19 @@ function renderDeckDocument(requestUrl) {
         gap: 18px;
         align-items: stretch;
       }
+      .deck-slide-shell.deck-slide-shell-proof .deck-proof-gallery {
+        height: 100%;
+        min-height: 0;
+      }
+      .deck-slide-shell.deck-slide-shell-proof .deck-shot-stack {
+        min-height: 0;
+        grid-template-rows: repeat(2, minmax(0, 1fr));
+      }
+      .deck-slide-shell.deck-slide-shell-proof .deck-shot.small,
+      .deck-slide-shell.deck-slide-shell-proof .deck-shot.deck-shot-tall {
+        height: 100%;
+        min-height: 0;
+      }
       .deck-shot.small {
         height: 280px;
         object-fit: cover;
@@ -4099,6 +4134,11 @@ function renderDeckDocument(requestUrl) {
         .deck-shot.deck-shot-tall {
           min-height: 460px;
         }
+        .deck-slide-shell.deck-slide-shell-proof .deck-shot.small,
+        .deck-slide-shell.deck-slide-shell-proof .deck-shot.deck-shot-tall {
+          height: 100%;
+          min-height: 0;
+        }
         .deck-ribbon {
           top: 14px;
           right: 16px;
@@ -4149,6 +4189,11 @@ function renderDeckDocument(requestUrl) {
         .deck-shot.deck-shot-tall {
           min-height: 408px;
         }
+        .deck-slide-shell.deck-slide-shell-proof .deck-shot.small,
+        .deck-slide-shell.deck-slide-shell-proof .deck-shot.deck-shot-tall {
+          height: 100%;
+          min-height: 0;
+        }
       }
       @media (max-width: 1180px) {
         .deck-slide-shell {
@@ -4170,6 +4215,14 @@ function renderDeckDocument(requestUrl) {
         }
         .deck-inline-flow {
           gap: 10px;
+        }
+        .deck-slide-shell.deck-slide-shell-proof .deck-proof-gallery,
+        .deck-slide-shell.deck-slide-shell-proof .deck-shot-stack {
+          height: auto;
+        }
+        .deck-slide-shell.deck-slide-shell-proof .deck-shot.small,
+        .deck-slide-shell.deck-slide-shell-proof .deck-shot.deck-shot-tall {
+          height: auto;
         }
         .deck-flow-arrow {
           transform: rotate(90deg);
@@ -4300,19 +4353,56 @@ function renderDeckDocument(requestUrl) {
     <script>${revealNotesJs}</script>
     <script>
       const useMobileStack = window.matchMedia('(max-width: 920px)').matches;
+      const usePrintDeck = ${printPdf ? 'true' : 'false'};
+      const getDesktopDeckGeometry = () => {
+        if (usePrintDeck) {
+          return {
+            margin: 0.03,
+            width: 1680,
+            height: 945,
+          };
+        }
+        return {
+          margin: 0,
+          width: Math.max(1280, window.innerWidth),
+          height: Math.max(720, window.innerHeight),
+        };
+      };
       document.documentElement.setAttribute('data-deck-mobile', useMobileStack ? 'true' : 'false');
-      if (!useMobileStack || ${printPdf ? 'true' : 'false'}) {
-        Reveal.initialize({
+      if (!useMobileStack || usePrintDeck) {
+        const revealInit = Reveal.initialize({
           hash: true,
           controls: true,
           progress: true,
           slideNumber: 'c/t',
           transition: 'fade',
-          margin: 0.05,
-          width: 1920,
-          height: 1080,
+          ...getDesktopDeckGeometry(),
           center: false,
           plugins: [ window.RevealNotes ].filter(Boolean)
+        });
+        Promise.resolve(revealInit).then(() => {
+          if (usePrintDeck) {
+            return;
+          }
+          let resizeFrame = null;
+          const syncDeckGeometry = () => {
+            Reveal.configure(getDesktopDeckGeometry());
+            Reveal.layout();
+          };
+          window.addEventListener(
+            'resize',
+            () => {
+              if (window.matchMedia('(max-width: 920px)').matches) {
+                return;
+              }
+              if (resizeFrame) {
+                cancelAnimationFrame(resizeFrame);
+              }
+              resizeFrame = requestAnimationFrame(syncDeckGeometry);
+            },
+            { passive: true }
+          );
+          syncDeckGeometry();
         });
       }
     </script>
