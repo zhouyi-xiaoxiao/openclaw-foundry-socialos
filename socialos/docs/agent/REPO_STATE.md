@@ -1,8 +1,8 @@
 # Repo State Handoff
 
-- Generated: 2026-03-07T03:19:03.512Z
+- Generated: 2026-03-07T03:19:48.844Z
 - Branch: main
-- Git head: 91662d5
+- Git head: aecdbf7
 - Dirty working tree: true
 
 ## Canonical Chain
@@ -44,22 +44,13 @@
 - `socialos/docs/evidence/socialos-demo.gif`
 
 ## Dirty Summary
-- M AGENTS.md
--  M QUEUE.md
--  M scripts/overnight_supervisor.mjs
--  M scripts/test.sh
--  M scripts/tests/agent_repo_smoke.mjs
--  M scripts/tests/docs_demo_smoke.mjs
--  M socialos/docs/AGENT_PLAYBOOK.md
--  M socialos/docs/DOCS_INDEX.md
--  M socialos/docs/EVIDENCE.md
--  M socialos/docs/SYSTEM_MANIFEST.json
-- ?? scripts/refresh_public_docs.mjs
-- ?? scripts/tests/refresh_public_docs_smoke.mjs
+- M socialos/docs/STATUS.md
+-  M socialos/docs/agent/REPO_STATE.md
+-  M socialos/docs/evidence/LATEST_VALIDATION.md
 
 ## Overnight Context
-- Next focus: respect-foundry-queue
-- Reason: Foundry already has active queue work; outer loop should bias to validation and repo trust.
+- Next focus: workspace-usability-and-demo-trust
+- Reason: Repo is healthy; continue aggressive product/core polish in Workspace, Contacts, Drafts, and Queue.
 
 ## Script Entry Points
 - `bash scripts/demo.sh` -> install, deploy runtime, validate safety, start public demo
