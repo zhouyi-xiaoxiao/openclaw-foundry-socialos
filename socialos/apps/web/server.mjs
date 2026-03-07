@@ -3387,6 +3387,8 @@ function renderDeckDocument(requestUrl) {
   const demoSummary = readOptionalString(deckStatus.demo?.summary, 'Local demo status not refreshed yet.');
   const repoUrl = readOptionalString(deckStatus.publicRepoUrl, PUBLIC_REPO_URL);
   const publicDeckUrl = PUBLIC_DECK_URL;
+  const repoDisplayUrl = repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  const publicDeckDisplayUrl = publicDeckUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
   const deckStatusLabel = deckStatus.demo?.healthy ? 'ready' : 'degraded';
   const slideSections = [
     renderDeckSlide({
@@ -3532,14 +3534,88 @@ function renderDeckDocument(requestUrl) {
         </ul>
       `,
       footerHtml: `
-        <p><strong>Proof surface:</strong> the deck now shows Contacts, Drafts, and Queue from the same real seeded demo.</p>
+        <div class="deck-proof-badge-row">
+          <span class="deck-proof-badge">Contacts memory</span>
+          <span class="deck-proof-badge">Draft generation</span>
+          <span class="deck-proof-badge">Trust-first queue</span>
+        </div>
+        <p>One seeded graph now powers every visible proof surface in the demo.</p>
       `,
       visualHtml: `
-        <div class="deck-proof-gallery">
-          ${contactsImage ? `<img class="deck-shot deck-shot-tall" src="${contactsImage}" alt="Contacts with real named network" />` : ''}
-          <div class="deck-shot-stack">
-            ${draftsImage ? `<img class="deck-shot small" src="${draftsImage}" alt="Draft generation flow" />` : ''}
-            ${queueImage ? `<img class="deck-shot small" src="${queueImage}" alt="Queue and recall flow" />` : ''}
+        <div class="deck-proof-gallery deck-proof-gallery-curated">
+          <article class="deck-proof-visual-card deck-proof-visual-card-tall">
+            <div class="deck-proof-visual-head">
+              <span>Relationship OS</span>
+              <strong>Contacts</strong>
+            </div>
+            <div class="deck-proof-visual-frame deck-proof-visual-frame-tall deck-proof-visual-frame-clean">
+              ${contactsImage ? `
+                <div class="deck-proof-shot-surface deck-proof-shot-surface-tall">
+                  <img class="deck-shot-proof deck-shot-proof-contain" src="${contactsImage}" alt="Contacts with real named network" />
+                </div>
+              ` : `<div class="deck-placeholder">Contacts screenshot unavailable</div>`}
+              <div class="deck-proof-callout">
+                <span>Visible proof</span>
+                <strong>Minghan Xiao, Candice Tang, James Wu</strong>
+                <p>Real names, notes, tags, and follow-up timing are already visible in the seeded contact memory.</p>
+              </div>
+            </div>
+            <div class="deck-proof-visual-caption">Real named people, linked identities, notes, and follow-up timing in one view.</div>
+          </article>
+          <div class="deck-proof-visual-stack">
+            <article class="deck-proof-visual-card">
+              <div class="deck-proof-visual-head">
+                <span>Content OS</span>
+                <strong>Drafts</strong>
+              </div>
+              <div class="deck-proof-visual-frame deck-proof-visual-frame-clean">
+                <div class="deck-proof-split">
+                  ${draftsImage ? `
+                    <div class="deck-proof-shot-surface">
+                      <img class="deck-shot-proof deck-shot-proof-contain" src="${draftsImage}" alt="Draft generation flow" />
+                    </div>
+                  ` : `<div class="deck-placeholder">Drafts screenshot unavailable</div>`}
+                  <div class="deck-proof-highlight">
+                    <span class="deck-proof-highlight-kicker">What is visible</span>
+                    <strong>7 drafts from one event</strong>
+                    <div class="deck-proof-token-row">
+                      <span class="deck-proof-token">LinkedIn</span>
+                      <span class="deck-proof-token">X</span>
+                      <span class="deck-proof-token">Instagram</span>
+                      <span class="deck-proof-token">Zhihu</span>
+                    </div>
+                    <p>Platform-native packages stay tied to the same London organiser thread instead of drifting apart.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="deck-proof-visual-caption">Seven platform-native packages from the same event context.</div>
+            </article>
+            <article class="deck-proof-visual-card">
+              <div class="deck-proof-visual-head">
+                <span>Trust layer</span>
+                <strong>Queue</strong>
+              </div>
+              <div class="deck-proof-visual-frame deck-proof-visual-frame-clean">
+                <div class="deck-proof-split">
+                  ${queueImage ? `
+                    <div class="deck-proof-shot-surface">
+                      <img class="deck-shot-proof deck-shot-proof-contain" src="${queueImage}" alt="Queue and recall flow" />
+                    </div>
+                  ` : `<div class="deck-placeholder">Queue screenshot unavailable</div>`}
+                  <div class="deck-proof-highlight">
+                    <span class="deck-proof-highlight-kicker">What is visible</span>
+                    <strong>Safe rehearsal before publish</strong>
+                    <div class="deck-proof-token-row">
+                      <span class="deck-proof-token">dry-run</span>
+                      <span class="deck-proof-token">manual step</span>
+                      <span class="deck-proof-token">approval gate</span>
+                    </div>
+                    <p>The queue makes the handoff legible, so nothing jumps straight from draft to public posting.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="deck-proof-visual-caption">Dry-run by default, with clear approval gates before anything goes live.</div>
+            </article>
           </div>
         </div>
       `,
@@ -3582,8 +3658,17 @@ function renderDeckDocument(requestUrl) {
         </div>
       `,
       footerHtml: `
-        <p><strong>Current status:</strong> ${escapeHtml(demoSummary)}</p>
-        <p><strong>Repo:</strong> <a href="${escapeHtml(repoUrl)}">${escapeHtml(repoUrl)}</a></p>
+        <div class="deck-reference-row">
+          <article class="deck-reference-card">
+            <span>Current status</span>
+            <strong>${escapeHtml(demoSummary)}</strong>
+          </article>
+          <a class="deck-reference-card deck-reference-card-link" href="${escapeHtml(repoUrl)}">
+            <span>Public repo</span>
+            <strong>Build log and source</strong>
+            <code>${escapeHtml(repoDisplayUrl)}</code>
+          </a>
+        </div>
       `,
       visualHtml: `
         <div class="deck-credibility-stack">
@@ -3614,7 +3699,7 @@ function renderDeckDocument(requestUrl) {
           <h3>SocialOS</h3>
           <p>A local-first relationship and identity operating system for high-context people.</p>
           <div class="deck-link-stack">
-            <a class="deck-cta-link" href="${escapeHtml(publicDeckUrl)}">Open zhouyixiaoxiao.org</a>
+            <a class="deck-cta-link" href="${escapeHtml(publicDeckUrl)}">Open ${escapeHtml(publicDeckDisplayUrl)}</a>
             <a class="deck-cta-link secondary" href="${escapeHtml(repoUrl)}">View public repo</a>
           </div>
         </div>
@@ -4055,16 +4140,210 @@ function renderDeckDocument(requestUrl) {
         gap: 18px;
         align-items: stretch;
       }
+      .deck-proof-gallery-curated {
+        gap: 18px;
+      }
+      .deck-proof-visual-stack {
+        display: grid;
+        gap: 18px;
+        min-height: 0;
+      }
+      .deck-proof-visual-card {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        min-height: 0;
+        overflow: hidden;
+        border-radius: calc(var(--deck-radius-xl) + 2px);
+        border: 1px solid var(--deck-line);
+        background: linear-gradient(180deg, rgba(255, 251, 245, 0.98) 0%, rgba(246, 240, 231, 0.98) 100%);
+        box-shadow: var(--deck-shadow);
+      }
+      .deck-proof-visual-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        padding: 16px 18px 14px;
+        border-bottom: 1px solid rgba(23, 33, 49, 0.08);
+        background: rgba(255, 252, 246, 0.92);
+      }
+      .deck-proof-visual-head span {
+        font-size: 12px;
+        line-height: 1.2;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--deck-accent);
+      }
+      .deck-proof-visual-head strong {
+        font-size: 28px;
+        line-height: 1;
+        font-family: var(--deck-display);
+        color: var(--deck-ink);
+      }
+      .deck-proof-visual-frame {
+        position: relative;
+        overflow: hidden;
+        min-height: 0;
+        height: 220px;
+        background: rgba(246, 240, 229, 0.92);
+      }
+      .deck-proof-visual-frame-tall {
+        height: 518px;
+      }
+      .deck-proof-visual-frame::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 22%;
+        background: linear-gradient(180deg, rgba(246, 240, 229, 0) 0%, rgba(246, 240, 229, 0.88) 100%);
+        pointer-events: none;
+      }
+      .deck-shot-proof {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        border: 0;
+        box-shadow: none;
+        background: transparent;
+      }
+      .deck-proof-visual-frame-clean::after {
+        display: none;
+      }
+      .deck-proof-shot-surface {
+        min-width: 0;
+        min-height: 0;
+        margin: 16px;
+        border-radius: calc(var(--deck-radius-xl) - 2px);
+        overflow: hidden;
+        border: 1px solid rgba(23, 33, 49, 0.1);
+        background: linear-gradient(180deg, rgba(240, 233, 221, 0.98) 0%, rgba(248, 243, 235, 0.98) 100%);
+        box-shadow: 0 16px 40px rgba(22, 33, 50, 0.12);
+      }
+      .deck-proof-shot-surface-tall {
+        margin: 18px 18px 12px;
+      }
+      .deck-proof-shot-surface .deck-shot-proof {
+        width: 100%;
+        height: 100%;
+      }
+      .deck-shot-proof-contacts {
+        object-position: 8% 0%;
+        transform: scale(1.01);
+        transform-origin: top left;
+      }
+      .deck-shot-proof-drafts {
+        object-position: 48% 10%;
+        transform: scale(1.03);
+        transform-origin: top center;
+      }
+      .deck-shot-proof-queue {
+        object-position: 50% 18%;
+        transform: scale(1.04);
+        transform-origin: top center;
+      }
+      .deck-shot-proof-contain {
+        object-fit: contain;
+        object-position: top center;
+        transform: none;
+      }
+      .deck-proof-callout {
+        display: grid;
+        gap: 10px;
+        padding: 0 18px 18px;
+      }
+      .deck-proof-callout span,
+      .deck-proof-highlight-kicker {
+        font-size: 11px;
+        line-height: 1.2;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--deck-accent);
+      }
+      .deck-proof-callout strong,
+      .deck-proof-highlight strong {
+        font-family: var(--deck-display);
+        font-size: 24px;
+        line-height: 1.02;
+        color: var(--deck-ink);
+      }
+      .deck-proof-callout p,
+      .deck-proof-highlight p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--deck-ink-soft);
+      }
+      .deck-proof-split {
+        display: grid;
+        grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+        align-items: stretch;
+        height: 100%;
+        min-height: 0;
+      }
+      .deck-proof-highlight {
+        display: grid;
+        align-content: center;
+        gap: 10px;
+        padding: 16px 18px 16px 0;
+      }
+      .deck-proof-token-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .deck-proof-token {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: rgba(21, 111, 106, 0.08);
+        border: 1px solid rgba(21, 111, 106, 0.12);
+        font-size: 12px;
+        line-height: 1;
+        color: var(--deck-accent);
+      }
+      .deck-proof-visual-caption {
+        padding: 12px 16px 14px;
+        border-top: 1px solid rgba(23, 33, 49, 0.08);
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--deck-ink-soft);
+        background: rgba(255, 252, 246, 0.9);
+      }
+      .deck-proof-badge-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .deck-proof-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(21, 111, 106, 0.1);
+        border: 1px solid rgba(21, 111, 106, 0.12);
+        font-size: 14px;
+        line-height: 1.2;
+        color: var(--deck-accent);
+      }
       .deck-slide-shell.deck-slide-shell-proof .deck-proof-gallery {
         height: 100%;
         min-height: 0;
       }
-      .deck-slide-shell.deck-slide-shell-proof .deck-shot-stack {
+      .deck-slide-shell.deck-slide-shell-proof .deck-shot-stack,
+      .deck-slide-shell.deck-slide-shell-proof .deck-proof-visual-stack {
         min-height: 0;
         grid-template-rows: repeat(2, minmax(0, 1fr));
       }
       .deck-slide-shell.deck-slide-shell-proof .deck-shot.small,
-      .deck-slide-shell.deck-slide-shell-proof .deck-shot.deck-shot-tall {
+      .deck-slide-shell.deck-slide-shell-proof .deck-shot.deck-shot-tall,
+      .deck-slide-shell.deck-slide-shell-proof .deck-proof-visual-frame,
+      .deck-slide-shell.deck-slide-shell-proof .deck-proof-visual-frame-tall {
         height: 100%;
         min-height: 0;
       }
@@ -4115,6 +4394,45 @@ function renderDeckDocument(requestUrl) {
         display: flex;
         gap: 12px;
         flex-wrap: wrap;
+      }
+      .deck-reference-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .deck-reference-card {
+        display: grid;
+        gap: 8px;
+        padding: 14px 16px;
+        border-radius: var(--deck-radius-xl);
+        border: 1px solid var(--deck-line);
+        background: linear-gradient(180deg, rgba(255, 251, 245, 0.96) 0%, rgba(246, 240, 231, 0.96) 100%);
+        box-shadow: var(--deck-shadow);
+      }
+      .deck-reference-card span {
+        font-size: 11px;
+        line-height: 1.2;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--deck-accent);
+      }
+      .deck-reference-card strong {
+        font-size: 18px;
+        line-height: 1.3;
+        color: var(--deck-ink);
+      }
+      .deck-reference-card code {
+        font-size: 13px;
+        line-height: 1.35;
+        color: var(--deck-ink-soft);
+        word-break: break-word;
+      }
+      .deck-reference-card-link {
+        text-decoration: none;
+      }
+      .deck-reference-card-link:hover {
+        transform: translateY(-1px);
+        transition: transform 160ms ease;
       }
       .deck-footer-note {
         display: grid;
@@ -4270,8 +4588,48 @@ function renderDeckDocument(requestUrl) {
         .deck-shot.deck-shot-tall {
           min-height: 460px;
         }
+        .deck-proof-visual-head {
+          padding: 12px 14px 11px;
+        }
+        .deck-proof-visual-head strong {
+          font-size: 22px;
+        }
+        .deck-proof-visual-head span {
+          font-size: 10px;
+        }
+        .deck-proof-callout strong,
+        .deck-proof-highlight strong {
+          font-size: 20px;
+        }
+        .deck-proof-callout p,
+        .deck-proof-highlight p {
+          font-size: 12px;
+        }
+        .deck-proof-token {
+          font-size: 11px;
+          padding: 6px 9px;
+        }
+        .deck-proof-visual-caption {
+          padding: 10px 12px 12px;
+          font-size: 12px;
+        }
+        .deck-proof-badge {
+          padding: 7px 10px;
+          font-size: 12px;
+        }
+        .deck-reference-card {
+          padding: 12px 14px;
+        }
+        .deck-reference-card strong {
+          font-size: 16px;
+        }
+        .deck-reference-card code {
+          font-size: 12px;
+        }
         .deck-slide-shell.deck-slide-shell-proof .deck-shot.small,
-        .deck-slide-shell.deck-slide-shell-proof .deck-shot.deck-shot-tall {
+        .deck-slide-shell.deck-slide-shell-proof .deck-shot.deck-shot-tall,
+        .deck-slide-shell.deck-slide-shell-proof .deck-proof-visual-frame,
+        .deck-slide-shell.deck-slide-shell-proof .deck-proof-visual-frame-tall {
           height: 100%;
           min-height: 0;
         }
@@ -4306,6 +4664,7 @@ function renderDeckDocument(requestUrl) {
         .deck-network-grid,
         .deck-proof-strip,
         .deck-real-loop,
+        .deck-proof-visual-stack,
         .deck-shot-stack,
         .deck-proof-gallery {
           gap: 12px;
@@ -4327,9 +4686,53 @@ function renderDeckDocument(requestUrl) {
           min-height: 408px;
         }
         .deck-slide-shell.deck-slide-shell-proof .deck-shot.small,
-        .deck-slide-shell.deck-slide-shell-proof .deck-shot.deck-shot-tall {
+        .deck-slide-shell.deck-slide-shell-proof .deck-shot.deck-shot-tall,
+        .deck-slide-shell.deck-slide-shell-proof .deck-proof-visual-frame,
+        .deck-slide-shell.deck-slide-shell-proof .deck-proof-visual-frame-tall {
           height: 100%;
           min-height: 0;
+        }
+        .deck-proof-visual-head {
+          padding: 12px 14px 11px;
+        }
+        .deck-proof-visual-head strong {
+          font-size: 20px;
+        }
+        .deck-proof-visual-head span,
+        .deck-proof-badge {
+          font-size: 11px;
+        }
+        .deck-proof-callout {
+          padding: 0 14px 14px;
+          gap: 8px;
+        }
+        .deck-proof-callout strong,
+        .deck-proof-highlight strong {
+          font-size: 18px;
+        }
+        .deck-proof-callout p,
+        .deck-proof-highlight p {
+          font-size: 12px;
+        }
+        .deck-proof-token {
+          font-size: 10px;
+          padding: 6px 8px;
+        }
+        .deck-proof-visual-caption {
+          padding: 10px 12px 12px;
+          font-size: 12px;
+        }
+        .deck-reference-row {
+          gap: 10px;
+        }
+        .deck-reference-card {
+          padding: 12px 14px;
+        }
+        .deck-reference-card strong {
+          font-size: 15px;
+        }
+        .deck-reference-card code {
+          font-size: 11px;
         }
         .deck-real-input,
         .deck-real-stage {
@@ -4369,12 +4772,37 @@ function renderDeckDocument(requestUrl) {
         .deck-real-chip-row {
           gap: 7px;
         }
+        .deck-proof-split {
+          grid-template-columns: 1fr;
+        }
+        .deck-proof-shot-surface {
+          margin: 14px 14px 8px;
+          min-height: 132px;
+        }
+        .deck-proof-shot-surface-tall {
+          margin-bottom: 10px;
+        }
+        .deck-proof-highlight {
+          padding: 0 14px 14px;
+        }
+        .deck-reference-row {
+          grid-template-columns: 1fr;
+        }
+        .deck-proof-visual-frame {
+          height: 228px;
+        }
+        .deck-proof-visual-frame-tall {
+          height: 420px;
+        }
         .deck-slide-shell.deck-slide-shell-proof .deck-proof-gallery,
-        .deck-slide-shell.deck-slide-shell-proof .deck-shot-stack {
+        .deck-slide-shell.deck-slide-shell-proof .deck-shot-stack,
+        .deck-slide-shell.deck-slide-shell-proof .deck-proof-visual-stack {
           height: auto;
         }
         .deck-slide-shell.deck-slide-shell-proof .deck-shot.small,
-        .deck-slide-shell.deck-slide-shell-proof .deck-shot.deck-shot-tall {
+        .deck-slide-shell.deck-slide-shell-proof .deck-shot.deck-shot-tall,
+        .deck-slide-shell.deck-slide-shell-proof .deck-proof-visual-frame,
+        .deck-slide-shell.deck-slide-shell-proof .deck-proof-visual-frame-tall {
           height: auto;
         }
         .deck-flow-arrow {
@@ -4462,12 +4890,39 @@ function renderDeckDocument(requestUrl) {
         }
         .deck-chip-row,
         .deck-inline-flow,
-        .deck-real-chip-row {
+        .deck-real-chip-row,
+        .deck-proof-badge-row {
           flex-direction: column;
           align-items: stretch;
         }
         .deck-real-chip {
           justify-content: center;
+        }
+        .deck-proof-badge {
+          justify-content: center;
+        }
+        .deck-proof-split {
+          grid-template-columns: 1fr;
+        }
+        .deck-proof-shot-surface {
+          margin: 14px 14px 8px;
+          min-height: 132px;
+        }
+        .deck-proof-shot-surface-tall {
+          margin-bottom: 10px;
+        }
+        .deck-proof-highlight {
+          padding: 0 14px 14px;
+        }
+        .deck-reference-row {
+          grid-template-columns: 1fr;
+        }
+        .deck-proof-visual-frame {
+          height: 220px;
+        }
+        .deck-proof-visual-frame-tall {
+          min-height: 300px;
+          height: 300px;
         }
         .reveal .controls,
         .reveal .progress,

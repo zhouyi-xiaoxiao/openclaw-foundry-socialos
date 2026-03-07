@@ -141,6 +141,39 @@ function buildPrimaryDemoDraftContent(platform) {
   return '这不是又一个内容工具，而是把“认识人、记住人、持续跟进、形成输出”串成一个系统工作台。我这次用 London hackathon organiser 圈子的真实关系来演示 SocialOS。';
 }
 
+function buildRecentCaptureSeeds() {
+  return [
+    {
+      captureId: 'capture_real_network_1',
+      source: 'workspace-chat',
+      personId: PRIMARY_DEMO_CONTACT_ID,
+      createdAt: nowIso(-1),
+      text: 'Minghan Xiao is a London hackathon organiser at Imperial College from Tianjin. He shared his X and LinkedIn. Shafi Maahe is another Imperial organiser who interviewed Peter, the creator of OpenClaw.',
+    },
+    {
+      captureId: 'capture_real_network_2',
+      source: 'workspace-chat',
+      personId: 'person_demo_candice_tang',
+      createdAt: nowIso(-2),
+      text: 'Candice Tang is an independent lawyer focused on cross-border and IP work. We met at a Chengdu Chamber event, I later visited her office, and she treated me to a meal. James Wu is Vice President at NVIDIA and a Tianjin University alumnus I met at iHealth in San Francisco.',
+    },
+    {
+      captureId: 'capture_real_network_3',
+      source: 'workspace-chat',
+      personId: 'person_demo_daniel_dandrea',
+      createdAt: nowIso(-3),
+      text: "Daniel D'Andrea, Alan Champneys, Matt Hennessy, James Sibson, and Clare Rees-Zimmerman belong to my Bristol and Exeter teaching and research-industrial circle around MDM3, Data Science: Methods and Practice, and the mini-drones programme.",
+    },
+    {
+      captureId: 'capture_real_network_4',
+      source: 'workspace-chat',
+      personId: 'person_demo_xiyue_zhang',
+      createdAt: nowIso(-4),
+      text: 'Xiyue Zhang, Michele Barbour, and Stefan Dienstag are active Bristol relationships I want SocialOS to remember across workshop follow-up, Early Career Enterprise Fellows, and the Nucleate AI community.',
+    },
+  ];
+}
+
 function main() {
   const db = new DatabaseSync(DB_PATH);
   db.exec(fs.readFileSync(SCHEMA_PATH, 'utf8'));
@@ -171,22 +204,25 @@ function main() {
     );
   }
 
-  const captureId = 'capture_demo_1';
-  writeRow(
-    db,
-    `INSERT OR REPLACE INTO Audit(id,action,payload,created_at)
-     VALUES(?,?,?,?)`,
-    [
-      captureId,
-      'capture',
-      JSON.stringify({
-        text: 'Met Minghan Xiao in the London hackathon organiser circle at Imperial College, exchanged X and LinkedIn, and want to follow up about builder communities and operator dashboards.',
-        source: 'seed_demo',
-        personId: PRIMARY_DEMO_CONTACT_ID,
-      }),
-      earlier,
-    ]
-  );
+  const recentCaptureSeeds = buildRecentCaptureSeeds();
+
+  for (const capture of recentCaptureSeeds) {
+    writeRow(
+      db,
+      `INSERT OR REPLACE INTO Audit(id,action,payload,created_at)
+       VALUES(?,?,?,?)`,
+      [
+        capture.captureId,
+        'capture',
+        JSON.stringify({
+          text: capture.text,
+          source: capture.source,
+          personId: capture.personId,
+        }),
+        capture.createdAt,
+      ]
+    );
+  }
 
   writeRow(
     db,
@@ -279,7 +315,7 @@ function main() {
     ]
   );
 
-  const structuredMirror = buildStructuredMirror({
+    const structuredMirror = buildStructuredMirror({
     checkins: checkins.map(([id, energy, emotions, trigger, reflection, createdAt]) => ({
       checkinId: id,
       energy,
@@ -288,12 +324,10 @@ function main() {
       reflection,
       createdAt,
     })),
-    captures: [
-      {
-        captureId,
-        text: 'Met Minghan Xiao in the London hackathon organiser circle at Imperial College, exchanged X and LinkedIn, and want to follow up about builder communities and operator dashboards.',
-      },
-    ],
+    captures: recentCaptureSeeds.map((capture) => ({
+      captureId: capture.captureId,
+      text: capture.text,
+    })),
     interactions: interactionRows.map(([id, , summary, happenedAt, evidence]) => ({
       interactionId: id,
       summary,
