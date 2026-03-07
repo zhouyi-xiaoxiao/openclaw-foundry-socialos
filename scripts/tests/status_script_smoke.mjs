@@ -18,6 +18,7 @@ const missingQueue = path.join(tempDir, 'MISSING_QUEUE.md');
 const queueFile = path.join(tempDir, 'QUEUE.md');
 const queueNoBlockedFile = path.join(tempDir, 'QUEUE_NO_BLOCKED.md');
 const queueBlockedOnlyFile = path.join(tempDir, 'QUEUE_BLOCKED_ONLY.md');
+const queueIndentedFile = path.join(tempDir, 'QUEUE_INDENTED.md');
 
 fs.mkdirSync(runDir, { recursive: true });
 fs.mkdirSync(emptyRunDir, { recursive: true });
@@ -31,6 +32,16 @@ fs.writeFileSync(queueNoBlockedFile, ['- [ ] Build workspace follow-up panel', '
 fs.writeFileSync(
   queueBlockedOnlyFile,
   ['- [!] Live publish credential handoff', '- [!] Postgres migration handoff'].join('\n'),
+  'utf8',
+);
+fs.writeFileSync(
+  queueIndentedFile,
+  [
+    '- [ ] Parent task',
+    '  - [-] Nested in-progress task',
+    '    - [!] Deep blocked task',
+    '\t- [x] Deep done task',
+  ].join('\n'),
   'utf8',
 );
 fs.writeFileSync(
@@ -101,6 +112,17 @@ const blockedOnlyResult = spawnSync('bash', [script], {
   },
 });
 
+const indentedQueueResult = spawnSync('bash', [script], {
+  cwd: root,
+  encoding: 'utf8',
+  env: {
+    ...process.env,
+    SOCIALOS_QUEUE_FILE: queueIndentedFile,
+    SOCIALOS_RUN_DIR: runDir,
+    SOCIALOS_LATEST_DIGEST_FILE: latestDigest,
+  },
+});
+
 const missingRunDirResult = spawnSync('bash', [script], {
   cwd: root,
   encoding: 'utf8',
@@ -132,6 +154,15 @@ try {
   assert(noBlockedResult.stdout.includes('Blocked queue head:\nnone'), 'blocked queue head should print none when queue has no blocked items');
   assert(blockedOnlyResult.status === 0, `status script with blocked-only queue should exit 0, got ${blockedOnlyResult.status}`);
   assert(blockedOnlyResult.stdout.includes('current_task: none'), 'blocked-only queue should not report a current actionable task');
+  assert(indentedQueueResult.status === 0, `status script with indented queue should exit 0, got ${indentedQueueResult.status}`);
+  assert(
+    indentedQueueResult.stdout.includes('pending=1 in_progress=1 blocked=1 done=1'),
+    'indented queue markers should be counted in queue totals',
+  );
+  assert(
+    indentedQueueResult.stdout.includes('Blocked queue head:\nDeep blocked task'),
+    'indented blocked tasks should be listed in blocked queue head',
+  );
   assert(missingRunDirResult.status === 0, `status script with missing run dir should exit 0, got ${missingRunDirResult.status}`);
   assert(missingRunDirResult.stdout.includes('run_reports_dir: missing'), 'status should report missing run reports directory');
   console.log('status_script_smoke: PASS');
