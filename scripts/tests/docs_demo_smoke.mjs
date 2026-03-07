@@ -12,6 +12,10 @@ function assert(condition, message) {
 }
 
 const readme = read('README.md');
+assert(readme.includes('## Project Overview'), 'README must include a Project Overview section');
+assert(readme.includes('## Setup & Installation'), 'README must include a Setup & Installation section');
+assert(readme.includes('## Architecture Overview'), 'README must include an Architecture Overview section');
+assert(readme.includes('## Bounty-Specific Integration'), 'README must include a Bounty-Specific Integration section');
 assert(readme.includes('bash scripts/demo.sh'), 'README must expose one-command demo bootstrap command');
 assert(readme.includes('bash scripts/demo_status.sh'), 'README must expose demo status command');
 assert(readme.includes('bash scripts/stop_demo.sh'), 'README must expose demo stop command');
@@ -38,6 +42,8 @@ assert(readme.includes('node scripts/refresh_public_docs.mjs'), 'README should e
 assert(readme.includes('socialos/docs/HACKATHON_BOUNTIES.md'), 'README should link to the hackathon bounty guide');
 assert(readme.includes('socialos/docs/pitch/DORAHACKS_MASTER_SCRIPT.md'), 'README should link to the DoraHacks master script');
 assert(readme.includes('socialos/docs/pitch/RECORDING_AND_SUBMISSION_RUNBOOK.md'), 'README should link to the recording runbook');
+assert(readme.includes('5 independent `5-8 minute` videos'), 'README should explain the five independent DoraHacks videos');
+assert(readme.includes('Canonical Bounty Hub'), 'README should position /hackathon as the canonical public bounty hub');
 
 const demoDoc = read('socialos/docs/DEMO_SCRIPT.md');
 for (const cmd of ['bash scripts/demo.sh', 'bash scripts/demo_status.sh', 'bash scripts/test.sh', 'bash scripts/stop_demo.sh']) {

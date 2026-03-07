@@ -78,9 +78,10 @@ async function main() {
 
     assert(indexHtml.includes('SocialOS VC Deck'), 'exported root index should contain the deck title');
     assert(printHtml.includes('data-print-pdf="true"'), 'exported print variant should preserve print mode');
-    assert(demoHtml.includes('Read-only public proof page'), 'exported demo page should render in public proof mode');
-    assert(hackathonHtml.includes('Read-only public bounty hub'), 'exported hackathon page should render in public proof mode');
-    assert(buddyHtml.includes('Read-only public Buddy page'), 'exported buddy page should render in public proof mode');
+    assert(demoHtml.includes('Auxiliary public proof page'), 'exported demo page should render in public proof mode');
+    assert(hackathonHtml.includes('Canonical public bounty hub'), 'exported hackathon page should render in public proof mode');
+    assert(hackathonHtml.includes('id="bounty-z-ai-general"'), 'exported hackathon page should keep same-page bounty anchors');
+    assert(buddyHtml.includes('Auxiliary public Buddy page'), 'exported buddy page should render in public proof mode');
     assert(cname === 'zhouyixiaoxiao.org', 'deck export should target the custom domain');
     assert(!indexHtml.includes('127.0.0.1'), 'exported public deck should not expose localhost-only links');
     assert(!demoHtml.includes('127.0.0.1'), 'exported public demo should not expose localhost-only links');

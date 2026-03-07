@@ -8,8 +8,11 @@ import { spawnSync } from 'node:child_process';
 import { startApiServer } from '../socialos/apps/api/server.mjs';
 
 const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
-const evidenceDir = path.join(repoRoot, 'socialos', 'docs', 'evidence');
+const evidenceDir = process.env.SOCIALOS_HACKATHON_EVIDENCE_DIR
+  ? path.resolve(process.env.SOCIALOS_HACKATHON_EVIDENCE_DIR)
+  : path.join(repoRoot, 'socialos', 'docs', 'evidence');
 const bountyIds = ['claw-for-human', 'animoca', 'human-for-claw', 'z-ai-general', 'ai-agents-for-good'];
+const requireLiveProofs = process.env.REQUIRE_LIVE_HACKATHON_PROOFS === '1';
 
 async function ensureDir(target) {
   await fsp.mkdir(target, { recursive: true });
@@ -68,21 +71,44 @@ function seedTempDemo(dbPath) {
   }
 }
 
+function assertLive(condition, message) {
+  if (!condition) {
+    throw new Error(message);
+  }
+}
+
+function isLiveProof(proof = {}) {
+  return Boolean(proof && proof.live === true && proof.fallbackUsed === false);
+}
+
+function formatProofLine(label, proof = {}) {
+  const provider = proof.provider || 'unknown';
+  const model = proof.model || 'unknown';
+  const capturedAt = proof.capturedAt || 'n/a';
+  return `${label}: provider=${provider}, model=${model}, live=${Boolean(proof.live)}, fallbackUsed=${Boolean(proof.fallbackUsed)}, capturedAt=${capturedAt}`;
+}
+
+function logStep(message) {
+  console.log(`capture_hackathon_proofs: ${message}`);
+}
+
 function buildSummary({ overview, glmGenerate, flockTriage, workspaceChat, drafts }) {
   const integrationLines = Array.isArray(overview.integrations)
-    ? overview.integrations.map((item) => `- ${item.label}: ${item.status}${item.model ? ` (${item.model})` : ''}`)
+    ? overview.integrations.map(
+        (item) =>
+          `- ${item.label}: status=${item.status}, provider=${item.provider || 'n/a'}, model=${item.model || 'n/a'}, live=${Boolean(item.live)}, fallbackUsed=${Boolean(item.fallbackUsed)}`
+      )
     : [];
 
   return `# Hackathon Proof Snapshot
 
 - Generated: ${new Date().toISOString()}
+- Proof mode: ${requireLiveProofs ? 'live-required' : 'capture'}
 - Bounties: ${Array.isArray(overview.bounties) ? overview.bounties.length : 0}
-- GLM provider: ${glmGenerate.proof?.provider || 'unknown'}
-- GLM fallback: ${Boolean(glmGenerate.proof?.fallbackUsed)}
-- FLock provider: ${flockTriage.proof?.provider || 'unknown'}
-- FLock fallback: ${Boolean(flockTriage.proof?.fallbackUsed)}
-- Workspace provider: ${workspaceChat.modelRouting?.effectiveProvider || 'unknown'}
-- Draft generation provider: ${drafts.proof?.provider || 'unknown'}
+- ${formatProofLine('GLM generation', glmGenerate.proof)}
+- ${formatProofLine('FLock SDG triage', flockTriage.proof)}
+- Workspace routing: provider=${workspaceChat.modelRouting?.effectiveProvider || 'unknown'}, model=${workspaceChat.modelRouting?.workspaceModel || 'unknown'}, fallbackUsed=${Boolean(workspaceChat.modelRouting?.fallbackUsed)}
+- ${formatProofLine('Draft generation', drafts.proof)}
 
 ## Integration status
 ${integrationLines.join('\n') || '- No integration summary available.'}
@@ -109,14 +135,7 @@ async function main() {
   const api = await startApiServer({ port: 0, quiet: true, dbPath });
 
   try {
-    const overview = await getJson(api.baseUrl, '/hackathon/overview');
-    const proofsAll = await getJson(api.baseUrl, '/proofs?limit=24');
-    const proofsByBounty = Object.fromEntries(
-      await Promise.all(
-        bountyIds.map(async (bountyId) => [bountyId, await getJson(api.baseUrl, `/proofs?limit=24&bounty=${encodeURIComponent(bountyId)}`)])
-      )
-    );
-
+    logStep(`starting mode=${requireLiveProofs ? 'live-required' : 'capture'} evidenceDir=${evidenceDir}`);
     const glmGenerate = await postJson(api.baseUrl, '/integrations/glm/generate', {
       taskType: 'bilingual-summary',
       prompt: 'Summarize why SocialOS fits Z.AI General for judges in one short bilingual answer.',
@@ -126,6 +145,7 @@ async function main() {
       },
       bountyMode: 'z-ai-general',
     });
+    logStep(`glm provider=${glmGenerate.proof?.provider || 'unknown'} fallbackUsed=${Boolean(glmGenerate.proof?.fallbackUsed)}`);
 
     const workspaceChat = await postJson(api.baseUrl, '/workspace/chat', {
       text: 'Help me remember the organizer I met at the hackathon and prepare a bilingual follow-up.',
@@ -133,6 +153,7 @@ async function main() {
       bountyMode: 'z-ai-general',
       source: 'hackathon_proof_capture',
     });
+    logStep(`workspace provider=${workspaceChat.modelRouting?.effectiveProvider || 'unknown'} fallbackUsed=${Boolean(workspaceChat.modelRouting?.fallbackUsed)}`);
 
     const event = await postJson(api.baseUrl, '/events', {
       title: 'Community Mentor Follow-up',
@@ -148,13 +169,50 @@ async function main() {
       eventId: event.eventId,
       provider: 'glm',
       bountyMode: 'z-ai-general',
-      platforms: ['linkedin', 'x', 'zhihu', 'wechat_moments'],
+      platforms: ['linkedin', 'zhihu'],
       languages: ['platform-native'],
     });
+    logStep(`drafts provider=${drafts.proof?.provider || 'unknown'} fallbackUsed=${Boolean(drafts.proof?.fallbackUsed)} count=${drafts.count || 0}`);
 
     const flockTriage = await postJson(api.baseUrl, '/integrations/flock/sdg-triage', {
       text: 'We need to coordinate volunteer mentors for a community workshop and help students follow up afterwards.',
     });
+    logStep(`flock provider=${flockTriage.proof?.provider || 'unknown'} fallbackUsed=${Boolean(flockTriage.proof?.fallbackUsed)}`);
+
+    if (requireLiveProofs) {
+      assertLive(isLiveProof(glmGenerate.proof), 'GLM proof capture stayed in fallback mode');
+      assertLive(isLiveProof(flockTriage.proof), 'FLock proof capture stayed in fallback mode');
+      assertLive(isLiveProof(drafts.proof), 'Draft generation stayed in fallback mode');
+      assertLive(
+        Array.isArray(drafts.proof?.generations) &&
+          drafts.proof.generations.length > 0 &&
+          drafts.proof.generations.every((item) => item.provider === 'glm' && item.fallbackUsed === false),
+        'At least one draft generation did not use live GLM output'
+      );
+    }
+
+    const overview = await getJson(api.baseUrl, '/hackathon/overview');
+    const proofsAll = await getJson(api.baseUrl, '/proofs?limit=24');
+    const proofsByBounty = Object.fromEntries(
+      await Promise.all(
+        bountyIds.map(async (bountyId) => [bountyId, await getJson(api.baseUrl, `/proofs?limit=24&bounty=${encodeURIComponent(bountyId)}`)])
+      )
+    );
+
+    if (requireLiveProofs) {
+      const zAiBounty = Array.isArray(overview.bounties) ? overview.bounties.find((item) => item.id === 'z-ai-general') : null;
+      const goodBounty = Array.isArray(overview.bounties) ? overview.bounties.find((item) => item.id === 'ai-agents-for-good') : null;
+      assertLive(zAiBounty && zAiBounty.live === true && zAiBounty.fallbackUsed === false, 'Hackathon overview still marks Z.AI General as fallback');
+      assertLive(goodBounty && goodBounty.live === true && goodBounty.fallbackUsed === false, 'Hackathon overview still marks AI Agents for Good as fallback');
+      assertLive(
+        proofsByBounty['z-ai-general']?.proofs?.some((item) => item.provider === 'glm' && item.fallbackUsed === false),
+        'Z.AI General proof catalog is missing a live GLM proof card'
+      );
+      assertLive(
+        proofsByBounty['ai-agents-for-good']?.proofs?.some((item) => item.provider === 'flock' && item.fallbackUsed === false),
+        'AI Agents for Good proof catalog is missing a live FLock proof card'
+      );
+    }
 
     await writeJson('hackathon-overview.json', overview);
     await writeJson('hackathon-proofs-all.json', proofsAll);

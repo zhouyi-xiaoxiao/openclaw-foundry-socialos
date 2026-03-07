@@ -50,7 +50,7 @@ async function main() {
     const deckHtml = await deck.text();
     assert(deck.status === 200, `/deck should render the VC deck (got ${deck.status})`);
     assert(deckHtml.includes('SocialOS VC Deck'), '/deck should render the deck title');
-    assert(deckHtml.includes('Appendix · Claw for Human'), '/deck should include the bounty appendix slides');
+    assert(deckHtml.includes('Slide 9 · Claw for Human'), '/deck should include the bounty appendix slides');
     assert(!deckHtml.includes('href="/quick-capture"'), '/deck should not reuse the dashboard shell nav');
 
     for (const page of DASHBOARD_PAGES) {
@@ -79,7 +79,7 @@ async function main() {
     const demoPublic = await fetch(`${web.baseUrl}/demo?mode=public`, { redirect: 'manual' });
     const demoPublicHtml = await demoPublic.text();
     assert(demoPublic.status === 200, `/demo?mode=public should render public proof mode (got ${demoPublic.status})`);
-    assert(demoPublicHtml.includes('Read-only public proof page'), '/demo?mode=public should expose the public proof notice');
+    assert(demoPublicHtml.includes('Auxiliary public proof page'), '/demo?mode=public should expose the auxiliary public proof notice');
     assert(!demoPublicHtml.includes('127.0.0.1'), '/demo?mode=public should not expose localhost links');
     assert(!demoPublicHtml.includes('data-api-form'), '/demo?mode=public should not expose interactive forms');
 
@@ -87,13 +87,16 @@ async function main() {
     const hackathonHtml = await hackathon.text();
     assert(hackathon.status === 200, `/hackathon should render the bounty hub (got ${hackathon.status})`);
     assert(hackathonHtml.includes('Bounty Map'), '/hackathon should expose the bounty map');
+    assert(hackathonHtml.includes('Bounty Sections'), '/hackathon should expose the bounty sections panel');
     assert(hackathonHtml.includes('Submission Pack'), '/hackathon should expose the submission pack panel');
+    assert(hackathonHtml.includes('id="bounty-claw-for-human"'), '/hackathon should expose same-page bounty anchor sections');
 
     const hackathonPublic = await fetch(`${web.baseUrl}/hackathon?mode=public`, { redirect: 'manual' });
     const hackathonPublicHtml = await hackathonPublic.text();
     assert(hackathonPublic.status === 200, `/hackathon?mode=public should render public proof mode (got ${hackathonPublic.status})`);
-    assert(hackathonPublicHtml.includes('Read-only public bounty hub'), '/hackathon?mode=public should expose the public proof notice');
+    assert(hackathonPublicHtml.includes('Canonical public bounty hub'), '/hackathon?mode=public should expose the canonical public proof notice');
     assert(hackathonPublicHtml.includes('/data/proofs/'), '/hackathon?mode=public should link to static proof JSON');
+    assert(hackathonPublicHtml.includes('#bounty-z-ai-general'), '/hackathon?mode=public should expose same-page bounty anchors');
     assert(!hackathonPublicHtml.includes('127.0.0.1'), '/hackathon?mode=public should not expose localhost links');
 
     const buddy = await fetch(`${web.baseUrl}/buddy`, { redirect: 'manual' });
@@ -105,7 +108,7 @@ async function main() {
     const buddyPublic = await fetch(`${web.baseUrl}/buddy?mode=public`, { redirect: 'manual' });
     const buddyPublicHtml = await buddyPublic.text();
     assert(buddyPublic.status === 200, `/buddy?mode=public should render public proof mode (got ${buddyPublic.status})`);
-    assert(buddyPublicHtml.includes('Read-only public Buddy page'), '/buddy?mode=public should expose the public proof notice');
+    assert(buddyPublicHtml.includes('Auxiliary public Buddy page'), '/buddy?mode=public should expose the auxiliary public proof notice');
     assert(!buddyPublicHtml.includes('127.0.0.1'), '/buddy?mode=public should not expose localhost links');
     assert(!buddyPublicHtml.includes('data-api-form'), '/buddy?mode=public should not expose interactive forms');
 

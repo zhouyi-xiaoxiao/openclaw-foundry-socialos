@@ -1,18 +1,18 @@
 {
-  "eventId": "event_9121774a40e54a2184884bebbdc97016",
+  "eventId": "event_8929199d8abb492d9b70a5df82141af7",
   "bountyMode": "z-ai-general",
   "provider": "glm",
-  "count": 4,
+  "count": 2,
   "drafts": [
     {
-      "draftId": "draft_37e5b86712af454faefa403c9319b8ea",
-      "eventId": "event_9121774a40e54a2184884bebbdc97016",
+      "draftId": "draft_9247052bb8484c478117c7aa5e522a06",
+      "eventId": "event_8929199d8abb492d9b70a5df82141af7",
       "eventTitle": "Community Mentor Follow-up",
       "platform": "linkedin",
       "platformLabel": "LinkedIn",
       "platformShellLabel": "LinkedIn",
       "language": "en",
-      "content": "Community Mentor Follow-up: an operational upgrade, not just a feature update\n\nThis came out of a recent conversation.\nThis was not just a UI refresh. The goal was to make Quick Capture, People, Drafts, Queue, and Self Mirror operate as one workflow.\nContext: The conversation was grounded in community. We focused on community building.\nWhy it matters: this turns content writing into an operating loop instead of a pile of drafts.\nWhat next: Reply if you want to compare notes on a similar workflow.\n\n#socialos #builder #campaign #ship #leadership",
+      "content": "Had a great follow-up session with student mentors and organizers after our community workshop. The conversation reinforced something important: community building isn't just about enthusiasm. It's about having systems that actually support the work. We walked through how Quick Capture, People, Drafts, Queue, and Self Mirror function as one connected workflow. Not separate tools. One loop. For student leaders juggling classes, events, and community engagement, this kind of infrastructure matters. It turns scattered ideas into publishable content without the usual friction. The best part? Watching mentors connect the dots between their own workflows and what they can teach others. Grateful for the energy everyone brought. This is how we build lasting communities. What systems have helped you sustain your community work?",
       "metadata": {
         "source": "api.drafts_generate",
         "capability": {
@@ -53,16 +53,16 @@
           "codexAssist": [
             "Codex can further refine tone, structure, CTA, and media notes."
           ],
-          "preview": "Community Mentor Follow-up: an operational upgrade, not just a feature update\n\nThis came out of a recent conversation.\nThis was not just a UI refresh. The goal was to make Quick Capture, People, Drafts, Queue, and Self Mirror operate as one workflow.\nContext: The conversation was grounded in community. We focused on community building.\nWhy it matters: this turns content writing into an operating loop instead of a pile of drafts.\nWhat next: Reply if you want to compare notes on a similar workflow.\n\n#socialos #builder #campaign #ship #leadership"
+          "preview": "Had a great follow-up session with student mentors and organizers after our community workshop. The conversation reinforced something important: community building isn't just about enthusiasm. It's about having systems that actually support the work. We walked through how Quick Capture, People, Drafts, Queue, and Self Mirror function as one connected workflow. Not separate tools. One loop. For student leaders juggling classes, events, and community engagement, this kind of infrastructure matters. It turns scattered ideas into publishable content without the usual friction. The best part? Watching mentors connect the dots between their own workflows and what they can teach others. Grateful for the energy everyone brought. This is how we build lasting communities. What systems have helped you sustain your community work?"
         },
         "variants": [],
         "validation": null,
         "generation": {
-          "provider": "local",
-          "model": "",
+          "provider": "glm",
+          "model": "glm-5",
           "bountyMode": "z-ai-general",
-          "fallbackUsed": true,
-          "reason": "glm-not-configured",
+          "fallbackUsed": false,
+          "reason": "provider-generated",
           "tone": "",
           "angle": "",
           "audience": "",
@@ -109,130 +109,21 @@
         "codexAssist": [
           "Codex can further refine tone, structure, CTA, and media notes."
         ],
-        "preview": "Community Mentor Follow-up: an operational upgrade, not just a feature update\n\nThis came out of a recent conversation.\nThis was not just a UI refresh. The goal was to make Quick Capture, People, Drafts, Queue, and Self Mirror operate as one workflow.\nContext: The conversation was grounded in community. We focused on community building.\nWhy it matters: this turns content writing into an operating loop instead of a pile of drafts.\nWhat next: Reply if you want to compare notes on a similar workflow.\n\n#socialos #builder #campaign #ship #leadership"
+        "preview": "Had a great follow-up session with student mentors and organizers after our community workshop. The conversation reinforced something important: community building isn't just about enthusiasm. It's about having systems that actually support the work. We walked through how Quick Capture, People, Drafts, Queue, and Self Mirror function as one connected workflow. Not separate tools. One loop. For student leaders juggling classes, events, and community engagement, this kind of infrastructure matters. It turns scattered ideas into publishable content without the usual friction. The best part? Watching mentors connect the dots between their own workflows and what they can teach others. Grateful for the energy everyone brought. This is how we build lasting communities. What systems have helped you sustain your community work?"
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T22:04:58.475Z"
+      "createdAt": "2026-03-07T22:33:00.819Z"
     },
     {
-      "draftId": "draft_502eecaf62ac435488aea48e33ad4b9a",
-      "eventId": "event_9121774a40e54a2184884bebbdc97016",
-      "eventTitle": "Community Mentor Follow-up",
-      "platform": "x",
-      "platformLabel": "X",
-      "platformShellLabel": "X",
-      "language": "en",
-      "content": "Community Mentor Follow-up: one operator takeaway after shipping this.\nThis came out of a recent conversation.\nThe conversation was grounded in community. We focused on community building.\nWhat matters now is not another screen. It is whether the whole SocialOS loop actually ope…",
-      "metadata": {
-        "source": "api.drafts_generate",
-        "capability": {
-          "supportLevel": "L2 Auto Publish (credentials gated)",
-          "lane": "publisher",
-          "entryTarget": "X web/API publishing lane",
-          "liveEligible": true,
-          "blockedBy": "requires live mode + credentials"
-        },
-        "publishPackage": {
-          "supportLevel": "L2 Auto Publish (credentials gated)",
-          "lane": "publisher",
-          "entryTarget": "X web/API publishing lane",
-          "entryUrl": "https://x.com/compose/post",
-          "liveEligible": true,
-          "blockedBy": "requires live mode + credentials",
-          "localizedTitle": "Community Mentor Follow-up",
-          "title": "Community Mentor Follow-up: one operator takeaway after shipping this.",
-          "hook": "Sharing this for builders shipping product and AI workflows, framed as operator update.",
-          "body": "The conversation was grounded in community. We focused on community building.",
-          "cta": "Reply if you want the short operator notes behind this workflow.",
-          "hashtags": [
-            "#socialos",
-            "#builder",
-            "#campaign",
-            "#ship"
-          ],
-          "imageIdeas": [
-            "A lead image that makes Community Mentor Follow-up feel tangible",
-            "A supporting detail shot or screenshot for context"
-          ],
-          "steps": [
-            "Queue for review in SocialOS.",
-            "If live mode + credentials are ready, promote through publisher.",
-            "Review tone, tags, and media notes before publishing."
-          ],
-          "codexAssist": [
-            "Codex can further refine tone, structure, CTA, and media notes."
-          ],
-          "preview": "Community Mentor Follow-up: one operator takeaway after shipping this.\nThis came out of a recent conversation.\nThe conversation was grounded in community. We focused on community building.\nWhat matters now is not another screen. It is whether the whole SocialOS loop actually ope…"
-        },
-        "variants": [],
-        "validation": null,
-        "generation": {
-          "provider": "local",
-          "model": "",
-          "bountyMode": "z-ai-general",
-          "fallbackUsed": true,
-          "reason": "glm-not-configured",
-          "tone": "",
-          "angle": "",
-          "audience": "",
-          "languageStrategy": "platform-native",
-          "links": [],
-          "assets": []
-        }
-      },
-      "capability": {
-        "supportLevel": "L2 Auto Publish (credentials gated)",
-        "lane": "publisher",
-        "entryTarget": "X web/API publishing lane",
-        "liveEligible": true,
-        "blockedBy": "requires live mode + credentials"
-      },
-      "publishPackage": {
-        "supportLevel": "L2 Auto Publish (credentials gated)",
-        "lane": "publisher",
-        "entryTarget": "X web/API publishing lane",
-        "entryUrl": "https://x.com/compose/post",
-        "liveEligible": true,
-        "blockedBy": "requires live mode + credentials",
-        "localizedTitle": "Community Mentor Follow-up",
-        "title": "Community Mentor Follow-up: one operator takeaway after shipping this.",
-        "hook": "Sharing this for builders shipping product and AI workflows, framed as operator update.",
-        "body": "The conversation was grounded in community. We focused on community building.",
-        "cta": "Reply if you want the short operator notes behind this workflow.",
-        "hashtags": [
-          "#socialos",
-          "#builder",
-          "#campaign",
-          "#ship"
-        ],
-        "imageIdeas": [
-          "A lead image that makes Community Mentor Follow-up feel tangible",
-          "A supporting detail shot or screenshot for context"
-        ],
-        "steps": [
-          "Queue for review in SocialOS.",
-          "If live mode + credentials are ready, promote through publisher.",
-          "Review tone, tags, and media notes before publishing."
-        ],
-        "codexAssist": [
-          "Codex can further refine tone, structure, CTA, and media notes."
-        ],
-        "preview": "Community Mentor Follow-up: one operator takeaway after shipping this.\nThis came out of a recent conversation.\nThe conversation was grounded in community. We focused on community building.\nWhat matters now is not another screen. It is whether the whole SocialOS loop actually ope…"
-      },
-      "validation": null,
-      "variants": [],
-      "createdAt": "2026-03-07T22:04:58.476Z"
-    },
-    {
-      "draftId": "draft_ace97ab6f0894e0ab33b7d9e10e5361c",
-      "eventId": "event_9121774a40e54a2184884bebbdc97016",
+      "draftId": "draft_00dc1ff2867e4366857c6679a586a454",
+      "eventId": "event_8929199d8abb492d9b70a5df82141af7",
       "eventTitle": "Community Mentor Follow-up",
       "platform": "zhihu",
       "platformLabel": "Zhihu",
       "platformShellLabel": "Zhihu",
       "language": "zh",
-      "content": "如果把“这次推进的后续跟进”讲透，最值得说的是哪几件事？\n\n这次内容来自最近的一次交流。\n先给结论：如果一个 SocialOS 真的要能用，最重要的不是功能列表，而是录入、检索、生成和发布之间的数据连续性。\n围绕「这次推进的后续跟进」的关键背景是：对方主要在做社区运营。这次聊到的重点是社区运营。\n我会重点展开 3 个部分：为什么这样设计、哪些地方卡住、现在怎么让它至少能稳定演示。\n如果你也在做类似方向，欢迎交流。\n\n#社交系统 #行动复盘 #内容实验 #增长",
+      "content": "社区导师跟进活动结束后，有几点实操心得想分享。 这次和学员导师、组织者的交流，让我对「后续跟进」这件事有了新的理解。 第一，跟进不是简单发个消息，而是建立可追溯的连接。SocialOS 的核心价值就在这里——录入、检索、生成、发布的数据连续性。导师反馈、学员问题、活动记录，如果散落在不同工具里，后续跟进就会变成「想起来才做」的事。 第二，卡点往往出现在信息断层。这次活动后，有导师提到：想回顾之前讨论的内容，但找不到入口。这说明我们的检索环节还不够顺畅。 第三，稳定演示比功能堆砌更重要。与其追求大而全，先让核心流程跑通——导师能快速找到历史记录，组织者能看到跟进状态。 如果你也在做社区运营或导师体系，欢迎聊聊你的跟进方式。 #社区运营 #导师体系 #SocialOS #实操复盘",
       "metadata": {
         "source": "api.drafts_generate",
         "capability": {
@@ -272,16 +163,16 @@
           "codexAssist": [
             "可以继续帮你改语气、改结构、补 CTA、补图文大纲"
           ],
-          "preview": "如果把“这次推进的后续跟进”讲透，最值得说的是哪几件事？\n\n这次内容来自最近的一次交流。\n先给结论：如果一个 SocialOS 真的要能用，最重要的不是功能列表，而是录入、检索、生成和发布之间的数据连续性。\n围绕「这次推进的后续跟进」的关键背景是：对方主要在做社区运营。这次聊到的重点是社区运营。\n我会重点展开 3 个部分：为什么这样设计、哪些地方卡住、现在怎么让它至少能稳定演示。\n如果你也在做类似方向，欢迎交流。\n\n#社交系统 #行动复盘 #内容实验 #增长"
+          "preview": "社区导师跟进活动结束后，有几点实操心得想分享。 这次和学员导师、组织者的交流，让我对「后续跟进」这件事有了新的理解。 第一，跟进不是简单发个消息，而是建立可追溯的连接。SocialOS 的核心价值就在这里——录入、检索、生成、发布的数据连续性。导师反馈、学员问题、活动记录，如果散落在不同工具里，后续跟进就会变成「想起来才做」的事。 第二，卡点往往出现在信息断层。这次活动后，有导师提到：想回顾之前讨论的内容，但找不到入口。这说明我们的检索环节还不够顺畅。 第三，稳定演示比功能堆砌更重要。与其追求大而全，先让核心流程跑通——导师能快速找到历史记录，组织者能看到跟进状态。 如果你也在做社区运营或导师体系，欢迎聊聊你的跟进方式。 #社区运营 #导师体系 #SocialOS #实操复盘"
         },
         "variants": [],
         "validation": null,
         "generation": {
-          "provider": "local",
-          "model": "",
+          "provider": "glm",
+          "model": "glm-5",
           "bountyMode": "z-ai-general",
-          "fallbackUsed": true,
-          "reason": "glm-not-configured",
+          "fallbackUsed": false,
+          "reason": "provider-generated",
           "tone": "",
           "angle": "",
           "audience": "",
@@ -327,154 +218,15 @@
         "codexAssist": [
           "可以继续帮你改语气、改结构、补 CTA、补图文大纲"
         ],
-        "preview": "如果把“这次推进的后续跟进”讲透，最值得说的是哪几件事？\n\n这次内容来自最近的一次交流。\n先给结论：如果一个 SocialOS 真的要能用，最重要的不是功能列表，而是录入、检索、生成和发布之间的数据连续性。\n围绕「这次推进的后续跟进」的关键背景是：对方主要在做社区运营。这次聊到的重点是社区运营。\n我会重点展开 3 个部分：为什么这样设计、哪些地方卡住、现在怎么让它至少能稳定演示。\n如果你也在做类似方向，欢迎交流。\n\n#社交系统 #行动复盘 #内容实验 #增长"
+        "preview": "社区导师跟进活动结束后，有几点实操心得想分享。 这次和学员导师、组织者的交流，让我对「后续跟进」这件事有了新的理解。 第一，跟进不是简单发个消息，而是建立可追溯的连接。SocialOS 的核心价值就在这里——录入、检索、生成、发布的数据连续性。导师反馈、学员问题、活动记录，如果散落在不同工具里，后续跟进就会变成「想起来才做」的事。 第二，卡点往往出现在信息断层。这次活动后，有导师提到：想回顾之前讨论的内容，但找不到入口。这说明我们的检索环节还不够顺畅。 第三，稳定演示比功能堆砌更重要。与其追求大而全，先让核心流程跑通——导师能快速找到历史记录，组织者能看到跟进状态。 如果你也在做社区运营或导师体系，欢迎聊聊你的跟进方式。 #社区运营 #导师体系 #SocialOS #实操复盘"
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T22:04:58.477Z"
-    },
-    {
-      "draftId": "draft_b7c36dbcab814676886f6c756f4a006d",
-      "eventId": "event_9121774a40e54a2184884bebbdc97016",
-      "eventTitle": "Community Mentor Follow-up",
-      "platform": "wechat_moments",
-      "platformLabel": "WeChat Moments",
-      "platformShellLabel": "WeChat Moments",
-      "language": "zh",
-      "content": "关于「这次推进的后续跟进」的一个近况\n这次内容来自最近的一次交流。\n对方主要在做社区运营。这次聊到的重点是社区运营。\n这次终于不只是“有个界面”，而是真的把流程跑顺了一些。\n如果你也在折腾类似的事，欢迎来聊聊。",
-      "metadata": {
-        "source": "api.drafts_generate",
-        "capability": {
-          "supportLevel": "L1 Assisted+",
-          "lane": "publish-package",
-          "entryTarget": "WeChat Moments mobile composer",
-          "liveEligible": false,
-          "blockedBy": "manual mobile-only publish"
-        },
-        "publishPackage": {
-          "supportLevel": "L1 Assisted+",
-          "lane": "publish-package",
-          "entryTarget": "WeChat Moments mobile composer",
-          "entryUrl": "https://weixin.qq.com/",
-          "liveEligible": false,
-          "blockedBy": "manual mobile-only publish",
-          "localizedTitle": "这次推进的后续跟进",
-          "title": "关于「这次推进的后续跟进」的一个近况",
-          "hook": "这次我想用“近况记录”的角度，面向熟人朋友分享这次进展。",
-          "body": "对方主要在做社区运营。这次聊到的重点是社区运营。",
-          "cta": "如果你也在折腾类似的事，欢迎来聊聊。",
-          "hashtags": [
-            "#社交系统",
-            "#行动复盘",
-            "#内容实验",
-            "#增长"
-          ],
-          "imageIdeas": [
-            "一张能体现“这次推进的后续跟进”现场感或结果感的主图",
-            "一张细节图或过程图，帮助解释背景"
-          ],
-          "steps": [
-            "复制正文和标签块。",
-            "打开WeChat Moments mobile composer。",
-            "检查语气、标签、封面建议后再发布。"
-          ],
-          "codexAssist": [
-            "可以继续帮你改语气、改结构、补 CTA、补图文大纲"
-          ],
-          "preview": "关于「这次推进的后续跟进」的一个近况\n这次内容来自最近的一次交流。\n对方主要在做社区运营。这次聊到的重点是社区运营。\n这次终于不只是“有个界面”，而是真的把流程跑顺了一些。\n如果你也在折腾类似的事，欢迎来聊聊。",
-          "captionVariants": [
-            "关于「这次推进的后续跟进」的一个近况。今天最深的感受是：对方主要在做社区运营。这次聊到的重点是社区运营。",
-            "刚处理完“这次推进的后续跟进”，比结果更重要的是过程里的判断。",
-            "关于这次推进的后续跟进，这次我最想记住的一句是：这次我想用“近况记录”的角度，面向熟人朋友分享这次进展。"
-          ],
-          "visualStoryboard": [
-            "首图：结果或现场",
-            "第二张：细节/过程",
-            "第三张：补充说明或截图"
-          ],
-          "assetChecklist": [
-            "手机可读短文案 2-3 版",
-            "图片 3 张以内",
-            "评论区跟进句 1 条"
-          ]
-        },
-        "variants": [],
-        "validation": null,
-        "generation": {
-          "provider": "local",
-          "model": "",
-          "bountyMode": "z-ai-general",
-          "fallbackUsed": true,
-          "reason": "glm-not-configured",
-          "tone": "",
-          "angle": "",
-          "audience": "",
-          "languageStrategy": "platform-native",
-          "links": [],
-          "assets": []
-        }
-      },
-      "capability": {
-        "supportLevel": "L1 Assisted+",
-        "lane": "publish-package",
-        "entryTarget": "WeChat Moments mobile composer",
-        "liveEligible": false,
-        "blockedBy": "manual mobile-only publish"
-      },
-      "publishPackage": {
-        "supportLevel": "L1 Assisted+",
-        "lane": "publish-package",
-        "entryTarget": "WeChat Moments mobile composer",
-        "entryUrl": "https://weixin.qq.com/",
-        "liveEligible": false,
-        "blockedBy": "manual mobile-only publish",
-        "localizedTitle": "这次推进的后续跟进",
-        "title": "关于「这次推进的后续跟进」的一个近况",
-        "hook": "这次我想用“近况记录”的角度，面向熟人朋友分享这次进展。",
-        "body": "对方主要在做社区运营。这次聊到的重点是社区运营。",
-        "cta": "如果你也在折腾类似的事，欢迎来聊聊。",
-        "hashtags": [
-          "#社交系统",
-          "#行动复盘",
-          "#内容实验",
-          "#增长"
-        ],
-        "imageIdeas": [
-          "一张能体现“这次推进的后续跟进”现场感或结果感的主图",
-          "一张细节图或过程图，帮助解释背景"
-        ],
-        "steps": [
-          "复制正文和标签块。",
-          "打开WeChat Moments mobile composer。",
-          "检查语气、标签、封面建议后再发布。"
-        ],
-        "codexAssist": [
-          "可以继续帮你改语气、改结构、补 CTA、补图文大纲"
-        ],
-        "preview": "关于「这次推进的后续跟进」的一个近况\n这次内容来自最近的一次交流。\n对方主要在做社区运营。这次聊到的重点是社区运营。\n这次终于不只是“有个界面”，而是真的把流程跑顺了一些。\n如果你也在折腾类似的事，欢迎来聊聊。",
-        "captionVariants": [
-          "关于「这次推进的后续跟进」的一个近况。今天最深的感受是：对方主要在做社区运营。这次聊到的重点是社区运营。",
-          "刚处理完“这次推进的后续跟进”，比结果更重要的是过程里的判断。",
-          "关于这次推进的后续跟进，这次我最想记住的一句是：这次我想用“近况记录”的角度，面向熟人朋友分享这次进展。"
-        ],
-        "visualStoryboard": [
-          "首图：结果或现场",
-          "第二张：细节/过程",
-          "第三张：补充说明或截图"
-        ],
-        "assetChecklist": [
-          "手机可读短文案 2-3 版",
-          "图片 3 张以内",
-          "评论区跟进句 1 条"
-        ]
-      },
-      "validation": null,
-      "variants": [],
-      "createdAt": "2026-03-07T22:04:58.477Z"
+      "createdAt": "2026-03-07T22:33:15.764Z"
     }
   ],
-  "auditId": "audit_77464c55dcea49a7ba74a15d26f97b90",
-  "digestId": "digest_ae022f55b9ae452ba62b72e34a40ed3d",
+  "auditId": "audit_6bab8d7761cf45c880616079b0d72f88",
+  "digestId": "digest_18531966d0ad4e39bd5fe678c7d98e77",
   "proof": {
     "requestedProvider": "glm",
     "bountyMode": "z-ai-general",
@@ -482,42 +234,31 @@
       "/hackathon?bounty=z-ai-general",
       "/drafts"
     ],
+    "provider": "glm",
+    "model": "glm-5",
+    "live": true,
+    "fallbackUsed": false,
+    "capturedAt": "2026-03-07T22:33:15.768Z",
     "generations": [
       {
-        "draftId": "draft_37e5b86712af454faefa403c9319b8ea",
+        "draftId": "draft_9247052bb8484c478117c7aa5e522a06",
         "platform": "linkedin",
         "language": "en",
-        "provider": "local",
-        "model": "",
-        "fallbackUsed": true,
-        "reason": "glm-not-configured"
+        "provider": "glm",
+        "model": "glm-5",
+        "live": true,
+        "fallbackUsed": false,
+        "reason": "provider-generated"
       },
       {
-        "draftId": "draft_502eecaf62ac435488aea48e33ad4b9a",
-        "platform": "x",
-        "language": "en",
-        "provider": "local",
-        "model": "",
-        "fallbackUsed": true,
-        "reason": "glm-not-configured"
-      },
-      {
-        "draftId": "draft_ace97ab6f0894e0ab33b7d9e10e5361c",
+        "draftId": "draft_00dc1ff2867e4366857c6679a586a454",
         "platform": "zhihu",
         "language": "zh",
-        "provider": "local",
-        "model": "",
-        "fallbackUsed": true,
-        "reason": "glm-not-configured"
-      },
-      {
-        "draftId": "draft_b7c36dbcab814676886f6c756f4a006d",
-        "platform": "wechat_moments",
-        "language": "zh",
-        "provider": "local",
-        "model": "",
-        "fallbackUsed": true,
-        "reason": "glm-not-configured"
+        "provider": "glm",
+        "model": "glm-5",
+        "live": true,
+        "fallbackUsed": false,
+        "reason": "provider-generated"
       }
     ]
   }

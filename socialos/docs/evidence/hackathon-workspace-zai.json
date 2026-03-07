@@ -1,21 +1,26 @@
 {
-  "responseId": "workspace_5d636f74fe184755a47cefc5edcc6518",
+  "responseId": "workspace_b5ebfd69795c437088608820e6396cc7",
   "intent": "capture",
   "bountyMode": "z-ai-general",
-  "summary": "I turned At The Hackathon into a contact draft first. Save it if it looks right, or keep talking and we can refine it together.",
+  "summary": "Found Minghan Xiao — the London hackathon organizer you spoke with about builder communities and operator dashboards. There are existing drafts for that follow-up. Want me to open their profile and review the drafts?",
   "presentation": {
-    "mode": "capture",
-    "answer": "I turned At The Hackathon into a contact draft first. Save it if it looks right, or keep talking and we can refine it together.",
+    "mode": "search",
+    "answer": "Found Minghan Xiao — the London hackathon organizer you spoke with about builder communities and operator dashboards. There are existing drafts for that follow-up. Want me to open their profile and review the drafts?",
     "primaryCard": {
       "type": "contact",
-      "kicker": "Ready to review",
-      "title": "At The Hackathon",
-      "body": "Follow up with At The Hackathon while the context is fresh, and anchor the message on the topic you just discussed.",
-      "subtitle": "Ready to review before saving",
-      "href": "",
-      "badges": [],
+      "kicker": "Contact",
+      "title": "Minghan Xiao",
+      "body": "Talked about builder communities, operator dashboards, and how SocialOS could support organiser follow-up.",
+      "subtitle": "",
+      "href": "/people/person_demo_lilei",
+      "badges": [
+        "london-hackathon",
+        "imperial",
+        "organiser"
+      ],
       "detailLines": [
-        "Context: Help me remember the organizer I met at the hackathon and prepare a bilingual follow-up."
+        "Next follow-up: 2026-03-09T22:31:57.756Z",
+        "Updated: 2026-03-07T22:11:57.756Z"
       ]
     },
     "related": {
@@ -33,25 +38,8 @@
             "organiser"
           ],
           "detailLines": [
-            "Next follow-up: 2026-03-09T22:04:58.338Z",
-            "Updated: 2026-03-07T21:44:58.338Z"
-          ]
-        },
-        {
-          "type": "contact",
-          "kicker": "Contact",
-          "title": "James Wu",
-          "body": "Met at iHealth in San Francisco during summer 2025.",
-          "subtitle": "",
-          "href": "/people/person_demo_james_wu",
-          "badges": [
-            "nvidia",
-            "industry",
-            "entrepreneurship"
-          ],
-          "detailLines": [
-            "Next follow-up: 2026-03-14T22:04:58.342Z",
-            "Updated: 2026-03-07T21:14:58.342Z"
+            "Next follow-up: 2026-03-09T22:31:57.756Z",
+            "Updated: 2026-03-07T22:11:57.756Z"
           ]
         },
         {
@@ -67,26 +55,29 @@
             "cross-border"
           ],
           "detailLines": [
-            "Next follow-up: 2026-03-12T22:04:58.341Z",
-            "Updated: 2026-03-07T21:24:58.341Z"
+            "Next follow-up: 2026-03-12T22:31:57.760Z",
+            "Updated: 2026-03-07T21:51:57.760Z"
+          ]
+        },
+        {
+          "type": "contact",
+          "kicker": "Contact",
+          "title": "James Wu",
+          "body": "Met at iHealth in San Francisco during summer 2025.",
+          "subtitle": "",
+          "href": "/people/person_demo_james_wu",
+          "badges": [
+            "nvidia",
+            "industry",
+            "entrepreneurship"
+          ],
+          "detailLines": [
+            "Next follow-up: 2026-03-14T22:31:57.762Z",
+            "Updated: 2026-03-07T21:41:57.762Z"
           ]
         }
       ],
       "events": [
-        {
-          "type": "event",
-          "kicker": "Event",
-          "title": "SF iHealth industry reflection",
-          "body": "Remembered the James Wu conversation from iHealth in San Francisco and preserved the entrepreneurship narrative.",
-          "subtitle": "",
-          "href": "/drafts?eventId=event_demo_sf_ihealth_circle",
-          "badges": [
-            "industry operators and alumni"
-          ],
-          "detailLines": [
-            "Created: 2026-03-07T16:44:58.356Z"
-          ]
-        },
         {
           "type": "event",
           "kicker": "Event",
@@ -98,7 +89,21 @@
             "builders and community organisers"
           ],
           "detailLines": [
-            "Created: 2026-03-07T20:54:58.353Z"
+            "Created: 2026-03-07T21:21:57.775Z"
+          ]
+        },
+        {
+          "type": "event",
+          "kicker": "Event",
+          "title": "SF iHealth industry reflection",
+          "body": "Remembered the James Wu conversation from iHealth in San Francisco and preserved the entrepreneurship narrative.",
+          "subtitle": "",
+          "href": "/drafts?eventId=event_demo_sf_ihealth_circle",
+          "badges": [
+            "industry operators and alumni"
+          ],
+          "detailLines": [
+            "Created: 2026-03-07T17:11:57.778Z"
           ]
         }
       ],
@@ -163,43 +168,12 @@
             "stretched"
           ],
           "detailLines": [
-            "Updated: 2026-03-07T22:04:58.337Z"
+            "Updated: 2026-03-07T22:31:57.755Z"
           ]
         }
       ]
     },
     "secondaryCards": [
-      {
-        "type": "contact",
-        "kicker": "Contact",
-        "title": "Minghan Xiao",
-        "body": "Talked about builder communities, operator dashboards, and how SocialOS could support organiser follow-up.",
-        "subtitle": "",
-        "href": "/people/person_demo_lilei",
-        "badges": [
-          "london-hackathon",
-          "imperial",
-          "organiser"
-        ],
-        "detailLines": [
-          "Next follow-up: 2026-03-09T22:04:58.338Z",
-          "Updated: 2026-03-07T21:44:58.338Z"
-        ]
-      },
-      {
-        "type": "event",
-        "kicker": "Event",
-        "title": "SF iHealth industry reflection",
-        "body": "Remembered the James Wu conversation from iHealth in San Francisco and preserved the entrepreneurship narrative.",
-        "subtitle": "",
-        "href": "/drafts?eventId=event_demo_sf_ihealth_circle",
-        "badges": [
-          "industry operators and alumni"
-        ],
-        "detailLines": [
-          "Created: 2026-03-07T16:44:58.356Z"
-        ]
-      },
       {
         "type": "draft",
         "kicker": "Draft ready",
@@ -214,15 +188,39 @@
         "detailLines": [
           "Entry: LinkedIn publish surface"
         ]
+      },
+      {
+        "type": "event",
+        "kicker": "Event",
+        "title": "London hackathon organiser follow-up",
+        "body": "Turned one London organiser conversation into a SocialOS follow-up, draft, and reflection loop.",
+        "subtitle": "",
+        "href": "/drafts?eventId=event_demo_campaign",
+        "badges": [
+          "builders and community organisers"
+        ],
+        "detailLines": [
+          "Created: 2026-03-07T21:21:57.775Z"
+        ]
+      },
+      {
+        "type": "mirror",
+        "kicker": "Mirror",
+        "title": "Weekly reflection",
+        "body": "This week centered on energized (1), social (1), stretched (1). Strongest lift: After a day of strong product conversations, I felt energized and wanted to lock in the follow-up quickly. Watch-out: A…",
+        "subtitle": "",
+        "href": "/self-mirror",
+        "badges": [
+          "energized",
+          "social",
+          "stretched"
+        ],
+        "detailLines": [
+          "Updated: 2026-03-07T22:31:57.755Z"
+        ]
       }
     ],
     "actions": [
-      {
-        "id": "review-contact",
-        "kind": "mutation",
-        "action": "review-contact",
-        "label": "Review & Save"
-      },
       {
         "id": "open-contact",
         "kind": "link",
@@ -230,10 +228,10 @@
         "label": "Open Contact"
       },
       {
-        "id": "open-event",
+        "id": "review-drafts",
         "kind": "link",
-        "href": "/events/event_demo_sf_ihealth_circle",
-        "label": "Open Event"
+        "href": "/drafts?eventId=event_demo_campaign",
+        "label": "Review Drafts"
       }
     ]
   },
@@ -244,14 +242,17 @@
     "combinedText": "Help me remember the organizer I met at the hackathon and prepare a bilingual follow-up.",
     "source": "hackathon_proof_capture",
     "personDraft": {
-      "name": "At The Hackathon",
-      "displayName": "At The Hackathon",
-      "isConfirmedName": true,
-      "requiresNameConfirmation": false,
-      "tags": [],
-      "notes": "Help me remember the organizer I met at the hackathon and prepare a bilingual follow-up.",
+      "name": "",
+      "displayName": "Unconfirmed contact",
+      "isConfirmedName": false,
+      "requiresNameConfirmation": true,
+      "tags": [
+        "hackathon",
+        "organizer"
+      ],
+      "notes": "Met at hackathon. User requests bilingual follow-up.",
       "nextFollowUpAt": "",
-      "followUpSuggestion": "Follow up with At The Hackathon while the context is fresh, and anchor the message on the topic you just discussed.",
+      "followUpSuggestion": "Draft a bilingual follow-up message.",
       "identities": []
     },
     "selfCheckinDraft": {
@@ -263,21 +264,21 @@
       "reflection": "Help me remember the organizer I met at the hackathon and prepare a bilingual follow-up."
     },
     "interactionDraft": {
-      "summary": "Help me remember the organizer I met at the hackathon and prepare a bilingual follow-up.",
+      "summary": "Met an organizer at a hackathon.",
       "happenedAt": "",
       "evidence": "Help me remember the organizer I met at the hackathon and prepare a bilingual follow-up."
     },
     "assets": [],
     "extraction": {
-      "method": "heuristic",
-      "model": "",
-      "provider": "local"
+      "method": "model",
+      "model": "glm-5",
+      "provider": "glm"
     }
   },
   "extraction": {
-    "method": "heuristic",
-    "model": "",
-    "provider": "local"
+    "method": "model",
+    "model": "glm-5",
+    "provider": "glm"
   },
   "relatedPeople": [
     {
@@ -292,10 +293,26 @@
         "ic"
       ],
       "notes": "London hackathon organiser at Imperial College. From Tianjin, China. Very nice guy. Shared both his X and LinkedIn.",
-      "nextFollowUpAt": "2026-03-09T22:04:58.338Z",
-      "updatedAt": "2026-03-07T21:44:58.338Z",
-      "score": 1.3079,
+      "nextFollowUpAt": "2026-03-09T22:31:57.756Z",
+      "updatedAt": "2026-03-07T22:11:57.756Z",
+      "score": 1.37,
       "evidenceSnippet": "Talked about builder communities, operator dashboards, and how SocialOS could support organiser follow-up."
+    },
+    {
+      "personId": "person_demo_candice_tang",
+      "name": "Candice Tang",
+      "tags": [
+        "lawyer",
+        "ip",
+        "cross-border",
+        "partner",
+        "chengdu"
+      ],
+      "notes": "Independent lawyer focused on cross-border and intellectual property work. Met through a Chamber of Commerce event in Chengdu. Later visited her office and she treated me to a meal. Trusted partner contact.",
+      "nextFollowUpAt": "2026-03-12T22:31:57.760Z",
+      "updatedAt": "2026-03-07T21:51:57.760Z",
+      "score": 1.21,
+      "evidenceSnippet": "Met at a Chamber of Commerce event in Chengdu."
     },
     {
       "personId": "person_demo_james_wu",
@@ -309,26 +326,10 @@
         "ihealth"
       ],
       "notes": "Vice President at NVIDIA. Met in San Francisco in summer 2025 at iHealth. Tianjin University alumnus who shared his entrepreneurship story and how he got into NVIDIA.",
-      "nextFollowUpAt": "2026-03-14T22:04:58.342Z",
-      "updatedAt": "2026-03-07T21:14:58.342Z",
-      "score": 1.2114,
+      "nextFollowUpAt": "2026-03-14T22:31:57.762Z",
+      "updatedAt": "2026-03-07T21:41:57.762Z",
+      "score": 1.21,
       "evidenceSnippet": "Met at iHealth in San Francisco during summer 2025."
-    },
-    {
-      "personId": "person_demo_candice_tang",
-      "name": "Candice Tang",
-      "tags": [
-        "lawyer",
-        "ip",
-        "cross-border",
-        "partner",
-        "chengdu"
-      ],
-      "notes": "Independent lawyer focused on cross-border and intellectual property work. Met through a Chamber of Commerce event in Chengdu. Later visited her office and she treated me to a meal. Trusted partner contact.",
-      "nextFollowUpAt": "2026-03-12T22:04:58.341Z",
-      "updatedAt": "2026-03-07T21:24:58.341Z",
-      "score": 1.115,
-      "evidenceSnippet": "Met at a Chamber of Commerce event in Chengdu."
     },
     {
       "personId": "person_demo_xiyue_zhang",
@@ -340,28 +341,13 @@
         "merchant-venturers"
       ],
       "notes": "Lecturer at the University of Bristol. Met in the EngiMath staff kitchen during a dynamics workshop. Shared her first-year experiences. I want to invite her for lunch or dinner. Office is in the Merchant Venturers Build…",
-      "nextFollowUpAt": "2026-03-10T22:04:58.350Z",
-      "updatedAt": "2026-03-07T20:14:58.350Z",
-      "score": 1.115,
+      "nextFollowUpAt": "2026-03-10T22:31:57.772Z",
+      "updatedAt": "2026-03-07T20:41:57.772Z",
+      "score": 1.13,
       "evidenceSnippet": "Met at a dynamics workshop in the EngiMath staff kitchen."
     }
   ],
   "relatedEvents": [
-    {
-      "eventId": "event_demo_sf_ihealth_circle",
-      "title": "SF iHealth industry reflection",
-      "payload": {
-        "audience": "industry operators and alumni",
-        "language": "en",
-        "tone": "reflective",
-        "details": {
-          "summary": "Remembered the James Wu conversation from iHealth in San Francisco and preserved the entrepreneurship narrative."
-        }
-      },
-      "createdAt": "2026-03-07T16:44:58.356Z",
-      "score": 0.875,
-      "snippet": "Remembered the James Wu conversation from iHealth in San Francisco and preserved the entrepreneurship narrative."
-    },
     {
       "eventId": "event_demo_campaign",
       "title": "London hackathon organiser follow-up",
@@ -380,9 +366,24 @@
           "focus": "hackathons, builder communities, and operator dashboards"
         }
       },
-      "createdAt": "2026-03-07T20:54:58.353Z",
-      "score": 0.7786,
+      "createdAt": "2026-03-07T21:21:57.775Z",
+      "score": 0.875,
       "snippet": "Turned one London organiser conversation into a SocialOS follow-up, draft, and reflection loop."
+    },
+    {
+      "eventId": "event_demo_sf_ihealth_circle",
+      "title": "SF iHealth industry reflection",
+      "payload": {
+        "audience": "industry operators and alumni",
+        "language": "en",
+        "tone": "reflective",
+        "details": {
+          "summary": "Remembered the James Wu conversation from iHealth in San Francisco and preserved the entrepreneurship narrative."
+        }
+      },
+      "createdAt": "2026-03-07T17:11:57.778Z",
+      "score": 0.875,
+      "snippet": "Remembered the James Wu conversation from iHealth in San Francisco and preserved the entrepreneurship narrative."
     },
     {
       "eventId": "event_demo_exeter_industry_programme",
@@ -395,7 +396,7 @@
           "summary": "Captured James Sibson and Clare Rees-Zimmerman in the same research-industry context."
         }
       },
-      "createdAt": "2026-03-07T13:24:58.358Z",
+      "createdAt": "2026-03-07T13:51:57.781Z",
       "score": 0.7786,
       "snippet": "Captured James Sibson and Clare Rees-Zimmerman in the same research-industry context."
     },
@@ -410,7 +411,7 @@
           "summary": "Captured the Candice Tang relationship thread from a Chengdu Chamber event into a reusable follow-up context."
         }
       },
-      "createdAt": "2026-03-07T17:44:58.355Z",
+      "createdAt": "2026-03-07T18:11:57.777Z",
       "score": 0.6821,
       "snippet": "Captured the Candice Tang relationship thread from a Chengdu Chamber event into a reusable follow-up context."
     }
@@ -478,7 +479,7 @@
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T20:44:58.366Z",
+      "createdAt": "2026-03-07T21:11:57.793Z",
       "score": 0.5333333333333333,
       "snippet": "I turned a real conversation with Minghan Xiao and the London hackathon organiser circle into a local-first SocialOS flow: one note becomes relationship memory, linked events, pla…"
     },
@@ -544,7 +545,7 @@
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T20:44:58.366Z",
+      "createdAt": "2026-03-07T21:11:57.792Z",
       "score": 0.4,
       "snippet": "SocialOS now turns one real London hackathon organiser conversation with Minghan Xiao into people memory, linked events, 7 platform-native drafts, and a weekly mirror. Still local…"
     },
@@ -610,7 +611,7 @@
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T20:44:58.368Z",
+      "createdAt": "2026-03-07T21:11:57.794Z",
       "score": 0.3333333333333333,
       "snippet": "这两天把和 Minghan Xiao 的一条真实 follow-up 跑顺了：聊天、联系人、内容和复盘，终于能在一个系统里串起来。"
     }
@@ -630,25 +631,8 @@
           "organiser"
         ],
         "detailLines": [
-          "Next follow-up: 2026-03-09T22:04:58.338Z",
-          "Updated: 2026-03-07T21:44:58.338Z"
-        ]
-      },
-      {
-        "type": "contact",
-        "kicker": "Contact",
-        "title": "James Wu",
-        "body": "Met at iHealth in San Francisco during summer 2025.",
-        "subtitle": "",
-        "href": "/people/person_demo_james_wu",
-        "badges": [
-          "nvidia",
-          "industry",
-          "entrepreneurship"
-        ],
-        "detailLines": [
-          "Next follow-up: 2026-03-14T22:04:58.342Z",
-          "Updated: 2026-03-07T21:14:58.342Z"
+          "Next follow-up: 2026-03-09T22:31:57.756Z",
+          "Updated: 2026-03-07T22:11:57.756Z"
         ]
       },
       {
@@ -664,26 +648,29 @@
           "cross-border"
         ],
         "detailLines": [
-          "Next follow-up: 2026-03-12T22:04:58.341Z",
-          "Updated: 2026-03-07T21:24:58.341Z"
+          "Next follow-up: 2026-03-12T22:31:57.760Z",
+          "Updated: 2026-03-07T21:51:57.760Z"
+        ]
+      },
+      {
+        "type": "contact",
+        "kicker": "Contact",
+        "title": "James Wu",
+        "body": "Met at iHealth in San Francisco during summer 2025.",
+        "subtitle": "",
+        "href": "/people/person_demo_james_wu",
+        "badges": [
+          "nvidia",
+          "industry",
+          "entrepreneurship"
+        ],
+        "detailLines": [
+          "Next follow-up: 2026-03-14T22:31:57.762Z",
+          "Updated: 2026-03-07T21:41:57.762Z"
         ]
       }
     ],
     "events": [
-      {
-        "type": "event",
-        "kicker": "Event",
-        "title": "SF iHealth industry reflection",
-        "body": "Remembered the James Wu conversation from iHealth in San Francisco and preserved the entrepreneurship narrative.",
-        "subtitle": "",
-        "href": "/drafts?eventId=event_demo_sf_ihealth_circle",
-        "badges": [
-          "industry operators and alumni"
-        ],
-        "detailLines": [
-          "Created: 2026-03-07T16:44:58.356Z"
-        ]
-      },
       {
         "type": "event",
         "kicker": "Event",
@@ -695,7 +682,21 @@
           "builders and community organisers"
         ],
         "detailLines": [
-          "Created: 2026-03-07T20:54:58.353Z"
+          "Created: 2026-03-07T21:21:57.775Z"
+        ]
+      },
+      {
+        "type": "event",
+        "kicker": "Event",
+        "title": "SF iHealth industry reflection",
+        "body": "Remembered the James Wu conversation from iHealth in San Francisco and preserved the entrepreneurship narrative.",
+        "subtitle": "",
+        "href": "/drafts?eventId=event_demo_sf_ihealth_circle",
+        "badges": [
+          "industry operators and alumni"
+        ],
+        "detailLines": [
+          "Created: 2026-03-07T17:11:57.778Z"
         ]
       }
     ],
@@ -760,24 +761,24 @@
           "stretched"
         ],
         "detailLines": [
-          "Updated: 2026-03-07T22:04:58.337Z"
+          "Updated: 2026-03-07T22:31:57.755Z"
         ]
       }
     ]
   },
   "suggestedEvent": {
-    "title": "Follow-up with At The Hackathon",
-    "audience": "builders, collaborators, future users",
+    "title": "Follow-up with Minghan Xiao",
+    "audience": "people interested in hackathon, organizer",
     "languageStrategy": "platform-native",
     "tone": "platform-native",
     "payload": {
       "focus": "contact follow-up",
       "sourceType": "workspace-chat",
-      "personName": "At The Hackathon",
+      "personName": "Minghan Xiao",
       "personId": "person_demo_lilei",
       "summary": "Help me remember the organizer I met at the hackathon and prepare a bilingual follow-up.",
       "combinedText": "Help me remember the organizer I met at the hackathon and prepare a bilingual follow-up.",
-      "followUpSuggestion": "Follow up with At The Hackathon while the context is fresh, and anchor the message on the topic you just discussed."
+      "followUpSuggestion": "Draft a bilingual follow-up message."
     }
   },
   "ui": {
@@ -796,9 +797,9 @@
           "ic"
         ],
         "notes": "London hackathon organiser at Imperial College. From Tianjin, China. Very nice guy. Shared both his X and LinkedIn.",
-        "nextFollowUpAt": "2026-03-09T22:04:58.338Z",
-        "updatedAt": "2026-03-07T21:44:58.338Z",
-        "score": 1.3079,
+        "nextFollowUpAt": "2026-03-09T22:31:57.756Z",
+        "updatedAt": "2026-03-07T22:11:57.756Z",
+        "score": 1.37,
         "evidenceSnippet": "Talked about builder communities, operator dashboards, and how SocialOS could support organiser follow-up."
       }
     ],
@@ -828,19 +829,19 @@
   },
   "modelRouting": {
     "requestedProvider": "glm",
-    "effectiveProvider": "local",
-    "captureProvider": "local",
-    "workspaceProvider": "local",
-    "captureModel": "",
-    "workspaceModel": "",
-    "fallbackUsed": true,
-    "reason": "glm-not-configured"
+    "effectiveProvider": "glm",
+    "captureProvider": "glm",
+    "workspaceProvider": "glm",
+    "captureModel": "glm-5",
+    "workspaceModel": "glm-5",
+    "fallbackUsed": false,
+    "reason": "glm-configured"
   },
   "proofs": [
     {
       "id": "workspace-routing",
       "bountyMode": "z-ai-general",
-      "provider": "local",
+      "provider": "glm",
       "summary": "Workspace routing is ready for GLM-backed capture and answer shaping."
     }
   ],
@@ -850,14 +851,17 @@
     "assetIds": [],
     "combinedText": "Help me remember the organizer I met at the hackathon and prepare a bilingual follow-up.",
     "personDraft": {
-      "name": "At The Hackathon",
-      "displayName": "At The Hackathon",
-      "isConfirmedName": true,
-      "requiresNameConfirmation": false,
-      "tags": [],
-      "notes": "Help me remember the organizer I met at the hackathon and prepare a bilingual follow-up.",
+      "name": "",
+      "displayName": "Unconfirmed contact",
+      "isConfirmedName": false,
+      "requiresNameConfirmation": true,
+      "tags": [
+        "hackathon",
+        "organizer"
+      ],
+      "notes": "Met at hackathon. User requests bilingual follow-up.",
       "nextFollowUpAt": "",
-      "followUpSuggestion": "Follow up with At The Hackathon while the context is fresh, and anchor the message on the topic you just discussed.",
+      "followUpSuggestion": "Draft a bilingual follow-up message.",
       "identities": []
     },
     "selfCheckinDraft": {
@@ -869,7 +873,7 @@
       "reflection": "Help me remember the organizer I met at the hackathon and prepare a bilingual follow-up."
     },
     "interactionDraft": {
-      "summary": "Help me remember the organizer I met at the hackathon and prepare a bilingual follow-up.",
+      "summary": "Met an organizer at a hackathon.",
       "happenedAt": "",
       "evidence": "Help me remember the organizer I met at the hackathon and prepare a bilingual follow-up."
     },
@@ -894,7 +898,7 @@
     "bountyMode": "z-ai-general"
   },
   "transcription": {
-    "openAiConfigured": false,
+    "openAiConfigured": true,
     "audioAssets": 0,
     "imageAssets": 0,
     "transcribedAudioAssets": 0,
@@ -945,6 +949,6 @@
       }
     ]
   },
-  "auditId": "audit_9b68d84cd3ae4c32b90555804847fca8",
-  "digestId": "digest_b2ce2d9aef2e41b88311129918a32602"
+  "auditId": "audit_9bb9487b811047c088c8e428a3bda645",
+  "digestId": "digest_42f49a20f3ce482bbf77ece74f438829"
 }

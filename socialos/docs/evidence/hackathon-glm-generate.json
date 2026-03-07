@@ -1,13 +1,15 @@
 {
-  "answer": "EN: Summarize why SocialOS fits Z.AI General for judges in one short bilingual answer.\nZH: {\"audience\":\"DoraHacks judges\",\"languages\":[\"en\",\"zh\"]}",
+  "answer": "EN: SocialOS fits Z.AI General by deploying AI agents to automate social intelligence, offering scalable infrastructure for decentralized social ecosystems. ZH: SocialOS 符合 Z.AI General 赛道，通过部署 AI 代理自动化社交智能，为去中心化社交生态提供可扩展的基础设施。",
   "proof": {
-    "provider": "local",
+    "provider": "glm",
     "requestedProvider": "glm",
-    "model": "",
-    "fallbackUsed": true,
-    "reason": "glm-not-configured"
+    "model": "glm-5",
+    "live": true,
+    "fallbackUsed": false,
+    "reason": "glm-generated",
+    "capturedAt": "2026-03-07T22:32:07.060Z"
   },
-  "auditId": "audit_2b5d49072c684ae08e560bf3756f73f6",
-  "digestId": "digest_40546e432ba544198148d3eec6b5056e",
-  "createdAt": "2026-03-07T22:04:58.448Z"
+  "auditId": "audit_d178b7c3235442679663ede60ef8c9fb",
+  "digestId": "digest_3aac39f0329b4edca88a47b77e9aed78",
+  "createdAt": "2026-03-07T22:32:25.722Z"
 }

@@ -1,14 +1,14 @@
 # Latest Validation Snapshot
 
-- Generated: 2026-03-07T22:04:59.565Z
+- Generated: 2026-03-07T22:37:19.823Z
 - Refreshed by: scripts/test.sh
-- Latest green validation: 2026-03-07T22:04:59.565Z
-- Git head: a453aa9
+- Latest green validation: 2026-03-07T22:37:19.823Z
+- Git head: ae82ac1
 
 ## Current Health Snapshot
 - Demo healthy: true
-- socialos-api: ready=true healthy=true pidAlive=false stalePid=false
-- socialos-web: ready=true healthy=true pidAlive=false stalePid=false
+- socialos-api: ready=true healthy=true pidAlive=true stalePid=false
+- socialos-web: ready=true healthy=true pidAlive=true stalePid=false
 
 ## Evidence Pointers
 - `socialos/docs/evidence/hackathon-drafts-zai.json`

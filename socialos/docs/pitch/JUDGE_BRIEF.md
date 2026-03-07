@@ -1,28 +1,30 @@
 # SocialOS Judge Brief
 
 ## What It Is
-SocialOS is a local-first relationship and identity operating system that turns messy daily inputs into structured people memory, event context, self insight, and platform-native draft packages.
+SocialOS is a local-first relationship and identity operating system that turns messy daily inputs into structured people memory, event context, multilingual draft packages, trust-first handoff, and evidence-backed reflection.
 
 ## What Makes It Different
-- It is not just a social media tool.
-- It is not just a CRM.
-- It is not just a reflection app.
+- It is not only a social media drafting tool.
+- It is not only a CRM.
+- It is not only a self-reflection app.
 
 It connects all three loops:
+
 - who I met
 - what happened
-- what it means for follow-up, content, and self-understanding
+- what that means for follow-up, content, and reflection
 
 ## What To Look For In The Demo
-- Natural capture in `Workspace`
-- Fuzzy recall of a person or event
-- Event to 7-platform draft generation
-- Trust-first queue handoff
-- Daily and weekly mirror grounded in evidence
-- Public proof routes at `/demo`, `/hackathon`, and `/buddy`
+- natural capture in `Workspace`
+- reuse of people memory or event context
+- multilingual or platform-native draft generation
+- trust-first queue handoff
+- `Self Mirror` grounded in evidence
+- public verification on `https://zhouyixiaoxiao.org/hackathon/`
 
 ## Why Local-First Matters
-The most valuable data in this product is personal:
+The most valuable data in this product is private and relational:
+
 - private notes
 - voice memos
 - screenshots
@@ -32,21 +34,22 @@ The most valuable data in this product is personal:
 Local-first keeps the trust boundary tight while still allowing model-assisted understanding.
 
 ## Why Multi-Agent Matters
-The product loop spans different kinds of work:
+The product loop spans different jobs:
+
 - capture and structuring
 - people memory
-- self reflection
-- draft validation
+- reflection
+- validation
 - publish handoff
 
-The multi-agent layer exists so each responsibility can stay narrow, safer, and more explainable.
+OpenClaw lets those jobs stay narrow and explainable without making the user live inside agent tooling.
 
 ## Practical Roadmap
-- Import Inbox for real historical data
-- Multi-entity capture from one raw note
-- Suggested LinkedIn mentions from linked people and identities
+- real inbox and import onboarding
+- multi-entity capture from one raw note
+- stronger mention and contact suggestion flows
 
-## Honest Demo Status
-- The live interactive demo is localhost-only by design.
+## Judge Notes
+- The interactive demo is localhost-only by design.
 - The public site is a read-only proof surface for judges.
-- `GLM` and `FLock` are shown in fallback mode until live keys are configured.
+- `GLM` and `FLock` are shown as live integrated proof paths in the current hackathon setup.

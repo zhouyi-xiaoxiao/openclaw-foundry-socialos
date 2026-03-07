@@ -1,69 +1,79 @@
-# SocialOS DoraHacks Master Script
+# SocialOS DoraHacks Shared Video Backbone
 
-This is the main 8-9 minute English recording script for the shared SocialOS story. Record this once, then swap only the bounty-specific segment from `DORAHACKS_BOUNTY_SWAPS.md`.
+Use this script structure for all five bounty videos. Each video should be `5-8 minutes`, stand alone on its own, and still reuse the same SocialOS product backbone.
 
-## 0:00-0:40 Problem
+## 0:00-0:25 Title
 Say:
 
-"People, context, content, and self-understanding drift apart.
+"This is SocialOS for [Bounty Name].
 
-One real conversation becomes a note, a screenshot, a follow-up promise, maybe a future post, and then the signal disappears across different tools. SocialOS is built to keep that signal alive."
+SocialOS is a local-first relationship and identity operating system, and in this video I will show the problem, the solution, the technical implementation, the partner integration, and a short live demo."
 
-## 0:40-1:20 Product Definition
+## 0:25-1:05 Problem
 Say:
 
-"SocialOS is a local-first relationship and identity operating system.
+"People, context, content, and follow-through drift apart.
 
-It takes one messy daily input and turns it into people memory, event context, platform-native drafts, and evidence-backed reflection."
+One real conversation becomes a note, a screenshot, a follow-up promise, maybe a post, and then the signal gets lost across different tools. SocialOS is built to keep that signal alive."
 
-## 1:20-2:40 Workspace -> Memory
-Open the local Workspace and say:
+## 1:05-1:45 Solution
+Say:
 
-"I start with one natural note, not a form. The same system can then recall the person or event later from fuzzy context, not only exact keywords."
+"SocialOS turns one messy daily input into people memory, event context, multilingual draft packages, trust-first queue handoff, and evidence-backed reflection.
+
+The key point is that this is one product loop, not five disconnected demos."
+
+## 1:45-2:35 Technical Implementation
+Say:
+
+"Under the surface, SocialOS runs as a local-first Node web app and API with SQLite, OpenClaw-backed agent lanes, and route-aware proof capture. The user sees one calm interface, while the system keeps memory, validation, publishing, and proof evidence separated behind the scenes."
 
 Show:
-- one raw note in `Workspace`
-- one linked contact or event in `Contacts` or `Logbook`
 
-## 2:40-3:40 Drafts -> Queue
+- local `Workspace` or the bounty-specific route
+- one memory or event artifact
+- one proof or agent trace panel
+
+## 2:35-4:15 Bounty-Specific Integration
+Insert the matching section from `DORAHACKS_BOUNTY_SWAPS.md`.
+
+This section must explicitly answer:
+
+- what this bounty cares about
+- why SocialOS fits
+- which API or infrastructure is integrated
+- what route or proof JSON a judge can verify afterwards
+
+## 4:15-6:40 Short Live Demo
+Use the local route for the target bounty:
+
+- `Claw for Human`: `/demo`
+- `Animoca Bounty`: `/hackathon?bounty=animoca`
+- `Human for Claw`: `/buddy`
+- `Z.AI General`: `/hackathon?bounty=z-ai-general`
+- `AI Agents for Good`: `/hackathon?bounty=ai-agents-for-good`
+
+Demo checklist:
+
+1. show one concrete user input or product state
+2. show one memory or event result
+3. show one proof panel or provider result
+4. show one trust boundary, such as `dry-run`, queue handoff, or public proof JSON
+
+## 6:40-7:10 Public Verification
 Say:
 
-"Once the moment becomes worth expressing, SocialOS turns the same event into multilingual, platform-native drafts. But it stays trust-first. The first version prepares a handoff instead of pretending everything should auto-post."
+"After this video, judges can verify the same story on the public site. The deck stays at the root, the canonical bounty page is `/hackathon`, and the structured proof JSON is published alongside it."
 
-Show:
-- `Drafts`
-- `Queue`
+Open:
 
-## 3:40-4:30 Mirror
+- `https://zhouyixiaoxiao.org/`
+- `https://zhouyixiaoxiao.org/hackathon/`
+- the matching bounty proof JSON
+
+## 7:10-7:40 Close
 Say:
 
-"The last layer is Self Mirror. This is not a personality quiz. It is reflection grounded in actual events, notes, and interactions."
+"SocialOS is one product with five review angles: Claw for Human, Animoca, Human for Claw, Z.AI General, and AI Agents for Good.
 
-Show:
-- `Self Mirror`
-- one evidence-backed conclusion
-
-## 4:30-5:20 Claw / OpenClaw Framing
-Open local `/demo` and say:
-
-"Under the surface, OpenClaw coordinates narrow agent lanes for memory, reflection, validation, and publishing. The point is not agent theater. The point is that the user still gets one calm product surface."
-
-## 5:20-6:10 Shared Public Proof
-Open public `/` or `/deck/`, then `/hackathon/`, and say:
-
-"After the video, judges can open the public proof site. The deck stays at the root, and the hackathon routes publish the judge walkthrough, bounty framing, and stable proof JSON without exposing the local runtime."
-
-## 6:10-7:10 Bounty Swap
-Insert exactly one bounty-specific segment from `DORAHACKS_BOUNTY_SWAPS.md`.
-
-## 7:10-8:10 Why This Is Credible
-Say:
-
-"The product is credible because the trust boundary is real: local-first, loopback-only, dry-run by default, and explicit about what is live versus what is fallback. GLM and FLock have integration-ready proof paths, and the repo keeps those claims honest."
-
-## 8:10-9:00 Close
-Say:
-
-"SocialOS is one product with five review angles, not five disconnected demos. The core loop already works: capture, recall, express, hand off, reflect.
-
-What I want now is design partners, user intros, and judges who care about relationship-rich workflows that should not be fragmented across separate tools."
+The core loop is the same in every case: capture, remember, express, hand off, reflect. What changes is the bounty framing and the partner proof."

@@ -270,6 +270,8 @@ const SUPPORTED_MODEL_PROVIDERS = new Set([
 
 const DEFAULT_GLM_MODEL_ID = 'glm-4.7';
 const DEFAULT_FLOCK_MODEL_ID = 'qwen3-30b-a3b-instruct-2507';
+const DEFAULT_STRUCTURED_MODEL_TIMEOUT_MS = 20000;
+const HACKATHON_DECK_APPENDIX_START_SLIDE = 9;
 
 const HACKATHON_BOUNTIES = Object.freeze([
   Object.freeze({
@@ -277,10 +279,18 @@ const HACKATHON_BOUNTIES = Object.freeze([
     label: 'Claw for Human',
     prize: '$500 USD',
     route: '/demo',
+    localRecordRoute: '/demo',
+    partnerLabel: 'OpenClaw Runtime',
+    apiSurface: 'GET /proofs?bounty=claw-for-human',
+    infrastructure: 'OpenClaw runtime lanes + loopback-only SocialOS UI + public proof export',
     audience: 'judges who want a human-ready product surface',
+    problem: 'OpenClaw is powerful for builders, but judges still need to see it translated into a calm, human-readable end-user workflow.',
     hook: 'Bring Claw out of the shell and into a guided relationship workspace.',
     fit: 'SocialOS already turns OpenClaw-powered agent orchestration into a calm interface with memory, drafts, queue, and reflection.',
     uniqueAngle: 'Explainable relationship OS instead of a generic assistant shell.',
+    integrationSummary: 'OpenClaw runs the orchestration, memory, compliance, and publishing lanes while SocialOS exposes one guided loop across Workspace, Contacts, Drafts, Queue, and Mirror.',
+    technicalImplementation: 'The Node API persists people, events, drafts, queue state, and mirror evidence in SQLite while the OpenClaw runtime keeps the product lanes separated behind the same UI.',
+    judgeClosing: 'This is Claw translated into a usable relationship operating system, not left as a shell-only interface.',
     integrations: ['openclaw', 'workspace', 'deck'],
     proofKinds: ['openclaw', 'ui', 'deck'],
     demoSteps: ['Open /demo', 'Launch /quick-capture', 'Show agent trace + evidence cards'],
@@ -290,10 +300,18 @@ const HACKATHON_BOUNTIES = Object.freeze([
     label: 'Animoca Bounty',
     prize: '$1,000 USD',
     route: '/hackathon?bounty=animoca',
+    localRecordRoute: '/hackathon?bounty=animoca',
+    partnerLabel: 'Persistent Identity + OpenClaw Lanes',
+    apiSurface: 'GET /proofs?bounty=animoca',
+    infrastructure: 'SQLite people graph + identity/event linking + multi-lane OpenClaw orchestration',
     audience: 'judges looking for identity, memory, and multi-agent coordination',
+    problem: 'Creator and community workflows break when identity, relationship memory, and long-horizon coordination are not persistent across sessions.',
     hook: 'Position SocialOS as an identity-rich agent system for creator and community ops.',
     fit: 'The repo already has persistent people memory, linked identities, and explicit agent lanes for memory, compliance, and publishing.',
     uniqueAngle: 'Persistent identity and long-horizon memory instead of a one-shot agent demo.',
+    integrationSummary: 'The same product loop already links Person, Identity, Interaction, Event, Draft, and Mirror state while OpenClaw coordinates the jobs needed to keep that memory actionable.',
+    technicalImplementation: 'The schema keeps linked people and event context first-class, and the runtime splits memory, compliance, and publishing responsibilities into visible lanes instead of a monolithic chatbot.',
+    judgeClosing: 'This is persistent identity and memory for creator-community operations, not a one-task assistant demo.',
     integrations: ['openclaw', 'workspace', 'deck'],
     proofKinds: ['openclaw', 'memory', 'ui'],
     demoSteps: ['Open /hackathon', 'Inspect Animoca card', 'Jump into Contacts and Studio agents'],
@@ -303,10 +321,18 @@ const HACKATHON_BOUNTIES = Object.freeze([
     label: 'Human for Claw',
     prize: '$500 USD',
     route: '/buddy',
+    localRecordRoute: '/buddy',
+    partnerLabel: 'Buddy Guardrails on OpenClaw',
+    apiSurface: 'GET /proofs?bounty=human-for-claw',
+    infrastructure: 'Buddy UI mode + dry-run safety defaults + OpenClaw-backed memory loop',
     audience: 'judges evaluating kid-friendly or family-friendly Claw experiences',
+    problem: 'Agent products are often too open-ended for students, younger users, or trust-sensitive first-time users.',
     hook: 'Offer a friendship and gratitude coach with guardrails instead of an unrestricted agent.',
     fit: 'SocialOS already captures people, follow-up, and reflection. Buddy mode narrows that loop to safe, supportive actions.',
     uniqueAngle: 'Positive social coaching with explicit boundaries and no risky publishing surface.',
+    integrationSummary: 'Buddy mode keeps the same SocialOS memory loop but narrows users into four safe tasks and removes any pressure to publish or configure complex automation.',
+    technicalImplementation: 'The web layer hides risky controls, keeps the product loop loopback-only and dry-run, and routes users into capture, memory, follow-up, and reflection flows instead of open-ended execution.',
+    judgeClosing: 'Buddy mode is intentionally narrower, safer, and easier to trust than a general-purpose agent.',
     integrations: ['openclaw', 'buddy', 'workspace'],
     proofKinds: ['ui', 'safety', 'memory'],
     demoSteps: ['Open /buddy', 'Pick a safe task card', 'Jump into a prefilled Workspace flow'],
@@ -316,10 +342,18 @@ const HACKATHON_BOUNTIES = Object.freeze([
     label: 'Z.AI General',
     prize: '$4,000 USD',
     route: '/hackathon?bounty=z-ai-general',
+    localRecordRoute: '/hackathon?bounty=z-ai-general',
+    partnerLabel: 'Z.AI GLM',
+    apiSurface: 'POST /integrations/glm/generate',
+    infrastructure: 'GLM model routing inside Workspace chat, bilingual summarization, and draft generation',
     audience: 'judges who want a real GLM-powered prototype',
+    problem: 'Multilingual relationship workflows are usually split between English-first product logic and separate Chinese-language generation tooling.',
     hook: 'Use GLM in the core multilingual SocialOS workflow, not as a side widget.',
     fit: 'Workspace responses, bilingual summarization, and draft generation all map naturally onto the current product loop.',
     uniqueAngle: 'Chinese + English creator workflow where GLM is a core path, not a decorative provider option.',
+    integrationSummary: 'GLM is routed through the native SocialOS flow: Workspace chat, bilingual summary generation, and platform-native draft generation all call the GLM path instead of a mock adapter.',
+    technicalImplementation: 'The API exposes a live GLM endpoint, records proof metadata into audit evidence, and reuses the same provider-aware routing path inside Workspace and Draft generation so the bounty is part of the product, not a side panel.',
+    judgeClosing: 'GLM is integrated into the real multilingual product loop and captured as live proof, not demonstrated as a decorative plug-in.',
     integrations: ['glm', 'workspace', 'deck'],
     proofKinds: ['glm', 'ui', 'deck'],
     demoSteps: ['Open /hackathon', 'Call GLM router', 'Show GLM-tagged Workspace or Draft flow'],
@@ -329,10 +363,18 @@ const HACKATHON_BOUNTIES = Object.freeze([
     label: 'AI Agents for Good',
     prize: '$5,000 USDT',
     route: '/hackathon?bounty=ai-agents-for-good',
+    localRecordRoute: '/hackathon?bounty=ai-agents-for-good',
+    partnerLabel: 'FLock SDG Triage',
+    apiSurface: 'POST /integrations/flock/sdg-triage',
+    infrastructure: 'FLock SDG triage + SocialOS contacts/events/drafts follow-through',
     audience: 'judges looking for impact-focused agent workflows',
+    problem: 'Impact workflows usually stop at categorization instead of carrying urgency and next action into a real coordination loop.',
     hook: 'Turn SocialOS into a community support and volunteer coordination operating system.',
     fit: 'Contacts, events, follow-up drafts, and evidence-backed coordination already exist; FLock adds SDG triage and urgency scoring.',
     uniqueAngle: 'Long-term relationship memory and follow-through for impact work, not a one-turn charity chatbot.',
+    integrationSummary: 'FLock adds live SDG labeling, urgency scoring, and next-step guidance, then SocialOS promotes that result into contacts, events, follow-up drafts, and queue-visible coordination.',
+    technicalImplementation: 'The API calls the live FLock structured model path, records provider metadata into proof evidence, and keeps the resulting action inside the same relationship-memory workflow used elsewhere in the product.',
+    judgeClosing: 'This is not a charity chatbot. It is impact triage plus relationship memory and actual follow-through.',
     integrations: ['openclaw', 'flock', 'workspace'],
     proofKinds: ['flock', 'openclaw', 'memory'],
     demoSteps: ['Open /hackathon', 'Run SDG triage', 'Promote the result into follow-up actions and drafts'],
@@ -357,6 +399,20 @@ const HACKATHON_BOUNTY_ALIAS_TO_ID = (() => {
 
   return aliasMap;
 })();
+
+function buildHackathonProofJsonPath(bountyId = '') {
+  const normalized = normalizeBountyMode(bountyId);
+  return normalized ? `/data/proofs/${encodeURIComponent(normalized)}.json` : '/data/proofs/all.json';
+}
+
+function buildHackathonPublicAnchor(bountyId = '') {
+  const normalized = normalizeBountyMode(bountyId);
+  return normalized ? `/hackathon/#bounty-${encodeURIComponent(normalized)}` : '/hackathon/';
+}
+
+function buildHackathonDeckAppendixSlide(index) {
+  return `Slide ${HACKATHON_DECK_APPENDIX_START_SLIDE + index}`;
+}
 
 function loadDotEnvFile(filePath) {
   let raw = '';
@@ -473,6 +529,15 @@ function readOptionalString(value, fallback) {
 
 function readOptionalBoolean(value, fallback = false) {
   return typeof value === 'boolean' ? value : fallback;
+}
+
+function readOptionalPositiveInteger(value, fallback) {
+  const parsed = typeof value === 'number'
+    ? value
+    : typeof value === 'string'
+      ? Number.parseInt(value.trim(), 10)
+      : Number.NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 function normalizePublishMode(value, fallback = DEFAULT_PUBLISH_MODE) {
@@ -2922,7 +2987,10 @@ function buildHackathonIntegrationStates() {
       summary: foundry.enabled
         ? `${(foundry.agents || []).length} lanes active for orchestrator, memory, compliance, and publishing.`
         : 'Runtime lanes are not available yet.',
+      provider: 'openclaw',
       model: '',
+      live: Boolean(foundry.enabled),
+      fallbackUsed: false,
       route: '/studio?panel=agents',
     },
     workspace: {
@@ -2931,7 +2999,10 @@ function buildHackathonIntegrationStates() {
       configured: true,
       status: 'ready',
       summary: 'Judge-facing capture, memory, drafts, queue, and mirror loop.',
+      provider: 'workspace-ui',
       model: '',
+      live: true,
+      fallbackUsed: false,
       route: '/demo',
     },
     buddy: {
@@ -2940,7 +3011,10 @@ function buildHackathonIntegrationStates() {
       configured: true,
       status: ops.publishMode === DEFAULT_PUBLISH_MODE ? 'ready' : 'warn',
       summary: 'Friendship and gratitude mode keeps the experience narrow and trust-first.',
+      provider: 'openclaw',
       model: '',
+      live: true,
+      fallbackUsed: false,
       route: '/buddy',
     },
     deck: {
@@ -2949,7 +3023,10 @@ function buildHackathonIntegrationStates() {
       configured: true,
       status: 'ready',
       summary: 'Public deck now carries the shared story plus bounty-specific appendix slides.',
+      provider: 'deck',
       model: '',
+      live: true,
+      fallbackUsed: false,
       route: '/deck',
     },
     glm: {
@@ -2958,9 +3035,12 @@ function buildHackathonIntegrationStates() {
       configured: hasConfiguredGlm(),
       status: hasConfiguredGlm() ? 'ready' : 'pending',
       summary: hasConfiguredGlm()
-        ? `Configured for GLM-backed chat and draft generation using ${readOptionalString(process.env.GLM_MODEL_ID, DEFAULT_GLM_MODEL_ID)}.`
-        : 'Add GLM_API_KEY to activate Z.AI routing for Workspace and Drafts.',
+        ? `Live GLM routing is active for chat and draft generation using ${readOptionalString(process.env.GLM_MODEL_ID, DEFAULT_GLM_MODEL_ID)}.`
+        : 'Add GLM_API_KEY to activate live Z.AI routing for Workspace and Drafts.',
+      provider: MODEL_PROVIDER_GLM,
       model: hasConfiguredGlm() ? readOptionalString(process.env.GLM_MODEL_ID, DEFAULT_GLM_MODEL_ID) : '',
+      live: hasConfiguredGlm(),
+      fallbackUsed: !hasConfiguredGlm(),
       route: '/hackathon?bounty=z-ai-general',
     },
     flock: {
@@ -2969,11 +3049,113 @@ function buildHackathonIntegrationStates() {
       configured: hasConfiguredFlock(),
       status: hasConfiguredFlock() ? 'ready' : 'pending',
       summary: hasConfiguredFlock()
-        ? `Configured for SDG triage using ${readOptionalString(process.env.FLOCK_MODEL_ID, DEFAULT_FLOCK_MODEL_ID)}.`
-        : 'Add FLOCK_API_KEY to activate SDG triage for AI Agents for Good.',
+        ? `Live FLock SDG triage is active using ${readOptionalString(process.env.FLOCK_MODEL_ID, DEFAULT_FLOCK_MODEL_ID)}.`
+        : 'Add FLOCK_API_KEY to activate live SDG triage for AI Agents for Good.',
+      provider: MODEL_PROVIDER_FLOCK,
       model: hasConfiguredFlock() ? readOptionalString(process.env.FLOCK_MODEL_ID, DEFAULT_FLOCK_MODEL_ID) : '',
+      live: hasConfiguredFlock(),
+      fallbackUsed: !hasConfiguredFlock(),
       route: '/hackathon?bounty=ai-agents-for-good',
     },
+  };
+}
+
+function sortHackathonProofsByCaptureTime(proofs = []) {
+  return [...proofs].sort((left, right) => {
+    const leftTime = Date.parse(left.capturedAt || left.createdAt || 0);
+    const rightTime = Date.parse(right.capturedAt || right.createdAt || 0);
+    return rightTime - leftTime;
+  });
+}
+
+function getBountyById(bountyId = '') {
+  const normalized = normalizeBountyMode(bountyId);
+  return HACKATHON_BOUNTIES.find((bounty) => bounty.id === normalized) || null;
+}
+
+function buildBountyPublicMetadata(bountyId = '') {
+  const bounty = getBountyById(bountyId);
+  const index = bounty ? HACKATHON_BOUNTIES.findIndex((item) => item.id === bounty.id) : -1;
+  return {
+    localRecordRoute: bounty?.localRecordRoute || bounty?.route || '/hackathon',
+    publicAnchor: buildHackathonPublicAnchor(bounty?.id || bountyId),
+    proofJsonUrl: buildHackathonProofJsonPath(bounty?.id || bountyId),
+    deckAppendixSlide: index >= 0 ? buildHackathonDeckAppendixSlide(index) : '',
+  };
+}
+
+function buildBountyLiveProofMetadata(bounty, integrations, bountyProofs = []) {
+  const latestCaptured = sortHackathonProofsByCaptureTime(bountyProofs).find(
+    (proof) => proof.provider || proof.model || proof.capturedAt || proof.createdAt
+  );
+
+  if (latestCaptured) {
+    return {
+      provider: readOptionalString(latestCaptured.provider, 'openclaw'),
+      model: readOptionalString(latestCaptured.model, ''),
+      live: !readOptionalBoolean(latestCaptured.fallbackUsed, false),
+      fallbackUsed: readOptionalBoolean(latestCaptured.fallbackUsed, false),
+      capturedAt: readOptionalString(latestCaptured.capturedAt || latestCaptured.createdAt, ''),
+      liveProofSummary: readOptionalString(latestCaptured.summary, ''),
+    };
+  }
+
+  if (bounty.id === 'z-ai-general') {
+    return {
+      provider: MODEL_PROVIDER_GLM,
+      model: readOptionalString(integrations.glm?.model, ''),
+      live: Boolean(integrations.glm?.live),
+      fallbackUsed: readOptionalBoolean(integrations.glm?.fallbackUsed, !integrations.glm?.live),
+      capturedAt: '',
+      liveProofSummary: readOptionalString(integrations.glm?.summary, ''),
+    };
+  }
+
+  if (bounty.id === 'ai-agents-for-good') {
+    return {
+      provider: MODEL_PROVIDER_FLOCK,
+      model: readOptionalString(integrations.flock?.model, ''),
+      live: Boolean(integrations.flock?.live),
+      fallbackUsed: readOptionalBoolean(integrations.flock?.fallbackUsed, !integrations.flock?.live),
+      capturedAt: '',
+      liveProofSummary: readOptionalString(integrations.flock?.summary, ''),
+    };
+  }
+
+  return {
+    provider: 'openclaw',
+    model: '',
+    live: true,
+    fallbackUsed: false,
+    capturedAt: '',
+    liveProofSummary: readOptionalString(bounty.integrationSummary, ''),
+  };
+}
+
+function attachHackathonProofMetadata(proof) {
+  const primaryBountyId = normalizeBountyMode((proof.bounties || [])[0] || '');
+  const bountyMetadata =
+    Array.isArray(proof.bounties) && proof.bounties.length === 1
+      ? buildBountyPublicMetadata(primaryBountyId)
+      : {
+          localRecordRoute: '/hackathon',
+          publicAnchor: '/hackathon/',
+          proofJsonUrl: buildHackathonProofJsonPath(''),
+          deckAppendixSlide: 'Shared appendix',
+        };
+  return {
+    ...proof,
+    label: readOptionalString(proof.label, readOptionalString(proof.title, proof.id)),
+    bountyId: primaryBountyId,
+    localRecordRoute: readOptionalString(proof.localRecordRoute, bountyMetadata.localRecordRoute),
+    publicAnchor: readOptionalString(proof.publicAnchor, bountyMetadata.publicAnchor),
+    proofJsonUrl: readOptionalString(proof.proofJsonUrl, bountyMetadata.proofJsonUrl),
+    deckAppendixSlide: readOptionalString(proof.deckAppendixSlide, bountyMetadata.deckAppendixSlide),
+    provider: readOptionalString(proof.provider, ''),
+    model: readOptionalString(proof.model, ''),
+    live: readOptionalBoolean(proof.live, !readOptionalBoolean(proof.fallbackUsed, false)),
+    fallbackUsed: readOptionalBoolean(proof.fallbackUsed, false),
+    capturedAt: readOptionalString(proof.capturedAt || proof.createdAt, ''),
   };
 }
 
@@ -2983,7 +3165,7 @@ function buildHackathonStaticProofs() {
   const ops = buildOpsStatus();
 
   return [
-    {
+    attachHackathonProofMetadata({
       id: 'proof-openclaw-runtime',
       kind: 'openclaw',
       status: integrations.openclaw.status,
@@ -2992,8 +3174,13 @@ function buildHackathonStaticProofs() {
       bounties: ['claw-for-human', 'animoca', 'ai-agents-for-good', 'human-for-claw'],
       route: integrations.openclaw.route,
       source: 'socialos/openclaw/runtime.openclaw.json5',
-    },
-    {
+      provider: integrations.openclaw.provider,
+      model: integrations.openclaw.model,
+      live: integrations.openclaw.live,
+      fallbackUsed: integrations.openclaw.fallbackUsed,
+      localRecordRoute: '/demo',
+    }),
+    attachHackathonProofMetadata({
       id: 'proof-workspace-loop',
       kind: 'ui',
       status: 'ready',
@@ -3002,8 +3189,13 @@ function buildHackathonStaticProofs() {
       bounties: ['claw-for-human', 'animoca', 'z-ai-general'],
       route: '/demo',
       source: 'socialos/apps/web/server.mjs',
-    },
-    {
+      provider: 'workspace-ui',
+      model: '',
+      live: true,
+      fallbackUsed: false,
+      localRecordRoute: '/demo',
+    }),
+    attachHackathonProofMetadata({
       id: 'proof-memory-identity',
       kind: 'memory',
       status: 'ready',
@@ -3012,8 +3204,13 @@ function buildHackathonStaticProofs() {
       bounties: ['animoca', 'human-for-claw', 'ai-agents-for-good'],
       route: '/people',
       source: 'infra/db/schema.sql',
-    },
-    {
+      provider: 'memory-graph',
+      model: '',
+      live: true,
+      fallbackUsed: false,
+      localRecordRoute: '/hackathon?bounty=animoca',
+    }),
+    attachHackathonProofMetadata({
       id: 'proof-buddy-guardrails',
       kind: 'safety',
       status: ops.publishMode === DEFAULT_PUBLISH_MODE ? 'ready' : 'warn',
@@ -3022,8 +3219,13 @@ function buildHackathonStaticProofs() {
       bounties: ['human-for-claw', 'claw-for-human'],
       route: '/buddy',
       source: 'socialos/apps/web/server.mjs',
-    },
-    {
+      provider: 'openclaw',
+      model: '',
+      live: true,
+      fallbackUsed: false,
+      localRecordRoute: '/buddy',
+    }),
+    attachHackathonProofMetadata({
       id: 'proof-glm-router',
       kind: 'glm',
       status: integrations.glm.status,
@@ -3032,8 +3234,13 @@ function buildHackathonStaticProofs() {
       bounties: ['z-ai-general'],
       route: integrations.glm.route,
       source: 'socialos/apps/api/server.mjs',
-    },
-    {
+      provider: integrations.glm.provider,
+      model: integrations.glm.model,
+      live: integrations.glm.live,
+      fallbackUsed: integrations.glm.fallbackUsed,
+      localRecordRoute: '/hackathon?bounty=z-ai-general',
+    }),
+    attachHackathonProofMetadata({
       id: 'proof-flock-triage',
       kind: 'flock',
       status: integrations.flock.status,
@@ -3042,8 +3249,13 @@ function buildHackathonStaticProofs() {
       bounties: ['ai-agents-for-good'],
       route: integrations.flock.route,
       source: 'socialos/apps/api/server.mjs',
-    },
-    {
+      provider: integrations.flock.provider,
+      model: integrations.flock.model,
+      live: integrations.flock.live,
+      fallbackUsed: integrations.flock.fallbackUsed,
+      localRecordRoute: '/hackathon?bounty=ai-agents-for-good',
+    }),
+    attachHackathonProofMetadata({
       id: 'proof-pitch-pack',
       kind: 'deck',
       status: 'ready',
@@ -3052,7 +3264,12 @@ function buildHackathonStaticProofs() {
       bounties: HACKATHON_BOUNTIES.map((bounty) => bounty.id),
       route: '/deck',
       source: 'socialos/docs/pitch/VC_DECK_SPEC.md',
-    },
+      provider: 'deck',
+      model: '',
+      live: true,
+      fallbackUsed: false,
+      localRecordRoute: '/deck',
+    }),
   ];
 }
 
@@ -3076,12 +3293,18 @@ function buildRecentHackathonProofs(statements, limit = 12) {
         route: readOptionalString(payload.route, '/hackathon'),
         source: `Audit ${row.id}`,
         createdAt: row.created_at,
+        provider: readOptionalString(payload.provider, ''),
+        model: readOptionalString(payload.model, ''),
+        live: readOptionalBoolean(payload.live, !readOptionalBoolean(payload.fallbackUsed, false)),
+        fallbackUsed: readOptionalBoolean(payload.fallbackUsed, false),
+        capturedAt: readOptionalString(payload.capturedAt, row.created_at),
       };
-    });
+    })
+    .map((proof) => attachHackathonProofMetadata(proof));
 }
 
 function buildHackathonProofCatalog(statements) {
-  return [...buildHackathonStaticProofs(), ...buildRecentHackathonProofs(statements, 16)];
+  return [...sortHackathonProofsByCaptureTime(buildRecentHackathonProofs(statements, 16)), ...buildHackathonStaticProofs()];
 }
 
 function buildHackathonOverviewPayload(statements) {
@@ -3095,17 +3318,29 @@ function buildHackathonOverviewPayload(statements) {
   ];
 
   const bountyCards = HACKATHON_BOUNTIES.map((bounty) => {
+    const index = HACKATHON_BOUNTIES.findIndex((item) => item.id === bounty.id);
     const requiredIntegrations = bounty.integrations.map((id) => integrations[id]).filter(Boolean);
     const blockingIntegrations = requiredIntegrations.filter(
       (integration) => !integration.configured && !new Set(['workspace', 'buddy', 'deck']).has(integration.id)
     );
     const bountyProofs = proofs.filter((proof) => proof.bounties.includes(bounty.id));
+    const liveProof = buildBountyLiveProofMetadata(bounty, integrations, bountyProofs);
     return {
       ...bounty,
-      status: blockingIntegrations.length ? 'partial' : 'ready',
+      status: liveProof.fallbackUsed ? 'warn' : blockingIntegrations.length ? 'partial' : 'ready',
       requiredIntegrations,
       proofCount: bountyProofs.length,
       recommendedRoute: bounty.route,
+      localRecordRoute: readOptionalString(bounty.localRecordRoute, bounty.route),
+      publicAnchor: buildHackathonPublicAnchor(bounty.id),
+      proofJsonUrl: buildHackathonProofJsonPath(bounty.id),
+      deckAppendixSlide: buildHackathonDeckAppendixSlide(index),
+      provider: liveProof.provider,
+      model: liveProof.model,
+      live: liveProof.live,
+      fallbackUsed: liveProof.fallbackUsed,
+      capturedAt: liveProof.capturedAt,
+      liveProofSummary: liveProof.liveProofSummary,
       proofs: bountyProofs.slice(0, 4),
     };
   });
@@ -3122,19 +3357,38 @@ function buildHackathonOverviewPayload(statements) {
 
 function recordHackathonEvidence(
   statements,
-  { action, bounty = '', provider = '', proofKind = '', title = '', summary = '', route = '/hackathon', input = {}, output = {}, fallbackUsed = false }
+  {
+    action,
+    bounty = '',
+    provider = '',
+    model = '',
+    proofKind = '',
+    title = '',
+    summary = '',
+    route = '/hackathon',
+    input = {},
+    output = {},
+    live = true,
+    fallbackUsed = false,
+  }
 ) {
   const createdAt = nowIso();
   const auditId = makeId('audit');
   const digestId = makeId('digest');
+  const normalizedBounty = normalizeBountyMode(bounty);
   const payload = {
-    bounty: normalizeBountyMode(bounty),
+    bounty: normalizedBounty,
     provider,
+    model,
     proofKind,
     title,
     summary,
     route,
+    live,
     fallbackUsed,
+    capturedAt: createdAt,
+    publicAnchor: buildHackathonPublicAnchor(normalizedBounty),
+    proofJsonUrl: buildHackathonProofJsonPath(normalizedBounty),
     input,
     output,
   };
@@ -3142,11 +3396,11 @@ function recordHackathonEvidence(
   statements.insertAudit.run(auditId, action, JSON.stringify(payload), createdAt);
   statements.insertDigest.run(
     digestId,
-    `hackathon:${normalizeBountyMode(bounty) || action}`,
+    `hackathon:${normalizedBounty || action}`,
     title || action,
     'Capture reusable bounty proof in repo-native evidence surfaces.',
-    fallbackUsed ? 'External provider fell back to local heuristics.' : 'Low risk: proof captured successfully.',
-    `GET /proofs?bounty=${encodeURIComponent(normalizeBountyMode(bounty) || '')}`,
+    fallbackUsed ? 'Provider fallback needs attention before judge recording.' : 'Live integration proof captured successfully.',
+    `GET /proofs?bounty=${encodeURIComponent(normalizedBounty || '')}`,
     `Open ${route} to present the latest proof.`,
     createdAt
   );
@@ -3217,6 +3471,7 @@ function buildHeuristicSdgTriage(text, { person = null, event = null } = {}) {
 
 async function buildFlockSdgTriage(statements, { text, personId = '', eventId = '' } = {}) {
   const safeText = cleanText(text || '');
+  const capturedAt = nowIso();
   if (!safeText) {
     throw new HttpError(400, 'text is required');
   }
@@ -3234,8 +3489,10 @@ async function buildFlockSdgTriage(statements, { text, personId = '', eventId = 
         provider: MODEL_PROVIDER_LOCAL,
         requestedProvider: MODEL_PROVIDER_FLOCK,
         model: '',
+        live: false,
         fallbackUsed: true,
         reason: 'flock-not-configured',
+        capturedAt,
       },
     };
   }
@@ -3277,8 +3534,10 @@ async function buildFlockSdgTriage(statements, { text, personId = '', eventId = 
       provider: response.ok ? response.provider : MODEL_PROVIDER_LOCAL,
       requestedProvider: MODEL_PROVIDER_FLOCK,
       model: response.ok ? response.model : '',
+      live: response.ok,
       fallbackUsed: !response.ok,
       reason: response.ok ? 'flock-generated' : response.error || 'local-fallback',
+      capturedAt,
     },
   };
 }
@@ -3311,6 +3570,7 @@ function buildLocalGlmFallback(taskType, prompt, context = {}) {
 
 async function buildGlmGenerationResult({ taskType = 'generation', prompt = '', context = {}, bountyMode = '' } = {}) {
   const safePrompt = cleanText(prompt || '');
+  const capturedAt = nowIso();
   if (!safePrompt) {
     throw new HttpError(400, 'prompt is required');
   }
@@ -3323,8 +3583,10 @@ async function buildGlmGenerationResult({ taskType = 'generation', prompt = '', 
         provider: MODEL_PROVIDER_LOCAL,
         requestedProvider: MODEL_PROVIDER_GLM,
         model: '',
+        live: false,
         fallbackUsed: true,
         reason: 'glm-not-configured',
+        capturedAt,
       },
     };
   }
@@ -3358,8 +3620,10 @@ async function buildGlmGenerationResult({ taskType = 'generation', prompt = '', 
       provider: response.ok ? response.provider : MODEL_PROVIDER_LOCAL,
       requestedProvider: MODEL_PROVIDER_GLM,
       model: response.ok ? response.model : '',
+      live: response.ok,
       fallbackUsed: !response.ok,
       reason: response.ok ? 'glm-generated' : response.error || 'local-fallback',
+      capturedAt,
     },
   };
 }
@@ -4376,10 +4640,16 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
         action: 'hackathon_workspace_chat',
         bounty: bountyMode,
         provider: modelAssist?.provider || captureDraft?.extraction?.provider || MODEL_PROVIDER_LOCAL,
+        model: modelAssist?.model || captureDraft?.extraction?.model || '',
         proofKind: bountyMode === 'z-ai-general' ? 'glm' : 'ui',
         title: 'Workspace hackathon run',
         summary: truncateText(answer, 180),
-        route: bountyMode === 'human-for-claw' ? '/buddy' : bountyMode === 'claw-for-human' ? '/demo' : '/hackathon',
+        route:
+          bountyMode === 'human-for-claw'
+            ? '/buddy'
+            : bountyMode === 'claw-for-human'
+              ? '/demo'
+              : `/hackathon?bounty=${encodeURIComponent(bountyMode)}`,
         input: {
           text,
           requestedProvider,
@@ -4391,6 +4661,9 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
             workspaceProvider: modelAssist?.provider || MODEL_PROVIDER_LOCAL,
           },
         },
+        live:
+          captureDraft?.extraction?.provider !== MODEL_PROVIDER_LOCAL &&
+          modelAssist?.provider !== MODEL_PROVIDER_LOCAL,
         fallbackUsed:
           captureDraft?.extraction?.provider === MODEL_PROVIDER_LOCAL ||
           modelAssist?.provider === MODEL_PROVIDER_LOCAL,
@@ -5917,10 +6190,22 @@ async function runStructuredModelTask({
     };
   }
 
+  const timeoutMs = readOptionalPositiveInteger(
+    process.env.STRUCTURED_MODEL_TIMEOUT_MS,
+    DEFAULT_STRUCTURED_MODEL_TIMEOUT_MS
+  );
+  const controller = new AbortController();
+  let didTimeout = false;
+  const timeoutHandle = setTimeout(() => {
+    didTimeout = true;
+    controller.abort();
+  }, timeoutMs);
+
   try {
     const response = await fetch(requestConfig.endpoint, {
       method: 'POST',
       headers: requestConfig.headers,
+      signal: controller.signal,
       body: JSON.stringify({
         model: requestConfig.model,
         temperature: 0.2,
@@ -5971,8 +6256,14 @@ async function runStructuredModelTask({
       model: requestConfig.model,
       parsed: null,
       rawContent: '',
-      error: error instanceof Error ? error.message : String(error),
+      error: didTimeout
+        ? `provider request timed out after ${timeoutMs}ms`
+        : error instanceof Error
+          ? error.message
+          : String(error),
     };
+  } finally {
+    clearTimeout(timeoutHandle);
   }
 }
 
@@ -7855,6 +8146,7 @@ async function routeRequest(req, res, statements) {
       action: 'hackathon_glm_generate',
       bounty: 'z-ai-general',
       provider: result.proof.provider,
+      model: result.proof.model,
       proofKind: 'glm',
       title: 'GLM generation run',
       summary: cleanText(result.answer).slice(0, 180),
@@ -7867,6 +8159,7 @@ async function routeRequest(req, res, statements) {
         answer: result.answer,
         proof: result.proof,
       },
+      live: !result.proof.fallbackUsed,
       fallbackUsed: result.proof.fallbackUsed,
     });
     sendJson(res, 200, {
@@ -7889,6 +8182,7 @@ async function routeRequest(req, res, statements) {
       action: 'hackathon_flock_triage',
       bounty: 'ai-agents-for-good',
       provider: result.proof.provider,
+      model: result.proof.model,
       proofKind: 'flock',
       title: 'FLock SDG triage run',
       summary: `${result.sdg} · ${result.urgency} · ${result.suggestedAction}`,
@@ -7899,6 +8193,7 @@ async function routeRequest(req, res, statements) {
         eventId: readOptionalString(body.eventId, ''),
       },
       output: result,
+      live: !result.proof.fallbackUsed,
       fallbackUsed: result.proof.fallbackUsed,
     });
     sendJson(res, 200, {
@@ -8021,6 +8316,7 @@ async function routeRequest(req, res, statements) {
           language,
           provider: generation.provider,
           model: generation.model,
+          live: generation.provider !== MODEL_PROVIDER_LOCAL,
           fallbackUsed: generation.fallbackUsed,
           reason: generation.reason,
         });
@@ -8033,6 +8329,9 @@ async function routeRequest(req, res, statements) {
           provider:
             generationProofs.find((item) => item.provider && item.provider !== MODEL_PROVIDER_LOCAL)?.provider ||
             MODEL_PROVIDER_LOCAL,
+          model:
+            generationProofs.find((item) => item.model && item.provider && item.provider !== MODEL_PROVIDER_LOCAL)?.model ||
+            '',
           proofKind: bountyMode === 'z-ai-general' ? 'glm' : 'ui',
           title: 'Hackathon draft package generated',
           summary: `${generatedDrafts.length} drafts generated for ${event.title}.`,
@@ -8046,6 +8345,7 @@ async function routeRequest(req, res, statements) {
             count: generatedDrafts.length,
             generations: generationProofs,
           },
+          live: generationProofs.some((item) => item.provider !== MODEL_PROVIDER_LOCAL),
           fallbackUsed: generationProofs.every((item) => item.provider === MODEL_PROVIDER_LOCAL),
         })
       : null;
@@ -8062,6 +8362,15 @@ async function routeRequest(req, res, statements) {
         requestedProvider,
         bountyMode,
         routes: bountyMode === 'z-ai-general' ? ['/hackathon?bounty=z-ai-general', '/drafts'] : ['/drafts'],
+        provider:
+          generationProofs.find((item) => item.provider && item.provider !== MODEL_PROVIDER_LOCAL)?.provider ||
+          MODEL_PROVIDER_LOCAL,
+        model:
+          generationProofs.find((item) => item.model && item.provider && item.provider !== MODEL_PROVIDER_LOCAL)?.model ||
+          '',
+        live: generationProofs.some((item) => item.provider !== MODEL_PROVIDER_LOCAL),
+        fallbackUsed: generationProofs.every((item) => item.provider === MODEL_PROVIDER_LOCAL),
+        capturedAt: evidence?.createdAt || nowIso(),
         generations: generationProofs,
       },
     });
@@ -8658,6 +8967,7 @@ async function routeRequest(req, res, statements) {
 export function createApiServer({ dbPath = DEFAULT_DB_PATH } = {}) {
   const db = initDb(dbPath);
   const statements = buildStatements(db);
+  const sockets = new Set();
   ACTIVE_STUDIO = createStudioControlPlane({
     db,
     repoRoot: REPO_ROOT,
@@ -8693,7 +9003,14 @@ export function createApiServer({ dbPath = DEFAULT_DB_PATH } = {}) {
     db.close();
   });
 
-  return { server, dbPath };
+  server.on('connection', (socket) => {
+    sockets.add(socket);
+    socket.on('close', () => {
+      sockets.delete(socket);
+    });
+  });
+
+  return { server, dbPath, sockets };
 }
 
 export async function startApiServer({
@@ -8701,7 +9018,7 @@ export async function startApiServer({
   dbPath = DEFAULT_DB_PATH,
   quiet = false,
 } = {}) {
-  const { server } = createApiServer({ dbPath });
+  const { server, sockets } = createApiServer({ dbPath });
 
   await new Promise((resolve, reject) => {
     server.once('error', reject);
@@ -8727,6 +9044,9 @@ export async function startApiServer({
         return;
       }
       server.close((error) => (error ? reject(error) : resolve()));
+      for (const socket of sockets) {
+        socket.destroy();
+      }
     });
   };
 

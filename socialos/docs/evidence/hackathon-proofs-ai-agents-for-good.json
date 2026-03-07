@@ -2,8 +2,32 @@
   "bounty": "ai-agents-for-good",
   "kind": "",
   "limit": 24,
-  "count": 4,
+  "count": 5,
   "proofs": [
+    {
+      "id": "audit_6146172c872f4e918b098aad7e4c4703",
+      "kind": "flock",
+      "status": "captured",
+      "title": "FLock SDG triage run",
+      "summary": "SDG 4: Quality Education · medium · Capture volunteer and student profiles, create a workshop event with bilingual reminders, and schedule automated follow-up messages to reinforce mentor-student connections.",
+      "bounties": [
+        "ai-agents-for-good"
+      ],
+      "route": "/hackathon?bounty=ai-agents-for-good",
+      "source": "Audit audit_6146172c872f4e918b098aad7e4c4703",
+      "createdAt": "2026-03-07T22:33:17.936Z",
+      "provider": "flock",
+      "model": "qwen3-235b-a22b-instruct-2507",
+      "live": true,
+      "fallbackUsed": false,
+      "capturedAt": "2026-03-07T22:33:17.936Z",
+      "label": "FLock SDG triage run",
+      "bountyId": "ai-agents-for-good",
+      "localRecordRoute": "/hackathon?bounty=ai-agents-for-good",
+      "publicAnchor": "/hackathon/#bounty-ai-agents-for-good",
+      "proofJsonUrl": "/data/proofs/ai-agents-for-good.json",
+      "deckAppendixSlide": "Slide 13"
+    },
     {
       "id": "proof-openclaw-runtime",
       "kind": "openclaw",
@@ -17,7 +41,18 @@
         "human-for-claw"
       ],
       "route": "/studio?panel=agents",
-      "source": "socialos/openclaw/runtime.openclaw.json5"
+      "source": "socialos/openclaw/runtime.openclaw.json5",
+      "provider": "openclaw",
+      "model": "",
+      "live": true,
+      "fallbackUsed": false,
+      "localRecordRoute": "/demo",
+      "label": "OpenClaw runtime powers the product lanes",
+      "bountyId": "claw-for-human",
+      "publicAnchor": "/hackathon/",
+      "proofJsonUrl": "/data/proofs/all.json",
+      "deckAppendixSlide": "Shared appendix",
+      "capturedAt": ""
     },
     {
       "id": "proof-memory-identity",
@@ -31,19 +66,41 @@
         "ai-agents-for-good"
       ],
       "route": "/people",
-      "source": "infra/db/schema.sql"
+      "source": "infra/db/schema.sql",
+      "provider": "memory-graph",
+      "model": "",
+      "live": true,
+      "fallbackUsed": false,
+      "localRecordRoute": "/hackathon?bounty=animoca",
+      "label": "Persistent identity and relationship memory are first-class",
+      "bountyId": "animoca",
+      "publicAnchor": "/hackathon/",
+      "proofJsonUrl": "/data/proofs/all.json",
+      "deckAppendixSlide": "Shared appendix",
+      "capturedAt": ""
     },
     {
       "id": "proof-flock-triage",
       "kind": "flock",
-      "status": "pending",
+      "status": "ready",
       "title": "FLock SDG triage is ready for impact workflows",
-      "summary": "Add FLOCK_API_KEY to activate SDG triage for AI Agents for Good.",
+      "summary": "Live FLock SDG triage is active using qwen3-235b-a22b-instruct-2507.",
       "bounties": [
         "ai-agents-for-good"
       ],
       "route": "/hackathon?bounty=ai-agents-for-good",
-      "source": "socialos/apps/api/server.mjs"
+      "source": "socialos/apps/api/server.mjs",
+      "provider": "flock",
+      "model": "qwen3-235b-a22b-instruct-2507",
+      "live": true,
+      "fallbackUsed": false,
+      "localRecordRoute": "/hackathon?bounty=ai-agents-for-good",
+      "label": "FLock SDG triage is ready for impact workflows",
+      "bountyId": "ai-agents-for-good",
+      "publicAnchor": "/hackathon/#bounty-ai-agents-for-good",
+      "proofJsonUrl": "/data/proofs/ai-agents-for-good.json",
+      "deckAppendixSlide": "Slide 13",
+      "capturedAt": ""
     },
     {
       "id": "proof-pitch-pack",
@@ -59,7 +116,18 @@
         "ai-agents-for-good"
       ],
       "route": "/deck",
-      "source": "socialos/docs/pitch/VC_DECK_SPEC.md"
+      "source": "socialos/docs/pitch/VC_DECK_SPEC.md",
+      "provider": "deck",
+      "model": "",
+      "live": true,
+      "fallbackUsed": false,
+      "localRecordRoute": "/deck",
+      "label": "Deck and public evidence stay submission-ready",
+      "bountyId": "claw-for-human",
+      "publicAnchor": "/hackathon/",
+      "proofJsonUrl": "/data/proofs/all.json",
+      "deckAppendixSlide": "Shared appendix",
+      "capturedAt": ""
     }
   ]
 }

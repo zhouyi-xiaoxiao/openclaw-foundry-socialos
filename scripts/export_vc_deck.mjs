@@ -6,7 +6,7 @@ import path from 'node:path';
 const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const outputRoot = path.join(repoRoot, '.deck-site');
 const webBaseUrl = process.env.SOCIALOS_WEB_BASE_URL || 'http://127.0.0.1:4173';
-const apiBaseUrl = process.env.SOCIALOS_API_BASE_URL || 'http://127.0.0.1:8787';
+const evidenceRoot = path.join(repoRoot, 'socialos', 'docs', 'evidence');
 const customDomain = process.env.SOCIALOS_DECK_DOMAIN || 'zhouyixiaoxiao.org';
 const bountyIds = ['claw-for-human', 'animoca', 'human-for-claw', 'z-ai-general', 'ai-agents-for-good'];
 
@@ -27,13 +27,9 @@ async function fetchText(url) {
   return await response.text();
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url);
-  const payload = await response.json();
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}: ${response.status} ${JSON.stringify(payload)}`);
-  }
-  return payload;
+async function copyFile(sourcePath, outputPath) {
+  const content = await fs.readFile(sourcePath, 'utf8');
+  await writeFile(outputPath, content);
 }
 
 function buildRedirectHtml(targetPath) {
@@ -62,11 +58,11 @@ async function main() {
     { output: 'buddy/index.html', source: `${webBaseUrl}/buddy?mode=public` },
   ];
   const jsonExports = [
-    { output: 'data/hackathon-overview.json', source: `${apiBaseUrl}/hackathon/overview` },
-    { output: 'data/proofs/all.json', source: `${apiBaseUrl}/proofs?limit=24` },
+    { output: 'data/hackathon-overview.json', source: path.join(evidenceRoot, 'hackathon-overview.json') },
+    { output: 'data/proofs/all.json', source: path.join(evidenceRoot, 'hackathon-proofs-all.json') },
     ...bountyIds.map((bountyId) => ({
       output: `data/proofs/${bountyId}.json`,
-      source: `${apiBaseUrl}/proofs?limit=24&bounty=${encodeURIComponent(bountyId)}`,
+      source: path.join(evidenceRoot, `hackathon-proofs-${bountyId}.json`),
     })),
   ];
 
@@ -79,8 +75,7 @@ async function main() {
   }
 
   for (const item of jsonExports) {
-    const payload = await fetchJson(item.source);
-    await writeFile(path.join(outputRoot, item.output), JSON.stringify(payload, null, 2) + '\n');
+    await copyFile(item.source, path.join(outputRoot, item.output));
   }
 
   await writeFile(path.join(outputRoot, '404.html'), buildRedirectHtml('/'));
@@ -94,7 +89,7 @@ async function main() {
     generatedAt: new Date().toISOString(),
     source: webBaseUrl,
     customDomain,
-    apiBaseUrl,
+    evidenceRoot,
     exportedFiles: [...htmlPages.map((page) => page.output), ...jsonExports.map((item) => item.output), '404.html', 'CNAME', 'robots.txt'],
   };
   await writeFile(path.join(outputRoot, 'deck-status.json'), JSON.stringify(statusPayload, null, 2));

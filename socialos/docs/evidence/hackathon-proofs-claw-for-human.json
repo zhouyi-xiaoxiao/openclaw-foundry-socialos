@@ -17,7 +17,18 @@
         "human-for-claw"
       ],
       "route": "/studio?panel=agents",
-      "source": "socialos/openclaw/runtime.openclaw.json5"
+      "source": "socialos/openclaw/runtime.openclaw.json5",
+      "provider": "openclaw",
+      "model": "",
+      "live": true,
+      "fallbackUsed": false,
+      "localRecordRoute": "/demo",
+      "label": "OpenClaw runtime powers the product lanes",
+      "bountyId": "claw-for-human",
+      "publicAnchor": "/hackathon/",
+      "proofJsonUrl": "/data/proofs/all.json",
+      "deckAppendixSlide": "Shared appendix",
+      "capturedAt": ""
     },
     {
       "id": "proof-workspace-loop",
@@ -31,7 +42,18 @@
         "z-ai-general"
       ],
       "route": "/demo",
-      "source": "socialos/apps/web/server.mjs"
+      "source": "socialos/apps/web/server.mjs",
+      "provider": "workspace-ui",
+      "model": "",
+      "live": true,
+      "fallbackUsed": false,
+      "localRecordRoute": "/demo",
+      "label": "Judge-ready Workspace loop already exists",
+      "bountyId": "claw-for-human",
+      "publicAnchor": "/hackathon/",
+      "proofJsonUrl": "/data/proofs/all.json",
+      "deckAppendixSlide": "Shared appendix",
+      "capturedAt": ""
     },
     {
       "id": "proof-buddy-guardrails",
@@ -44,7 +66,18 @@
         "claw-for-human"
       ],
       "route": "/buddy",
-      "source": "socialos/apps/web/server.mjs"
+      "source": "socialos/apps/web/server.mjs",
+      "provider": "openclaw",
+      "model": "",
+      "live": true,
+      "fallbackUsed": false,
+      "localRecordRoute": "/buddy",
+      "label": "Buddy mode keeps the experience safe and narrow",
+      "bountyId": "human-for-claw",
+      "publicAnchor": "/hackathon/",
+      "proofJsonUrl": "/data/proofs/all.json",
+      "deckAppendixSlide": "Shared appendix",
+      "capturedAt": ""
     },
     {
       "id": "proof-pitch-pack",
@@ -60,7 +93,18 @@
         "ai-agents-for-good"
       ],
       "route": "/deck",
-      "source": "socialos/docs/pitch/VC_DECK_SPEC.md"
+      "source": "socialos/docs/pitch/VC_DECK_SPEC.md",
+      "provider": "deck",
+      "model": "",
+      "live": true,
+      "fallbackUsed": false,
+      "localRecordRoute": "/deck",
+      "label": "Deck and public evidence stay submission-ready",
+      "bountyId": "claw-for-human",
+      "publicAnchor": "/hackathon/",
+      "proofJsonUrl": "/data/proofs/all.json",
+      "deckAppendixSlide": "Shared appendix",
+      "capturedAt": ""
     }
   ]
 }

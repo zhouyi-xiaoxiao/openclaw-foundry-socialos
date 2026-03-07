@@ -1,8 +1,8 @@
 # Repo State Handoff
 
-- Generated: 2026-03-07T22:04:59.565Z
-- Branch: detached
-- Git head: a453aa9
+- Generated: 2026-03-07T22:37:19.823Z
+- Branch: main
+- Git head: ae82ac1
 - Dirty working tree: true
 
 ## Canonical Chain
@@ -63,20 +63,22 @@
 - `socialos/docs/evidence/socialos-demo.gif`
 
 ## Dirty Summary
-- M socialos/docs/STATUS.md
--  M socialos/docs/agent/REPO_STATE.md
--  M socialos/docs/evidence/LATEST_VALIDATION.md
--  M socialos/docs/evidence/hackathon-drafts-zai.json
--  M socialos/docs/evidence/hackathon-flock-triage.json
--  M socialos/docs/evidence/hackathon-glm-generate.json
--  M socialos/docs/evidence/hackathon-overview.json
--  M socialos/docs/evidence/hackathon-proof-summary.md
--  M socialos/docs/evidence/hackathon-workspace-zai.json
--  M socialos/docs/pitch/DECK_STATUS.json
+- M QUEUE.md
+-  M README.md
+-  M ROADMAP.md
+-  M scripts/capture_hackathon_proofs.mjs
+-  M scripts/devloop_once.sh
+-  M scripts/export_vc_deck.mjs
+-  M scripts/hackathon_live.sh
+-  M scripts/hackathon_preflight.sh
+-  M scripts/tests/deck_export_smoke.mjs
+-  M scripts/tests/docs_demo_smoke.mjs
+-  M scripts/tests/hackathon_api_smoke.mjs
+-  M scripts/tests/hackathon_proof_capture_smoke.mjs
 
 ## Overnight Context
-- Next focus: workspace-usability-and-demo-trust
-- Reason: Repo is healthy; continue aggressive product/core polish in Workspace, Contacts, Drafts, and Queue.
+- Next focus: respect-foundry-queue
+- Reason: Foundry already has active queue work; outer loop should bias to validation and repo trust.
 
 ## Script Entry Points
 - `bash scripts/demo.sh` -> install, deploy runtime, validate safety, start public demo

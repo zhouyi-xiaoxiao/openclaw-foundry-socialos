@@ -134,7 +134,7 @@ Talk track:
 ## 7. Public evidence
 - curated public evidence: `socialos/docs/EVIDENCE.md`
 - hackathon framing: `socialos/docs/HACKATHON_BOUNTIES.md`
-- master recording script: `socialos/docs/pitch/DORAHACKS_MASTER_SCRIPT.md`
+- shared video backbone: `socialos/docs/pitch/DORAHACKS_MASTER_SCRIPT.md`
 - recording + submission runbook: `socialos/docs/pitch/RECORDING_AND_SUBMISSION_RUNBOOK.md`
 - representative run report snapshots: `socialos/docs/evidence/`
 - runtime config: `socialos/openclaw/runtime.openclaw.json5`

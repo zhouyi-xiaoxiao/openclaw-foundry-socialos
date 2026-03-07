@@ -2,8 +2,80 @@
   "bounty": "z-ai-general",
   "kind": "",
   "limit": 24,
-  "count": 3,
+  "count": 6,
   "proofs": [
+    {
+      "id": "audit_6bab8d7761cf45c880616079b0d72f88",
+      "kind": "glm",
+      "status": "captured",
+      "title": "Hackathon draft package generated",
+      "summary": "2 drafts generated for Community Mentor Follow-up.",
+      "bounties": [
+        "z-ai-general"
+      ],
+      "route": "/hackathon?bounty=z-ai-general",
+      "source": "Audit audit_6bab8d7761cf45c880616079b0d72f88",
+      "createdAt": "2026-03-07T22:33:15.768Z",
+      "provider": "glm",
+      "model": "glm-5",
+      "live": true,
+      "fallbackUsed": false,
+      "capturedAt": "2026-03-07T22:33:15.768Z",
+      "label": "Hackathon draft package generated",
+      "bountyId": "z-ai-general",
+      "localRecordRoute": "/hackathon?bounty=z-ai-general",
+      "publicAnchor": "/hackathon/#bounty-z-ai-general",
+      "proofJsonUrl": "/data/proofs/z-ai-general.json",
+      "deckAppendixSlide": "Slide 12"
+    },
+    {
+      "id": "audit_9bb9487b811047c088c8e428a3bda645",
+      "kind": "glm",
+      "status": "captured",
+      "title": "Workspace hackathon run",
+      "summary": "Found Minghan Xiao — the London hackathon organizer you spoke with about builder communities and operator dashboards. There are existing drafts for that follow-up. Want me to open…",
+      "bounties": [
+        "z-ai-general"
+      ],
+      "route": "/hackathon?bounty=z-ai-general",
+      "source": "Audit audit_9bb9487b811047c088c8e428a3bda645",
+      "createdAt": "2026-03-07T22:32:50.049Z",
+      "provider": "glm",
+      "model": "glm-5",
+      "live": true,
+      "fallbackUsed": false,
+      "capturedAt": "2026-03-07T22:32:50.049Z",
+      "label": "Workspace hackathon run",
+      "bountyId": "z-ai-general",
+      "localRecordRoute": "/hackathon?bounty=z-ai-general",
+      "publicAnchor": "/hackathon/#bounty-z-ai-general",
+      "proofJsonUrl": "/data/proofs/z-ai-general.json",
+      "deckAppendixSlide": "Slide 12"
+    },
+    {
+      "id": "audit_d178b7c3235442679663ede60ef8c9fb",
+      "kind": "glm",
+      "status": "captured",
+      "title": "GLM generation run",
+      "summary": "EN: SocialOS fits Z.AI General by deploying AI agents to automate social intelligence, offering scalable infrastructure for decentralized social ecosystems. ZH: SocialOS 符合 Z.AI Ge",
+      "bounties": [
+        "z-ai-general"
+      ],
+      "route": "/hackathon?bounty=z-ai-general",
+      "source": "Audit audit_d178b7c3235442679663ede60ef8c9fb",
+      "createdAt": "2026-03-07T22:32:25.722Z",
+      "provider": "glm",
+      "model": "glm-5",
+      "live": true,
+      "fallbackUsed": false,
+      "capturedAt": "2026-03-07T22:32:25.722Z",
+      "label": "GLM generation run",
+      "bountyId": "z-ai-general",
+      "localRecordRoute": "/hackathon?bounty=z-ai-general",
+      "publicAnchor": "/hackathon/#bounty-z-ai-general",
+      "proofJsonUrl": "/data/proofs/z-ai-general.json",
+      "deckAppendixSlide": "Slide 12"
+    },
     {
       "id": "proof-workspace-loop",
       "kind": "ui",
@@ -16,19 +88,41 @@
         "z-ai-general"
       ],
       "route": "/demo",
-      "source": "socialos/apps/web/server.mjs"
+      "source": "socialos/apps/web/server.mjs",
+      "provider": "workspace-ui",
+      "model": "",
+      "live": true,
+      "fallbackUsed": false,
+      "localRecordRoute": "/demo",
+      "label": "Judge-ready Workspace loop already exists",
+      "bountyId": "claw-for-human",
+      "publicAnchor": "/hackathon/",
+      "proofJsonUrl": "/data/proofs/all.json",
+      "deckAppendixSlide": "Shared appendix",
+      "capturedAt": ""
     },
     {
       "id": "proof-glm-router",
       "kind": "glm",
-      "status": "pending",
+      "status": "ready",
       "title": "GLM router is wired into Workspace and Draft generation",
-      "summary": "Add GLM_API_KEY to activate Z.AI routing for Workspace and Drafts.",
+      "summary": "Live GLM routing is active for chat and draft generation using glm-5.",
       "bounties": [
         "z-ai-general"
       ],
       "route": "/hackathon?bounty=z-ai-general",
-      "source": "socialos/apps/api/server.mjs"
+      "source": "socialos/apps/api/server.mjs",
+      "provider": "glm",
+      "model": "glm-5",
+      "live": true,
+      "fallbackUsed": false,
+      "localRecordRoute": "/hackathon?bounty=z-ai-general",
+      "label": "GLM router is wired into Workspace and Draft generation",
+      "bountyId": "z-ai-general",
+      "publicAnchor": "/hackathon/#bounty-z-ai-general",
+      "proofJsonUrl": "/data/proofs/z-ai-general.json",
+      "deckAppendixSlide": "Slide 12",
+      "capturedAt": ""
     },
     {
       "id": "proof-pitch-pack",
@@ -44,7 +138,18 @@
         "ai-agents-for-good"
       ],
       "route": "/deck",
-      "source": "socialos/docs/pitch/VC_DECK_SPEC.md"
+      "source": "socialos/docs/pitch/VC_DECK_SPEC.md",
+      "provider": "deck",
+      "model": "",
+      "live": true,
+      "fallbackUsed": false,
+      "localRecordRoute": "/deck",
+      "label": "Deck and public evidence stay submission-ready",
+      "bountyId": "claw-for-human",
+      "publicAnchor": "/hackathon/",
+      "proofJsonUrl": "/data/proofs/all.json",
+      "deckAppendixSlide": "Shared appendix",
+      "capturedAt": ""
     }
   ]
 }

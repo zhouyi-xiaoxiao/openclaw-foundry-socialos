@@ -23,6 +23,8 @@ const EVIDENCE_STEP_ONE_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step01.png
 const EVIDENCE_STEP_TWO_CONTACTS_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step02-contacts.png');
 const EVIDENCE_STEP_FOUR_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step04.png');
 const EVIDENCE_STEP_EIGHT_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step08.png');
+const HACKATHON_OVERVIEW_EVIDENCE_PATH = path.join(EVIDENCE_DIR, 'hackathon-overview.json');
+const HACKATHON_PROOFS_ALL_EVIDENCE_PATH = path.join(EVIDENCE_DIR, 'hackathon-proofs-all.json');
 const PUBLIC_REPO_URL = 'https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos';
 const PUBLIC_DECK_URL = 'https://zhouyixiaoxiao.org/';
 let apiBaseUrlOverride = '';
@@ -146,7 +148,14 @@ const HACKATHON_PAGE_FALLBACK = Object.freeze([
     label: 'Claw for Human',
     status: 'ready',
     route: '/demo',
+    localRecordRoute: '/demo',
+    publicAnchor: '/hackathon/#bounty-claw-for-human',
+    proofJsonUrl: '/data/proofs/claw-for-human.json',
+    deckAppendixSlide: 'Slide 9',
+    problem: 'Claw is powerful for builders, but judges need to see it translated into a guided end-user workflow.',
     uniqueAngle: 'Bring Claw into a human-readable relationship workspace.',
+    integrationSummary: 'OpenClaw runs the orchestration and SocialOS turns it into one calm loop across memory, drafts, queue, and reflection.',
+    liveProofSummary: 'OpenClaw lanes, the judge-facing demo route, and exported proof cards are all live inside the current product surface.',
     integrations: ['OpenClaw Runtime', 'Workspace UI', 'Pitch Deck'],
   }),
   Object.freeze({
@@ -154,7 +163,14 @@ const HACKATHON_PAGE_FALLBACK = Object.freeze([
     label: 'Animoca Bounty',
     status: 'ready',
     route: '/hackathon?bounty=animoca',
+    localRecordRoute: '/hackathon?bounty=animoca',
+    publicAnchor: '/hackathon/#bounty-animoca',
+    proofJsonUrl: '/data/proofs/animoca.json',
+    deckAppendixSlide: 'Slide 10',
+    problem: 'Creator-community workflows need persistent identity, memory, and coordination instead of one-shot tasks.',
     uniqueAngle: 'Persistent identity, memory, and agent coordination for creator/community ops.',
+    integrationSummary: 'The people graph, event graph, and OpenClaw lane separation already make identity and coordination persistent across sessions.',
+    liveProofSummary: 'The judge route can move from bounty framing into real contacts, events, and lane coordination without changing products.',
     integrations: ['OpenClaw Runtime', 'People Memory', 'Studio Agents'],
   }),
   Object.freeze({
@@ -162,7 +178,14 @@ const HACKATHON_PAGE_FALLBACK = Object.freeze([
     label: 'Human for Claw',
     status: 'ready',
     route: '/buddy',
+    localRecordRoute: '/buddy',
+    publicAnchor: '/hackathon/#bounty-human-for-claw',
+    proofJsonUrl: '/data/proofs/human-for-claw.json',
+    deckAppendixSlide: 'Slide 11',
+    problem: 'General-purpose agent products are often too open-ended for trust-sensitive or younger users.',
     uniqueAngle: 'Friendship and gratitude coaching with visible guardrails.',
+    integrationSummary: 'Buddy mode narrows SocialOS into four safe tasks and keeps the same memory loop without exposing risky publish or configuration surfaces.',
+    liveProofSummary: 'Buddy stays a real product mode, not a mock skin, and the public proof layer points back to the same bounded workflow.',
     integrations: ['Buddy Guardrails', 'People Memory', 'Self Mirror'],
   }),
   Object.freeze({
@@ -170,7 +193,14 @@ const HACKATHON_PAGE_FALLBACK = Object.freeze([
     label: 'Z.AI General',
     status: 'partial',
     route: '/hackathon?bounty=z-ai-general',
+    localRecordRoute: '/hackathon?bounty=z-ai-general',
+    publicAnchor: '/hackathon/#bounty-z-ai-general',
+    proofJsonUrl: '/data/proofs/z-ai-general.json',
+    deckAppendixSlide: 'Slide 12',
+    problem: 'Multilingual relationship workflows usually split English-first product logic from Chinese-language generation tooling.',
     uniqueAngle: 'GLM inside multilingual Workspace and draft generation, not a side widget.',
+    integrationSummary: 'GLM is called through the native SocialOS Workspace and Draft generation paths instead of a standalone demo panel.',
+    liveProofSummary: 'The hub page points judges to the live GLM generation capture and the public Z.AI proof JSON.',
     integrations: ['GLM Router', 'Workspace Chat', 'Draft Generation'],
   }),
   Object.freeze({
@@ -178,7 +208,14 @@ const HACKATHON_PAGE_FALLBACK = Object.freeze([
     label: 'AI Agents for Good',
     status: 'partial',
     route: '/hackathon?bounty=ai-agents-for-good',
+    localRecordRoute: '/hackathon?bounty=ai-agents-for-good',
+    publicAnchor: '/hackathon/#bounty-ai-agents-for-good',
+    proofJsonUrl: '/data/proofs/ai-agents-for-good.json',
+    deckAppendixSlide: 'Slide 13',
+    problem: 'Impact tooling often stops at classification instead of carrying urgency and next action into real coordination.',
     uniqueAngle: 'Impact workflows with SDG triage, long-term relationship memory, and follow-through.',
+    integrationSummary: 'FLock supplies live SDG triage and SocialOS turns that result into contact memory, event context, and follow-up actions.',
+    liveProofSummary: 'The public hub surfaces the live FLock triage result and the follow-through path into the SocialOS coordination loop.',
     integrations: ['FLock SDG Triage', 'OpenClaw Runtime', 'Events + Drafts'],
   }),
 ]);
@@ -187,6 +224,17 @@ function readOptionalString(value, fallback) {
   if (typeof value !== 'string') return fallback;
   const trimmed = value.trim();
   return trimmed || fallback;
+}
+
+function readOptionalBoolean(value, fallback = false) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (['true', '1', 'yes', 'on'].includes(normalized)) return true;
+    if (['false', '0', 'no', 'off'].includes(normalized)) return false;
+  }
+  return fallback;
 }
 
 function resolveApiBaseUrl() {
@@ -215,6 +263,27 @@ function readJsonFileSafe(filePath, fallback = {}) {
   } catch {
     return fallback;
   }
+}
+
+function buildEvidenceProofPath(bountyId = '') {
+  const normalized = readOptionalString(bountyId, '');
+  return normalized
+    ? path.join(EVIDENCE_DIR, `hackathon-proofs-${normalized}.json`)
+    : HACKATHON_PROOFS_ALL_EVIDENCE_PATH;
+}
+
+function readHackathonOverviewEvidence() {
+  return readJsonFileSafe(HACKATHON_OVERVIEW_EVIDENCE_PATH, {
+    generatedAt: '',
+    integrations: [],
+    bounties: HACKATHON_PAGE_FALLBACK,
+    proofsPreview: [],
+    routes: [],
+  });
+}
+
+function readHackathonProofEvidence(bountyId = '') {
+  return readJsonFileSafe(buildEvidenceProofPath(bountyId), { count: 0, proofs: [] });
 }
 
 function detectMimeType(filePath) {
@@ -2892,7 +2961,7 @@ async function renderQueuePage(page) {
 
 function toneForHackathonStatus(status = '') {
   const normalized = readOptionalString(status, '').toLowerCase();
-  if (['ready', 'configured', 'captured'].includes(normalized)) return 'good';
+  if (['ready', 'configured', 'captured', 'live'].includes(normalized)) return 'good';
   if (['partial', 'pending', 'fallback', 'warn'].includes(normalized)) return 'warn';
   return 'soft';
 }
@@ -2909,12 +2978,14 @@ function renderHackathonBountyCards(bounties = [], selectedId = '', { publicMode
 
   return `<div class="grid two-up">${ordered
     .map((bounty) => {
-      const route = readOptionalString(bounty.recommendedRoute || bounty.route, '/hackathon');
+      const recordRoute = readOptionalString(bounty.localRecordRoute || bounty.recommendedRoute || bounty.route, '/hackathon');
       const proofCount = Number(bounty.proofCount || 0);
-      const routeHref = publicMode ? buildPublicPageHref(route) : route;
+      const sectionHref = `#bounty-${encodeURIComponent(bounty.id || '')}`;
+      const routeHref = publicMode ? buildPublicPageHref(recordRoute) : recordRoute;
+      const proofHref = readOptionalString(bounty.proofJsonUrl, publicMode ? buildPublicProofDataHref(bounty.id || '') : `/proofs?bounty=${encodeURIComponent(bounty.id || '')}`);
       const proofsHref = publicMode ? buildPublicProofDataHref(bounty.id || '') : `/proofs?bounty=${encodeURIComponent(bounty.id || '')}`;
       return `
-        <article id="bounty-${escapeHtml(bounty.id || '')}" class="stack-card ${bounty.id === selectedId ? 'hackathon-card-selected' : ''}">
+        <article id="bounty-card-${escapeHtml(bounty.id || '')}" class="stack-card ${bounty.id === selectedId ? 'hackathon-card-selected' : ''}">
           <div class="stack-meta">
             <strong>${escapeHtml(bounty.label || bounty.id)}</strong>
             ${renderPill(readOptionalString(bounty.status, 'ready'), toneForHackathonStatus(bounty.status))}
@@ -2923,11 +2994,14 @@ function renderHackathonBountyCards(bounties = [], selectedId = '', { publicMode
           <div class="chip-row">
             ${bounty.prize ? renderPill(bounty.prize, 'soft') : ''}
             ${renderPill(`${proofCount} proof${proofCount === 1 ? '' : 's'}`, proofCount ? 'accent' : 'soft')}
+            ${readOptionalBoolean(bounty.live, false) ? renderPill('live integrated', 'good') : ''}
+            ${bounty.model ? renderPill(bounty.model, 'soft') : ''}
           </div>
           <p>${escapeHtml(truncate(bounty.uniqueAngle || bounty.fit || '', 160))}</p>
           <div class="inline-actions">
-            ${routeHref ? `<a class="mini-link" href="${escapeHtml(routeHref)}">${publicMode ? 'Open page' : 'Open route'}</a>` : ''}
-            <a class="mini-link" href="${escapeHtml(proofsHref)}">${publicMode ? 'Proof JSON' : 'View proofs'}</a>
+            <a class="mini-link" href="${escapeHtml(sectionHref)}">Open section</a>
+            ${routeHref ? `<a class="mini-link" href="${escapeHtml(routeHref)}">${publicMode ? 'Aux page' : 'Record route'}</a>` : ''}
+            <a class="mini-link" href="${escapeHtml(publicMode ? proofHref : proofsHref)}">${publicMode ? 'Proof JSON' : 'View proofs'}</a>
           </div>
         </article>
       `;
@@ -2955,16 +3029,135 @@ function renderHackathonProofCards(proofs = [], { publicMode = false } = {}) {
           <p>${escapeHtml(truncate(proof.summary || '', 180))}</p>
           <div class="chip-row">
             ${(proof.bounties || []).slice(0, 3).map((bountyId) => renderPill(bountyId, 'soft')).join('')}
+            ${proof.provider ? renderPill(proof.provider, 'soft') : ''}
+            ${proof.model ? renderPill(proof.model, 'soft') : ''}
+            ${readOptionalBoolean(proof.live, false) ? renderPill('live', 'good') : ''}
+            ${readOptionalBoolean(proof.fallbackUsed, false) ? renderPill('fallbackUsed=true', 'warn') : renderPill('fallbackUsed=false', 'good')}
           </div>
           <div class="inline-actions">
             ${routeHref ? `<a class="mini-link" href="${escapeHtml(routeHref)}">${publicMode ? 'Open page' : 'Open'}</a>` : ''}
-            ${!routeHref && fallbackProofHref ? `<a class="mini-link" href="${escapeHtml(fallbackProofHref)}">Proof JSON</a>` : ''}
+            ${(proof.proofJsonUrl || (!routeHref && fallbackProofHref)) ? `<a class="mini-link" href="${escapeHtml(readOptionalString(proof.proofJsonUrl, fallbackProofHref))}">Proof JSON</a>` : ''}
+            ${proof.deckAppendixSlide ? `<small>${escapeHtml(proof.deckAppendixSlide)}</small>` : ''}
             ${proof.source ? `<small>${escapeHtml(proof.source)}</small>` : ''}
           </div>
         </article>
       `;
       }
     )
+    .join('')}</div>`;
+}
+
+function renderHackathonBountySections(bounties = [], selectedId = '', { publicMode = false } = {}) {
+  if (!Array.isArray(bounties) || !bounties.length) {
+    return renderEmptyState('No bounty detail sections are available right now.');
+  }
+
+  const ordered = [
+    ...bounties.filter((bounty) => bounty.id === selectedId),
+    ...bounties.filter((bounty) => bounty.id !== selectedId),
+  ];
+
+  return `<div class="stack">${ordered
+    .map((bounty) => {
+      const recordRoute = readOptionalString(bounty.localRecordRoute || bounty.route, '/hackathon');
+      const publicAnchor = readOptionalString(bounty.publicAnchor, buildPublicPageHref(`/hackathon?bounty=${bounty.id}`) || '/hackathon/');
+      const proofJsonUrl = readOptionalString(bounty.proofJsonUrl, buildPublicProofDataHref(bounty.id || ''));
+      const auxiliaryPage = publicMode ? buildPublicPageHref(recordRoute) : recordRoute;
+      const proofCount = Number(bounty.proofCount || 0);
+      return `
+        <section id="bounty-${escapeHtml(bounty.id || '')}" class="stack-card ${bounty.id === selectedId ? 'hackathon-card-selected' : ''}">
+          <div class="stack-meta">
+            <strong>${escapeHtml(bounty.label || bounty.id)}</strong>
+            ${renderPill(readOptionalString(bounty.status, 'ready'), toneForHackathonStatus(bounty.status))}
+            ${readOptionalBoolean(bounty.live, false) ? renderPill('live integrated', 'good') : renderPill('live pending', 'warn')}
+          </div>
+          <p>${escapeHtml(bounty.uniqueAngle || bounty.hook || '')}</p>
+          <div class="chip-row">
+            ${bounty.prize ? renderPill(bounty.prize, 'soft') : ''}
+            ${bounty.partnerLabel ? renderPill(bounty.partnerLabel, 'soft') : ''}
+            ${bounty.model ? renderPill(bounty.model, 'soft') : ''}
+            ${renderPill(`${proofCount} proof${proofCount === 1 ? '' : 's'}`, proofCount ? 'accent' : 'soft')}
+          </div>
+          <div class="grid two-up">
+            ${renderPanel('Problem Framing', `<p>${escapeHtml(bounty.problem || 'Problem framing unavailable.')}</p>`, 'Use this framing in the first 40-60 seconds of the bounty video.')}
+            ${renderPanel('Why SocialOS Fits', `<p>${escapeHtml(bounty.fit || bounty.uniqueAngle || '')}</p>`, 'Keep the product narrative fixed and only change the bounty lens.')}
+          </div>
+          <div class="grid two-up">
+            ${renderPanel(
+              'Partner / API / Infrastructure',
+              `
+                <div class="stack">
+                  <article class="stack-card compact-card">
+                    <div class="stack-meta"><strong>Partner</strong>${bounty.partnerLabel ? renderPill(bounty.partnerLabel, 'soft') : ''}</div>
+                    <p>${escapeHtml(bounty.integrationSummary || 'Integration summary unavailable.')}</p>
+                  </article>
+                  <article class="stack-card compact-card">
+                    <div class="stack-meta"><strong>Technical Implementation</strong>${bounty.apiSurface ? renderPill(bounty.apiSurface, 'accent') : ''}</div>
+                    <p>${escapeHtml(bounty.technicalImplementation || bounty.infrastructure || '')}</p>
+                  </article>
+                </div>
+              `,
+              'This block answers the judge question “how exactly did you integrate the partner or infrastructure?”'
+            )}
+            ${renderPanel(
+              'Live Proof Summary',
+              `
+                <div class="stack">
+                  <article class="stack-card compact-card">
+                    <div class="stack-meta">
+                      <strong>Current proof posture</strong>
+                      ${readOptionalBoolean(bounty.live, false) ? renderPill('live=true', 'good') : renderPill('live=false', 'warn')}
+                      ${readOptionalBoolean(bounty.fallbackUsed, false) ? renderPill('fallbackUsed=true', 'warn') : renderPill('fallbackUsed=false', 'good')}
+                    </div>
+                    <p>${escapeHtml(bounty.liveProofSummary || 'Live proof summary unavailable.')}</p>
+                  </article>
+                  <article class="stack-card compact-card">
+                    <div class="stack-meta">
+                      <strong>Proof metadata</strong>
+                      ${bounty.provider ? renderPill(bounty.provider, 'soft') : ''}
+                      ${bounty.model ? renderPill(bounty.model, 'soft') : ''}
+                    </div>
+                    <p>${escapeHtml(bounty.capturedAt ? `Captured at ${bounty.capturedAt}.` : 'Use the proof JSON and public anchor below as the judge-verifiable evidence package.')}</p>
+                  </article>
+                </div>
+              `,
+              'This block should match the live provider story in the README, deck appendix, and video.'
+            )}
+          </div>
+          <div class="grid two-up">
+            ${renderPanel(
+              'Recording Route',
+              `
+                <div class="stack">
+                  <article class="stack-card compact-card">
+                    <div class="stack-meta"><strong>Local recording route</strong>${renderPill(recordRoute, 'soft')}</div>
+                    <p>${escapeHtml((bounty.demoSteps || []).join(' → ') || 'Record the fixed product loop first, then show the bounty-specific proof.')}</p>
+                  </article>
+                  ${auxiliaryPage ? `<div class="inline-actions"><a class="mini-link" href="${escapeHtml(auxiliaryPage)}">${publicMode ? 'Auxiliary public page' : 'Open recording route'}</a></div>` : ''}
+                </div>
+              `,
+              'Each bounty video is independent, but the interaction route stays fixed.'
+            )}
+            ${renderPanel(
+              'Submission Assets',
+              `
+                <div class="stack">
+                  <article class="stack-card compact-card">
+                    <div class="stack-meta"><strong>Public hub anchor</strong>${renderPill(bounty.deckAppendixSlide || '', 'soft')}</div>
+                    <p><a class="mini-link" href="${escapeHtml(publicAnchor)}">${escapeHtml(publicAnchor)}</a></p>
+                  </article>
+                  <article class="stack-card compact-card">
+                    <div class="stack-meta"><strong>Proof JSON</strong>${renderPill('judge-verifiable', 'accent')}</div>
+                    <p><a class="mini-link" href="${escapeHtml(proofJsonUrl)}">${escapeHtml(proofJsonUrl)}</a></p>
+                  </article>
+                </div>
+              `,
+              escapeHtml(bounty.judgeClosing || 'Close the video by pointing judges back to the public hub and proof JSON.')
+            )}
+          </div>
+        </section>
+      `;
+    })
     .join('')}</div>`;
 }
 
@@ -3018,7 +3211,7 @@ async function renderDemoPage(page, requestUrl) {
     fetchJsonSafe('/workspace/bootstrap'),
     fetchJsonSafe('/queue/tasks?limit=8'),
     fetchJsonSafe('/studio/agents'),
-    fetchJsonSafe('/proofs?bounty=claw-for-human&limit=4'),
+    publicMode ? Promise.resolve({ ok: true, payload: readHackathonProofEvidence('claw-for-human') }) : fetchJsonSafe('/proofs?bounty=claw-for-human&limit=4'),
   ]);
 
   const bootstrap = bootstrapRes.ok
@@ -3092,9 +3285,9 @@ async function renderDemoPage(page, requestUrl) {
         renderMetric(String((bootstrap.recentDrafts || []).length), 'drafts'),
         renderMetric(String((queueTasks || []).length), 'queue items'),
       ].join(''),
-      `<div class="info-card"><strong>Shared judge path</strong><p>Use this route for the master demo and for Claw for Human. It keeps the story fixed: problem, product loop, OpenClaw trace, and safe handoff.</p></div>`
+      `<div class="info-card"><strong>Claw for Human recording route</strong><p>Use this route for the shared product loop and the dedicated Claw for Human video. The canonical public submission page still lives at /hackathon/#bounty-claw-for-human.</p></div>`
     )}
-    ${publicMode ? renderPublicProofNotice('Read-only public proof page', 'The full interactive demo stays localhost-only for recording. This page keeps the judge flow, screenshots, and proof cards public.') : ''}
+    ${publicMode ? renderPublicProofNotice('Auxiliary public proof page', 'This page supports Claw for Human, but the canonical public submission page is the single bounty hub at /hackathon/#bounty-claw-for-human.') : ''}
     <div class="grid two-up">
       ${renderPanel('Judge Flow', judgeFlow, publicMode ? 'This public page mirrors the exact recording sequence without exposing local-only controls.' : 'The sequence stays fixed so the 5-10 minute video remains easy to rehearse.')}
       ${renderPanel('OpenClaw Trace Snapshot', renderAgentLaneSnapshot(agents), 'These lanes are the backend proof for Claw for Human and Animoca.')}
@@ -3118,10 +3311,12 @@ async function renderHackathonPage(page, requestUrl) {
   const publicMode = isPublicPageMode(requestUrl);
   const requestedBounty = readOptionalString(requestUrl.searchParams.get('bounty'), '');
   const normalizedBounty = HACKATHON_PAGE_FALLBACK.find((item) => item.id === requestedBounty) ? requestedBounty : '';
-  const overviewRes = await fetchJsonSafe('/hackathon/overview');
-  const proofsRes = await fetchJsonSafe(
-    `/proofs?limit=8${normalizedBounty ? `&bounty=${encodeURIComponent(normalizedBounty)}` : ''}`
-  );
+  const overviewRes = publicMode
+    ? { ok: true, payload: readHackathonOverviewEvidence() }
+    : await fetchJsonSafe('/hackathon/overview');
+  const proofsRes = publicMode
+    ? { ok: true, payload: readHackathonProofEvidence(normalizedBounty) }
+    : await fetchJsonSafe(`/proofs?limit=8${normalizedBounty ? `&bounty=${encodeURIComponent(normalizedBounty)}` : ''}`);
 
   const overview = overviewRes.ok
     ? overviewRes.payload
@@ -3139,66 +3334,77 @@ async function renderHackathonPage(page, requestUrl) {
   const bounties = Array.isArray(overview.bounties) && overview.bounties.length ? overview.bounties : HACKATHON_PAGE_FALLBACK;
   const proofs = proofsRes.ok ? proofsRes.payload.proofs || [] : overview.proofsPreview || [];
   const integrations = Array.isArray(overview.integrations) ? overview.integrations : [];
+  const heroMetrics = [
+    renderMetric(String(bounties.length), 'active bounties'),
+    renderMetric(String(integrations.filter((item) => item.live).length), 'live integrations'),
+    renderMetric(String(proofs.length), 'proof cards'),
+    renderMetric(readOptionalString(overview.mode, 'repo-native'), 'mode'),
+  ].join('');
+  const publicNotice = publicMode
+    ? renderPublicProofNotice(
+        'Canonical public bounty hub',
+        'This page is the judge-facing proof surface. /demo/ and /buddy/ remain auxiliary proof pages, while the interactive product stays localhost-only in the recorded videos.'
+      )
+    : '';
+  const integrationMatrixHtml = integrations.length
+    ? `<div class="stack">${integrations
+        .map(
+          (integration) => `
+            <article class="stack-card compact-card">
+              <div class="stack-meta">
+                <strong>${escapeHtml(integration.label || integration.id)}</strong>
+                ${renderPill(readOptionalString(integration.status, 'ready'), toneForHackathonStatus(integration.status))}
+                ${readOptionalBoolean(integration.live, false) ? renderPill('live', 'good') : ''}
+              </div>
+              <p>${escapeHtml(truncate(integration.summary || '', 180))}</p>
+              <div class="inline-actions">
+                ${integration.route ? `<a class="mini-link" href="${escapeHtml(integration.route)}">Open</a>` : ''}
+                ${integration.model ? renderPill(integration.model, 'soft') : ''}
+              </div>
+            </article>
+          `
+        )
+        .join('')}</div>`
+    : renderEmptyState('Integration status is unavailable right now.');
+  const submissionPackHtml = `
+    <div class="stack">
+      <article class="stack-card compact-card">
+        <div class="stack-meta"><strong>1. Pitch / Demo Video</strong>${renderPill('5 videos', 'accent')}</div>
+        <p>Record five independent 5-8 minute videos. Keep the SocialOS product backbone fixed, then swap the bounty-specific framing, integration, and live demo section.</p>
+      </article>
+      <article class="stack-card compact-card">
+        <div class="stack-meta"><strong>2. Public GitHub Repo</strong>${renderPill('README', 'soft')}</div>
+        <p>Point judges to the shared README, this canonical /hackathon page, and the matching proof JSON for structured evidence.</p>
+      </article>
+      <article class="stack-card compact-card">
+        <div class="stack-meta"><strong>3. Pitch Deck</strong>${renderPill('appendix', 'soft')}</div>
+        <p>The deck stays shared at the top, then adds one appendix slide per bounty in the same order shown on this page.</p>
+      </article>
+    </div>
+  `;
+  const bountySectionsDescription = publicMode
+    ? 'Each section is a complete judge-facing bounty brief with problem, fit, integration, live proof, recording route, and submission assets.'
+    : 'Record from these sections one bounty at a time, then finish each video by opening the matching public anchor and proof JSON.';
+  const proofCardsDescription = publicMode
+    ? 'Use the JSON links and auxiliary pages only as supporting evidence. The canonical public entry remains this page.'
+    : normalizedBounty
+      ? `Filtered for ${normalizedBounty}.`
+      : 'Use ?bounty=<id> for a tighter proof review while recording.';
 
   return `
     ${renderHero(
       page,
-      [
-        renderMetric(String(bounties.length), 'active bounties'),
-        renderMetric(String(integrations.filter((item) => item.configured).length), 'configured integrations'),
-        renderMetric(String(proofs.length), 'proof cards'),
-        renderMetric(readOptionalString(overview.mode, 'repo-native'), 'mode'),
-      ].join(''),
-      `<div class="info-card"><strong>One product, five angles</strong><p>SocialOS stays one product narrative. The bounty layer only changes the proof frame, not the core architecture.</p></div>`
+      heroMetrics,
+      `<div class="info-card"><strong>Canonical bounty hub</strong><p>This is the single public submission page for all five DoraHacks bounties. SocialOS stays one product, while each bounty section exposes its own framing, integration, live proof, recording route, and deck appendix reference.</p></div>`
     )}
-    ${publicMode ? renderPublicProofNotice('Read-only public bounty hub', 'This page is the stable public proof layer for judges. The live interactive workflow remains localhost-only in the recorded demo.') : ''}
-    ${renderPanel('Bounty Map', renderHackathonBountyCards(bounties, normalizedBounty, { publicMode }), publicMode ? 'Use these cards to jump between the public proof sections or download the stable proof JSON.' : 'Use this hub to choose the right story before recording a bounty-specific demo.')}
+    ${publicNotice}
+    ${renderPanel('Bounty Map', renderHackathonBountyCards(bounties, normalizedBounty, { publicMode }), publicMode ? 'Start here, jump to the matching bounty section, then open the linked proof JSON if a judge wants structured evidence.' : 'Use this page as the control room while recording each independent bounty video.')}
     <div class="grid two-up">
-      ${renderPanel(
-        'Integration Hub',
-        integrations.length
-          ? `<div class="stack">${integrations
-              .map(
-                (integration) => `
-                  <article class="stack-card compact-card">
-                    <div class="stack-meta">
-                      <strong>${escapeHtml(integration.label || integration.id)}</strong>
-                      ${renderPill(readOptionalString(integration.status, 'ready'), toneForHackathonStatus(integration.status))}
-                    </div>
-                    <p>${escapeHtml(truncate(integration.summary || '', 180))}</p>
-                    <div class="inline-actions">
-                      ${integration.route ? `<a class="mini-link" href="${escapeHtml(integration.route)}">Open</a>` : ''}
-                      ${integration.model ? renderPill(integration.model, 'soft') : ''}
-                    </div>
-                  </article>
-                `
-              )
-              .join('')}</div>`
-          : renderEmptyState('Integration status is unavailable right now.'),
-        'GLM and FLock stay optional until keys are present, while the rest of the product remains demo-ready.'
-      )}
-      ${renderPanel(
-        'Submission Pack',
-        `
-          <div class="stack">
-            <article class="stack-card compact-card">
-              <div class="stack-meta"><strong>1. Pitch / Demo Video</strong>${renderPill('5-10 min', 'accent')}</div>
-              <p>Record one master demo using localhost and /demo, then swap the 45-60 second bounty section for each submission.</p>
-            </article>
-            <article class="stack-card compact-card">
-              <div class="stack-meta"><strong>2. Public GitHub Repo</strong>${renderPill('README', 'soft')}</div>
-              <p>Point judges to the shared README, the public /hackathon page, and proof JSON for integration evidence.</p>
-            </article>
-            <article class="stack-card compact-card">
-              <div class="stack-meta"><strong>3. Pitch Deck</strong>${renderPill('appendix', 'soft')}</div>
-              <p>The public deck stays shared at the top, then adds one appendix slide per bounty angle.</p>
-            </article>
-          </div>
-        `,
-        'This keeps the submission work reusable instead of rebuilding assets for every bounty.'
-      )}
+      ${renderPanel('Live Partner / API Matrix', integrationMatrixHtml, 'This is the live integration matrix for the partner APIs and shared product infrastructure that power the five bounty tracks.')}
+      ${renderPanel('Submission Pack', submissionPackHtml, 'The repo, deck, public hub, and video pack must tell the same story without drift in wording or proof posture.')}
     </div>
-    ${renderPanel('Proof Cards', renderHackathonProofCards(proofs, { publicMode }), publicMode ? 'This public page carries the shared proof catalog; use the JSON links when a submission form asks for concrete integration evidence.' : normalizedBounty ? `Filtered for ${normalizedBounty}.` : 'Filter by bounty with ?bounty=<id> when you want a tighter review path.')}
+    ${renderPanel('Bounty Sections', renderHackathonBountySections(bounties, normalizedBounty, { publicMode }), bountySectionsDescription)}
+    ${renderPanel('Proof Cards', renderHackathonProofCards(proofs, { publicMode }), proofCardsDescription)}
   `;
 }
 
@@ -3207,7 +3413,7 @@ async function renderBuddyPage(page, requestUrl) {
   const [bootstrapRes, runtimeRes, proofsRes] = await Promise.all([
     fetchJsonSafe('/workspace/bootstrap'),
     fetchJsonSafe('/settings/runtime'),
-    fetchJsonSafe('/proofs?bounty=human-for-claw&limit=6'),
+    publicMode ? Promise.resolve({ ok: true, payload: readHackathonProofEvidence('human-for-claw') }) : fetchJsonSafe('/proofs?bounty=human-for-claw&limit=6'),
   ]);
   const bootstrap = bootstrapRes.ok
     ? bootstrapRes.payload
@@ -3247,7 +3453,7 @@ async function renderBuddyPage(page, requestUrl) {
       ].join(''),
       `<div class="info-card"><strong>Friendship & Gratitude Coach</strong><p>Buddy mode is the Human for Claw angle: simpler language, only kind tasks, and no pressure to publish or configure anything complicated.</p></div>`
     )}
-    ${publicMode ? renderPublicProofNotice('Read-only public Buddy page', 'Buddy mode is recorded locally. This public page keeps the safe-task framing and Human for Claw proof cards accessible to judges.') : ''}
+    ${publicMode ? renderPublicProofNotice('Auxiliary public Buddy page', 'Buddy mode is the Human for Claw recording route, but the canonical public submission page remains /hackathon/#bounty-human-for-claw.') : ''}
     <div class="grid two-up">
       ${renderPanel(
         'Choose a Kind Task',
@@ -3897,29 +4103,29 @@ function renderDeckSlide({ eyebrow = '', title, bodyHtml = '', visualHtml = '', 
 
 function renderDeckHackathonAppendixSlide(bounty) {
   const proofCopyById = {
-    'claw-for-human': 'Use /demo to show the full judge loop and how Claw becomes a usable relationship workspace.',
-    animoca: 'Use /hackathon?bounty=animoca to frame SocialOS as persistent identity plus multi-agent memory.',
-    'human-for-claw': 'Use /buddy to keep the flow kid-friendly, guided, and clearly bounded.',
-    'z-ai-general': 'Use /hackathon?bounty=z-ai-general to show GLM routing inside multilingual product flows.',
-    'ai-agents-for-good': 'Use /hackathon?bounty=ai-agents-for-good to show SDG triage feeding follow-up and coordination.',
+    'claw-for-human': 'Use /demo for the local recording and /hackathon/#bounty-claw-for-human as the canonical public proof page.',
+    animoca: 'Use /hackathon?bounty=animoca for recording and the matching /hackathon/#bounty-animoca section for the public proof.',
+    'human-for-claw': 'Use /buddy for recording and /hackathon/#bounty-human-for-claw as the canonical public proof page.',
+    'z-ai-general': 'Use /hackathon?bounty=z-ai-general for recording and the public proof JSON to show live GLM integration.',
+    'ai-agents-for-good': 'Use /hackathon?bounty=ai-agents-for-good for recording and the public proof JSON to show live FLock integration.',
   };
 
   return renderDeckSlide({
-    eyebrow: `Appendix · ${bounty.label}`,
+    eyebrow: `${escapeHtml(readOptionalString(bounty.deckAppendixSlide, 'Appendix'))} · ${bounty.label}`,
     title: bounty.label,
     bodyHtml: `
       <p class="deck-lead">${escapeHtml(bounty.uniqueAngle || '')}</p>
       <ul class="deck-check-list">
         <li>${escapeHtml(proofCopyById[bounty.id] || 'Use the hackathon hub to present the matching proof layer.')}</li>
-        <li>${escapeHtml((bounty.integrations || []).join(' · '))}</li>
-        <li>${escapeHtml(readOptionalString(bounty.route, '/hackathon'))}</li>
+        <li>${escapeHtml(readOptionalString(bounty.partnerLabel, (bounty.integrations || []).join(' · ')))}</li>
+        <li>${escapeHtml(readOptionalString(bounty.publicAnchor, '/hackathon/'))}</li>
       </ul>
     `,
     visualHtml: `
       <div class="deck-proof-grid">
         ${renderDeckMetric('Status', readOptionalString(bounty.status, 'ready'))}
-        ${renderDeckMetric('Route', readOptionalString(bounty.route, '/hackathon'))}
-        ${renderDeckMetric('Angle', bounty.id)}
+        ${renderDeckMetric('Record', readOptionalString(bounty.localRecordRoute || bounty.route, '/hackathon'))}
+        ${renderDeckMetric('Proof', readOptionalString(bounty.model, readOptionalString(bounty.partnerLabel, bounty.id)))}
       </div>
     `,
   });

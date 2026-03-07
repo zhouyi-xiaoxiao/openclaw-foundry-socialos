@@ -24,7 +24,7 @@ This index is the fastest way for a human reviewer or a future agent to understa
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/HACKATHON_BOUNTIES.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/HACKATHON_BOUNTIES.md)
   Bounty-by-bounty fit, routes, proof surfaces, and honest integration status.
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/HACKATHON_LIVE_PROVIDER_SETUP.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/HACKATHON_LIVE_PROVIDER_SETUP.md)
-  Optional live GLM + FLock provider cutover for judge-facing capture refreshes.
+  Live GLM + FLock verification and proof-refresh workflow for the final submission pack.
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/PITCH_5_MIN.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/PITCH_5_MIN.md)
   Five-minute pitch structure and timing.
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/JUDGE_BRIEF.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/JUDGE_BRIEF.md)
@@ -34,7 +34,7 @@ This index is the fastest way for a human reviewer or a future agent to understa
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DORAHACKS_MASTER_SCRIPT.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DORAHACKS_MASTER_SCRIPT.md)
   Main 8-9 minute English script for the recording.
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DORAHACKS_BOUNTY_SWAPS.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/DORAHACKS_BOUNTY_SWAPS.md)
-  45-60 second bounty-specific swap segments.
+  Bounty-specific integration modules used inside the five independent videos.
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/REHEARSAL_CUES_CN.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/REHEARSAL_CUES_CN.md)
   Chinese rehearsal prompts keyed to the English script.
 - [`/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/RECORDING_AND_SUBMISSION_RUNBOOK.md`](/Users/zhouyixiaoxiao/openclaw-foundry-socialos/socialos/docs/pitch/RECORDING_AND_SUBMISSION_RUNBOOK.md)

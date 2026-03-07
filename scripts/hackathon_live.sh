@@ -9,10 +9,11 @@ export SOCIALOS_WEB_PORT="${SOCIALOS_WEB_PORT:-4173}"
 export HACKATHON_MODE="${HACKATHON_MODE:-all-bounties}"
 export PUBLISH_MODE="${PUBLISH_MODE:-dry-run}"
 
-# Use the strongest provider models for judge-facing bounty paths.
+# Use the strongest provider models that are reliable for judge-facing bounty paths.
 # These defaults are overridable via the caller's environment.
 export GLM_MODEL_ID="${GLM_MODEL_ID:-glm-5}"
-export FLOCK_MODEL_ID="${FLOCK_MODEL_ID:-qwen3-235b-a22b-thinking-2507}"
+export FLOCK_MODEL_ID="${FLOCK_MODEL_ID:-qwen3-235b-a22b-instruct-2507}"
+export STRUCTURED_MODEL_TIMEOUT_MS="${STRUCTURED_MODEL_TIMEOUT_MS:-20000}"
 
 read_keychain_secret() {
   local service_name="$1"
@@ -44,6 +45,7 @@ Commands:
 
 Notes:
   - Keys are read from macOS Keychain labels 'Z.ai API key' and 'Flock API key' by default.
+  - Structured model calls time out after STRUCTURED_MODEL_TIMEOUT_MS (default 20000 ms).
   - Override GLM_MODEL_ID or FLOCK_MODEL_ID in the shell if you want a different model.
 EOF
 }
@@ -52,12 +54,25 @@ case "$MODE" in
   api)
     require_secret GLM_API_KEY
     require_secret FLOCK_API_KEY
-    exec node "${REPO_ROOT}/socialos/apps/api/server.mjs" --port "${SOCIALOS_API_PORT}"
+    exec env \
+      GLM_API_KEY="${GLM_API_KEY}" \
+      FLOCK_API_KEY="${FLOCK_API_KEY}" \
+      GLM_MODEL_ID="${GLM_MODEL_ID}" \
+      FLOCK_MODEL_ID="${FLOCK_MODEL_ID}" \
+      STRUCTURED_MODEL_TIMEOUT_MS="${STRUCTURED_MODEL_TIMEOUT_MS}" \
+      node "${REPO_ROOT}/socialos/apps/api/server.mjs" --port "${SOCIALOS_API_PORT}"
     ;;
   proofs)
     require_secret GLM_API_KEY
     require_secret FLOCK_API_KEY
-    exec node "${REPO_ROOT}/scripts/capture_hackathon_proofs.mjs"
+    exec env \
+      GLM_API_KEY="${GLM_API_KEY}" \
+      FLOCK_API_KEY="${FLOCK_API_KEY}" \
+      GLM_MODEL_ID="${GLM_MODEL_ID}" \
+      FLOCK_MODEL_ID="${FLOCK_MODEL_ID}" \
+      STRUCTURED_MODEL_TIMEOUT_MS="${STRUCTURED_MODEL_TIMEOUT_MS}" \
+      REQUIRE_LIVE_HACKATHON_PROOFS=1 \
+      node "${REPO_ROOT}/scripts/capture_hackathon_proofs.mjs"
     ;;
   env-check)
     echo "SOCIALOS_API_PORT=${SOCIALOS_API_PORT}"
@@ -65,6 +80,7 @@ case "$MODE" in
     echo "PUBLISH_MODE=${PUBLISH_MODE}"
     echo "GLM_MODEL_ID=${GLM_MODEL_ID}"
     echo "FLOCK_MODEL_ID=${FLOCK_MODEL_ID}"
+    echo "STRUCTURED_MODEL_TIMEOUT_MS=${STRUCTURED_MODEL_TIMEOUT_MS}"
     if [[ -n "${GLM_API_KEY:-}" ]]; then
       echo "GLM_API_KEY=present"
     else
