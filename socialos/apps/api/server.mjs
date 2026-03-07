@@ -7094,6 +7094,10 @@ async function routeRequest(req, res, statements) {
     let language;
     let content;
     let draftId = draftIdInput;
+    let existingMetadata = null;
+    let nextDraftMetadata = null;
+    let existingHighFrequency = false;
+    let existingNoDeliver = false;
 
     if (draftIdInput) {
       const existingDraft = statements.selectDraftById.get(draftIdInput);
@@ -7104,29 +7108,14 @@ async function routeRequest(req, res, statements) {
       language = existingDraft.language;
       content = existingDraft.content;
 
-      const existingMetadata = safeParseJsonObject(existingDraft.metadata, {});
-      const existingHighFrequency = readOptionalBoolean(existingMetadata.highFrequency, false);
-      const existingNoDeliver = readOptionalBoolean(existingMetadata.noDeliver, false);
-      const nextDraftMetadata = {
+      existingMetadata = safeParseJsonObject(existingDraft.metadata, {});
+      existingHighFrequency = readOptionalBoolean(existingMetadata.highFrequency, false);
+      existingNoDeliver = readOptionalBoolean(existingMetadata.noDeliver, false);
+      nextDraftMetadata = {
         ...existingMetadata,
         highFrequency: existingHighFrequency || queueMetadata.highFrequency,
         noDeliver: existingNoDeliver || queueMetadata.noDeliver,
       };
-      if (!nextDraftMetadata.validation) {
-        const validation = buildDraftValidation(
-          platformRule,
-          content,
-          validateQueueContentCompliance(platformRule, content).issues
-        );
-        nextDraftMetadata.validation = validation;
-      }
-      if (
-        !existingMetadata.validation ||
-        nextDraftMetadata.highFrequency !== existingHighFrequency ||
-        nextDraftMetadata.noDeliver !== existingNoDeliver
-      ) {
-        statements.updateDraftContentMetadata.run(content, JSON.stringify(nextDraftMetadata), draftIdInput);
-      }
     } else {
       eventId = requireString(body.eventId, 'eventId');
       const event = statements.selectEventById.get(eventId);
@@ -7139,12 +7128,36 @@ async function routeRequest(req, res, statements) {
 
     const mode = normalizePublishMode(body.mode);
     const compliance = validateQueueContentCompliance(platformRule, content);
+    const validation = buildDraftValidation(platformRule, content, compliance.issues);
+
+    if (draftIdInput && nextDraftMetadata) {
+      nextDraftMetadata.validation = validation;
+      const previousValidation = existingMetadata?.validation || null;
+      const validationChanged = JSON.stringify(previousValidation) !== JSON.stringify(validation);
+      if (
+        validationChanged ||
+        nextDraftMetadata.highFrequency !== existingHighFrequency ||
+        nextDraftMetadata.noDeliver !== existingNoDeliver
+      ) {
+        statements.updateDraftContentMetadata.run(content, JSON.stringify(nextDraftMetadata), draftIdInput);
+      }
+    }
 
     if (!compliance.ok) {
       sendJson(res, 422, {
         error: 'platform compliance failed',
         platform,
         issues: compliance.issues,
+      });
+      return;
+    }
+
+    if (!validation.ok) {
+      sendJson(res, 422, {
+        error: 'draft validation failed',
+        platform,
+        issues: validation.issues,
+        categories: validation.categories,
       });
       return;
     }
@@ -7158,7 +7171,6 @@ async function routeRequest(req, res, statements) {
       const publishPackage = eventDetail
         ? buildPublishPackage(platformRule, eventDetail, language, content, body)
         : null;
-      const validation = buildDraftValidation(platformRule, content, compliance.issues);
       const draftMetadataToStore = {
         ...queueMetadata,
         capability,

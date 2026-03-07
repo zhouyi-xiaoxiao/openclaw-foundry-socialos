@@ -1385,6 +1385,7 @@ function renderDraftCards(drafts) {
         'untitled event'
       );
       const hasIssues = validation && Object.keys(validation).length && validation.ok === false;
+      const queueDisabled = hasIssues;
       const supportLabel = publishPackage.supportLevel || capability.supportLevel || 'L0 Draft';
       const entryLabel = publishPackage.entryTarget || capability.entryTarget || 'manual';
       const blockedLabel = publishPackage.blockedBy || capability.blockedBy || 'n/a';
@@ -1429,8 +1430,15 @@ function renderDraftCards(drafts) {
             <input type="hidden" name="draftId" value="${escapeHtml(draft.draftId)}" />
             <input type="hidden" name="mode" value="dry-run" />
             <div class="inline-actions">
-              <button type="submit">${escapeHtml(pickDraftUiCopy(draft, 'Queue Draft', '加入队列'))}</button>
+              <button type="submit"${queueDisabled ? ' disabled' : ''}>${escapeHtml(
+                pickDraftUiCopy(draft, 'Queue Draft', '加入队列')
+              )}</button>
             </div>
+            ${
+              queueDisabled
+                ? `<small>Queue is blocked until validation issues are resolved.</small>`
+                : ''
+            }
             <div class="form-result" data-form-result></div>
           </form>
           <details class="draft-details">

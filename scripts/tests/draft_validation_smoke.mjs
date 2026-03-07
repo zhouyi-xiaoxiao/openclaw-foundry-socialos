@@ -65,6 +65,19 @@ async function main() {
     assert(validation.validation.categories.sensitive.length >= 1, 'validation should detect sensitive terms');
     assert((validation.draft.variants || []).length === 2, 'draft edit should persist variants');
 
+    const queueResponse = await fetch(`${api.baseUrl}/publish/queue`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        draftId,
+        mode: 'dry-run',
+      }),
+    });
+    const queuePayload = await queueResponse.json();
+    assert(queueResponse.status === 422, 'queue should reject drafts that fail validation checks');
+    assert(queuePayload.error === 'draft validation failed', 'queue rejection should explain validation failure');
+    assert(Array.isArray(queuePayload.issues) && queuePayload.issues.length >= 1, 'queue rejection should return issues');
+
     const listed = await requestJson(api.baseUrl, `/drafts?eventId=${encodeURIComponent(event.eventId)}&limit=5`);
     assert(listed.drafts[0].validation?.ok === false, 'draft list should expose stored validation');
 
