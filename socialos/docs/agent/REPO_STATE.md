@@ -1,8 +1,8 @@
 # Repo State Handoff
 
-- Generated: 2026-03-07T13:03:16.275Z
-- Branch: detached
-- Git head: a76e49d
+- Generated: 2026-03-07T13:05:14.989Z
+- Branch: automation/socialos-overnight-2-20260307
+- Git head: a16be1b
 - Dirty working tree: true
 
 ## Canonical Chain
@@ -51,9 +51,7 @@
 - `socialos/docs/evidence/socialos-demo.gif`
 
 ## Dirty Summary
-- M scripts/overnight_supervisor.mjs
--  M scripts/tests/overnight_supervisor_parser_smoke.mjs
--  M socialos/docs/STATUS.md
+- M socialos/docs/STATUS.md
 -  M socialos/docs/agent/REPO_STATE.md
 -  M socialos/docs/evidence/LATEST_VALIDATION.md
 -  M socialos/docs/pitch/DECK_STATUS.json
