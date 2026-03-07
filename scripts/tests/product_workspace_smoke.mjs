@@ -296,6 +296,11 @@ async function main() {
       mode: 'dry-run',
     });
     assert(typeof queuedSecondDraft.taskId === 'string', 'queue should support staging a second draft');
+    const queuedPostedDraft = await postJson(api.baseUrl, '/publish/queue', {
+      draftId: generated.drafts[2].draftId,
+      mode: 'dry-run',
+    });
+    assert(typeof queuedPostedDraft.taskId === 'string', 'queue should support staging a posted completion sample');
     const approved = await postJson(api.baseUrl, '/publish/approve', {
       taskId: queuedRetry.taskId,
       note: 'workspace smoke approval',
@@ -308,6 +313,14 @@ async function main() {
       note: 'intentional failed path to verify queue coherence',
     });
     assert(failed.status === 'failed', 'manual completion should allow failed outcomes');
+    const posted = await postJson(api.baseUrl, '/publish/complete', {
+      taskId: queuedPostedDraft.taskId,
+      outcome: 'posted',
+      operator: 'product_workspace_smoke',
+      link: 'https://example.local/post/posted-preview',
+      note: 'intentional posted path to verify workspace queue preview fallback',
+    });
+    assert(posted.status === 'posted', 'manual completion should allow posted outcomes');
 
     const queueTasks = await getJson(api.baseUrl, '/queue/tasks?limit=10');
     assert(Array.isArray(queueTasks.queueTasks), 'queue/tasks should return queue task list');
@@ -319,6 +332,10 @@ async function main() {
     assert(
       queueTasks.queueTasks.some((task) => task.taskId === queuedSecondDraft.taskId),
       'queued task for a second draft should appear in queue list history'
+    );
+    assert(
+      queueTasks.queueTasks.some((task) => task.taskId === queuedPostedDraft.taskId),
+      'queued task for posted completion sample should appear in queue list history'
     );
 
     const cluster = await getJson(api.baseUrl, '/ops/cluster');
@@ -362,6 +379,10 @@ async function main() {
     assert(
       bootstrap.queuePreview.some((task) => task.taskId === queuedSecondDraft.taskId && task.status === 'failed'),
       'workspace queue preview should include failed tasks when capacity allows'
+    );
+    assert(
+      bootstrap.queuePreview.some((task) => task.taskId === queuedPostedDraft.taskId && task.status === 'posted'),
+      'workspace queue preview should backfill with posted tasks when fewer than three active items exist'
     );
     assert(typeof bootstrap.voiceReadiness?.summary === 'string', 'workspace bootstrap should expose voice readiness');
     assert(Array.isArray(bootstrap.recentDrafts), 'workspace bootstrap should expose recent drafts');

@@ -4431,6 +4431,7 @@ function buildWorkspaceBootstrapPayload(statements) {
     ...cockpit.queue.manualSteps,
     ...cockpit.queue.awaitingApproval,
     ...cockpit.queue.failed,
+    ...cockpit.queue.posted,
   ].slice(0, 3);
 
   return {
