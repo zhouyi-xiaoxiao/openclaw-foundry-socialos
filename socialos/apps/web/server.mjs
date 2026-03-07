@@ -3752,9 +3752,14 @@ function renderClientScript() {
             appendSourceAsset(response.payload.asset);
           }
           if (statusNode) {
-            statusNode.innerHTML = '<strong>Attached</strong><p>' +
-              escapeHtml(response.payload.asset.fileName || response.payload.asset.assetId) +
-              ' is ready in the composer.</p>';
+            statusNode.innerHTML =
+              attachToMessage
+                ? '<strong>Attached</strong><p>' +
+                    escapeHtml(response.payload.asset.fileName || response.payload.asset.assetId) +
+                    ' is ready in the composer.</p>'
+                : '<strong>Saved locally</strong><p>' +
+                    escapeHtml(response.payload.asset.fileName || response.payload.asset.assetId) +
+                    ' is stored as the original source while you work from the transcript.</p>';
           }
           renderWorkspaceComposerResult(resultNode, '');
         }
