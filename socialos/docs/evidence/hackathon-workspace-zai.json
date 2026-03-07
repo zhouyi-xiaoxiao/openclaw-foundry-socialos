@@ -1,5 +1,5 @@
 {
-  "responseId": "workspace_c4729e21bed24d0cb51e49057a4b5004",
+  "responseId": "workspace_470a2ca06e314c02b6cc8897e37cef09",
   "intent": "capture",
   "bountyMode": "z-ai-general",
   "summary": "I turned At The Hackathon into a contact draft first. Save it if it looks right, or keep talking and we can refine it together.",
@@ -33,8 +33,8 @@
             "organiser"
           ],
           "detailLines": [
-            "Next follow-up: 2026-03-09T21:22:05.279Z",
-            "Updated: 2026-03-07T21:02:05.279Z"
+            "Next follow-up: 2026-03-09T22:03:34.773Z",
+            "Updated: 2026-03-07T21:43:34.773Z"
           ]
         },
         {
@@ -50,8 +50,8 @@
             "entrepreneurship"
           ],
           "detailLines": [
-            "Next follow-up: 2026-03-14T21:22:05.283Z",
-            "Updated: 2026-03-07T20:32:05.283Z"
+            "Next follow-up: 2026-03-14T22:03:34.776Z",
+            "Updated: 2026-03-07T21:13:34.776Z"
           ]
         },
         {
@@ -67,8 +67,8 @@
             "cross-border"
           ],
           "detailLines": [
-            "Next follow-up: 2026-03-12T21:22:05.282Z",
-            "Updated: 2026-03-07T20:42:05.282Z"
+            "Next follow-up: 2026-03-12T22:03:34.775Z",
+            "Updated: 2026-03-07T21:23:34.775Z"
           ]
         }
       ],
@@ -84,7 +84,7 @@
             "industry operators and alumni"
           ],
           "detailLines": [
-            "Created: 2026-03-07T16:02:05.295Z"
+            "Created: 2026-03-07T16:43:34.787Z"
           ]
         },
         {
@@ -98,7 +98,7 @@
             "builders and community organisers"
           ],
           "detailLines": [
-            "Created: 2026-03-07T20:12:05.292Z"
+            "Created: 2026-03-07T20:53:34.785Z"
           ]
         }
       ],
@@ -163,7 +163,7 @@
             "stretched"
           ],
           "detailLines": [
-            "Updated: 2026-03-07T21:22:05.278Z"
+            "Updated: 2026-03-07T22:03:34.772Z"
           ]
         }
       ]
@@ -182,8 +182,8 @@
           "organiser"
         ],
         "detailLines": [
-          "Next follow-up: 2026-03-09T21:22:05.279Z",
-          "Updated: 2026-03-07T21:02:05.279Z"
+          "Next follow-up: 2026-03-09T22:03:34.773Z",
+          "Updated: 2026-03-07T21:43:34.773Z"
         ]
       },
       {
@@ -197,7 +197,7 @@
           "industry operators and alumni"
         ],
         "detailLines": [
-          "Created: 2026-03-07T16:02:05.295Z"
+          "Created: 2026-03-07T16:43:34.787Z"
         ]
       },
       {
@@ -292,9 +292,9 @@
         "ic"
       ],
       "notes": "London hackathon organiser at Imperial College. From Tianjin, China. Very nice guy. Shared both his X and LinkedIn.",
-      "nextFollowUpAt": "2026-03-09T21:22:05.279Z",
-      "updatedAt": "2026-03-07T21:02:05.279Z",
-      "score": 1.5186,
+      "nextFollowUpAt": "2026-03-09T22:03:34.773Z",
+      "updatedAt": "2026-03-07T21:43:34.773Z",
+      "score": 1.3079,
       "evidenceSnippet": "Talked about builder communities, operator dashboards, and how SocialOS could support organiser follow-up."
     },
     {
@@ -309,9 +309,9 @@
         "ihealth"
       ],
       "notes": "Vice President at NVIDIA. Met in San Francisco in summer 2025 at iHealth. Tianjin University alumnus who shared his entrepreneurship story and how he got into NVIDIA.",
-      "nextFollowUpAt": "2026-03-14T21:22:05.283Z",
-      "updatedAt": "2026-03-07T20:32:05.283Z",
-      "score": 1.4043,
+      "nextFollowUpAt": "2026-03-14T22:03:34.776Z",
+      "updatedAt": "2026-03-07T21:13:34.776Z",
+      "score": 1.2114,
       "evidenceSnippet": "Met at iHealth in San Francisco during summer 2025."
     },
     {
@@ -325,9 +325,9 @@
         "chengdu"
       ],
       "notes": "Independent lawyer focused on cross-border and intellectual property work. Met through a Chamber of Commerce event in Chengdu. Later visited her office and she treated me to a meal. Trusted partner contact.",
-      "nextFollowUpAt": "2026-03-12T21:22:05.282Z",
-      "updatedAt": "2026-03-07T20:42:05.282Z",
-      "score": 1.29,
+      "nextFollowUpAt": "2026-03-12T22:03:34.775Z",
+      "updatedAt": "2026-03-07T21:23:34.775Z",
+      "score": 1.115,
       "evidenceSnippet": "Met at a Chamber of Commerce event in Chengdu."
     },
     {
@@ -340,9 +340,9 @@
         "merchant-venturers"
       ],
       "notes": "Lecturer at the University of Bristol. Met in the EngiMath staff kitchen during a dynamics workshop. Shared her first-year experiences. I want to invite her for lunch or dinner. Office is in the Merchant Venturers Build…",
-      "nextFollowUpAt": "2026-03-10T21:22:05.290Z",
-      "updatedAt": "2026-03-07T19:32:05.290Z",
-      "score": 1.29,
+      "nextFollowUpAt": "2026-03-10T22:03:34.783Z",
+      "updatedAt": "2026-03-07T20:13:34.783Z",
+      "score": 1.115,
       "evidenceSnippet": "Met at a dynamics workshop in the EngiMath staff kitchen."
     }
   ],
@@ -358,7 +358,7 @@
           "summary": "Remembered the James Wu conversation from iHealth in San Francisco and preserved the entrepreneurship narrative."
         }
       },
-      "createdAt": "2026-03-07T16:02:05.295Z",
+      "createdAt": "2026-03-07T16:43:34.787Z",
       "score": 0.875,
       "snippet": "Remembered the James Wu conversation from iHealth in San Francisco and preserved the entrepreneurship narrative."
     },
@@ -380,7 +380,7 @@
           "focus": "hackathons, builder communities, and operator dashboards"
         }
       },
-      "createdAt": "2026-03-07T20:12:05.292Z",
+      "createdAt": "2026-03-07T20:53:34.785Z",
       "score": 0.7786,
       "snippet": "Turned one London organiser conversation into a SocialOS follow-up, draft, and reflection loop."
     },
@@ -395,7 +395,7 @@
           "summary": "Captured James Sibson and Clare Rees-Zimmerman in the same research-industry context."
         }
       },
-      "createdAt": "2026-03-07T12:42:05.297Z",
+      "createdAt": "2026-03-07T13:23:34.789Z",
       "score": 0.7786,
       "snippet": "Captured James Sibson and Clare Rees-Zimmerman in the same research-industry context."
     },
@@ -410,7 +410,7 @@
           "summary": "Captured the Candice Tang relationship thread from a Chengdu Chamber event into a reusable follow-up context."
         }
       },
-      "createdAt": "2026-03-07T17:02:05.294Z",
+      "createdAt": "2026-03-07T17:43:34.786Z",
       "score": 0.6821,
       "snippet": "Captured the Candice Tang relationship thread from a Chengdu Chamber event into a reusable follow-up context."
     }
@@ -478,7 +478,7 @@
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T20:02:05.305Z",
+      "createdAt": "2026-03-07T20:43:34.797Z",
       "score": 0.5333333333333333,
       "snippet": "I turned a real conversation with Minghan Xiao and the London hackathon organiser circle into a local-first SocialOS flow: one note becomes relationship memory, linked events, pla…"
     },
@@ -544,7 +544,7 @@
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T20:02:05.305Z",
+      "createdAt": "2026-03-07T20:43:34.797Z",
       "score": 0.4,
       "snippet": "SocialOS now turns one real London hackathon organiser conversation with Minghan Xiao into people memory, linked events, 7 platform-native drafts, and a weekly mirror. Still local…"
     },
@@ -610,7 +610,7 @@
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T20:02:05.307Z",
+      "createdAt": "2026-03-07T20:43:34.799Z",
       "score": 0.3333333333333333,
       "snippet": "这两天把和 Minghan Xiao 的一条真实 follow-up 跑顺了：聊天、联系人、内容和复盘，终于能在一个系统里串起来。"
     }
@@ -630,8 +630,8 @@
           "organiser"
         ],
         "detailLines": [
-          "Next follow-up: 2026-03-09T21:22:05.279Z",
-          "Updated: 2026-03-07T21:02:05.279Z"
+          "Next follow-up: 2026-03-09T22:03:34.773Z",
+          "Updated: 2026-03-07T21:43:34.773Z"
         ]
       },
       {
@@ -647,8 +647,8 @@
           "entrepreneurship"
         ],
         "detailLines": [
-          "Next follow-up: 2026-03-14T21:22:05.283Z",
-          "Updated: 2026-03-07T20:32:05.283Z"
+          "Next follow-up: 2026-03-14T22:03:34.776Z",
+          "Updated: 2026-03-07T21:13:34.776Z"
         ]
       },
       {
@@ -664,8 +664,8 @@
           "cross-border"
         ],
         "detailLines": [
-          "Next follow-up: 2026-03-12T21:22:05.282Z",
-          "Updated: 2026-03-07T20:42:05.282Z"
+          "Next follow-up: 2026-03-12T22:03:34.775Z",
+          "Updated: 2026-03-07T21:23:34.775Z"
         ]
       }
     ],
@@ -681,7 +681,7 @@
           "industry operators and alumni"
         ],
         "detailLines": [
-          "Created: 2026-03-07T16:02:05.295Z"
+          "Created: 2026-03-07T16:43:34.787Z"
         ]
       },
       {
@@ -695,7 +695,7 @@
           "builders and community organisers"
         ],
         "detailLines": [
-          "Created: 2026-03-07T20:12:05.292Z"
+          "Created: 2026-03-07T20:53:34.785Z"
         ]
       }
     ],
@@ -760,7 +760,7 @@
           "stretched"
         ],
         "detailLines": [
-          "Updated: 2026-03-07T21:22:05.278Z"
+          "Updated: 2026-03-07T22:03:34.772Z"
         ]
       }
     ]
@@ -796,9 +796,9 @@
           "ic"
         ],
         "notes": "London hackathon organiser at Imperial College. From Tianjin, China. Very nice guy. Shared both his X and LinkedIn.",
-        "nextFollowUpAt": "2026-03-09T21:22:05.279Z",
-        "updatedAt": "2026-03-07T21:02:05.279Z",
-        "score": 1.5186,
+        "nextFollowUpAt": "2026-03-09T22:03:34.773Z",
+        "updatedAt": "2026-03-07T21:43:34.773Z",
+        "score": 1.3079,
         "evidenceSnippet": "Talked about builder communities, operator dashboards, and how SocialOS could support organiser follow-up."
       }
     ],
@@ -894,7 +894,7 @@
     "bountyMode": "z-ai-general"
   },
   "transcription": {
-    "openAiConfigured": true,
+    "openAiConfigured": false,
     "audioAssets": 0,
     "imageAssets": 0,
     "transcribedAudioAssets": 0,
@@ -945,6 +945,6 @@
       }
     ]
   },
-  "auditId": "audit_b9f4d7572fc74303ba36db1c945e16f8",
-  "digestId": "digest_dd0ed59610154df5b33cd4f5ded48a34"
+  "auditId": "audit_87f6dec9fca24ec78006bb46cde201fc",
+  "digestId": "digest_8a8cb2d9719e4b7b8b07901f88e37288"
 }
