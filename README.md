@@ -106,8 +106,10 @@ Agent-facing entrypoints:
 
 ## Judge Pitch Pack
 - [5-Minute Pitch](socialos/docs/pitch/PITCH_5_MIN.md)
+- [5-Minute VC Script](socialos/docs/pitch/PITCH_5_MIN_VC_SCRIPT.md)
 - [Judge Brief](socialos/docs/pitch/JUDGE_BRIEF.md)
 - [Demo Talk Track](socialos/docs/pitch/DEMO_TALK_TRACK.md)
+- [Deck Page Script](socialos/docs/pitch/DECK_PAGE_SCRIPT.md)
 - [VC Deck Spec](socialos/docs/pitch/VC_DECK_SPEC.md)
 - [Deck Maintenance](socialos/docs/pitch/DECK_MAINTENANCE.md)
 

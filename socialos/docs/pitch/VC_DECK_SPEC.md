@@ -27,7 +27,7 @@ This document is the curated source of truth for the public VC deck served from 
 ## Slide Headlines
 1. `People, context, content, and self-understanding drift apart.`
 2. `A local-first relationship and identity operating system.`
-3. `Built for high-context people whose work runs on relationships.`
+3. `Built for high-context people, and already grounded in a real network.`
 4. `One loop: capture, recall, express, hand off, reflect.`
 5. `The core loop already works.`
 6. `It combines Relationship OS, Content OS, and Self OS in one loop.`
@@ -48,7 +48,8 @@ This document is the curated source of truth for the public VC deck served from 
 ### 3. Who it is for
 - Define the wedge clearly.
 - Explain “high-context people” in plain language.
-- Visual source: persona cards, no market-size chart here.
+- Show that the demo is seeded with real named relationships, not placeholders.
+- Visual source: network cluster cards with named contacts, not a market-size chart.
 
 ### 4. Product loop
 - Show the operating loop clearly:
@@ -61,7 +62,7 @@ This document is the curated source of truth for the public VC deck served from 
 
 ### 5. What works today
 - Establish proof that this is more than a concept.
-- Mention fuzzy recall, linked people + events, drafts, queue handoff, daily/weekly mirror.
+- Mention real named contacts, fuzzy recall, linked people + events, drafts, queue handoff, daily/weekly mirror.
 - Visual source: `socialos/docs/evidence/socialos-demo-step04.png`, `socialos/docs/evidence/socialos-demo-step08.png`
 
 ### 6. Why it is different

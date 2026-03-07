@@ -27,6 +27,8 @@ Show only this product loop:
 5. `Mirror`
    Show daily or weekly reflection grounded in evidence.
 
+Before or during the `Contacts` step, point out that the seeded graph now uses real named relationships across London, Bristol, Chengdu, and San Francisco instead of placeholder contacts.
+
 ## 2:40-3:30 Why It Is Different
 Most tools only solve one layer:
 - CRM tools track people

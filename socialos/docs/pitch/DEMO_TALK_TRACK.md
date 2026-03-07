@@ -1,5 +1,7 @@
 # SocialOS Demo Talk Track
 
+For slide-by-slide deck reading, see `socialos/docs/pitch/DECK_PAGE_SCRIPT.md`.
+
 ## URLs To Open
 - Workspace: `http://127.0.0.1:4173/quick-capture`
 - Contacts: `http://127.0.0.1:4173/people`

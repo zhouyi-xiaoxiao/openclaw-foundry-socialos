@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { DEMO_NETWORK_DECK_CLUSTERS } from '../../lib/demo-network.mjs';
 
 export const LOOPBACK_HOST = '127.0.0.1';
 export const DEFAULT_PORT = Number(process.env.SOCIALOS_WEB_PORT || 4173);
@@ -25,6 +26,7 @@ const EVIDENCE_STEP_ONE_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step01.png
 const EVIDENCE_STEP_FOUR_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step04.png');
 const EVIDENCE_STEP_EIGHT_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step08.png');
 const PUBLIC_REPO_URL = 'https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos';
+const PUBLIC_DECK_URL = 'https://zhouyixiaoxiao.org/';
 const fileTextCache = new Map();
 const dataUriCache = new Map();
 
@@ -3338,6 +3340,16 @@ function renderDeckMetric(label, value) {
   `;
 }
 
+function renderDeckNetworkCluster(cluster) {
+  return `
+    <article class="deck-network-card">
+      <strong>${escapeHtml(cluster.title)}</strong>
+      <span>${escapeHtml((cluster.members || []).join(' · '))}</span>
+      <small>${escapeHtml(cluster.summary || '')}</small>
+    </article>
+  `;
+}
+
 function renderDeckSlide({ eyebrow = '', title, bodyHtml = '', visualHtml = '', footerHtml = '', notesHtml = '' }) {
   return `
     <section>
@@ -3370,6 +3382,7 @@ function renderDeckDocument(requestUrl) {
   const repoHead = readOptionalString(deckStatus.repoHead, 'unknown');
   const demoSummary = readOptionalString(deckStatus.demo?.summary, 'Local demo status not refreshed yet.');
   const repoUrl = readOptionalString(deckStatus.publicRepoUrl, PUBLIC_REPO_URL);
+  const publicDeckUrl = PUBLIC_DECK_URL;
   const deckStatusLabel = deckStatus.demo?.healthy ? 'ready' : 'degraded';
   const slideSections = [
     renderDeckSlide({
@@ -3419,9 +3432,9 @@ function renderDeckDocument(requestUrl) {
     }),
     renderDeckSlide({
       eyebrow: 'Slide 3 · Who it is for',
-      title: 'Built for high-context people whose work runs on relationships.',
+      title: 'Built for high-context people, and already grounded in a real network.',
       bodyHtml: `
-        <p class="deck-lead">The wedge is not “everyone.” It starts with people who constantly turn conversations into opportunities, follow-up, and public expression.</p>
+        <p class="deck-lead">The wedge is not “everyone.” It starts with people who constantly turn conversations into opportunities, follow-up, and public expression. The demo now carries a real relationship graph across London, Bristol, Chengdu, and San Francisco.</p>
         <div class="deck-persona-grid">
           <div class="deck-persona-card"><strong>Founders</strong><span>track people, momentum, and narrative</span></div>
           <div class="deck-persona-card"><strong>Investors</strong><span>remember who matters and why</span></div>
@@ -3431,12 +3444,12 @@ function renderDeckDocument(requestUrl) {
         </div>
       `,
       visualHtml: `
-        <div class="deck-quote-card">
-          <p>“If your job depends on remembering people, context, and next steps, SocialOS is meant to become your default operating surface.”</p>
+        <div class="deck-network-grid">
+          ${DEMO_NETWORK_DECK_CLUSTERS.map((cluster) => renderDeckNetworkCluster(cluster)).join('')}
         </div>
       `,
       notesHtml: `
-        <p>VCs need a clear wedge. Explain high-context people in plain language.</p>
+        <p>VCs need a clear wedge. Explain high-context people in plain language, then point out that the demo already uses real relationships instead of placeholders.</p>
       `,
     }),
     renderDeckSlide({
@@ -3472,6 +3485,7 @@ function renderDeckDocument(requestUrl) {
       title: 'The core loop already works.',
       bodyHtml: `
         <ul class="deck-check-list">
+          <li>Real named contacts with linked identities, interactions, and event context already seeded into the demo</li>
           <li>Fuzzy recall across people, events, drafts, and self signals</li>
           <li>Linked people and events through a graph-backed relationship layer</li>
           <li>Seven platform-native drafts with per-platform language defaults</li>
@@ -3555,7 +3569,10 @@ function renderDeckDocument(requestUrl) {
         <div class="deck-final-card">
           <h3>SocialOS</h3>
           <p>A local-first relationship and identity operating system for high-context people.</p>
-          <a class="deck-cta-link" href="${escapeHtml(repoUrl)}">View public repo</a>
+          <div class="deck-link-stack">
+            <a class="deck-cta-link" href="${escapeHtml(publicDeckUrl)}">Open zhouyixiaoxiao.org</a>
+            <a class="deck-cta-link secondary" href="${escapeHtml(repoUrl)}">View public repo</a>
+          </div>
         </div>
       `,
       notesHtml: `
@@ -3650,6 +3667,13 @@ function renderDeckDocument(requestUrl) {
         font-size: 28px;
         line-height: 1.45;
       }
+      .reveal p,
+      .reveal li,
+      .reveal span,
+      .reveal small,
+      .reveal a {
+        overflow-wrap: anywhere;
+      }
       .deck-slide-shell {
         min-height: 100vh;
         padding: 72px 68px;
@@ -3696,6 +3720,7 @@ function renderDeckDocument(requestUrl) {
       .deck-loop-card,
       .deck-problem-card,
       .deck-persona-card,
+      .deck-network-card,
       .deck-proof-card,
       .deck-credibility-card,
       .deck-cta-card,
@@ -3723,7 +3748,8 @@ function renderDeckDocument(requestUrl) {
       .deck-persona-grid,
       .deck-proof-grid,
       .deck-three-column,
-      .deck-cta-grid {
+      .deck-cta-grid,
+      .deck-network-grid {
         display: grid;
         gap: 16px;
       }
@@ -3735,11 +3761,13 @@ function renderDeckDocument(requestUrl) {
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
       .deck-proof-grid,
-      .deck-cta-grid {
+      .deck-cta-grid,
+      .deck-network-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
       .deck-problem-card,
       .deck-persona-card,
+      .deck-network-card,
       .deck-loop-card,
       .deck-credibility-card,
       .deck-cta-card {
@@ -3749,6 +3777,7 @@ function renderDeckDocument(requestUrl) {
       }
       .deck-problem-card strong,
       .deck-persona-card strong,
+      .deck-network-card strong,
       .deck-loop-card strong,
       .deck-credibility-card strong,
       .deck-cta-card strong,
@@ -3758,11 +3787,23 @@ function renderDeckDocument(requestUrl) {
       }
       .deck-problem-card span,
       .deck-persona-card span,
+      .deck-network-card span,
       .deck-loop-card span,
       .deck-credibility-card span,
       .deck-cta-card span,
       .deck-final-card p {
         font-size: 20px;
+        color: var(--deck-ink-soft);
+      }
+      .deck-network-card {
+        background: linear-gradient(160deg, rgba(255,251,245,0.98) 0%, rgba(246,241,233,0.98) 100%);
+      }
+      .deck-network-card span {
+        color: var(--deck-ink);
+      }
+      .deck-network-card small {
+        font-size: 15px;
+        line-height: 1.5;
         color: var(--deck-ink-soft);
       }
       .deck-quote-card,
@@ -3840,8 +3881,9 @@ function renderDeckDocument(requestUrl) {
         gap: 18px;
       }
       .deck-shot.small {
-        max-height: 280px;
+        height: 280px;
         object-fit: cover;
+        object-position: center;
       }
       .deck-placeholder {
         min-height: 320px;
@@ -3869,6 +3911,16 @@ function renderDeckDocument(requestUrl) {
         color: #fff;
         text-decoration: none;
         font-size: 18px;
+      }
+      .deck-cta-link.secondary {
+        background: rgba(22, 33, 50, 0.08);
+        color: var(--deck-ink);
+        border: 1px solid var(--deck-line);
+      }
+      .deck-link-stack {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
       }
       .deck-footer-note {
         display: grid;
@@ -3941,7 +3993,8 @@ function renderDeckDocument(requestUrl) {
         .deck-proof-grid,
         .deck-cta-grid,
         .deck-problem-grid,
-        .deck-persona-grid {
+        .deck-persona-grid,
+        .deck-network-grid {
           grid-template-columns: 1fr;
         }
         .deck-flow {
@@ -3957,18 +4010,58 @@ function renderDeckDocument(requestUrl) {
         }
       }
       @media (max-width: 920px) {
+        .reveal-viewport,
+        .reveal {
+          width: 100% !important;
+          min-height: 100% !important;
+          height: auto !important;
+          overflow: visible !important;
+        }
         .reveal .slides {
-          width: auto !important;
+          width: 100% !important;
           height: auto !important;
           transform: none !important;
           position: static !important;
+          left: auto !important;
+          top: auto !important;
+          overflow: visible !important;
+          display: block !important;
+          perspective: none !important;
         }
-        .reveal .slides section {
+        .reveal .slides > section {
           position: relative !important;
           display: block !important;
+          width: auto !important;
+          height: auto !important;
           opacity: 1 !important;
-          min-height: auto !important;
+          min-height: 100vh !important;
+          transform: none !important;
+          left: auto !important;
+          top: auto !important;
+          margin: 0 !important;
           page-break-after: always;
+        }
+        .deck-slide-shell {
+          min-height: 100vh;
+          padding: 104px 20px 42px;
+          gap: 20px;
+        }
+        .reveal h2 {
+          font-size: clamp(38px, 13vw, 54px);
+          max-width: none;
+        }
+        .reveal p,
+        .reveal li,
+        .reveal span {
+          font-size: 18px;
+        }
+        .deck-quote-card,
+        .deck-contrast-card,
+        .deck-final-card {
+          padding: 24px 20px;
+        }
+        .deck-shot.small {
+          height: 220px;
         }
         .reveal .controls,
         .reveal .progress,
@@ -4024,18 +4117,22 @@ function renderDeckDocument(requestUrl) {
     <script>${revealJs}</script>
     <script>${revealNotesJs}</script>
     <script>
-      Reveal.initialize({
-        hash: true,
-        controls: true,
-        progress: true,
-        slideNumber: 'c/t',
-        transition: 'fade',
-        margin: 0.05,
-        width: 1600,
-        height: 900,
-        center: false,
-        plugins: [ window.RevealNotes ].filter(Boolean)
-      });
+      const useMobileStack = window.matchMedia('(max-width: 920px)').matches;
+      document.documentElement.setAttribute('data-deck-mobile', useMobileStack ? 'true' : 'false');
+      if (!useMobileStack || ${printPdf ? 'true' : 'false'}) {
+        Reveal.initialize({
+          hash: true,
+          controls: true,
+          progress: true,
+          slideNumber: 'c/t',
+          transition: 'fade',
+          margin: 0.05,
+          width: 1600,
+          height: 900,
+          center: false,
+          plugins: [ window.RevealNotes ].filter(Boolean)
+        });
+      }
     </script>
   </body>
 </html>`;
@@ -5596,6 +5693,11 @@ function renderLayout({ currentPath, title, body }) {
         margin: 0;
         color: var(--ink-soft);
         line-height: 1.65;
+        overflow-wrap: anywhere;
+      }
+      small,
+      a {
+        overflow-wrap: anywhere;
       }
       .api-hint {
         margin-top: 14px;
