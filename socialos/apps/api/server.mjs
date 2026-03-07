@@ -2437,7 +2437,7 @@ function readTextFileOrDefault(filePath, fallback = '') {
   }
 }
 
-function parseQueueSummary(queueMarkdown) {
+export function parseQueueSummary(queueMarkdown) {
   const lines = queueMarkdown.split(/\r?\n/u);
   const summary = {
     pending: 0,
@@ -2449,7 +2449,7 @@ function parseQueueSummary(queueMarkdown) {
   let firstQueuedTask = null;
 
   for (const line of lines) {
-    const taskMatch = line.match(/^- \[([ xX!\-])\] (.+)$/u);
+    const taskMatch = line.match(/^\s*-\s+\[([ xX!\-])\]\s+(.+)$/u);
     if (!taskMatch) continue;
     const marker = taskMatch[1];
     const taskText = taskMatch[2].trim();
@@ -2469,12 +2469,12 @@ function parseQueueSummary(queueMarkdown) {
   return summary;
 }
 
-function parseBlockedTasks(queueMarkdown, limit = 20) {
+export function parseBlockedTasks(queueMarkdown, limit = 20) {
   const lines = queueMarkdown.split(/\r?\n/u);
   const blocked = [];
 
   for (let index = 0; index < lines.length; index += 1) {
-    const match = lines[index].match(/^- \[!\] (.+)$/u);
+    const match = lines[index].match(/^\s*-\s+\[!\]\s+(.+)$/u);
     if (!match) continue;
     blocked.push({
       line: index + 1,
