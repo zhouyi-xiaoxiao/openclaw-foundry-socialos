@@ -21,28 +21,31 @@ async function main() {
   const dbPath = path.join(tempDir, 'ops.api.db');
   const api = await startApiServer({ port: 0, quiet: true, dbPath });
   try {
-    const status = await getJson(api.baseUrl, '/ops/status');
-    assert(typeof status.mode === 'string', 'ops/status should include mode');
-    assert(status.queue && typeof status.queue.pending === 'number', 'ops/status should include queue summary');
-    if (status.queue.inProgress === 0 && status.queue.pending > 0) {
+    const bootstrap = await getJson(api.baseUrl, '/studio/bootstrap');
+    assert(typeof bootstrap.status?.mode === 'string', 'studio/bootstrap should include status mode');
+    assert(bootstrap.status?.queue && typeof bootstrap.status.queue.pending === 'number', 'studio/bootstrap should include queue summary');
+    if (bootstrap.status.queue.inProgress === 0 && bootstrap.status.queue.pending > 0) {
       assert(
-        typeof status.queue.currentTask === 'string' && status.queue.currentTask.trim().length > 0,
-        'ops/status should surface currentTask when queue has actionable pending work',
+        typeof bootstrap.status.queue.currentTask === 'string' && bootstrap.status.queue.currentTask.trim().length > 0,
+        'studio/bootstrap should surface currentTask when queue has actionable pending work',
       );
     }
 
-    const runs = await getJson(api.baseUrl, '/ops/runs?limit=3');
-    assert(Array.isArray(runs.runs), 'ops/runs should include runs array');
+    const runs = await getJson(api.baseUrl, '/studio/runs?limit=3');
+    assert(Array.isArray(runs.runs), 'studio/runs should include runs array');
 
-    const blocked = await getJson(api.baseUrl, '/ops/blocked');
-    assert(Array.isArray(blocked.blockedTasks), 'ops/blocked should include blockedTasks');
+    const tasks = await getJson(api.baseUrl, '/studio/tasks?limit=5');
+    assert(Array.isArray(tasks.tasks), 'studio/tasks should include task list');
 
-    const tasks = await getJson(api.baseUrl, '/ops/tasks?limit=5');
-    assert(Array.isArray(tasks.tasks), 'ops/tasks should include structured task list');
+    const agents = await getJson(api.baseUrl, '/studio/agents');
+    assert(typeof agents.cluster?.genericTaskExecutionEnabled === 'boolean', 'studio/agents should expose generic task execution flag');
+    assert(agents.cluster?.llmTaskHealth, 'studio/agents should expose llm-task health');
 
-    const cluster = await getJson(api.baseUrl, '/ops/cluster');
-    assert(typeof cluster.foundry?.genericTaskExecutionEnabled === 'boolean', 'ops/cluster should expose generic task execution flag');
-    assert(cluster.foundry?.llmTaskHealth, 'ops/cluster should expose llm-task health');
+    const settings = await getJson(api.baseUrl, '/studio/settings');
+    assert(typeof settings.publishMode === 'string', 'studio/settings should expose publishMode');
+
+    const legacyStatus = await fetch(`${api.baseUrl}/ops/status`);
+    assert(legacyStatus.status === 410, 'legacy /ops/status should be retired');
 
     console.log('ops_api_smoke: PASS');
   } finally {

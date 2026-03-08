@@ -86,13 +86,13 @@ async function main() {
   });
 
   try {
-    const quick = await postJson(api.baseUrl, '/ops/tasks', {
+    const quick = await postJson(api.baseUrl, '/studio/tasks', {
       taskText: 'Quick task from smoke',
     });
-    assert(quick.task.intakeMode === 'quick', 'quick task should use quick intake mode');
+    assert(quick.task.metadata?.intakeMode === 'quick', 'quick task should use quick intake mode');
     assert(quick.task.scope === 'socialos', 'quick task should default to socialos scope');
 
-    const structured = await postJson(api.baseUrl, '/ops/tasks', {
+    const structured = await postJson(api.baseUrl, '/studio/tasks', {
       intakeMode: 'structured',
       title: 'Structured smoke task',
       goal: 'Exercise the generic Foundry executor in mock mode',
@@ -102,10 +102,10 @@ async function main() {
       preferredTests: ['test -f QUEUE.md', 'test -d foundry/tasks'],
     });
 
-    assert(structured.task.intakeMode === 'structured', 'structured task should persist structured intake');
+    assert(structured.task.metadata?.intakeMode === 'structured', 'structured task should persist structured intake');
     assert(structured.task.acceptanceCriteria.length === 2, 'structured task should persist acceptance criteria');
 
-    const invalidResponse = await fetch(`${api.baseUrl}/ops/tasks`, {
+    const invalidResponse = await fetch(`${api.baseUrl}/studio/tasks`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -115,14 +115,14 @@ async function main() {
     });
     assert(invalidResponse.status === 400, 'cross-repo task without explicit scope should be rejected');
 
-    const listed = await getJson(api.baseUrl, '/ops/tasks?limit=10');
-    assert(listed.count >= 2, 'ops/tasks should list created tasks');
+    const listed = await getJson(api.baseUrl, '/studio/tasks?limit=10');
+    assert(listed.count >= 2, 'studio/tasks should list created tasks');
     assert(listed.tasks.some((task) => task.taskId === structured.task.taskId), 'structured task should appear in task list');
 
-    const cluster = await getJson(api.baseUrl, '/ops/cluster');
-    assert(typeof cluster.foundry.genericTaskExecutionEnabled === 'boolean', 'cluster should include generic task toggle');
-    assert(Array.isArray(cluster.foundry.supportedScopes), 'cluster should include supported scopes');
-    assert(typeof cluster.foundry.defaultAutonomyMode === 'string', 'cluster should include autonomy mode');
+    const agents = await getJson(api.baseUrl, '/studio/agents');
+    assert(typeof agents.cluster?.genericTaskExecutionEnabled === 'boolean', 'cluster should include generic task toggle');
+    assert(Array.isArray(agents.cluster?.supportedScopes), 'cluster should include supported scopes');
+    assert(typeof agents.cluster?.defaultAutonomyMode === 'string', 'cluster should include autonomy mode');
 
     const runtime = await getJson(api.baseUrl, '/settings/runtime');
     assert(runtime.foundry?.llmTaskHealth, 'settings/runtime should expose llm-task health');
@@ -159,7 +159,7 @@ async function main() {
     );
     assert(branchProbe.stdout.trim(), 'backup branch should exist');
 
-    const failing = await postJson(api.baseUrl, '/ops/tasks', {
+    const failing = await postJson(api.baseUrl, '/studio/tasks', {
       intakeMode: 'structured',
       title: 'Failing structured smoke task',
       goal: 'Confirm failed verification marks the task blocked',

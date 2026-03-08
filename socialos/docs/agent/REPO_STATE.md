@@ -1,8 +1,8 @@
 # Repo State Handoff
 
-- Generated: 2026-03-08T04:02:38.691Z
+- Generated: 2026-03-08T06:03:38.419Z
 - Branch: detached
-- Git head: d806701
+- Git head: 33c9811
 - Dirty working tree: true
 
 ## Canonical Chain
@@ -69,16 +69,16 @@
 - `socialos/docs/evidence/socialos-demo.gif`
 
 ## Dirty Summary
-- M scripts/overnight_supervisor.mjs
--  M scripts/tests/overnight_supervisor_parser_smoke.mjs
+- M scripts/tests/foundry_generic_task_smoke.mjs
+-  M scripts/tests/ops_api_smoke.mjs
 -  M socialos/docs/STATUS.md
 -  M socialos/docs/agent/REPO_STATE.md
 -  M socialos/docs/evidence/LATEST_VALIDATION.md
 -  M socialos/docs/pitch/DECK_STATUS.json
 
 ## Overnight Context
-- Next focus: workspace-usability-and-demo-trust
-- Reason: Repo is healthy; continue aggressive product/core polish in Workspace, Contacts, Drafts, and Queue.
+- Next focus: triage-blocked-foundry-queue
+- Reason: Foundry has blocked queue items; prioritize safe unblock and queue coherence before new polish work.
 
 ## Script Entry Points
 - `bash scripts/demo.sh` -> install, deploy runtime, validate safety, start public demo
