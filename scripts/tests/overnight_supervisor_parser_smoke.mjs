@@ -63,6 +63,7 @@ const parsedWithNoBlocked = parseFoundryStatus(outputWithNoBlocked);
 assert(parsedWithNoBlocked.mode === 'ACTIVE', 'RUNNING mode should normalize to ACTIVE in no-blocked path');
 assert(parsedWithNoBlocked.blockedHead.length === 0, '"none" blocked marker should normalize to an empty list');
 assert(parsedWithNoBlocked.latestDigest.length === 0, '"No digest yet." marker should normalize to an empty digest list');
+assert(parsedWithNoBlocked.latestRun.status === 'unknown', 'missing latest run status should not parse from the status header');
 const parsedCommandFailure = parseFoundryStatus('', { commandOk: false });
 assert(parsedCommandFailure.commandOk === false, 'commandOk should reflect failed status probe');
 

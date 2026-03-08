@@ -228,13 +228,13 @@ export function parseFoundryStatus(output, options = {}) {
   const queueMatch = output.match(
     /pending\s*[:=]\s*(\d+)\s*(?:,?\s*)in[_ ]progress\s*[:=]\s*(\d+)\s*(?:,?\s*)blocked\s*[:=]\s*(\d+)\s*(?:,?\s*)done\s*[:=]\s*(\d+)/iu
   );
-  const runIdMatch = output.match(/run_id\s*[:=]\s*(.+)/iu);
-  const runStatusMatch = output.match(/status\s*[:=]\s*(.+)/iu);
-  const runSummaryMatch = output.match(/summary\s*[:=]\s*(.+)/iu);
-  const modeMatch = output.match(/mode\s*[:=]\s*(.+)/iu);
-  const lockMatch = output.match(/lock\s*[:=]\s*(.+)/iu);
-  const currentTaskMatch = output.match(/current[_ ]task\s*[:=]\s*(.+)/iu);
-  const failureMatch = output.match(/Consecutive failures\s*[:=]\s*(\d+)/iu);
+  const runIdMatch = output.match(/^\s*run_id\s*[:=]\s*(.+)\s*$/imu);
+  const runStatusMatch = output.match(/^\s*status\s*[:=]\s*(.+)\s*$/imu);
+  const runSummaryMatch = output.match(/^\s*summary\s*[:=]\s*(.+)\s*$/imu);
+  const modeMatch = output.match(/^\s*mode\s*[:=]\s*(.+)\s*$/imu);
+  const lockMatch = output.match(/^\s*lock\s*[:=]\s*(.+)\s*$/imu);
+  const currentTaskMatch = output.match(/^\s*current[_ ]task\s*[:=]\s*(.+)\s*$/imu);
+  const failureMatch = output.match(/^\s*Consecutive failures\s*[:=]\s*(\d+)\s*$/imu);
   const blockedHeadMatch = output.match(
     /Blocked queue head:\n([\s\S]*?)(?:\nLatest digest:|\nrun_reports_dir:|\nLatest run:|\n== |$)/
   );
