@@ -93,6 +93,12 @@ function readOptionalString(value, fallback = '') {
   return trimmed || fallback;
 }
 
+function normalizeBlockedByReason(value) {
+  const normalized = readOptionalString(value, '');
+  if (!normalized) return '';
+  return normalized.replace(/^blocked by:\s*/iu, '').trim();
+}
+
 function normalizeStringList(value, fallback = []) {
   if (Array.isArray(value)) {
     return [...new Set(value.map((item) => readOptionalString(item, '')).filter(Boolean))];
@@ -301,7 +307,7 @@ function parseLegacyQueue(queueMarkdown) {
       title,
       goal: title,
       acceptanceCriteria: details.filter((detail) => !detail.toLowerCase().startsWith('blocked by:')),
-      blockedBy: details.find((detail) => detail.toLowerCase().startsWith('blocked by:')) || '',
+      blockedBy: normalizeBlockedByReason(details.find((detail) => detail.toLowerCase().startsWith('blocked by:')) || ''),
       priority: STUDIO_PRIORITY_BY_SECTION[currentSection] || 3,
       section: currentSection,
       status: studioStatusFromQueueMarker(marker, currentSection),
@@ -1148,7 +1154,7 @@ export function createStudioControlPlane({ db, repoRoot, dbPath, env = process.e
         .map((task, index) => ({
           line: index + 1,
           task: `${task.taskId} ${task.title}`.trim(),
-          blockedBy: readOptionalString(task.metadata?.blockedBy, ''),
+          blockedBy: normalizeBlockedByReason(task.metadata?.blockedBy),
         })),
       latestDigest: latestRun ? formatDigest(latestRun) : '',
     };
@@ -1314,8 +1320,9 @@ export function createStudioControlPlane({ db, repoRoot, dbPath, env = process.e
       lines.push(`## ${section}`);
       for (const task of sectionTasks) {
         lines.push(`- [${queueMarkerForStudioStatus(task.status)}] ${task.taskId} ${task.title}`.trim());
-        if (task.status === STUDIO_TASK_STATUS.blocked && readOptionalString(task.metadata?.blockedBy, '')) {
-          lines.push(`  - blocked by: ${task.metadata.blockedBy}`);
+        const blockedBy = normalizeBlockedByReason(task.metadata?.blockedBy);
+        if (task.status === STUDIO_TASK_STATUS.blocked && blockedBy) {
+          lines.push(`  - blocked by: ${blockedBy}`);
         }
       }
       lines.push('');

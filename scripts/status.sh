@@ -229,9 +229,10 @@ process.stdin.on("end", () => {
         if (typeof entry === "string") return entry.trim();
         if (entry && typeof entry === "object" && typeof entry.task === "string") {
           const task = entry.task.trim();
-          const blockedBy = typeof entry.blockedBy === "string" ? entry.blockedBy.trim() : "";
-          if (blockedBy) return `${task} (blocked by: ${blockedBy})`;
-          return task;
+          const reason = typeof entry.blockedBy === "string"
+            ? entry.blockedBy.replace(/^blocked by:\s*/iu, "").trim()
+            : "";
+          return reason ? `${task} (blocked by: ${reason})` : task;
         }
         return "";
       })
