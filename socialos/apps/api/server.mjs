@@ -6825,17 +6825,36 @@ function findExistingPersonByName(statements, name) {
     .find((person) => cleanText(person.name).toLowerCase() === normalizedName) || null;
 }
 
+function canonicalizeContactNote(note) {
+  return cleanText(note)
+    .toLowerCase()
+    .replace(/[。！？、，,.!?;:]/gu, '')
+    .replace(/\s+/gu, ' ')
+    .trim();
+}
+
+function mergeDistinctContactNotes(baseNote, incomingNote) {
+  const base = sanitizeContactDraftText(readOptionalString(baseNote, ''));
+  const incoming = sanitizeContactDraftText(readOptionalString(incomingNote, ''));
+  if (!base) return cleanText(incoming);
+  if (!incoming) return cleanText(base);
+
+  const baseCanonical = canonicalizeContactNote(base);
+  const incomingCanonical = canonicalizeContactNote(incoming);
+  if (incomingCanonical && baseCanonical.includes(incomingCanonical)) {
+    return cleanText(base);
+  }
+
+  return cleanText(`${base}\n\n${incoming}`);
+}
+
 function touchExistingPerson(statements, personRow, overrides = {}) {
   const now = nowIso();
   const mergedTags = cleanList([
     ...parseJsonStringArray(personRow.tags),
     ...(Array.isArray(overrides.tags) ? overrides.tags : []),
   ]);
-  const mergedNotes = cleanText(
-    [sanitizeContactDraftText(readOptionalString(personRow.notes, '')), sanitizeContactDraftText(readOptionalString(overrides.notes, ''))]
-      .filter(Boolean)
-      .join('\n\n')
-  );
+  const mergedNotes = mergeDistinctContactNotes(personRow.notes, overrides.notes);
   const nextFollowUpAt =
     normalizeTimestampInput(overrides.nextFollowUpAt, null) || personRow.next_follow_up_at || null;
   const safeName = isPlaceholderContactName(overrides.name)

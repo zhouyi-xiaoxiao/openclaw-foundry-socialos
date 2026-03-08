@@ -110,6 +110,30 @@ async function main() {
     assert(refined.person.personId === saved.person.personId, 'existing person refinement should keep the same person id');
     assert(refined.person.name === '王章', 'existing person refinement should keep prior confirmed name');
     assert(refined.person.tags.includes('warm-intro'), 'existing person refinement should merge new tags');
+    assert(
+      refined.person.notes.includes('补充：约在下周二继续聊合作方向'),
+      'existing person refinement should append new notes'
+    );
+    assert(
+      refined.person.notes.split('补充：约在下周二继续聊合作方向').length - 1 === 1,
+      'existing person refinement should avoid duplicate note segments'
+    );
+
+    const repeatedRefinement = await requestJson(api.baseUrl, '/capture/commit', {
+      method: 'POST',
+      body: {
+        source: 'workspace_contact_review_smoke',
+        personId: saved.person.personId,
+        personDraft: {
+          name: '',
+          notes: '补充：约在下周二继续聊合作方向。',
+        },
+      },
+    });
+    assert(
+      repeatedRefinement.person.notes === refined.person.notes,
+      'repeated refinement with the same note should not duplicate notes'
+    );
 
     const missingPersonResponse = await fetch(`${api.baseUrl}/capture/commit`, {
       method: 'POST',
