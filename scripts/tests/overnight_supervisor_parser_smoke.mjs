@@ -1,8 +1,16 @@
-import { combineProbeOutput, determineDecision, parseFoundryStatus } from '../overnight_supervisor.mjs';
+import { combineProbeOutput, determineDecision, parseDemoStatus, parseFoundryStatus } from '../overnight_supervisor.mjs';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
+
+const demoStatusOutput = `socialos-api: health=http://127.0.0.1:8787/health ready=true healthy=true pid=none pidAlive=false stalePid=false listeningPid=11570 unmanagedHealthy=true
+socialos-web: ready=true healthy=true pid=none pidAlive=false stalePid=false listeningPid=11609 unmanagedHealthy=true health=http://127.0.0.1:4173/quick-capture extraField=ignored`;
+const parsedDemoStatus = parseDemoStatus(demoStatusOutput);
+assert(parsedDemoStatus.services.length === 2, 'demo parser should keep both services');
+assert(parsedDemoStatus.allHealthy === true, 'demo parser should mark both ready services healthy');
+assert(parsedDemoStatus.services[0].healthUrl === 'http://127.0.0.1:8787/health', 'demo parser should parse api health URL when keys are reordered');
+assert(parsedDemoStatus.services[1].label === 'socialos-web', 'demo parser should retain web service label');
 
 const outputWithoutDigest = `== Foundry Status ==
 mode: RUNNING

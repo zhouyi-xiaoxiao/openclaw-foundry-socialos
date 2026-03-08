@@ -125,44 +125,71 @@ function normalizeFoundryMode(value) {
   return mode;
 }
 
-function parseDemoStatus(output) {
+function parseKeyValueFields(line) {
+  const pairs = line.match(/\b[a-zA-Z][a-zA-Z0-9]*=[^\s]+/g) || [];
+  const fields = {};
+  for (const pair of pairs) {
+    const separator = pair.indexOf('=');
+    if (separator <= 0) continue;
+    const key = pair.slice(0, separator);
+    const value = pair.slice(separator + 1);
+    fields[key] = value;
+  }
+  return fields;
+}
+
+function parseBooleanField(value, fallback = false) {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return fallback;
+}
+
+export function parseDemoStatus(output) {
   const services = output
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const nextMatch = line.match(
-        /^(socialos-(api|web)): ready=(true|false) healthy=(true|false) pid=([^ ]+) pidAlive=(true|false) stalePid=(true|false) listeningPid=([^ ]+) unmanagedHealthy=(true|false) health=(.+)$/
-      );
+      const labeledMatch = line.match(/^(socialos-(api|web)):\s*(.+)$/);
+      if (labeledMatch) {
+        const fields = parseKeyValueFields(labeledMatch[3]);
+        if (fields.health) {
+          const ready = parseBooleanField(fields.ready, false);
+          const healthy = parseBooleanField(fields.healthy, ready);
+          const pidAlive = parseBooleanField(fields.pidAlive, false);
+          const stalePid = parseBooleanField(fields.stalePid, false);
+          const unmanagedHealthy = parseBooleanField(fields.unmanagedHealthy, false);
+          return {
+            label: labeledMatch[1],
+            id: labeledMatch[2],
+            ready,
+            healthy,
+            pid: fields.pid || 'none',
+            pidAlive,
+            stalePid,
+            listeningPid: fields.listeningPid || 'none',
+            unmanagedHealthy,
+            healthUrl: fields.health,
+          };
+        }
+      }
+
+      const nextMatch = line.match(/^(socialos-(api|web)): healthy=(true|false) pid=([^ ]+) alive=(true|false) health=(.+)$/);
       if (nextMatch) {
         return {
           label: nextMatch[1],
           id: nextMatch[2],
-          ready: nextMatch[3] === 'true',
-          healthy: nextMatch[4] === 'true',
-          pid: nextMatch[5],
-          pidAlive: nextMatch[6] === 'true',
-          stalePid: nextMatch[7] === 'true',
-          listeningPid: nextMatch[8],
-          unmanagedHealthy: nextMatch[9] === 'true',
-          healthUrl: nextMatch[10],
+          ready: nextMatch[3] === 'true' && nextMatch[5] === 'true',
+          healthy: nextMatch[3] === 'true',
+          pid: nextMatch[4],
+          pidAlive: nextMatch[5] === 'true',
+          stalePid: false,
+          listeningPid: 'none',
+          unmanagedHealthy: false,
+          healthUrl: nextMatch[6],
         };
       }
-
-      const legacyMatch = line.match(/^(socialos-(api|web)): healthy=(true|false) pid=([^ ]+) alive=(true|false) health=(.+)$/);
-      if (!legacyMatch) return null;
-      return {
-        label: legacyMatch[1],
-        id: legacyMatch[2],
-        ready: legacyMatch[3] === 'true' && legacyMatch[5] === 'true',
-        healthy: legacyMatch[3] === 'true',
-        pid: legacyMatch[4],
-        pidAlive: legacyMatch[5] === 'true',
-        stalePid: false,
-        listeningPid: 'none',
-        unmanagedHealthy: false,
-        healthUrl: legacyMatch[6],
-      };
+      return null;
     })
     .filter(Boolean);
 
