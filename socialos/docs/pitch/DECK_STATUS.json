@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-03-08T00:03:15.965Z",
-  "latestGreenValidationAt": "2026-03-08T00:03:15.965Z",
-  "repoHead": "4a02a1c",
+  "generatedAt": "2026-03-08T01:07:09.756Z",
+  "latestGreenValidationAt": "2026-03-08T01:07:09.756Z",
+  "repoHead": "243e3f3",
   "validationSource": "scripts/test.sh",
   "demo": {
     "healthy": true,
@@ -12,10 +12,10 @@
         "id": "api",
         "ready": true,
         "healthy": true,
-        "pid": "36851",
+        "pid": "44237",
         "pidAlive": true,
         "stalePid": false,
-        "listeningPid": "36851",
+        "listeningPid": "44237",
         "unmanagedHealthy": false,
         "healthUrl": "http://127.0.0.1:8787/health"
       },
@@ -24,10 +24,10 @@
         "id": "web",
         "ready": true,
         "healthy": true,
-        "pid": "36871",
+        "pid": "44264",
         "pidAlive": true,
         "stalePid": false,
-        "listeningPid": "36871",
+        "listeningPid": "44264",
         "unmanagedHealthy": false,
         "healthUrl": "http://127.0.0.1:4173/quick-capture"
       }
@@ -60,6 +60,7 @@
       "socialos/docs/evidence/hackathon-proofs-z-ai-general.json",
       "socialos/docs/evidence/hackathon-telegram-send.json",
       "socialos/docs/evidence/hackathon-telegram-status.json",
+      "socialos/docs/evidence/hackathon-telegram-webhook.json",
       "socialos/docs/evidence/hackathon-workspace-zai.json",
       "socialos/docs/evidence/sample-digest.md",
       "socialos/docs/evidence/sample-run-report.json",

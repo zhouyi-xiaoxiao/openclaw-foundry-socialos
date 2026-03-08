@@ -1,4 +1,4 @@
-import { parseFoundryStatus } from '../overnight_supervisor.mjs';
+import { determineDecision, parseFoundryStatus } from '../overnight_supervisor.mjs';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -140,5 +140,30 @@ const parsedJsonWithLeadingNoiseObject = parseFoundryStatus(jsonWithLeadingNoise
 assert(parsedJsonWithLeadingNoiseObject.mode === 'ACTIVE', 'parser should prefer the status-shaped JSON object');
 assert(parsedJsonWithLeadingNoiseObject.queue.inProgress === 2, 'parser should ignore leading non-status JSON objects');
 assert(parsedJsonWithLeadingNoiseObject.queue.blocked === 3, 'parser should keep queue metrics when leading JSON noise exists');
+
+const decisionPaused = determineDecision({
+  publishMode: 'dry-run',
+  demo: { allHealthy: true },
+  foundry: {
+    mode: 'PAUSED',
+    commandOk: true,
+    consecutiveFailures: 0,
+    queue: { pending: 0, inProgress: 0, blocked: 0, done: 0, currentTask: 'none' },
+  },
+});
+assert(decisionPaused.decision === 'stop', 'paused foundry mode should stop unattended overnight iteration');
+assert(decisionPaused.nextFocus === 'stabilize-foundry', 'paused foundry mode should route to foundry stabilization');
+
+const decisionActive = determineDecision({
+  publishMode: 'dry-run',
+  demo: { allHealthy: true },
+  foundry: {
+    mode: 'ACTIVE',
+    commandOk: true,
+    consecutiveFailures: 0,
+    queue: { pending: 0, inProgress: 0, blocked: 0, done: 0, currentTask: 'none' },
+  },
+});
+assert(decisionActive.decision === 'continue', 'healthy active foundry mode should continue');
 
 console.log('overnight_supervisor_parser_smoke: PASS');

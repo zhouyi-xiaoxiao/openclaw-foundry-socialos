@@ -1,16 +1,16 @@
 # Public Status
 
-- Generated: 2026-03-08T00:03:15.965Z
+- Generated: 2026-03-08T01:07:09.756Z
 - Product posture: local-first
 - Network exposure: loopback-only
 - Publish mode: Safe rehearsal
 - Demo healthy: true
-- Git head: 4a02a1c
+- Git head: 243e3f3
 
 ## Current Readout
 - The repo is currently healthy enough to present as a judge-facing local-first package.
-- Overnight supervisor reason: Foundry already has active queue work; outer loop should bias to validation and repo trust.
-- Next focus: respect-foundry-queue
+- Overnight supervisor reason: Foundry is paused; resume intentionally before unattended overnight iteration.
+- Next focus: stabilize-foundry
 
 ## Demo Endpoints
 - socialos-api: ready=true healthy=true pidAlive=true stalePid=false url=http://127.0.0.1:8787/health
@@ -39,6 +39,7 @@
 - socialos/docs/evidence/hackathon-public-hub.png
 - socialos/docs/evidence/hackathon-telegram-send.json
 - socialos/docs/evidence/hackathon-telegram-status.json
+- socialos/docs/evidence/hackathon-telegram-webhook.json
 - socialos/docs/evidence/hackathon-workspace-zai.json
 - socialos/docs/evidence/sample-digest.md
 - socialos/docs/evidence/sample-run-report.json

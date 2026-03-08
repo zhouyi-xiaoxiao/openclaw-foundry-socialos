@@ -14,6 +14,10 @@ const evidenceDir = process.env.SOCIALOS_HACKATHON_EVIDENCE_DIR
   : path.join(repoRoot, 'socialos', 'docs', 'evidence');
 const bountyIds = ['claw-for-human', 'animoca', 'human-for-claw', 'z-ai-general', 'ai-agents-for-good'];
 const requireLiveProofs = process.env.REQUIRE_LIVE_HACKATHON_PROOFS === '1';
+const WKHTMLTOIMAGE_TIMEOUT_MS = Math.max(
+  10000,
+  Number.parseInt(process.env.SOCIALOS_WKHTMLTOIMAGE_TIMEOUT_MS || '45000', 10) || 45000
+);
 const screenshotTargets = Object.freeze([
   { fileName: 'socialos-demo-step01.png', path: '/quick-capture', width: 1600, cropHeight: 1180 },
   { fileName: 'socialos-demo-step02-contacts.png', path: '/people', width: 1600, cropHeight: 1180 },
@@ -112,7 +116,7 @@ function normalizeScreenshot(outputPath, width, height) {
     {
       cwd: repoRoot,
       encoding: 'utf8',
-      timeout: 20000,
+      timeout: WKHTMLTOIMAGE_TIMEOUT_MS,
     }
   );
 
@@ -676,11 +680,7 @@ async function main() {
     if (chromeBinary) {
       for (const target of screenshotTargets) {
         const outputPath = path.join(evidenceDir, target.fileName);
-        if (target.fileName === 'ai-agents-for-good-telegram-proof.png' && commandExists('wkhtmltoimage')) {
-          captureScreenshot(web.baseUrl, target, outputPath);
-        } else {
-          await captureChromeScreenshot(chromeBinary, web.baseUrl, target, outputPath);
-        }
+        await captureChromeScreenshot(chromeBinary, web.baseUrl, target, outputPath);
       }
       screenshotsCaptured = true;
       logStep(`screenshots refreshed via chrome-headless=${screenshotTargets.length}`);

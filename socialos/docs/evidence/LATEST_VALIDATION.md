@@ -1,9 +1,9 @@
 # Latest Validation Snapshot
 
-- Generated: 2026-03-08T00:03:15.965Z
+- Generated: 2026-03-08T01:07:09.756Z
 - Refreshed by: scripts/test.sh
-- Latest green validation: 2026-03-08T00:03:15.965Z
-- Git head: 4a02a1c
+- Latest green validation: 2026-03-08T01:07:09.756Z
+- Git head: 243e3f3
 
 ## Current Health Snapshot
 - Demo healthy: true
@@ -27,6 +27,7 @@
 - `socialos/docs/evidence/hackathon-public-hub.png`
 - `socialos/docs/evidence/hackathon-telegram-send.json`
 - `socialos/docs/evidence/hackathon-telegram-status.json`
+- `socialos/docs/evidence/hackathon-telegram-webhook.json`
 - `socialos/docs/evidence/hackathon-workspace-zai.json`
 - `socialos/docs/evidence/sample-digest.md`
 - `socialos/docs/evidence/sample-run-report.json`

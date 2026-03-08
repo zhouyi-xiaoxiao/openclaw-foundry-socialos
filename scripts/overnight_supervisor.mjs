@@ -396,7 +396,7 @@ function writeReports(report) {
   fs.writeFileSync(SUMMARY_PATH, `${lines.join('\n')}\n`, 'utf8');
 }
 
-function determineDecision({ demo, foundry, publishMode }) {
+export function determineDecision({ demo, foundry, publishMode }) {
   if (publishMode !== 'dry-run') {
     return {
       decision: 'stop',
@@ -426,6 +426,14 @@ function determineDecision({ demo, foundry, publishMode }) {
       decision: 'stop',
       nextFocus: 'stabilize-foundry',
       reason: 'Foundry STATUS command failed or returned empty output.',
+    };
+  }
+
+  if (foundry.mode === 'PAUSED') {
+    return {
+      decision: 'stop',
+      nextFocus: 'stabilize-foundry',
+      reason: 'Foundry is paused; resume intentionally before unattended overnight iteration.',
     };
   }
 

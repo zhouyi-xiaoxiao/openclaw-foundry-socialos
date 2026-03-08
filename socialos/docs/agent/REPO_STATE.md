@@ -1,9 +1,9 @@
 # Repo State Handoff
 
-- Generated: 2026-03-08T00:03:15.965Z
-- Branch: main
-- Git head: 4a02a1c
-- Dirty working tree: false
+- Generated: 2026-03-08T01:07:09.756Z
+- Branch: detached
+- Git head: 243e3f3
+- Dirty working tree: true
 
 ## Canonical Chain
 - `README.md` -> human and judge entrypoint
@@ -57,6 +57,7 @@
 - `socialos/docs/evidence/hackathon-public-hub.png`
 - `socialos/docs/evidence/hackathon-telegram-send.json`
 - `socialos/docs/evidence/hackathon-telegram-status.json`
+- `socialos/docs/evidence/hackathon-telegram-webhook.json`
 - `socialos/docs/evidence/hackathon-workspace-zai.json`
 - `socialos/docs/evidence/sample-digest.md`
 - `socialos/docs/evidence/sample-run-report.json`
@@ -67,9 +68,23 @@
 - `socialos/docs/evidence/socialos-demo-step08.png`
 - `socialos/docs/evidence/socialos-demo.gif`
 
+## Dirty Summary
+- M QUEUE.md
+-  M foundry/tasks/TASK-20260305210700851017.json
+-  M scripts/capture_hackathon_proofs.mjs
+-  M scripts/overnight_supervisor.mjs
+-  M scripts/tests/overnight_supervisor_parser_smoke.mjs
+-  M socialos/docs/STATUS.md
+-  M socialos/docs/agent/REPO_STATE.md
+-  M socialos/docs/evidence/LATEST_VALIDATION.md
+-  M socialos/docs/pitch/DECK_STATUS.json
+- ?? .tmp-hackathon-proof-capture-RigRTK/
+- ?? .tmp-hackathon-proof-capture-dw0U0m/
+- ?? foundry/tasks/AUTO-OPT-BLOCKED-TRIAGE.json
+
 ## Overnight Context
-- Next focus: respect-foundry-queue
-- Reason: Foundry already has active queue work; outer loop should bias to validation and repo trust.
+- Next focus: stabilize-foundry
+- Reason: Foundry is paused; resume intentionally before unattended overnight iteration.
 
 ## Script Entry Points
 - `bash scripts/demo.sh` -> install, deploy runtime, validate safety, start public demo
