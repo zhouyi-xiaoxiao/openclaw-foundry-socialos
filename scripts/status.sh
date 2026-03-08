@@ -44,6 +44,12 @@ current_task="none"
 queue_notice=""
 studio_status_json=""
 studio_status_ok="0"
+studio_latest_run_id=""
+studio_latest_run_status=""
+studio_latest_run_summary=""
+studio_latest_run_duration_ms=""
+studio_latest_run_next=""
+studio_consecutive_failures=""
 if [[ -z "${SOCIALOS_QUEUE_FILE:-}" ]]; then
   if [[ -n "${STUDIO_STATUS_JSON_OVERRIDE}" ]]; then
     studio_status_json="${STUDIO_STATUS_JSON_OVERRIDE}"
@@ -98,6 +104,30 @@ process.stdin.on("end", () => {
       if [[ -n "${studio_mode}" ]]; then
         mode="${studio_mode}"
       fi
+
+      studio_run_summary="$(printf '%s' "${studio_status_json}" | node -e '
+let data = "";
+process.stdin.on("data", (chunk) => { data += chunk; });
+process.stdin.on("end", () => {
+  try {
+    const payload = JSON.parse(data);
+    const latestRun = payload && typeof payload.latestRun === "object" ? payload.latestRun : {};
+    const health = payload && typeof payload.health === "object" ? payload.health : {};
+    const runId = typeof latestRun.runId === "string" && latestRun.runId.trim() ? latestRun.runId.trim() : "";
+    const status = typeof latestRun.status === "string" && latestRun.status.trim() ? latestRun.status.trim() : "";
+    const summary = typeof latestRun.summary === "string" && latestRun.summary.trim() ? latestRun.summary.trim() : "";
+    const durationMs = Number.isFinite(Number(latestRun.durationMs)) ? String(Number(latestRun.durationMs)) : "";
+    const next = typeof latestRun.next === "string" && latestRun.next.trim() ? latestRun.next.trim() : "";
+    const failures = Number.isFinite(Number(health.consecutiveFailures)) ? String(Number(health.consecutiveFailures)) : "";
+    process.stdout.write([runId, status, summary, durationMs, next, failures].join("\t"));
+  } catch {
+    process.stdout.write("");
+  }
+});
+')"
+      if [[ -n "${studio_run_summary}" ]]; then
+        IFS=$'\t' read -r studio_latest_run_id studio_latest_run_status studio_latest_run_summary studio_latest_run_duration_ms studio_latest_run_next studio_consecutive_failures <<< "${studio_run_summary}"
+      fi
     fi
   fi
 fi
@@ -148,7 +178,9 @@ NODE
 )"
 
 consecutive_failures="0"
-if [[ -n "${latest_json}" ]]; then
+if [[ -n "${studio_consecutive_failures}" ]]; then
+  consecutive_failures="${studio_consecutive_failures}"
+elif [[ -n "${latest_json}" ]]; then
   consecutive_failures="$(node - "${RUN_DIR}" <<'NODE'
 const fs = require('fs');
 const path = require('path');
@@ -195,7 +227,14 @@ echo "Consecutive failures: ${consecutive_failures}"
 [[ -n "${run_dir_notice}" ]] && echo "run_reports_dir: ${run_dir_notice}"
 echo
 echo "Latest run:"
-if [[ -n "${latest_json}" ]]; then
+if [[ -n "${studio_latest_run_id}" ]]; then
+  echo "run_id: ${studio_latest_run_id}"
+  echo "status: ${studio_latest_run_status:-unknown}"
+  echo "summary: ${studio_latest_run_summary:-unknown}"
+  echo "duration_ms: ${studio_latest_run_duration_ms:-unknown}"
+  echo "push: unknown"
+  echo "next: ${studio_latest_run_next:-unknown}"
+elif [[ -n "${latest_json}" ]]; then
   node - "${latest_json}" <<'NODE'
 const fs = require('fs');
 const runPath = process.argv[2];

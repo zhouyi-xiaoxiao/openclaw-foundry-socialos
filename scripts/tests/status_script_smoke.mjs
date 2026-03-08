@@ -148,12 +148,22 @@ const studioJsonResult = spawnSync('bash', [script], {
         done: 9,
         currentTask: 'Studio primary task',
       },
+      health: {
+        consecutiveFailures: 4,
+      },
+      latestRun: {
+        runId: 'RUN-STUDIO-1',
+        status: 'failed',
+        summary: 'Studio latest run failed',
+        durationMs: 2750,
+        next: 'Inspect queue blockers',
+      },
       blockedHead: [
         { task: 'Studio blocked task A', blockedBy: 'blocked by: credentials + login state' },
         { task: 'Studio blocked task B', blockedBy: 'manual review required' },
       ],
     }),
-    SOCIALOS_RUN_DIR: runDir,
+    SOCIALOS_RUN_DIR: missingRunDir,
     SOCIALOS_LATEST_DIGEST_FILE: latestDigest,
   },
 });
@@ -259,6 +269,30 @@ try {
       'Blocked queue head:\nStudio blocked task A (blocked by: credentials + login state)\nStudio blocked task B (blocked by: manual review required)'
     ),
     'studio status blocked head should include normalized blocked reasons',
+  );
+  assert(
+    studioJsonResult.stdout.includes('Consecutive failures: 4'),
+    'studio status health should drive consecutive failures when available',
+  );
+  assert(
+    studioJsonResult.stdout.includes('run_id: RUN-STUDIO-1'),
+    'studio status latest run id should drive latest run output when available',
+  );
+  assert(
+    studioJsonResult.stdout.includes('status: failed'),
+    'studio status latest run status should drive latest run output when available',
+  );
+  assert(
+    studioJsonResult.stdout.includes('summary: Studio latest run failed'),
+    'studio status latest run summary should drive latest run output when available',
+  );
+  assert(
+    studioJsonResult.stdout.includes('duration_ms: 2750'),
+    'studio status latest run duration should drive latest run output when available',
+  );
+  assert(
+    studioJsonResult.stdout.includes('next: Inspect queue blockers'),
+    'studio status latest run next step should drive latest run output when available',
   );
   assert(
     studioJsonBlockedReasonResult.status === 0,
