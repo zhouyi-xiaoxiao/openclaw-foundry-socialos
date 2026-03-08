@@ -123,6 +123,78 @@ function normalizeScreenshot(outputPath, width, height) {
   fs.renameSync(tempPath, outputPath);
 }
 
+function findChromeBinary() {
+  const candidates = [
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    '/opt/homebrew/bin/chromium',
+    '/opt/homebrew/bin/google-chrome',
+    '/usr/local/bin/google-chrome',
+  ];
+
+  return candidates.find((candidate) => fs.existsSync(candidate)) || null;
+}
+
+async function waitForFile(filePath, attempts = 80, intervalMs = 250) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const stats = await fsp.stat(filePath);
+      if (stats.size > 0) {
+        return;
+      }
+    } catch {
+      // Keep polling until the file exists and has content.
+    }
+    await delay(intervalMs);
+  }
+  throw new Error(`timed out waiting for screenshot ${filePath}`);
+}
+
+async function captureChromeScreenshot(chromeBinary, baseUrl, target, outputPath) {
+  const height = target.cropHeight || 1200;
+  const width = target.width || 1600;
+  const profileDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'socialos-shot-profile-'));
+  const chromeLogPath = path.join(profileDir, 'chrome.log');
+  const chromeLogFd = fs.openSync(chromeLogPath, 'w');
+  const url = `${baseUrl}${target.path}`;
+  await fsp.rm(outputPath, { force: true });
+  const child = spawn(
+    chromeBinary,
+    [
+      '--headless=new',
+      '--disable-gpu',
+      '--hide-scrollbars',
+      '--no-first-run',
+      '--no-default-browser-check',
+      '--disable-extensions',
+      `--user-data-dir=${profileDir}`,
+      `--window-size=${width},${height}`,
+      '--virtual-time-budget=5000',
+      '--run-all-compositor-stages-before-draw',
+      `--screenshot=${outputPath}`,
+      url,
+    ],
+    {
+      cwd: repoRoot,
+      stdio: ['ignore', chromeLogFd, chromeLogFd],
+    }
+  );
+
+  try {
+    await waitForFile(outputPath);
+  } finally {
+    child.kill('SIGTERM');
+    spawnSync('bash', ['-lc', `pkill -f ${JSON.stringify(profileDir)} >/dev/null 2>&1 || true`], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+    });
+    fs.closeSync(chromeLogFd);
+    await fsp.rm(profileDir, { recursive: true, force: true });
+  }
+
+  normalizeScreenshot(outputPath, width, height);
+}
+
 function cleanupSafariAutomation() {
   spawnSync('bash', ['-lc', 'pkill -x safaridriver >/dev/null 2>&1 || true; pkill -x Safari >/dev/null 2>&1 || true'], {
     cwd: repoRoot,
@@ -219,6 +291,48 @@ class SafariScreenshotDriver {
     return payload;
   }
 
+  async execute(functionBody, args = []) {
+    return this.request('POST', `/session/${this.sessionId}/execute/sync`, {
+      script: functionBody,
+      args,
+    });
+  }
+
+  async sanitizeInjectedOverlays() {
+    await this.execute(
+      `return (() => {
+        const suspiciousText = [
+          'Click the floating ball to translate quickly',
+          'Your lives are defined by opportunities',
+          'Curious Case of Benjamin Button',
+          'translate quickly',
+          'floating ball'
+        ];
+        const normalized = (value) => String(value || '').toLowerCase();
+        const shouldStripText = (value) =>
+          suspiciousText.some((needle) => normalized(value).includes(needle.toLowerCase()));
+        const removed = [];
+        for (const node of Array.from(document.querySelectorAll('body *'))) {
+          const text = [node.innerText, node.textContent, node.getAttribute && node.getAttribute('aria-label'), node.getAttribute && node.getAttribute('title')]
+            .filter(Boolean)
+            .join(' ');
+          const style = window.getComputedStyle(node);
+          const isFixed = style.position === 'fixed' || style.position === 'sticky';
+          const likelyInjectedBubble =
+            isFixed &&
+            Number.parseFloat(style.zIndex || '0') >= 999 &&
+            Number.parseFloat(style.right || '9999') <= 160 &&
+            Number.parseFloat(style.width || '0') <= 260;
+          if (shouldStripText(text) || (likelyInjectedBubble && shouldStripText(text))) {
+            removed.push(text.slice(0, 120));
+            node.remove();
+          }
+        }
+        return removed;
+      })();`
+    );
+  }
+
   async capture(baseUrl, target, outputPath) {
     const height = target.cropHeight || 1200;
     const width = target.width || 1600;
@@ -232,6 +346,8 @@ class SafariScreenshotDriver {
       url: `${baseUrl}${target.path}`,
     });
     await delay(1800);
+    await this.sanitizeInjectedOverlays();
+    await delay(200);
     const payload = await this.request('GET', `/session/${this.sessionId}/screenshot`);
     if (!payload?.value) {
       throw new Error(`safaridriver did not return screenshot data for ${target.path}`);
@@ -310,7 +426,7 @@ async function captureStableWorkspaceProof(baseUrl) {
 }
 
 function seedTempDemo(dbPath) {
-  const result = spawnSync('node', ['scripts/seed_demo_data.mjs', '--reset-review-demo'], {
+  const result = spawnSync(process.execPath, ['scripts/seed_demo_data.mjs', '--reset-review-demo'], {
     cwd: repoRoot,
     env: {
       ...process.env,
@@ -507,7 +623,14 @@ async function main() {
     });
 
     let screenshotsCaptured = false;
-    if (commandExists('safaridriver')) {
+    const chromeBinary = findChromeBinary();
+    if (chromeBinary) {
+      for (const target of screenshotTargets) {
+        await captureChromeScreenshot(chromeBinary, web.baseUrl, target, path.join(evidenceDir, target.fileName));
+      }
+      screenshotsCaptured = true;
+      logStep(`screenshots refreshed via chrome-headless=${screenshotTargets.length}`);
+    } else if (commandExists('safaridriver')) {
       const safari = new SafariScreenshotDriver();
       try {
         await safari.start();
