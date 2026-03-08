@@ -261,6 +261,10 @@ function isTaskActive(status) {
   ].includes(status);
 }
 
+function isTaskActionable(status) {
+  return status === STUDIO_TASK_STATUS.queued || status === STUDIO_TASK_STATUS.draft || isTaskActive(status);
+}
+
 function isPathInside(parentPath, childPath) {
   const parent = path.resolve(parentPath);
   const child = path.resolve(childPath);
@@ -1749,10 +1753,51 @@ export function createStudioControlPlane({ db, repoRoot, dbPath, env = process.e
       };
     }
 
-    const nextTask = listTasks({ limit: 100 }).find(
+    const taskSnapshot = listTasks({ limit: 300 });
+    const nextTask = taskSnapshot.find(
       (task) => task.status === STUDIO_TASK_STATUS.queued || task.status === STUDIO_TASK_STATUS.draft
     );
     if (!nextTask) {
+      const blockedTask = taskSnapshot.find((task) => task.status === STUDIO_TASK_STATUS.blocked);
+      if (blockedTask) {
+        const existingAutoTriage = taskSnapshot.find((task) => {
+          if (!isTaskActionable(task.status)) return false;
+          return (
+            readOptionalString(task.metadata?.autoTriageForTaskId, '') === blockedTask.taskId &&
+            readOptionalString(task.source, '') === 'studio.auto-triage'
+          );
+        });
+
+        if (!existingAutoTriage) {
+          const blockedTitle = readOptionalString(blockedTask.title, 'blocked Studio task');
+          const autoTask = createTask({
+            taskText: `Auto-triage ${blockedTask.taskId}: unblock ${blockedTitle}`,
+            goal: `Produce a safe unblock plan for ${blockedTask.taskId} and queue an executable fix task with verification evidence.`,
+            scope: readOptionalString(blockedTask.scope, 'socialos'),
+            section: 'AutoFix Backlog',
+            source: 'studio.auto-triage',
+            acceptanceCriteria: [
+              `Identify why ${blockedTask.taskId} is blocked and restate the root cause.`,
+              'Queue one concrete follow-up task with explicit verification steps.',
+            ],
+            metadata: {
+              autoTriageForTaskId: blockedTask.taskId,
+              autoTriageForTitle: blockedTitle,
+              createdByCommand: 'run-once',
+            },
+          });
+
+          const summary = `Queued auto-triage task ${autoTask.taskId} for blocked item ${blockedTask.taskId}.`;
+          return {
+            command,
+            output: summary,
+            task: autoTask,
+            run: createNoopRun(summary),
+            status: getStatus(),
+          };
+        }
+      }
+
       return {
         command,
         output: 'No queued Studio task is ready right now.',

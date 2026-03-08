@@ -34,6 +34,21 @@ function getJson(baseUrl, route) {
   });
 }
 
+function patchJson(baseUrl, route, payload, expectedStatus = 200) {
+  return fetch(`${baseUrl}${route}`, {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).then(async (response) => {
+    const raw = await response.text();
+    const parsed = raw ? JSON.parse(raw) : {};
+    if (response.status !== expectedStatus) {
+      throw new Error(`${route} failed (${response.status}): ${raw}`);
+    }
+    return parsed;
+  });
+}
+
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd,
@@ -141,6 +156,32 @@ async function main() {
     const wrapperPayload = JSON.parse(wrapper.stdout);
     assert(typeof wrapperPayload.mode === 'string', 'studio wrapper should expose status mode');
     assert(!wrapper.stderr.trim(), 'studio wrapper should keep stderr quiet for machine parsing');
+
+    const blockedSeed = await postJson(api.baseUrl, '/studio/tasks', {
+      taskText: 'Blocked queue seed for auto triage',
+      goal: 'Reproduce blocked-only queue behavior',
+      section: 'P2 Blocked',
+      acceptanceCriteria: ['Task remains blocked until triage creates a follow-up'],
+    });
+    const blockedTaskId = blockedSeed.task.taskId;
+    const blocked = await patchJson(
+      api.baseUrl,
+      `/studio/tasks/${encodeURIComponent(blockedTaskId)}`,
+      { status: 'blocked', source: 'studio.test' }
+    );
+    assert(blocked.task.status === 'blocked', 'seed task should move to blocked state for triage smoke');
+
+    const triageQueued = await postJson(api.baseUrl, '/studio/commands/run-once', {}, 200);
+    assert(triageQueued.task?.source === 'studio.auto-triage', 'run-once should queue auto-triage work for blocked-only queues');
+    assert(triageQueued.task?.status === 'queued', 'auto-triage task should enter queued state');
+    assert(
+      triageQueued.task?.metadata?.autoTriageForTaskId === blockedTaskId,
+      'auto-triage task should reference the blocked source task id'
+    );
+
+    const triageExecuted = await postJson(api.baseUrl, '/studio/commands/run-once', {}, 200);
+    assert(triageExecuted.task?.taskId === triageQueued.task.taskId, 'next run-once should execute queued auto-triage task');
+    assert(triageExecuted.task?.status === 'done', 'auto-triage task should complete under mock execution');
 
     console.log('studio_control_plane_smoke: PASS');
   } finally {
