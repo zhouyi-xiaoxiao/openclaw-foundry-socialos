@@ -2868,6 +2868,16 @@ function readTextFileOrDefault(filePath, fallback = '') {
   }
 }
 
+function parseQueueTaskLine(line) {
+  const source = typeof line === 'string' ? line : '';
+  const match = source.match(/^\s*[-*]\s+\[\s*([ xX!\-])\s*\]\s*(.+?)\s*$/u);
+  if (!match) return null;
+  return {
+    marker: match[1],
+    taskText: match[2].trim(),
+  };
+}
+
 export function parseQueueSummary(queueMarkdown) {
   const source = typeof queueMarkdown === 'string' ? queueMarkdown : '';
   const lines = source.split(/\r?\n/u);
@@ -2881,10 +2891,9 @@ export function parseQueueSummary(queueMarkdown) {
   let firstQueuedTask = null;
 
   for (const line of lines) {
-    const taskMatch = line.match(/^\s*-\s+\[([ xX!\-])\]\s+(.+)$/u);
-    if (!taskMatch) continue;
-    const marker = taskMatch[1];
-    const taskText = taskMatch[2].trim();
+    const task = parseQueueTaskLine(line);
+    if (!task) continue;
+    const { marker, taskText } = task;
     const isQueued = marker === ' ' || marker === '-';
     if (isQueued && !firstQueuedTask) firstQueuedTask = taskText;
 
@@ -2915,13 +2924,13 @@ export function parseBlockedTasks(queueMarkdown, limit = 20) {
   };
 
   for (let index = 0; index < lines.length; index += 1) {
-    const match = lines[index].match(/^\s*-\s+\[!\]\s+(.+)$/u);
-    if (!match) continue;
+    const task = parseQueueTaskLine(lines[index]);
+    if (!task || task.marker !== '!') continue;
     let blockedBy = '';
     let cursor = index + 1;
     while (cursor < lines.length) {
       const next = lines[cursor];
-      if (/^##\s+/u.test(next) || /^\s*-\s+\[[ xX!\-]\]\s+/u.test(next)) break;
+      if (/^##\s+/u.test(next) || parseQueueTaskLine(next)) break;
       const detail = cleanText(next.replace(/^\s*-\s*/u, ''));
       if (detail && /^blocked by:/iu.test(detail)) {
         blockedBy = normalizeBlockedByReason(detail);
@@ -2931,7 +2940,7 @@ export function parseBlockedTasks(queueMarkdown, limit = 20) {
     }
     blocked.push({
       line: index + 1,
-      task: match[1].trim(),
+      task: task.taskText,
       blockedBy,
     });
     if (blocked.length >= normalizedLimit) break;

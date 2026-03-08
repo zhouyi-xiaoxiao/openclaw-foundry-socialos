@@ -34,4 +34,22 @@ assert(emptySummary.done === 0, 'null queue should default done to 0');
 assert(emptySummary.currentTask === null, 'null queue should preserve empty current task');
 assert(parseBlockedTasks(null).length === 0, 'null queue should produce no blocked tasks');
 
+const variantQueueMarkdown = `# Queue
+
+* [ ] Bullet pending
+- [ - ] Spaced in-progress
+  * [ ! ] Spaced blocked
+  * [ x ] Spaced done`;
+
+const variantSummary = parseQueueSummary(variantQueueMarkdown);
+assert(variantSummary.pending === 1, 'should parse pending tasks with * bullet marker');
+assert(variantSummary.inProgress === 1, 'should parse in-progress tasks with spaced marker');
+assert(variantSummary.blocked === 1, 'should parse blocked tasks with spaced marker');
+assert(variantSummary.done === 1, 'should parse done tasks with spaced marker');
+assert(variantSummary.currentTask === 'Spaced in-progress', 'variant queue should preserve current in-progress task');
+
+const variantBlocked = parseBlockedTasks(variantQueueMarkdown, 10);
+assert(variantBlocked.length === 1, 'blocked parser should parse spaced blocked markers');
+assert(variantBlocked[0].task === 'Spaced blocked', 'blocked parser should trim spaced blocked task text');
+
 console.log('ops_queue_parser_smoke: PASS');
