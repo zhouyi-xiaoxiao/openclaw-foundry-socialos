@@ -80,6 +80,24 @@ process.stdin.on("end", () => {
           ;;
       esac
       studio_status_ok="1"
+      studio_mode="$(printf '%s' "${studio_status_json}" | node -e '
+let data = "";
+process.stdin.on("data", (chunk) => { data += chunk; });
+process.stdin.on("end", () => {
+  try {
+    const payload = JSON.parse(data);
+    const value = typeof payload?.mode === "string" ? payload.mode.trim().toUpperCase() : "";
+    if (value === "PAUSED" || value === "ACTIVE" || value === "STOPPED") {
+      process.stdout.write(value);
+      return;
+    }
+  } catch {}
+  process.stdout.write("");
+});
+')"
+      if [[ -n "${studio_mode}" ]]; then
+        mode="${studio_mode}"
+      fi
     fi
   fi
 fi
@@ -228,6 +246,11 @@ if [[ "${studio_status_ok}" == "1" ]]; then
 let data = "";
 process.stdin.on("data", (chunk) => { data += chunk; });
 process.stdin.on("end", () => {
+  const normalizeReason = (value) => {
+    const text = typeof value === "string" ? value.trim() : "";
+    if (!text) return "";
+    return text.replace(/^blocked by:\s*/iu, "").trim();
+  };
   try {
     const payload = JSON.parse(data);
     const blockedHead = Array.isArray(payload?.blockedHead) ? payload.blockedHead : [];
@@ -236,9 +259,7 @@ process.stdin.on("end", () => {
         if (typeof entry === "string") return entry.trim();
         if (entry && typeof entry === "object" && typeof entry.task === "string") {
           const task = entry.task.trim();
-          const reason = typeof entry.blockedBy === "string"
-            ? entry.blockedBy.replace(/^blocked by:\s*/iu, "").trim()
-            : "";
+          const reason = normalizeReason(entry.blockedBy);
           return reason ? `${task} (blocked by: ${reason})` : task;
         }
         return "";

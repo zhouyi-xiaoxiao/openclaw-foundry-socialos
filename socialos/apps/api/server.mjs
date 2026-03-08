@@ -2879,13 +2879,31 @@ export function parseBlockedTasks(queueMarkdown, limit = 20) {
 
   const lines = source.split(/\r?\n/u);
   const blocked = [];
+  const normalizeBlockedByReason = (value) => {
+    const text = cleanText(value);
+    if (!text) return '';
+    return text.replace(/^blocked by:\s*/iu, '').trim();
+  };
 
   for (let index = 0; index < lines.length; index += 1) {
     const match = lines[index].match(/^\s*-\s+\[!\]\s+(.+)$/u);
     if (!match) continue;
+    let blockedBy = '';
+    let cursor = index + 1;
+    while (cursor < lines.length) {
+      const next = lines[cursor];
+      if (/^##\s+/u.test(next) || /^\s*-\s+\[[ xX!\-]\]\s+/u.test(next)) break;
+      const detail = cleanText(next.replace(/^\s*-\s*/u, ''));
+      if (detail && /^blocked by:/iu.test(detail)) {
+        blockedBy = normalizeBlockedByReason(detail);
+        break;
+      }
+      cursor += 1;
+    }
     blocked.push({
       line: index + 1,
       task: match[1].trim(),
+      blockedBy,
     });
     if (blocked.length >= normalizedLimit) break;
   }

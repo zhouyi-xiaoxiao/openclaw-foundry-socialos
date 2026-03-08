@@ -148,7 +148,10 @@ const studioJsonResult = spawnSync('bash', [script], {
         done: 9,
         currentTask: 'Studio primary task',
       },
-      blockedHead: [{ task: 'Studio blocked task A' }, { task: 'Studio blocked task B' }],
+      blockedHead: [
+        { task: 'Studio blocked task A', blockedBy: 'blocked by: credentials + login state' },
+        { task: 'Studio blocked task B', blockedBy: 'manual review required' },
+      ],
     }),
     SOCIALOS_RUN_DIR: runDir,
     SOCIALOS_LATEST_DIGEST_FILE: latestDigest,
@@ -224,8 +227,14 @@ try {
     'studio status current task should drive current task output',
   );
   assert(
-    studioJsonResult.stdout.includes('Blocked queue head:\nStudio blocked task A\nStudio blocked task B'),
-    'studio status blocked head should drive blocked queue output',
+    studioJsonResult.stdout.includes('mode: ACTIVE'),
+    'studio status mode should drive status output mode when available',
+  );
+  assert(
+    studioJsonResult.stdout.includes(
+      'Blocked queue head:\nStudio blocked task A (blocked by: credentials + login state)\nStudio blocked task B (blocked by: manual review required)'
+    ),
+    'studio status blocked head should include normalized blocked reasons',
   );
   assert(
     studioJsonBlockedReasonResult.status === 0,

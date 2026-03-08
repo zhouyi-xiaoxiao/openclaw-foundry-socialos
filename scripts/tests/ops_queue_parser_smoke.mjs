@@ -9,6 +9,7 @@ const queueMarkdown = `# Queue
 - [ ] Top-level pending
   - [-] Nested in progress
     - [!] Deep blocked task
+      - blocked by: credentials + live publish approval
   - [x] Nested done
 - [ ] Second pending`;
 
@@ -22,6 +23,7 @@ assert(summary.currentTask === 'Nested in progress', 'in-progress task should be
 const blocked = parseBlockedTasks(queueMarkdown, 10);
 assert(blocked.length === 1, 'should return indented blocked tasks');
 assert(blocked[0].task === 'Deep blocked task', 'blocked task text should be trimmed');
+assert(blocked[0].blockedBy === 'credentials + live publish approval', 'blocked reason should normalize without prefix');
 assert(parseBlockedTasks(queueMarkdown, 0).length === 0, 'limit=0 should return no blocked tasks');
 
 const emptySummary = parseQueueSummary(null);

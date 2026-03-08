@@ -271,6 +271,12 @@ function normalizeSection(section) {
   return FOUNDY_TO_STUDIO_SECTION[section] || section || 'Studio Ops';
 }
 
+function normalizeBlockedByReason(reason) {
+  const text = readOptionalString(reason, '').trim();
+  if (!text) return '';
+  return text.replace(/^blocked by:\s*/iu, '').trim();
+}
+
 function parseLegacyQueue(queueMarkdown) {
   const lines = queueMarkdown.split(/\r?\n/u);
   const tasks = [];
