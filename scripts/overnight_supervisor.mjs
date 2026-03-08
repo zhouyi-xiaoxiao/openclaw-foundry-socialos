@@ -54,6 +54,28 @@ function normalizeDigestEntries(value) {
     .filter((entry) => Boolean(entry) && !/^none(?:\b|$)/iu.test(entry) && !/^no digest yet\.?$/iu.test(entry));
 }
 
+function normalizeBlockedHeadEntry(entry) {
+  if (typeof entry === 'string') return entry.trim();
+  if (!entry || typeof entry !== 'object') return '';
+
+  const task = safeTrim(entry.task);
+  const blockedBy =
+    typeof entry.blockedBy === 'string' ? entry.blockedBy.trim().replace(/^blocked by:\s*/iu, '') : '';
+  if (task) {
+    if (blockedBy && !/\(blocked by:/iu.test(task)) {
+      return `${task} (blocked by: ${blockedBy})`;
+    }
+    return task;
+  }
+
+  const title = safeTrim(entry.title);
+  const taskId = safeTrim(entry.taskId);
+  if (title && taskId) return `${taskId} ${title}`;
+  if (title) return title;
+  if (taskId) return taskId;
+  return '';
+}
+
 function extractJsonObjects(raw) {
   if (typeof raw !== 'string' || !raw.includes('{')) return [];
   const objects = [];
@@ -261,21 +283,7 @@ function parseFoundryStatusJson(output, commandOk) {
       status: typeof latestRun.status === 'string' && latestRun.status.trim() ? latestRun.status.trim() : 'unknown',
       summary: typeof latestRun.summary === 'string' && latestRun.summary.trim() ? latestRun.summary.trim() : 'unknown',
     },
-    blockedHead: blockedHead
-      .map((entry) => {
-        if (typeof entry === 'string') return entry.trim();
-        if (entry && typeof entry === 'object' && typeof entry.task === 'string') {
-          const task = entry.task.trim();
-          const blockedBy =
-            typeof entry.blockedBy === 'string' ? entry.blockedBy.trim().replace(/^blocked by:\s*/iu, '') : '';
-          if (blockedBy && !/\(blocked by:/iu.test(task)) {
-            return `${task} (blocked by: ${blockedBy})`;
-          }
-          return task;
-        }
-        return '';
-      })
-      .filter(Boolean),
+    blockedHead: blockedHead.map((entry) => normalizeBlockedHeadEntry(entry)).filter(Boolean),
     latestDigest,
   };
 }

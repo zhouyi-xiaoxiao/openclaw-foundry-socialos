@@ -179,6 +179,38 @@ assert(parsedMinimalJsonStatus.mode === 'ACTIVE', 'minimal json mode should stil
 assert(parsedMinimalJsonStatus.queue.blocked === 0, 'minimal json mode should default queue counts to zero');
 assert(parsedMinimalJsonStatus.latestRun.status === 'unknown', 'minimal json mode should keep latest run unknown when absent');
 
+const jsonStatusOutputWithTaskTitleVariants = JSON.stringify(
+  {
+    mode: 'ACTIVE',
+    queue: {
+      pending: 0,
+      inProgress: 0,
+      blocked: 3,
+      done: 0,
+      currentTask: 'none',
+    },
+    lock: { present: false },
+    health: { consecutiveFailures: 0 },
+    latestRun: { runId: 'RUN-1000', status: 'blocked', summary: 'waiting on unblock' },
+    blockedHead: [
+      { taskId: 'TASK-123', title: 'Missing token handoff' },
+      { title: 'Needs DB access' },
+      { taskId: 'TASK-999' },
+    ],
+    latestDigest: [],
+  },
+  null,
+  2
+);
+const parsedTaskTitleVariantStatus = parseFoundryStatus(jsonStatusOutputWithTaskTitleVariants, { commandOk: true });
+assert(parsedTaskTitleVariantStatus.blockedHead.length === 3, 'task/title variant blocked entries should normalize');
+assert(
+  parsedTaskTitleVariantStatus.blockedHead[0] === 'TASK-123 Missing token handoff',
+  'taskId+title entries should normalize into one line',
+);
+assert(parsedTaskTitleVariantStatus.blockedHead[1] === 'Needs DB access', 'title-only blocked entries should normalize');
+assert(parsedTaskTitleVariantStatus.blockedHead[2] === 'TASK-999', 'taskId-only blocked entries should normalize');
+
 const probeFromStderrOnly = combineProbeOutput('', '\n  {"mode":"ACTIVE"}  \n');
 assert(probeFromStderrOnly === '{"mode":"ACTIVE"}', 'probe output should trim and keep stderr-only status payloads');
 const probeFromBothStreams = combineProbeOutput('status on stdout', 'status on stderr');

@@ -257,14 +257,20 @@ process.stdin.on("end", () => {
     const lines = blockedHead
       .map((entry) => {
         if (typeof entry === "string") return entry.trim();
-        if (entry && typeof entry === "object" && typeof entry.task === "string") {
-          const task = entry.task.trim();
-          const reason = normalizeReason(entry.blockedBy);
+        if (!entry || typeof entry !== "object") return "";
+        const task = typeof entry.task === "string" ? entry.task.trim() : "";
+        const reason = normalizeReason(entry.blockedBy);
+        if (task) {
           if (reason && !/\(blocked by:/iu.test(task)) {
             return `${task} (blocked by: ${reason})`;
           }
           return task;
         }
+        const title = typeof entry.title === "string" ? entry.title.trim() : "";
+        const taskId = typeof entry.taskId === "string" ? entry.taskId.trim() : "";
+        if (title && taskId) return `${taskId} ${title}`;
+        if (title) return title;
+        if (taskId) return taskId;
         return "";
       })
       .filter(Boolean)

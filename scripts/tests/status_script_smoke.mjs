@@ -181,6 +181,30 @@ const studioJsonBlockedReasonResult = spawnSync('bash', [script], {
   },
 });
 
+const studioJsonVariantResult = spawnSync('bash', [script], {
+  cwd: root,
+  encoding: 'utf8',
+  env: {
+    ...process.env,
+    SOCIALOS_STUDIO_STATUS_JSON: JSON.stringify({
+      queue: {
+        pending: 0,
+        inProgress: 0,
+        blocked: 3,
+        done: 0,
+        currentTask: 'none',
+      },
+      blockedHead: [
+        { taskId: 'TASK-123', title: 'Missing token handoff' },
+        { title: 'Needs DB access' },
+        { taskId: 'TASK-999' },
+      ],
+    }),
+    SOCIALOS_RUN_DIR: runDir,
+    SOCIALOS_LATEST_DIGEST_FILE: latestDigest,
+  },
+});
+
 try {
   assert(result.status === 0, `status script should exit 0, got ${result.status}`);
   assert(result.stdout.includes('== Foundry Status =='), 'status output header missing');
@@ -253,6 +277,11 @@ try {
   assert(
     !studioJsonBlockedReasonResult.stdout.includes('blocked by: blocked by:'),
     'studio status blocked reason should not repeat the blocked by prefix',
+  );
+  assert(studioJsonVariantResult.status === 0, `status script with studio blocked variants should exit 0, got ${studioJsonVariantResult.status}`);
+  assert(
+    studioJsonVariantResult.stdout.includes('Blocked queue head:\nTASK-123 Missing token handoff\nNeeds DB access\nTASK-999'),
+    'studio status blocked head should normalize taskId/title variants',
   );
   console.log('status_script_smoke: PASS');
 } finally {
