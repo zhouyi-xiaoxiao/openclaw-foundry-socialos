@@ -11,6 +11,36 @@ const WEB_PORT = Number(process.env.SOCIALOS_WEB_PORT || 4173);
 const API_URL = `http://127.0.0.1:${API_PORT}/health`;
 const WEB_URL = `http://127.0.0.1:${WEB_PORT}/quick-capture`;
 
+function parseEnvValue(rawValue = '') {
+  const value = String(rawValue || '').trim();
+  if (!value) return '';
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    return value.slice(1, -1);
+  }
+  return value;
+}
+
+function loadEnvFile(targetPath) {
+  if (!fs.existsSync(targetPath)) return;
+  const content = fs.readFileSync(targetPath, 'utf8');
+  for (const line of content.split(/\r?\n/u)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const separatorIndex = trimmed.indexOf('=');
+    if (separatorIndex <= 0) continue;
+    const key = trimmed.slice(0, separatorIndex).trim();
+    if (!key || process.env[key]) continue;
+    const value = parseEnvValue(trimmed.slice(separatorIndex + 1));
+    process.env[key] = value;
+  }
+}
+
+loadEnvFile(path.join(REPO_ROOT, '.env'));
+loadEnvFile(path.join(REPO_ROOT, '.env.local'));
+
 const SERVICES = [
   {
     id: 'api',
