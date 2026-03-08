@@ -561,6 +561,15 @@ function readOptionalBoolean(value, fallback = false) {
   return typeof value === 'boolean' ? value : fallback;
 }
 
+function readBooleanLike(value, fallback = false) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value !== 'string') return fallback;
+  const normalized = value.trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+  return fallback;
+}
+
 function readOptionalPositiveInteger(value, fallback) {
   const parsed = typeof value === 'number'
     ? value
@@ -7937,9 +7946,11 @@ async function routeRequest(req, res, statements) {
   if (method === 'GET' && pathname === '/queue/tasks') {
     const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 24, 100);
     const statusFilter = readOptionalString(requestUrl.searchParams.get('status'), '').toLowerCase();
-    const queueTasks = statements.listRecentQueueTasks
-      .all(limit * 3)
-      .map(formatQueueTaskRow)
+    const includeHistory = readBooleanLike(requestUrl.searchParams.get('includeHistory'), false);
+    const latestOnly = readBooleanLike(requestUrl.searchParams.get('latestOnly'), false);
+    const dedupeLatestOnly = latestOnly && !includeHistory;
+    const queueTaskRows = statements.listRecentQueueTasks.all(limit * 6).map(formatQueueTaskRow);
+    const queueTasks = (dedupeLatestOnly ? dedupeLatestQueueTasks(queueTaskRows, limit * 3) : queueTaskRows)
       .filter((task) => !statusFilter || task.status.toLowerCase() === statusFilter)
       .slice(0, limit);
     sendJson(res, 200, { limit, count: queueTasks.length, queueTasks });
