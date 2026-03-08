@@ -182,6 +182,7 @@ function parseFoundryStatusJson(output, commandOk) {
 
   let parsed = null;
   let bestScore = 0;
+  let modeOnlyCandidate = null;
   for (const candidate of candidates) {
     try {
       const next = JSON.parse(candidate);
@@ -190,12 +191,20 @@ function parseFoundryStatusJson(output, commandOk) {
         parsed = next;
         bestScore = score;
       }
+      if (!modeOnlyCandidate && next && typeof next === 'object' && typeof next.mode === 'string') {
+        modeOnlyCandidate = next;
+      }
     } catch {
       // ignore non-JSON braces from stderr wrappers and continue scanning
     }
   }
 
-  if (!parsed || bestScore < 2) return null;
+  if ((!parsed || bestScore < 2) && modeOnlyCandidate) {
+    parsed = modeOnlyCandidate;
+    bestScore = Math.max(bestScore, 1);
+  }
+
+  if (!parsed || bestScore < 1) return null;
   if (!parsed || typeof parsed !== 'object') return null;
   const queue = parsed.queue && typeof parsed.queue === 'object' ? parsed.queue : {};
   const lock = parsed.lock && typeof parsed.lock === 'object' ? parsed.lock : {};

@@ -161,6 +161,12 @@ assert(parsedJsonWithLeadingNoiseObject.mode === 'ACTIVE', 'parser should prefer
 assert(parsedJsonWithLeadingNoiseObject.queue.inProgress === 2, 'parser should ignore leading non-status JSON objects');
 assert(parsedJsonWithLeadingNoiseObject.queue.blocked === 3, 'parser should keep queue metrics when leading JSON noise exists');
 
+const minimalJsonStatusOutput = '{"mode":"RUNNING"}';
+const parsedMinimalJsonStatus = parseFoundryStatus(minimalJsonStatusOutput, { commandOk: true });
+assert(parsedMinimalJsonStatus.mode === 'ACTIVE', 'minimal json mode should still parse and normalize RUNNING');
+assert(parsedMinimalJsonStatus.queue.blocked === 0, 'minimal json mode should default queue counts to zero');
+assert(parsedMinimalJsonStatus.latestRun.status === 'unknown', 'minimal json mode should keep latest run unknown when absent');
+
 const probeFromStderrOnly = combineProbeOutput('', '\n  {"mode":"ACTIVE"}  \n');
 assert(probeFromStderrOnly === '{"mode":"ACTIVE"}', 'probe output should trim and keep stderr-only status payloads');
 const probeFromBothStreams = combineProbeOutput('status on stdout', 'status on stderr');
