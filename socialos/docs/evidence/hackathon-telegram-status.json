@@ -1,0 +1,18 @@
+{
+  "channel": "telegram",
+  "transport": "bot-api",
+  "configured": false,
+  "tokenPresent": false,
+  "defaultChatIdConfigured": false,
+  "defaultChatIdMasked": "",
+  "webhookSecretConfigured": false,
+  "botUsername": "",
+  "botDisplayName": "",
+  "provider": "telegram",
+  "model": "",
+  "live": false,
+  "fallbackUsed": true,
+  "openSourceModel": false,
+  "capturedAt": "2026-03-07T23:59:27.700Z",
+  "error": "telegram-not-configured"
+}

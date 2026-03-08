@@ -4,6 +4,7 @@ Use this document to verify and refresh the live provider paths used by the fina
 
 - `Z.AI General` via `POST /integrations/glm/generate`
 - `AI Agents for Good` via `POST /integrations/flock/sdg-triage`
+- `AI Agents for Good` Telegram channel via `GET /integrations/telegram/status` and `POST /integrations/telegram/send`
 
 ## Recommended Routing
 - `GLM_MODEL_ID=glm-5`
@@ -16,6 +17,10 @@ The scripts read provider keys from macOS Keychain by default:
 
 - `Z.ai API key`
 - `Flock API key`
+- `Telegram Bot Token`
+- `Telegram Webhook Secret`
+- `Telegram Default Chat ID`
+- `Telegram Bot Username`
 
 ## Verify Configuration
 Run:
@@ -36,6 +41,7 @@ This command:
 
 - requires both provider keys
 - captures live GLM and FLock responses
+- captures Telegram channel proof when Telegram credentials are present
 - refuses to write fallback-only proof snapshots
 - refreshes `socialos/docs/evidence/hackathon-*.json`
 

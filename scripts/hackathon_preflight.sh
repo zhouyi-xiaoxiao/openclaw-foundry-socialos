@@ -8,6 +8,19 @@ LOCAL_API="http://127.0.0.1:${API_PORT}"
 LOCAL_WEB="http://127.0.0.1:${WEB_PORT}"
 PUBLIC_WEB="${SOCIALOS_PUBLIC_WEB_URL:-https://zhouyixiaoxiao.org}"
 
+load_env_file() {
+  local target="$1"
+  if [[ -f "${target}" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "${target}"
+    set +a
+  fi
+}
+
+load_env_file "${REPO_ROOT}/.env"
+load_env_file "${REPO_ROOT}/.env.local"
+
 read_keychain_secret() {
   local service_name="$1"
   security find-generic-password -s "$service_name" -w 2>/dev/null || true

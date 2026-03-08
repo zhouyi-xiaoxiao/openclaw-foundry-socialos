@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-03-07T23:04:13.999Z",
-  "latestGreenValidationAt": "2026-03-07T23:04:13.999Z",
+  "generatedAt": "2026-03-07T23:34:01.756Z",
+  "latestGreenValidationAt": "2026-03-07T23:34:01.756Z",
   "repoHead": "a682dc8",
   "validationSource": "scripts/test.sh",
   "demo": {
@@ -12,11 +12,11 @@
         "id": "api",
         "ready": true,
         "healthy": true,
-        "pid": "none",
-        "pidAlive": false,
+        "pid": "93678",
+        "pidAlive": true,
         "stalePid": false,
-        "listeningPid": "42556",
-        "unmanagedHealthy": true,
+        "listeningPid": "93678",
+        "unmanagedHealthy": false,
         "healthUrl": "http://127.0.0.1:8787/health"
       },
       {
@@ -24,17 +24,20 @@
         "id": "web",
         "ready": true,
         "healthy": true,
-        "pid": "none",
-        "pidAlive": false,
+        "pid": "93698",
+        "pidAlive": true,
         "stalePid": false,
-        "listeningPid": "42576",
-        "unmanagedHealthy": true,
+        "listeningPid": "93698",
+        "unmanagedHealthy": false,
         "healthUrl": "http://127.0.0.1:4173/quick-capture"
       }
     ]
   },
   "evidence": {
     "screenshots": [
+      "socialos/docs/evidence/ai-agents-for-good-telegram-proof.png",
+      "socialos/docs/evidence/buddy-public-proof.png",
+      "socialos/docs/evidence/hackathon-public-hub.png",
       "socialos/docs/evidence/socialos-demo-step01.png",
       "socialos/docs/evidence/socialos-demo-step02-contacts.png",
       "socialos/docs/evidence/socialos-demo-step04.png",
@@ -55,6 +58,8 @@
       "socialos/docs/evidence/hackathon-proofs-claw-for-human.json",
       "socialos/docs/evidence/hackathon-proofs-human-for-claw.json",
       "socialos/docs/evidence/hackathon-proofs-z-ai-general.json",
+      "socialos/docs/evidence/hackathon-telegram-send.json",
+      "socialos/docs/evidence/hackathon-telegram-status.json",
       "socialos/docs/evidence/hackathon-workspace-zai.json",
       "socialos/docs/evidence/sample-digest.md",
       "socialos/docs/evidence/sample-run-report.json",

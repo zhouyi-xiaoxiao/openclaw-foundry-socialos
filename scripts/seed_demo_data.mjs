@@ -153,7 +153,6 @@ function seedNetworkEvents(db) {
   }
 }
 
-// Chinese strings below are intentional and limited to Chinese-platform draft bodies.
 function buildPrimaryDemoDraftContent(platform) {
   if (platform === 'instagram') {
     return 'Today I turned one real conversation with London hackathon organiser Minghan Xiao into a SocialOS loop that keeps people, context, and follow-up alive.';
@@ -165,15 +164,15 @@ function buildPrimaryDemoDraftContent(platform) {
     return 'I turned a real conversation with Minghan Xiao and the London hackathon organiser circle into a local-first SocialOS flow: one note becomes relationship memory, linked events, platform-native drafts, and an evidence-backed mirror.';
   }
   if (platform === 'zhihu') {
-    return '这次我把和 Minghan Xiao 的一次真实线下交流，推进成一个能演示的 SocialOS 工作流：一条记录能落到联系人、人脉上下文、内容草稿和每周自我镜像。';
+    return 'This Zhihu-ready draft explains how one real conversation with Minghan Xiao became a SocialOS workflow for people memory, linked context, reusable drafts, and a weekly mirror.';
   }
   if (platform === 'xiaohongshu') {
-    return '最近把和伦敦 hackathon organiser 圈子的一次真实对话做成了 SocialOS 演示：像发消息一样记一条，后面就能变成人脉卡、事件和内容灵感。';
+    return 'This Rednote-ready draft turns one real London hackathon organiser conversation into a visual SocialOS story: one note becomes a contact card, an event trail, and fresh content ideas.';
   }
   if (platform === 'wechat_moments') {
-    return '这两天把和 Minghan Xiao 的一条真实 follow-up 跑顺了：聊天、联系人、内容和复盘，终于能在一个系统里串起来。';
+    return 'This WeChat Moments-ready draft captures the strongest update from the demo week: the same follow-up now flows through chat, contacts, content, and reflection inside one system.';
   }
-  return '这不是又一个内容工具，而是把“认识人、记住人、持续跟进、形成输出”串成一个系统工作台。我这次用 London hackathon organiser 圈子的真实关系来演示 SocialOS。';
+  return 'This is not just another content tool. It is a relationship operating system that helps you meet people, remember context, follow through, and turn the work into clear output. The demo uses a real London hackathon organiser thread to show that loop end to end.';
 }
 
 function buildRecentCaptureSeeds() {

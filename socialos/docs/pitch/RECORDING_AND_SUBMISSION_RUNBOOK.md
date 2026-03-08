@@ -13,9 +13,11 @@ bash scripts/hackathon_preflight.sh
 This command:
 
 - verifies live GLM and FLock keys
+- checks whether the Telegram volunteer channel is configured
 - restarts the local demo in record-ready mode
 - checks `/demo`, `/hackathon`, and `/buddy`
 - refreshes repo-tracked live proof JSON
+- refreshes the latest English-only screenshots
 - exports the public static site into `.deck-site/`
 
 ## 2. Tabs To Open
@@ -74,14 +76,14 @@ Use:
 
 ### Z.AI General
 - Local start: `http://127.0.0.1:4173/hackathon?bounty=z-ai-general`
-- What to show: live GLM proof summary, `POST /integrations/glm/generate`, multilingual draft flow
+- What to show: live GLM proof summary, `POST /integrations/glm/generate`, English-only review output, real draft flow
 - Public close: `https://zhouyixiaoxiao.org/hackathon/#bounty-z-ai-general`
 - Proof JSON: `https://zhouyixiaoxiao.org/data/proofs/z-ai-general.json`
 - Deck appendix: `Slide 12`
 
 ### AI Agents for Good
 - Local start: `http://127.0.0.1:4173/hackathon?bounty=ai-agents-for-good`
-- What to show: live FLock SDG triage, urgency, suggested action, follow-up framing
+- What to show: live FLock SDG triage, urgency, suggested action, open-source-model proof, and the channel proof or outreach-lane proof
 - Public close: `https://zhouyixiaoxiao.org/hackathon/#bounty-ai-agents-for-good`
 - Proof JSON: `https://zhouyixiaoxiao.org/data/proofs/ai-agents-for-good.json`
 - Deck appendix: `Slide 13`
@@ -102,10 +104,10 @@ Use:
 > SocialOS exposes a dedicated Buddy mode with four safe tasks and a smaller trust-first surface for first-time or younger users. The canonical proof anchor is `/hackathon/#bounty-human-for-claw`.
 
 ### Z.AI General
-> SocialOS integrates GLM through `POST /integrations/glm/generate` and the real multilingual draft workflow, with public provider proof published at `/data/proofs/z-ai-general.json`.
+> SocialOS integrates GLM through `POST /integrations/glm/generate` and the real production draft workflow, with public provider proof published at `/data/proofs/z-ai-general.json`.
 
 ### AI Agents for Good
-> SocialOS integrates FLock through `POST /integrations/flock/sdg-triage`, turning SDG labeling, urgency, and suggested action into a reusable follow-up workflow. Public proof is published at `/data/proofs/ai-agents-for-good.json`.
+> SocialOS integrates FLock through `POST /integrations/flock/sdg-triage` and extends the impact workflow with `POST /integrations/telegram/send` plus the existing outreach lanes. The result is SDG labeling, urgency, and channel-ready follow-through with public proof published at `/data/proofs/ai-agents-for-good.json`.
 
 ## 7. Final Submission Checklist
 For each bounty, attach:

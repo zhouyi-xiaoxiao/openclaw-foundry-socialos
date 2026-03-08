@@ -278,6 +278,7 @@ const HACKATHON_BOUNTIES = Object.freeze([
     id: 'claw-for-human',
     label: 'Claw for Human',
     prize: '$500 USD',
+    sponsor: 'Imperial Blockchain',
     route: '/demo',
     localRecordRoute: '/demo',
     partnerLabel: 'OpenClaw Runtime',
@@ -291,6 +292,11 @@ const HACKATHON_BOUNTIES = Object.freeze([
     integrationSummary: 'OpenClaw runs the orchestration, memory, compliance, and publishing lanes while SocialOS exposes one guided loop across Workspace, Contacts, Drafts, Queue, and Mirror.',
     technicalImplementation: 'The Node API persists people, events, drafts, queue state, and mirror evidence in SQLite while the OpenClaw runtime keeps the product lanes separated behind the same UI.',
     judgeClosing: 'This is Claw translated into a usable relationship operating system, not left as a shell-only interface.',
+    eligibilityChecklist: [
+      'Show a real OpenClaw-powered product instead of a shell-only workflow.',
+      'Use the shared demo route to make the orchestration legible to non-technical judges.',
+      'Close on the public hub anchor and proof JSON so the submission stays reviewable after the video.',
+    ],
     integrations: ['openclaw', 'workspace', 'deck'],
     proofKinds: ['openclaw', 'ui', 'deck'],
     demoSteps: ['Open /demo', 'Launch /quick-capture', 'Show agent trace + evidence cards'],
@@ -299,19 +305,25 @@ const HACKATHON_BOUNTIES = Object.freeze([
     id: 'animoca',
     label: 'Animoca Bounty',
     prize: '$1,000 USD',
+    sponsor: 'Animoca Brands',
     route: '/hackathon?bounty=animoca',
     localRecordRoute: '/hackathon?bounty=animoca',
-    partnerLabel: 'Persistent Identity + OpenClaw Lanes',
+    partnerLabel: 'Animoca-style Identity, Memory, and Cognition',
     apiSurface: 'GET /proofs?bounty=animoca',
-    infrastructure: 'SQLite people graph + identity/event linking + multi-lane OpenClaw orchestration',
+    infrastructure: 'SQLite identity graph + event memory + OpenClaw lane coordination for long-horizon agent work',
     audience: 'judges looking for identity, memory, and multi-agent coordination',
     problem: 'Creator and community workflows break when identity, relationship memory, and long-horizon coordination are not persistent across sessions.',
-    hook: 'Position SocialOS as an identity-rich agent system for creator and community ops.',
-    fit: 'The repo already has persistent people memory, linked identities, and explicit agent lanes for memory, compliance, and publishing.',
+    hook: 'Position SocialOS as an identity-rich agent system for creator, operator, and community workflows.',
+    fit: 'The repo already has persistent people memory, linked identities, event continuity, and explicit agent lanes for memory, compliance, and publishing.',
     uniqueAngle: 'Persistent identity and long-horizon memory instead of a one-shot agent demo.',
-    integrationSummary: 'The same product loop already links Person, Identity, Interaction, Event, Draft, and Mirror state while OpenClaw coordinates the jobs needed to keep that memory actionable.',
-    technicalImplementation: 'The schema keeps linked people and event context first-class, and the runtime splits memory, compliance, and publishing responsibilities into visible lanes instead of a monolithic chatbot.',
+    integrationSummary: 'The same product loop already links Person, Identity, Interaction, Event, Draft, and Mirror state while OpenClaw coordinates the memory, compliance, and publishing jobs needed to keep that identity graph actionable.',
+    technicalImplementation: 'The schema keeps linked people and event context first-class, and the runtime splits memory, compliance, and publishing responsibilities into visible lanes instead of a monolithic chatbot. That gives SocialOS the identity, memory, and cognition posture Animoca is asking for.',
     judgeClosing: 'This is persistent identity and memory for creator-community operations, not a one-task assistant demo.',
+    eligibilityChecklist: [
+      'Show identity, memory, and cognition working together across the same person or community thread.',
+      'Keep the demo focused on long-horizon continuity, not one-off generation.',
+      'Use the agent-lane trace to make the multi-agent shape explicit to judges.',
+    ],
     integrations: ['openclaw', 'workspace', 'deck'],
     proofKinds: ['openclaw', 'memory', 'ui'],
     demoSteps: ['Open /hackathon', 'Inspect Animoca card', 'Jump into Contacts and Studio agents'],
@@ -320,6 +332,7 @@ const HACKATHON_BOUNTIES = Object.freeze([
     id: 'human-for-claw',
     label: 'Human for Claw',
     prize: '$500 USD',
+    sponsor: 'Imperial Blockchain',
     route: '/buddy',
     localRecordRoute: '/buddy',
     partnerLabel: 'Buddy Guardrails on OpenClaw',
@@ -333,6 +346,11 @@ const HACKATHON_BOUNTIES = Object.freeze([
     integrationSummary: 'Buddy mode keeps the same SocialOS memory loop but narrows users into four safe tasks and removes any pressure to publish or configure complex automation.',
     technicalImplementation: 'The web layer hides risky controls, keeps the product loop loopback-only and dry-run, and routes users into capture, memory, follow-up, and reflection flows instead of open-ended execution.',
     judgeClosing: 'Buddy mode is intentionally narrower, safer, and easier to trust than a general-purpose agent.',
+    eligibilityChecklist: [
+      'Show the four constrained Buddy tasks instead of the full operator surface.',
+      'Make the safety rails visible: dry-run only, trust-first defaults, and simpler language.',
+      'Keep the route emotionally approachable for younger or first-time users.',
+    ],
     integrations: ['openclaw', 'buddy', 'workspace'],
     proofKinds: ['ui', 'safety', 'memory'],
     demoSteps: ['Open /buddy', 'Pick a safe task card', 'Jump into a prefilled Workspace flow'],
@@ -341,19 +359,25 @@ const HACKATHON_BOUNTIES = Object.freeze([
     id: 'z-ai-general',
     label: 'Z.AI General',
     prize: '$4,000 USD',
+    sponsor: 'Z.AI',
     route: '/hackathon?bounty=z-ai-general',
     localRecordRoute: '/hackathon?bounty=z-ai-general',
     partnerLabel: 'Z.AI GLM',
     apiSurface: 'POST /integrations/glm/generate',
-    infrastructure: 'GLM model routing inside Workspace chat, bilingual summarization, and draft generation',
+    infrastructure: 'GLM model routing inside Workspace support, judge summaries, and production draft generation',
     audience: 'judges who want a real GLM-powered prototype',
-    problem: 'Multilingual relationship workflows are usually split between English-first product logic and separate Chinese-language generation tooling.',
-    hook: 'Use GLM in the core multilingual SocialOS workflow, not as a side widget.',
-    fit: 'Workspace responses, bilingual summarization, and draft generation all map naturally onto the current product loop.',
-    uniqueAngle: 'Chinese + English creator workflow where GLM is a core path, not a decorative provider option.',
-    integrationSummary: 'GLM is routed through the native SocialOS flow: Workspace chat, bilingual summary generation, and platform-native draft generation all call the GLM path instead of a mock adapter.',
+    problem: 'Production agent workflows often bolt a model onto a demo page instead of making that model a core part of the real product loop.',
+    hook: 'Use GLM in the core SocialOS workflow, not as a side widget.',
+    fit: 'Workspace support, judge summaries, and draft generation all map naturally onto the current product loop, so GLM can become a first-class provider instead of a decorative plug-in.',
+    uniqueAngle: 'GLM is a core production path for summaries, reasoning, and content generation, not a checkbox integration.',
+    integrationSummary: 'GLM is routed through the native SocialOS flow: judge-facing summary generation, Workspace support, and platform-native draft generation all call the same GLM path instead of a mock adapter.',
     technicalImplementation: 'The API exposes a live GLM endpoint, records proof metadata into audit evidence, and reuses the same provider-aware routing path inside Workspace and Draft generation so the bounty is part of the product, not a side panel.',
-    judgeClosing: 'GLM is integrated into the real multilingual product loop and captured as live proof, not demonstrated as a decorative plug-in.',
+    judgeClosing: 'GLM is integrated into the real SocialOS loop and captured as live proof, not demonstrated as a decorative plug-in.',
+    eligibilityChecklist: [
+      'Keep GLM as a core product dependency in the live demo and proof JSON.',
+      'Show the real generation path inside Workspace or Drafts, not an isolated API call only.',
+      'Close on a runnable prototype, a public repo, and a live proof surface.',
+    ],
     integrations: ['glm', 'workspace', 'deck'],
     proofKinds: ['glm', 'ui', 'deck'],
     demoSteps: ['Open /hackathon', 'Call GLM router', 'Show GLM-tagged Workspace or Draft flow'],
@@ -362,22 +386,28 @@ const HACKATHON_BOUNTIES = Object.freeze([
     id: 'ai-agents-for-good',
     label: 'AI Agents for Good',
     prize: '$5,000 USDT',
+    sponsor: 'FLock.io',
     route: '/hackathon?bounty=ai-agents-for-good',
     localRecordRoute: '/hackathon?bounty=ai-agents-for-good',
-    partnerLabel: 'FLock SDG Triage',
-    apiSurface: 'POST /integrations/flock/sdg-triage',
-    infrastructure: 'FLock SDG triage + SocialOS contacts/events/drafts follow-through',
+    partnerLabel: 'FLock SDG Triage + OpenClaw + Multi-channel Outreach',
+    apiSurface: 'POST /integrations/flock/sdg-triage + POST /integrations/telegram/send',
+    infrastructure: 'FLock SDG triage + OpenClaw memory loop + outreach lanes + Telegram volunteer channel',
     audience: 'judges looking for impact-focused agent workflows',
     problem: 'Impact workflows usually stop at categorization instead of carrying urgency and next action into a real coordination loop.',
     hook: 'Turn SocialOS into a community support and volunteer coordination operating system.',
-    fit: 'Contacts, events, follow-up drafts, and evidence-backed coordination already exist; FLock adds SDG triage and urgency scoring.',
+    fit: 'Contacts, events, follow-up drafts, and evidence-backed coordination already exist; FLock adds SDG triage and urgency scoring while SocialOS already ships multi-channel outreach lanes.',
     uniqueAngle: 'Long-term relationship memory and follow-through for impact work, not a one-turn charity chatbot.',
-    integrationSummary: 'FLock adds live SDG labeling, urgency scoring, and next-step guidance, then SocialOS promotes that result into contacts, events, follow-up drafts, and queue-visible coordination.',
-    technicalImplementation: 'The API calls the live FLock structured model path, records provider metadata into proof evidence, and keeps the resulting action inside the same relationship-memory workflow used elsewhere in the product.',
+    integrationSummary: 'FLock adds live SDG labeling, urgency scoring, and next-step guidance, then SocialOS promotes that result into contacts, events, follow-up drafts, queue-visible coordination, and a Telegram volunteer channel when credentials are present.',
+    technicalImplementation: 'The API calls the live FLock structured-model path, marks the route as open-source-model-backed, records provider metadata into proof evidence, and keeps the resulting action inside the same OpenClaw-orchestrated relationship-memory workflow used elsewhere in the product. The impact track also exposes a Telegram send/status/webhook surface plus the existing outreach lanes for multi-channel deployment.',
     judgeClosing: 'This is not a charity chatbot. It is impact triage plus relationship memory and actual follow-through.',
-    integrations: ['openclaw', 'flock', 'workspace'],
-    proofKinds: ['flock', 'openclaw', 'memory'],
-    demoSteps: ['Open /hackathon', 'Run SDG triage', 'Promote the result into follow-up actions and drafts'],
+    eligibilityChecklist: [
+      'Show OpenClaw, FLock, and the SDG-aligned triage result inside the same workflow.',
+      'Expose the multi-channel story through outreach lanes and the Telegram volunteer channel.',
+      'Make the open-source model requirement explicit in the proof metadata.',
+    ],
+    integrations: ['openclaw', 'flock', 'channels', 'workspace'],
+    proofKinds: ['flock', 'openclaw', 'memory', 'multi-channel', 'telegram'],
+    demoSteps: ['Open /hackathon', 'Run SDG triage', 'Show channel proof', 'Promote the result into follow-up actions and drafts'],
   }),
 ]);
 
@@ -616,6 +646,40 @@ function hasConfiguredGlm() {
 
 function hasConfiguredFlock() {
   return Boolean(readOptionalString(process.env.FLOCK_API_KEY, ''));
+}
+
+function readTelegramBotToken() {
+  return readOptionalString(process.env.TELEGRAM_BOT_TOKEN, '');
+}
+
+function readTelegramDefaultChatId() {
+  return readOptionalString(process.env.TELEGRAM_DEFAULT_CHAT_ID, '');
+}
+
+function readTelegramWebhookSecret() {
+  return readOptionalString(process.env.TELEGRAM_WEBHOOK_SECRET, '');
+}
+
+function readTelegramBotUsername() {
+  return readOptionalString(process.env.TELEGRAM_BOT_USERNAME, '');
+}
+
+function hasConfiguredTelegram() {
+  return Boolean(readTelegramBotToken() && readTelegramDefaultChatId());
+}
+
+function maskTelegramChatId(chatId = '') {
+  const safeChatId = readOptionalString(chatId, '');
+  if (!safeChatId) return '';
+  if (safeChatId.length <= 4) return safeChatId;
+  return `${safeChatId.slice(0, 2)}***${safeChatId.slice(-2)}`;
+}
+
+function inferOpenSourceModelFlag(provider = '', model = '') {
+  const normalizedProvider = readOptionalString(provider, '').toLowerCase();
+  const normalizedModel = readOptionalString(model, '').toLowerCase();
+  if (normalizedProvider === MODEL_PROVIDER_FLOCK || normalizedProvider === MODEL_PROVIDER_LOCAL) return true;
+  return /(?:qwen|llama|mistral|deepseek|gemma|yi|open.?source|mixtral)/u.test(normalizedModel);
 }
 
 function resolveRequestedModelProvider({ requestedProvider = MODEL_PROVIDER_AUTO, bountyMode = '' } = {}) {
@@ -3062,6 +3126,32 @@ function buildHackathonIntegrationStates() {
       fallbackUsed: !hasConfiguredFlock(),
       route: '/hackathon?bounty=ai-agents-for-good',
     },
+    channels: {
+      id: 'channels',
+      label: 'Multi-channel Outreach',
+      configured: true,
+      status: 'ready',
+      summary: 'SocialOS already ships outreach lanes for LinkedIn, X, Instagram, Zhihu, Rednote, WeChat Moments, and WeChat Official Account.',
+      provider: 'social-channels',
+      model: '',
+      live: true,
+      fallbackUsed: false,
+      route: '/drafts',
+    },
+    telegram: {
+      id: 'telegram',
+      label: 'Telegram Volunteer Channel',
+      configured: hasConfiguredTelegram(),
+      status: hasConfiguredTelegram() ? 'ready' : 'pending',
+      summary: hasConfiguredTelegram()
+        ? `Telegram bot delivery is ready for volunteer follow-through via ${maskTelegramChatId(readTelegramDefaultChatId())}.`
+        : 'Add TELEGRAM_BOT_TOKEN and TELEGRAM_DEFAULT_CHAT_ID to activate the Telegram volunteer channel.',
+      provider: 'telegram',
+      model: readTelegramBotUsername(),
+      live: hasConfiguredTelegram(),
+      fallbackUsed: !hasConfiguredTelegram(),
+      route: '/hackathon?bounty=ai-agents-for-good',
+    },
   };
 }
 
@@ -3089,7 +3179,52 @@ function buildBountyPublicMetadata(bountyId = '') {
   };
 }
 
+function buildProofResponseMetadata(bountyId = '', proofs = []) {
+  const bounty = getBountyById(bountyId);
+  if (!bounty) return null;
+  const integrations = buildHackathonIntegrationStates();
+  const liveProof = buildBountyLiveProofMetadata(bounty, integrations, proofs);
+  const publicMetadata = buildBountyPublicMetadata(bounty.id);
+  return {
+    id: bounty.id,
+    label: bounty.label,
+    sponsor: bounty.sponsor,
+    partnerLabel: bounty.partnerLabel,
+    localRecordRoute: publicMetadata.localRecordRoute,
+    publicAnchor: publicMetadata.publicAnchor,
+    proofJsonUrl: publicMetadata.proofJsonUrl,
+    deckAppendixSlide: publicMetadata.deckAppendixSlide,
+    provider: liveProof.provider,
+    model: liveProof.model,
+    live: liveProof.live,
+    fallbackUsed: liveProof.fallbackUsed,
+    capturedAt: liveProof.capturedAt,
+  };
+}
+
 function buildBountyLiveProofMetadata(bounty, integrations, bountyProofs = []) {
+  if (bounty.id === 'ai-agents-for-good') {
+    const latestFlock = sortHackathonProofsByCaptureTime(bountyProofs).find(
+      (proof) => proof.kind === 'flock' || proof.provider === MODEL_PROVIDER_FLOCK
+    );
+    const latestTelegram = sortHackathonProofsByCaptureTime(bountyProofs).find(
+      (proof) => proof.kind === 'telegram' || proof.channel === 'telegram' || proof.provider === 'telegram'
+    );
+    const multiChannelSummary =
+      latestTelegram && latestTelegram.fallbackUsed === false
+        ? 'Live FLock triage and Telegram volunteer handoff are both captured in the public proof pack.'
+        : 'Live FLock triage is captured and the product also exposes multi-channel outreach lanes for volunteer follow-through.';
+
+    return {
+      provider: readOptionalString(latestFlock?.provider, MODEL_PROVIDER_FLOCK),
+      model: readOptionalString(latestFlock?.model, readOptionalString(integrations.flock?.model, '')),
+      live: readOptionalBoolean(latestFlock?.live, Boolean(integrations.flock?.live)),
+      fallbackUsed: readOptionalBoolean(latestFlock?.fallbackUsed, readOptionalBoolean(integrations.flock?.fallbackUsed, false)),
+      capturedAt: readOptionalString(latestFlock?.capturedAt || latestTelegram?.capturedAt, ''),
+      liveProofSummary: multiChannelSummary,
+    };
+  }
+
   const latestCaptured = sortHackathonProofsByCaptureTime(bountyProofs).find(
     (proof) => proof.provider || proof.model || proof.capturedAt || proof.createdAt
   );
@@ -3158,6 +3293,12 @@ function attachHackathonProofMetadata(proof) {
     deckAppendixSlide: readOptionalString(proof.deckAppendixSlide, bountyMetadata.deckAppendixSlide),
     provider: readOptionalString(proof.provider, ''),
     model: readOptionalString(proof.model, ''),
+    channel: readOptionalString(proof.channel, ''),
+    transport: readOptionalString(proof.transport, ''),
+    openSourceModel:
+      typeof proof.openSourceModel === 'boolean'
+        ? proof.openSourceModel
+        : inferOpenSourceModelFlag(proof.provider, proof.model),
     live: readOptionalBoolean(proof.live, !readOptionalBoolean(proof.fallbackUsed, false)),
     fallbackUsed: readOptionalBoolean(proof.fallbackUsed, false),
     capturedAt: readOptionalString(proof.capturedAt || proof.createdAt, ''),
@@ -3256,8 +3397,43 @@ function buildHackathonStaticProofs() {
       source: 'socialos/apps/api/server.mjs',
       provider: integrations.flock.provider,
       model: integrations.flock.model,
+      openSourceModel: true,
       live: integrations.flock.live,
       fallbackUsed: integrations.flock.fallbackUsed,
+      localRecordRoute: '/hackathon?bounty=ai-agents-for-good',
+    }),
+    attachHackathonProofMetadata({
+      id: 'proof-social-channels',
+      kind: 'multi-channel',
+      status: integrations.channels.status,
+      title: 'SocialOS already ships multi-channel outreach lanes',
+      summary: integrations.channels.summary,
+      bounties: ['ai-agents-for-good', 'z-ai-general'],
+      route: integrations.channels.route,
+      source: 'socialos/apps/api/server.mjs',
+      provider: integrations.channels.provider,
+      model: integrations.channels.model,
+      channel: 'web-workspace + outreach drafts',
+      transport: 'http + publish-package',
+      live: integrations.channels.live,
+      fallbackUsed: integrations.channels.fallbackUsed,
+      localRecordRoute: '/hackathon?bounty=ai-agents-for-good',
+    }),
+    attachHackathonProofMetadata({
+      id: 'proof-telegram-channel',
+      kind: 'telegram',
+      status: integrations.telegram.status,
+      title: 'Telegram volunteer handoff is available for impact follow-through',
+      summary: integrations.telegram.summary,
+      bounties: ['ai-agents-for-good'],
+      route: integrations.telegram.route,
+      source: 'socialos/apps/api/server.mjs',
+      provider: integrations.telegram.provider,
+      model: integrations.telegram.model,
+      channel: 'telegram',
+      transport: 'bot-api',
+      live: integrations.telegram.live,
+      fallbackUsed: integrations.telegram.fallbackUsed,
       localRecordRoute: '/hackathon?bounty=ai-agents-for-good',
     }),
     attachHackathonProofMetadata({
@@ -3300,6 +3476,12 @@ function buildRecentHackathonProofs(statements, limit = 12) {
         createdAt: row.created_at,
         provider: readOptionalString(payload.provider, ''),
         model: readOptionalString(payload.model, ''),
+        channel: readOptionalString(payload.channel, ''),
+        transport: readOptionalString(payload.transport, ''),
+        openSourceModel:
+          typeof payload.openSourceModel === 'boolean'
+            ? payload.openSourceModel
+            : inferOpenSourceModelFlag(payload.provider, payload.model),
         live: readOptionalBoolean(payload.live, !readOptionalBoolean(payload.fallbackUsed, false)),
         fallbackUsed: readOptionalBoolean(payload.fallbackUsed, false),
         capturedAt: readOptionalString(payload.capturedAt, row.created_at),
@@ -3371,6 +3553,9 @@ function recordHackathonEvidence(
     title = '',
     summary = '',
     route = '/hackathon',
+    channel = '',
+    transport = '',
+    openSourceModel,
     input = {},
     output = {},
     live = true,
@@ -3389,6 +3574,10 @@ function recordHackathonEvidence(
     title,
     summary,
     route,
+    channel,
+    transport,
+    openSourceModel:
+      typeof openSourceModel === 'boolean' ? openSourceModel : inferOpenSourceModelFlag(provider, model),
     live,
     fallbackUsed,
     capturedAt: createdAt,
@@ -3443,7 +3632,7 @@ function buildHeuristicSdgTriage(text, { person = null, event = null } = {}) {
     return {
       sdg: 'SDG 4: Quality Education',
       urgency: /deadline|tomorrow|today|urgent/u.test(haystack) ? 'high' : 'medium',
-      suggestedAction: 'Capture the learner or volunteer context, create an event, and generate a bilingual follow-up pack for coordination.',
+      suggestedAction: 'Capture the learner or volunteer context, create an event, and generate a follow-up pack for coordination.',
       reasoning: 'The request points to mentoring, workshops, or learning access, which maps best to SDG 4.',
     };
   }
@@ -3496,6 +3685,7 @@ async function buildFlockSdgTriage(statements, { text, personId = '', eventId = 
         model: '',
         live: false,
         fallbackUsed: true,
+        openSourceModel: true,
         reason: 'flock-not-configured',
         capturedAt,
       },
@@ -3541,6 +3731,7 @@ async function buildFlockSdgTriage(statements, { text, personId = '', eventId = 
       model: response.ok ? response.model : '',
       live: response.ok,
       fallbackUsed: !response.ok,
+      openSourceModel: true,
       reason: response.ok ? 'flock-generated' : response.error || 'local-fallback',
       capturedAt,
     },
@@ -3630,6 +3821,132 @@ async function buildGlmGenerationResult({ taskType = 'generation', prompt = '', 
       reason: response.ok ? 'glm-generated' : response.error || 'local-fallback',
       capturedAt,
     },
+  };
+}
+
+async function fetchTelegramBotProfile() {
+  const token = readTelegramBotToken();
+  if (!token) {
+    return {
+      ok: false,
+      username: readTelegramBotUsername(),
+      displayName: '',
+      error: 'telegram-not-configured',
+    };
+  }
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${token}/getMe`);
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload?.ok !== true) {
+      return {
+        ok: false,
+        username: readTelegramBotUsername(),
+        displayName: '',
+        error: readOptionalString(payload?.description, `status ${response.status}`),
+      };
+    }
+    const result = normalizeRecord(payload.result);
+    return {
+      ok: true,
+      username: readOptionalString(result.username, readTelegramBotUsername()),
+      displayName: cleanText([readOptionalString(result.first_name, ''), readOptionalString(result.last_name, '')].filter(Boolean).join(' ')),
+      error: '',
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      username: readTelegramBotUsername(),
+      displayName: '',
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+function buildTelegramStatusPayload(profile = {}) {
+  const tokenPresent = Boolean(readTelegramBotToken());
+  const defaultChatId = readTelegramDefaultChatId();
+  const readyForSend = Boolean(tokenPresent && defaultChatId);
+  return {
+    channel: 'telegram',
+    transport: 'bot-api',
+    configured: readyForSend,
+    tokenPresent,
+    defaultChatIdConfigured: Boolean(defaultChatId),
+    defaultChatIdMasked: maskTelegramChatId(defaultChatId),
+    webhookSecretConfigured: Boolean(readTelegramWebhookSecret()),
+    botUsername: readOptionalString(profile.username, readTelegramBotUsername()),
+    botDisplayName: readOptionalString(profile.displayName, ''),
+    provider: 'telegram',
+    model: readOptionalString(profile.username, readTelegramBotUsername()),
+    live: readyForSend && Boolean(profile.ok || !tokenPresent),
+    fallbackUsed: !readyForSend,
+    openSourceModel: false,
+    capturedAt: nowIso(),
+    error: readOptionalString(profile.error, ''),
+  };
+}
+
+function extractTelegramUpdateSummary(update = {}) {
+  const message = normalizeRecord(update.message || update.edited_message || update.channel_post || {});
+  const chat = normalizeRecord(message.chat);
+  const from = normalizeRecord(message.from);
+  const text = cleanText(message.text || message.caption || '');
+  return {
+    messageId: message.message_id || null,
+    chatId: readOptionalString(chat.id ? String(chat.id) : '', ''),
+    chatType: readOptionalString(chat.type, ''),
+    fromName: cleanText(
+      [readOptionalString(from.first_name, ''), readOptionalString(from.last_name, '')].filter(Boolean).join(' ')
+    ),
+    fromUsername: readOptionalString(from.username, ''),
+    text,
+  };
+}
+
+async function sendTelegramMessage({ text, chatId = '' } = {}) {
+  const safeText = cleanText(text || '');
+  if (!safeText) {
+    throw new HttpError(400, 'text is required');
+  }
+
+  const token = readTelegramBotToken();
+  const targetChatId = readOptionalString(chatId, readTelegramDefaultChatId());
+  if (!token || !targetChatId) {
+    throw new HttpError(503, 'telegram channel is not configured');
+  }
+
+  const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      chat_id: targetChatId,
+      text: safeText,
+      disable_web_page_preview: true,
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.ok !== true) {
+    throw new HttpError(502, 'telegram send failed', {
+      error: readOptionalString(payload?.description, `status ${response.status}`),
+    });
+  }
+
+  const result = normalizeRecord(payload.result);
+  return {
+    ok: true,
+    chatId: readOptionalString(result.chat?.id ? String(result.chat.id) : targetChatId, targetChatId),
+    messageId: result.message_id || null,
+    text: safeText,
+    provider: 'telegram',
+    model: readTelegramBotUsername(),
+    channel: 'telegram',
+    transport: 'bot-api',
+    live: true,
+    fallbackUsed: false,
+    capturedAt: nowIso(),
   };
 }
 
@@ -4664,14 +4981,15 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
           routing: {
             captureProvider: captureDraft?.extraction?.provider || MODEL_PROVIDER_LOCAL,
             workspaceProvider: modelAssist?.provider || MODEL_PROVIDER_LOCAL,
+            captureFallbackUsed: captureDraft?.extraction?.provider === MODEL_PROVIDER_LOCAL,
+            workspaceFallbackUsed:
+              modelAssist?.provider === MODEL_PROVIDER_LOCAL || providerSelection.fallbackUsed,
           },
         },
         live:
-          captureDraft?.extraction?.provider !== MODEL_PROVIDER_LOCAL &&
-          modelAssist?.provider !== MODEL_PROVIDER_LOCAL,
+          modelAssist?.provider !== MODEL_PROVIDER_LOCAL && !providerSelection.fallbackUsed,
         fallbackUsed:
-          captureDraft?.extraction?.provider === MODEL_PROVIDER_LOCAL ||
-          modelAssist?.provider === MODEL_PROVIDER_LOCAL,
+          modelAssist?.provider === MODEL_PROVIDER_LOCAL || providerSelection.fallbackUsed,
       })
     : null;
 
@@ -4707,10 +5025,10 @@ async function buildWorkspaceChatPayload(statements, body = {}) {
       workspaceProvider: modelAssist?.provider || MODEL_PROVIDER_LOCAL,
       captureModel: captureDraft?.extraction?.model || '',
       workspaceModel: modelAssist?.model || '',
-      fallbackUsed:
-        captureDraft?.extraction?.provider === MODEL_PROVIDER_LOCAL ||
-        modelAssist?.provider === MODEL_PROVIDER_LOCAL ||
-        providerSelection.fallbackUsed,
+      captureFallbackUsed: captureDraft?.extraction?.provider === MODEL_PROVIDER_LOCAL,
+      workspaceFallbackUsed:
+        modelAssist?.provider === MODEL_PROVIDER_LOCAL || providerSelection.fallbackUsed,
+      fallbackUsed: modelAssist?.provider === MODEL_PROVIDER_LOCAL || providerSelection.fallbackUsed,
       reason: providerSelection.reason,
     },
     proofs: [
@@ -7390,11 +7708,13 @@ async function routeRequest(req, res, statements) {
       .filter((proof) => !bounty || proof.bounties.includes(bounty))
       .filter((proof) => !kind || proof.kind === kind)
       .slice(0, limit);
+    const proofMetadata = buildProofResponseMetadata(bounty, proofs);
     sendJson(res, 200, {
       bounty,
       kind,
       limit,
       count: proofs.length,
+      ...(proofMetadata || {}),
       proofs,
     });
     return;
@@ -8139,6 +8459,94 @@ async function routeRequest(req, res, statements) {
     return;
   }
 
+  if (method === 'GET' && pathname === '/integrations/telegram/status') {
+    const profile = await fetchTelegramBotProfile();
+    sendJson(res, 200, buildTelegramStatusPayload(profile));
+    return;
+  }
+
+  if (method === 'POST' && pathname === '/integrations/telegram/send') {
+    const body = await readJsonBody(req);
+    const result = await sendTelegramMessage({
+      text: body.text,
+      chatId: readOptionalString(body.chatId, ''),
+    });
+    const evidence = recordHackathonEvidence(statements, {
+      action: 'hackathon_telegram_send',
+      bounty: 'ai-agents-for-good',
+      provider: result.provider,
+      model: result.model,
+      proofKind: 'telegram',
+      title: 'Telegram volunteer channel send',
+      summary: truncateText(result.text, 180),
+      route: '/hackathon?bounty=ai-agents-for-good',
+      channel: result.channel,
+      transport: result.transport,
+      openSourceModel: false,
+      input: {
+        requestedChatId: readOptionalString(body.chatId, ''),
+        text: cleanText(body.text || ''),
+      },
+      output: {
+        chatId: result.chatId,
+        messageId: result.messageId,
+        botUsername: readTelegramBotUsername(),
+      },
+      live: true,
+      fallbackUsed: false,
+    });
+    sendJson(res, 200, {
+      ...result,
+      auditId: evidence.auditId,
+      digestId: evidence.digestId,
+      createdAt: evidence.createdAt,
+    });
+    return;
+  }
+
+  if (method === 'POST' && pathname === '/integrations/telegram/webhook') {
+    const expectedSecret = readTelegramWebhookSecret();
+    const providedSecret = readOptionalString(req.headers['x-telegram-bot-api-secret-token'], '');
+    if (expectedSecret && providedSecret !== expectedSecret) {
+      throw new HttpError(403, 'telegram webhook secret mismatch');
+    }
+
+    const body = await readJsonBody(req);
+    const summary = extractTelegramUpdateSummary(body);
+    const evidence = summary.text
+      ? recordHackathonEvidence(statements, {
+          action: 'hackathon_telegram_webhook',
+          bounty: 'ai-agents-for-good',
+          provider: 'telegram',
+          model: readTelegramBotUsername(),
+          proofKind: 'telegram',
+          title: 'Telegram volunteer channel receive',
+          summary: truncateText(summary.text, 180),
+          route: '/hackathon?bounty=ai-agents-for-good',
+          channel: 'telegram',
+          transport: 'bot-api',
+          openSourceModel: false,
+          input: {
+            chatId: summary.chatId,
+            fromUsername: summary.fromUsername,
+          },
+          output: summary,
+          live: true,
+          fallbackUsed: false,
+        })
+      : null;
+
+    sendJson(res, 200, {
+      ok: true,
+      received: Boolean(summary.text),
+      updateId: body?.update_id || null,
+      summary,
+      auditId: evidence?.auditId || '',
+      digestId: evidence?.digestId || '',
+    });
+    return;
+  }
+
   if (method === 'POST' && pathname === '/integrations/glm/generate') {
     const body = await readJsonBody(req);
     const result = await buildGlmGenerationResult({
@@ -8192,6 +8600,9 @@ async function routeRequest(req, res, statements) {
       title: 'FLock SDG triage run',
       summary: `${result.sdg} · ${result.urgency} · ${result.suggestedAction}`,
       route: '/hackathon?bounty=ai-agents-for-good',
+      channel: 'web-workspace',
+      transport: 'http',
+      openSourceModel: true,
       input: {
         text: cleanText(body.text || ''),
         personId: readOptionalString(body.personId, ''),

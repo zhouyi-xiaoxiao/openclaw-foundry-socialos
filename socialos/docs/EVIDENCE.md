@@ -8,12 +8,18 @@ This folder contains curated, stable evidence copied out of volatile local runti
 - Screenshot 2: `socialos/docs/evidence/socialos-demo-step02-contacts.png`
 - Screenshot 3: `socialos/docs/evidence/socialos-demo-step04.png`
 - Screenshot 4: `socialos/docs/evidence/socialos-demo-step08.png`
+- Public Hub Screenshot: `socialos/docs/evidence/hackathon-public-hub.png`
+- Buddy Proof Screenshot: `socialos/docs/evidence/buddy-public-proof.png`
+- AI Agents for Good Channel Screenshot: `socialos/docs/evidence/ai-agents-for-good-telegram-proof.png`
 
 ### Preview
 ![Workspace capture flow](evidence/socialos-demo-step01.png)
 ![Contacts with real named network](evidence/socialos-demo-step02-contacts.png)
 ![Draft generation flow](evidence/socialos-demo-step04.png)
 ![Queue and recall flow](evidence/socialos-demo-step08.png)
+![Public bounty hub](evidence/hackathon-public-hub.png)
+![Buddy public proof](evidence/buddy-public-proof.png)
+![AI Agents for Good channel proof](evidence/ai-agents-for-good-telegram-proof.png)
 
 ## Representative Runtime Evidence
 - Sample run report (Markdown): `socialos/docs/evidence/sample-run-report.md`
@@ -33,6 +39,8 @@ This folder contains curated, stable evidence copied out of volatile local runti
 - Workspace GLM proof: `socialos/docs/evidence/hackathon-workspace-zai.json`
 - Draft generation GLM proof: `socialos/docs/evidence/hackathon-drafts-zai.json`
 - FLock SDG proof: `socialos/docs/evidence/hackathon-flock-triage.json`
+- Telegram status proof: `socialos/docs/evidence/hackathon-telegram-status.json`
+- Telegram send proof: `socialos/docs/evidence/hackathon-telegram-send.json`
 - Summary note: `socialos/docs/evidence/hackathon-proof-summary.md`
 
 ## Why This Exists

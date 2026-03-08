@@ -7,6 +7,7 @@ import { startWebServer } from '../../socialos/apps/web/server.mjs';
 import { startApiServer } from '../../socialos/apps/api/server.mjs';
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
+const bountyIds = ['claw-for-human', 'animoca', 'human-for-claw', 'z-ai-general', 'ai-agents-for-good'];
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -64,6 +65,9 @@ async function main() {
     assert(fs.existsSync(path.join(deckSite, 'demo', 'index.html')), 'deck export should write /demo/index.html');
     assert(fs.existsSync(path.join(deckSite, 'hackathon', 'index.html')), 'deck export should write /hackathon/index.html');
     assert(fs.existsSync(path.join(deckSite, 'buddy', 'index.html')), 'deck export should write /buddy/index.html');
+    for (const bountyId of bountyIds) {
+      assert(fs.existsSync(path.join(deckSite, 'videos', bountyId, 'index.html')), `deck export should write /videos/${bountyId}/index.html`);
+    }
     assert(fs.existsSync(path.join(deckSite, 'data', 'hackathon-overview.json')), 'deck export should write hackathon overview JSON');
     assert(fs.existsSync(path.join(deckSite, 'data', 'proofs', 'all.json')), 'deck export should write proof catalog JSON');
     assert(fs.existsSync(path.join(deckSite, 'data', 'proofs', 'z-ai-general.json')), 'deck export should write bounty proof JSON');
@@ -74,6 +78,7 @@ async function main() {
     const demoHtml = fs.readFileSync(path.join(deckSite, 'demo', 'index.html'), 'utf8');
     const hackathonHtml = fs.readFileSync(path.join(deckSite, 'hackathon', 'index.html'), 'utf8');
     const buddyHtml = fs.readFileSync(path.join(deckSite, 'buddy', 'index.html'), 'utf8');
+    const videoPlaceholderHtml = fs.readFileSync(path.join(deckSite, 'videos', 'z-ai-general', 'index.html'), 'utf8');
     const cname = fs.readFileSync(path.join(deckSite, 'CNAME'), 'utf8').trim();
 
     assert(indexHtml.includes('SocialOS VC Deck'), 'exported root index should contain the deck title');
@@ -82,14 +87,18 @@ async function main() {
     assert(hackathonHtml.includes('Canonical public bounty hub'), 'exported hackathon page should render in public proof mode');
     assert(hackathonHtml.includes('id="bounty-z-ai-general"'), 'exported hackathon page should keep same-page bounty anchors');
     assert(buddyHtml.includes('Auxiliary public Buddy page'), 'exported buddy page should render in public proof mode');
+    assert(videoPlaceholderHtml.includes('Demo video upload in progress'), 'exported video placeholder page should render the upload notice');
+    assert(videoPlaceholderHtml.includes('/data/proofs/z-ai-general.json'), 'exported video placeholder page should keep the matching proof JSON link');
     assert(cname === 'zhouyixiaoxiao.org', 'deck export should target the custom domain');
     assert(!indexHtml.includes('127.0.0.1'), 'exported public deck should not expose localhost-only links');
     assert(!demoHtml.includes('127.0.0.1'), 'exported public demo should not expose localhost-only links');
     assert(!hackathonHtml.includes('127.0.0.1'), 'exported public hackathon should not expose localhost-only links');
     assert(!buddyHtml.includes('127.0.0.1'), 'exported public buddy should not expose localhost-only links');
+    assert(!videoPlaceholderHtml.includes('127.0.0.1'), 'exported video placeholder page should not expose localhost-only links');
     assert(!demoHtml.includes('data-api-form'), 'exported public demo should not expose interactive API forms');
     assert(!hackathonHtml.includes('data-api-form'), 'exported public hackathon should not expose interactive API forms');
     assert(!buddyHtml.includes('data-api-form'), 'exported public buddy should not expose interactive API forms');
+    assert(!videoPlaceholderHtml.includes('data-api-form'), 'exported video placeholder page should not expose interactive API forms');
 
     console.log('deck_export_smoke: PASS');
   } finally {

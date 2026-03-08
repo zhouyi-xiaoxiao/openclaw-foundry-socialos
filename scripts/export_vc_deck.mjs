@@ -56,6 +56,10 @@ async function main() {
     { output: 'demo/index.html', source: `${webBaseUrl}/demo?mode=public` },
     { output: 'hackathon/index.html', source: `${webBaseUrl}/hackathon?mode=public` },
     { output: 'buddy/index.html', source: `${webBaseUrl}/buddy?mode=public` },
+    ...bountyIds.map((bountyId) => ({
+      output: `videos/${bountyId}/index.html`,
+      source: `${webBaseUrl}/videos/${bountyId}`,
+    })),
   ];
   const jsonExports = [
     { output: 'data/hackathon-overview.json', source: path.join(evidenceRoot, 'hackathon-overview.json') },

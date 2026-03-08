@@ -53,3 +53,4 @@ OpenClaw lets those jobs stay narrow and explainable without making the user liv
 - The interactive demo is localhost-only by design.
 - The public site is a read-only proof surface for judges.
 - `GLM` and `FLock` are shown as live integrated proof paths in the current hackathon setup.
+- `AI Agents for Good` also shows the impact workflow moving into outreach lanes and the Telegram volunteer channel when the channel is configured.

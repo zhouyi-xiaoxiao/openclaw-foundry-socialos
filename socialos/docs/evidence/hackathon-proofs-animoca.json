@@ -3,6 +3,19 @@
   "kind": "",
   "limit": 24,
   "count": 4,
+  "id": "animoca",
+  "label": "Animoca Bounty",
+  "sponsor": "Animoca Brands",
+  "partnerLabel": "Animoca-style Identity, Memory, and Cognition",
+  "localRecordRoute": "/hackathon?bounty=animoca",
+  "publicAnchor": "/hackathon/#bounty-animoca",
+  "proofJsonUrl": "/data/proofs/animoca.json",
+  "deckAppendixSlide": "Slide 10",
+  "provider": "openclaw",
+  "model": "",
+  "live": true,
+  "fallbackUsed": false,
+  "capturedAt": "",
   "proofs": [
     {
       "id": "proof-openclaw-runtime",
@@ -28,6 +41,9 @@
       "publicAnchor": "/hackathon/",
       "proofJsonUrl": "/data/proofs/all.json",
       "deckAppendixSlide": "Shared appendix",
+      "channel": "",
+      "transport": "",
+      "openSourceModel": false,
       "capturedAt": ""
     },
     {
@@ -53,6 +69,9 @@
       "publicAnchor": "/hackathon/",
       "proofJsonUrl": "/data/proofs/all.json",
       "deckAppendixSlide": "Shared appendix",
+      "channel": "",
+      "transport": "",
+      "openSourceModel": false,
       "capturedAt": ""
     },
     {
@@ -78,6 +97,9 @@
       "publicAnchor": "/hackathon/",
       "proofJsonUrl": "/data/proofs/all.json",
       "deckAppendixSlide": "Shared appendix",
+      "channel": "",
+      "transport": "",
+      "openSourceModel": false,
       "capturedAt": ""
     },
     {
@@ -105,6 +127,9 @@
       "publicAnchor": "/hackathon/",
       "proofJsonUrl": "/data/proofs/all.json",
       "deckAppendixSlide": "Shared appendix",
+      "channel": "",
+      "transport": "",
+      "openSourceModel": false,
       "capturedAt": ""
     }
   ]

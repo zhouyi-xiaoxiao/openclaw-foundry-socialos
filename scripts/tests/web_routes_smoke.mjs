@@ -112,6 +112,14 @@ async function main() {
     assert(!buddyPublicHtml.includes('127.0.0.1'), '/buddy?mode=public should not expose localhost links');
     assert(!buddyPublicHtml.includes('data-api-form'), '/buddy?mode=public should not expose interactive forms');
 
+    const videoPlaceholder = await fetch(`${web.baseUrl}/videos/z-ai-general`, { redirect: 'manual' });
+    const videoPlaceholderHtml = await videoPlaceholder.text();
+    assert(videoPlaceholder.status === 200, `/videos/z-ai-general should render a public video placeholder page (got ${videoPlaceholder.status})`);
+    assert(videoPlaceholderHtml.includes('Demo video upload in progress'), '/videos/z-ai-general should explain that the video upload is pending');
+    assert(videoPlaceholderHtml.includes('/data/proofs/z-ai-general.json'), '/videos/z-ai-general should link to the matching proof JSON');
+    assert(!videoPlaceholderHtml.includes('127.0.0.1'), '/videos/z-ai-general should not expose localhost links');
+    assert(!videoPlaceholderHtml.includes('data-api-form'), '/videos/z-ai-general should not expose interactive forms');
+
     const peopleIndex = await fetch(`${web.baseUrl}/people`, { redirect: 'manual' });
     const peopleIndexHtml = await peopleIndex.text();
     assert(peopleIndex.status === 200, `/people should render Contacts index (got ${peopleIndex.status})`);

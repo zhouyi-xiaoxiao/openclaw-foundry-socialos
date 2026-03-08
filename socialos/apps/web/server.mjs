@@ -23,6 +23,9 @@ const EVIDENCE_STEP_ONE_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step01.png
 const EVIDENCE_STEP_TWO_CONTACTS_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step02-contacts.png');
 const EVIDENCE_STEP_FOUR_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step04.png');
 const EVIDENCE_STEP_EIGHT_PATH = path.join(EVIDENCE_DIR, 'socialos-demo-step08.png');
+const EVIDENCE_HACKATHON_HUB_PATH = path.join(EVIDENCE_DIR, 'hackathon-public-hub.png');
+const EVIDENCE_BUDDY_PUBLIC_PATH = path.join(EVIDENCE_DIR, 'buddy-public-proof.png');
+const EVIDENCE_AI_GOOD_TELEGRAM_PATH = path.join(EVIDENCE_DIR, 'ai-agents-for-good-telegram-proof.png');
 const HACKATHON_OVERVIEW_EVIDENCE_PATH = path.join(EVIDENCE_DIR, 'hackathon-overview.json');
 const HACKATHON_PROOFS_ALL_EVIDENCE_PATH = path.join(EVIDENCE_DIR, 'hackathon-proofs-all.json');
 const PUBLIC_REPO_URL = 'https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos';
@@ -480,6 +483,18 @@ function buildPublicProofDataHref(bountyId = '') {
   return normalized ? `/data/proofs/${encodeURIComponent(normalized)}.json` : '/data/proofs/all.json';
 }
 
+function buildVideoPlaceholderPath(bountyId = '', { trailingSlash = false } = {}) {
+  const normalized = readOptionalString(bountyId, '');
+  if (!normalized) return '';
+  const basePath = `/videos/${encodeURIComponent(normalized)}`;
+  return trailingSlash ? `${basePath}/` : basePath;
+}
+
+function getHackathonBountyById(bountyId = '') {
+  const normalized = readOptionalString(bountyId, '');
+  return HACKATHON_PAGE_FALLBACK.find((item) => item.id === normalized) || null;
+}
+
 function buildPublicPageHref(route = '') {
   const raw = readOptionalString(route, '');
   if (!raw) return '';
@@ -493,6 +508,10 @@ function buildPublicPageHref(route = '') {
     if (pathname === '/hackathon') {
       const bounty = readOptionalString(parsed.searchParams.get('bounty'), '');
       return bounty ? `/hackathon/#bounty-${encodeURIComponent(bounty)}` : '/hackathon/';
+    }
+    if (/^\/videos\/[^/]+$/u.test(pathname)) {
+      const bounty = decodeURIComponent(pathname.replace(/^\/videos\//u, ''));
+      return buildVideoPlaceholderPath(bounty, { trailingSlash: true });
     }
     return '';
   } catch {
@@ -630,6 +649,92 @@ function renderPublicProofNotice(label, detail) {
       <strong>${escapeHtml(label)}</strong><br />
       ${escapeHtml(detail)}
     </div>
+  `;
+}
+
+function renderVideoPlaceholderPage(bounty) {
+  const bountyId = readOptionalString(bounty?.id, '');
+  const proofPageHref = readOptionalString(bounty?.publicAnchor, `/hackathon/#bounty-${encodeURIComponent(bountyId)}`);
+  const proofJsonHref = readOptionalString(bounty?.proofJsonUrl, buildPublicProofDataHref(bountyId));
+  const videoHref = buildVideoPlaceholderPath(bountyId, { trailingSlash: true });
+  const heroMetrics = [
+    renderMetric('5-8 min', 'planned demo'),
+    renderMetric(readOptionalString(bounty?.sponsor, 'DoraHacks'), 'track sponsor'),
+    renderMetric('live', 'placeholder URL'),
+  ].join('');
+  const heroAside = `
+    <div class="stack-card">
+      <div class="stack-meta"><strong>Submit this URL</strong>${renderPill(videoHref, 'soft')}</div>
+      <p>This page is a stable video placeholder. Keep the same link in DoraHacks now, then replace the placeholder with the final uploaded demo later.</p>
+    </div>
+  `;
+  return `
+    ${renderHero(
+      {
+        title: `${readOptionalString(bounty?.label, 'Hackathon')} Video Placeholder`,
+        summary: 'Stable public placeholder page for the final SocialOS demo video while upload and hosting are still in progress.',
+      },
+      heroMetrics,
+      heroAside,
+    )}
+    ${renderPublicProofNotice(
+      'Demo video upload in progress',
+      'This URL is reserved for the final SocialOS demo video for this bounty. Until the recording is uploaded, judges can review the proof page, repo, deck, and structured JSON below.'
+    )}
+    ${renderPanel(
+      'Planned Video',
+      `<div class="stack">
+        <div class="stack-card">
+          <strong>Video title</strong>
+          <p>SocialOS for ${escapeHtml(readOptionalString(bounty?.label, 'this bounty'))}</p>
+        </div>
+        <div class="stack-card">
+          <strong>What the final video will cover</strong>
+          <p>The final recording will show the problem, the SocialOS solution, the technical implementation, the bounty integration, and a short live demo.</p>
+        </div>
+      </div>`,
+      'Use this public page in the submission form now. When the video is ready, embed it here or replace the placeholder content without changing the URL.'
+    )}
+    ${renderPanel(
+      'What Judges Can Review Now',
+      `<div class="stack">
+        <div class="stack-card">
+          <strong>Proof page</strong>
+          <p><a class="mini-link" href="${escapeHtml(proofPageHref)}">${escapeHtml(proofPageHref)}</a></p>
+        </div>
+        <div class="stack-card">
+          <strong>Proof JSON</strong>
+          <p><a class="mini-link" href="${escapeHtml(proofJsonHref)}">${escapeHtml(proofJsonHref)}</a></p>
+        </div>
+        <div class="stack-card">
+          <strong>Public deck</strong>
+          <p><a class="mini-link" href="${escapeHtml(PUBLIC_DECK_URL)}">${escapeHtml(PUBLIC_DECK_URL)}</a></p>
+        </div>
+        <div class="stack-card">
+          <strong>GitHub repo</strong>
+          <p><a class="mini-link" href="${escapeHtml(PUBLIC_REPO_URL)}">${escapeHtml(PUBLIC_REPO_URL)}</a></p>
+        </div>
+      </div>`,
+      'These links already support the same submission story even before the final video file is uploaded.'
+    )}
+    ${renderPanel(
+      'Track Framing',
+      `<div class="stack">
+        <div class="stack-card">
+          <strong>Problem</strong>
+          <p>${escapeHtml(readOptionalString(bounty?.problem, 'Track-specific problem framing will be added with the final video.'))}</p>
+        </div>
+        <div class="stack-card">
+          <strong>Why SocialOS fits</strong>
+          <p>${escapeHtml(readOptionalString(bounty?.uniqueAngle, 'SocialOS adapts one shared product loop into the exact review angle this bounty asks for.'))}</p>
+        </div>
+        <div class="stack-card">
+          <strong>Integration summary</strong>
+          <p>${escapeHtml(readOptionalString(bounty?.integrationSummary, 'The final video will show the same integration path already surfaced on the public proof pages.'))}</p>
+        </div>
+      </div>`,
+      'This copy should stay aligned with the repo README, proof page, and final recording.'
+    )}
   `;
 }
 
@@ -2993,6 +3098,7 @@ function renderHackathonBountyCards(bounties = [], selectedId = '', { publicMode
           <p>${escapeHtml(truncate(bounty.hook || bounty.uniqueAngle || bounty.summary || '', 180))}</p>
           <div class="chip-row">
             ${bounty.prize ? renderPill(bounty.prize, 'soft') : ''}
+            ${bounty.sponsor ? renderPill(bounty.sponsor, 'soft') : ''}
             ${renderPill(`${proofCount} proof${proofCount === 1 ? '' : 's'}`, proofCount ? 'accent' : 'soft')}
             ${readOptionalBoolean(bounty.live, false) ? renderPill('live integrated', 'good') : ''}
             ${bounty.model ? renderPill(bounty.model, 'soft') : ''}
@@ -3031,6 +3137,9 @@ function renderHackathonProofCards(proofs = [], { publicMode = false } = {}) {
             ${(proof.bounties || []).slice(0, 3).map((bountyId) => renderPill(bountyId, 'soft')).join('')}
             ${proof.provider ? renderPill(proof.provider, 'soft') : ''}
             ${proof.model ? renderPill(proof.model, 'soft') : ''}
+            ${proof.channel ? renderPill(proof.channel, 'soft') : ''}
+            ${proof.transport ? renderPill(proof.transport, 'soft') : ''}
+            ${typeof proof.openSourceModel === 'boolean' ? renderPill(`openSourceModel=${proof.openSourceModel}`, proof.openSourceModel ? 'good' : 'soft') : ''}
             ${readOptionalBoolean(proof.live, false) ? renderPill('live', 'good') : ''}
             ${readOptionalBoolean(proof.fallbackUsed, false) ? renderPill('fallbackUsed=true', 'warn') : renderPill('fallbackUsed=false', 'good')}
           </div>
@@ -3074,6 +3183,7 @@ function renderHackathonBountySections(bounties = [], selectedId = '', { publicM
           <p>${escapeHtml(bounty.uniqueAngle || bounty.hook || '')}</p>
           <div class="chip-row">
             ${bounty.prize ? renderPill(bounty.prize, 'soft') : ''}
+            ${bounty.sponsor ? renderPill(bounty.sponsor, 'soft') : ''}
             ${bounty.partnerLabel ? renderPill(bounty.partnerLabel, 'soft') : ''}
             ${bounty.model ? renderPill(bounty.model, 'soft') : ''}
             ${renderPill(`${proofCount} proof${proofCount === 1 ? '' : 's'}`, proofCount ? 'accent' : 'soft')}
@@ -3088,13 +3198,21 @@ function renderHackathonBountySections(bounties = [], selectedId = '', { publicM
               `
                 <div class="stack">
                   <article class="stack-card compact-card">
-                    <div class="stack-meta"><strong>Partner</strong>${bounty.partnerLabel ? renderPill(bounty.partnerLabel, 'soft') : ''}</div>
+                    <div class="stack-meta"><strong>Partner</strong>${bounty.partnerLabel ? renderPill(bounty.partnerLabel, 'soft') : ''}${bounty.sponsor ? renderPill(bounty.sponsor, 'soft') : ''}</div>
                     <p>${escapeHtml(bounty.integrationSummary || 'Integration summary unavailable.')}</p>
                   </article>
                   <article class="stack-card compact-card">
                     <div class="stack-meta"><strong>Technical Implementation</strong>${bounty.apiSurface ? renderPill(bounty.apiSurface, 'accent') : ''}</div>
                     <p>${escapeHtml(bounty.technicalImplementation || bounty.infrastructure || '')}</p>
                   </article>
+                  ${
+                    Array.isArray(bounty.eligibilityChecklist) && bounty.eligibilityChecklist.length
+                      ? `<article class="stack-card compact-card">
+                          <div class="stack-meta"><strong>Track Checklist</strong>${renderPill('official requirements', 'soft')}</div>
+                          <ul class="compact-list">${bounty.eligibilityChecklist.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+                        </article>`
+                      : ''
+                  }
                 </div>
               `,
               'This block answers the judge question “how exactly did you integrate the partner or infrastructure?”'
@@ -3182,6 +3300,21 @@ function renderHackathonShotGallery() {
       title: 'Queue',
       caption: 'Trust-first publish handoff and traceability.',
       image: readDataUriCached(EVIDENCE_STEP_EIGHT_PATH),
+    },
+    {
+      title: 'Bounty Hub',
+      caption: 'The canonical public page that lists all five tracks and their proof links.',
+      image: readDataUriCached(EVIDENCE_HACKATHON_HUB_PATH),
+    },
+    {
+      title: 'Buddy Public Proof',
+      caption: 'The Human for Claw public proof surface stays English-only and visibly constrained.',
+      image: readDataUriCached(EVIDENCE_BUDDY_PUBLIC_PATH),
+    },
+    {
+      title: 'AI Agents for Good Channel Proof',
+      caption: 'Telegram or outreach-channel proof for volunteer follow-through lives beside the FLock SDG story.',
+      image: readDataUriCached(EVIDENCE_AI_GOOD_TELEGRAM_PATH),
     },
   ];
 
@@ -3422,22 +3555,22 @@ async function renderBuddyPage(page, requestUrl) {
   const proofs = proofsRes.ok ? proofsRes.payload.proofs || [] : [];
   const buddyTasks = [
     {
-      title: '认识新朋友',
+      title: 'Meet Someone New',
       body: 'Write one simple note about someone new, and let SocialOS turn it into a contact you can remember later.',
-      href: '/quick-capture?prefill=%E6%88%91%E4%BB%8A%E5%A4%A9%E8%AE%A4%E8%AF%86%E4%BA%86%E4%B8%80%E4%B8%AA%E6%96%B0%E6%9C%8B%E5%8F%8B%EF%BC%8C%E4%BB%96%E5%96%9C%E6%AC%A2%E7%94%BB%E7%94%BB%EF%BC%8C%E6%88%91%E6%83%B3%E8%AE%B0%E4%BD%8F%E4%BB%96%E3%80%82',
+      href: '/quick-capture?prefill=I%20met%20someone%20new%20today.%20They%20love%20drawing%2C%20and%20I%20want%20to%20remember%20their%20name%20and%20what%20we%20talked%20about.',
     },
     {
-      title: '记住人和场景',
+      title: 'Remember People and Context',
       body: 'Capture where you met, what you talked about, and one kind follow-up you want to do next.',
       href: '/quick-capture?prefill=I%20met%20a%20new%20friend%20at%20the%20library%20club%20and%20we%20both%20liked%20building%20games.',
     },
     {
-      title: '生成感谢或活动跟进',
+      title: 'Write a Thank-you or Follow-up',
       body: 'Turn one event or friendship moment into a thank-you message or a warm follow-up note.',
-      href: '/quick-capture?prefill=%E5%B8%AE%E6%88%91%E5%86%99%E4%B8%80%E6%AE%B5%E8%B0%A2%E8%B0%A2%E4%BB%8A%E5%A4%A9%E9%99%AA%E6%88%91%E5%81%9A%E6%B4%BB%E5%8A%A8%E7%9A%84%E6%9C%8B%E5%8F%8B%E7%9A%84%E8%AF%9D%E3%80%82',
+      href: '/quick-capture?prefill=Help%20me%20write%20a%20warm%20thank-you%20note%20for%20the%20friend%20who%20spent%20time%20with%20me%20at%20today%27s%20activity.',
     },
     {
-      title: '安全反思',
+      title: 'Calm Reflection',
       body: 'Use Mirror to notice what made you feel good, tired, brave, or nervous after a day with people.',
       href: '/self-mirror',
     },
@@ -8990,6 +9123,35 @@ async function routeRequest(req, res) {
 
   if (pathname === '/deck') {
     sendHtml(res, 200, renderDeckDocument(requestUrl));
+    return;
+  }
+
+  if (/^\/videos\/[^/]+$/u.test(pathname)) {
+    const bountyId = decodeURIComponent(pathname.replace(/^\/videos\//u, ''));
+    const bounty = getHackathonBountyById(bountyId);
+    if (!bounty) {
+      sendHtml(
+        res,
+        404,
+        renderLayout({
+          currentPath: '',
+          title: 'Video Placeholder Not Found',
+          body: `<h1>Not Found</h1><p>No video placeholder exists for <code>${escapeHtml(pathname)}</code>.</p>`,
+          publicMode: true,
+        })
+      );
+      return;
+    }
+    sendHtml(
+      res,
+      200,
+      renderLayout({
+        currentPath: '',
+        title: `${bounty.label} Video Placeholder`,
+        body: renderVideoPlaceholderPage(bounty),
+        publicMode: true,
+      })
+    );
     return;
   }
 

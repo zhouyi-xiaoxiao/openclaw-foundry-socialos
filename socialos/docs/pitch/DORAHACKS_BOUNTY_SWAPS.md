@@ -56,7 +56,7 @@ Public close:
 
 Say:
 
-"For Z.AI General, GLM is part of the real SocialOS workflow. I can trigger a live GLM generation run, show the provider and model metadata, and then connect that same provider path to multilingual content generation inside the product. This is important because the integration is not isolated from the product story. GLM is being used exactly where SocialOS needs strong bilingual and platform-aware generation."
+"For Z.AI General, GLM is part of the real SocialOS workflow. I can trigger a live GLM generation run, show the provider and model metadata, and then connect that same provider path to product summaries and draft generation inside the product. This is important because the integration is not isolated from the product story. GLM is being used exactly where SocialOS needs production-ready generation and reasoning."
 
 ## AI Agents for Good
 Local route:
@@ -70,4 +70,4 @@ Public close:
 
 Say:
 
-"For AI Agents for Good, SocialOS becomes a coordination system for impact work. The live FLock route adds SDG labeling, urgency, and a next action recommendation, and then SocialOS keeps that result inside a longer-running relationship and follow-up loop. That is the main point: not just answering an impact question once, but carrying the result into real volunteer, student, or community coordination."
+"For AI Agents for Good, SocialOS becomes a coordination system for impact work. The live FLock route adds SDG labeling, urgency, and a next action recommendation, and then SocialOS keeps that result inside a longer-running relationship and follow-up loop. On top of that, the same workflow can hand the next action into outreach lanes and the Telegram volunteer channel. The point is not just answering an impact question once, but carrying the result into real volunteer, student, or community coordination."

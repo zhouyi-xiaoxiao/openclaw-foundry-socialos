@@ -9,6 +9,10 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function containsHan(value) {
+  return /[\p{Script=Han}]/u.test(String(value || ''));
+}
+
 function readJson(fileName) {
   return JSON.parse(fs.readFileSync(path.join(evidenceDir, fileName), 'utf8'));
 }
@@ -33,7 +37,16 @@ async function main() {
     'hackathon-workspace-zai.json',
     'hackathon-drafts-zai.json',
     'hackathon-flock-triage.json',
+    'hackathon-telegram-status.json',
+    'hackathon-telegram-send.json',
     'hackathon-proof-summary.md',
+    'socialos-demo-step01.png',
+    'socialos-demo-step02-contacts.png',
+    'socialos-demo-step04.png',
+    'socialos-demo-step08.png',
+    'hackathon-public-hub.png',
+    'buddy-public-proof.png',
+    'ai-agents-for-good-telegram-proof.png',
   ]) {
     assert(fs.existsSync(path.join(tempEvidenceDir, fileName)), `${fileName} should exist after proof capture`);
   }
@@ -42,16 +55,27 @@ async function main() {
   const overview = readTempJson('hackathon-overview.json');
   const glm = readTempJson('hackathon-glm-generate.json');
   const flock = readTempJson('hackathon-flock-triage.json');
+  const telegramStatus = readTempJson('hackathon-telegram-status.json');
   const proofsAll = readTempJson('hackathon-proofs-all.json');
 
   assert(Array.isArray(overview.bounties) && overview.bounties.length === 5, 'proof overview should include the 5 active bounties');
   assert(overview.bounties.every((bounty) => typeof bounty.publicAnchor === 'string' && bounty.publicAnchor.includes('#bounty-')), 'proof overview should expose public anchors');
   assert(overview.bounties.every((bounty) => typeof bounty.proofJsonUrl === 'string' && bounty.proofJsonUrl.includes('/data/proofs/')), 'proof overview should expose public proof JSON links');
+  assert(overview.bounties.every((bounty) => typeof bounty.sponsor === 'string' && bounty.sponsor.length > 0), 'proof overview should expose sponsor metadata');
+  assert(proofsAll.id === undefined, 'all-proofs snapshot should stay a catalog without a single bounty id');
   assert(typeof glm.proof?.provider === 'string', 'GLM proof snapshot should expose provider metadata');
   assert(typeof glm.proof?.live === 'boolean', 'GLM proof snapshot should expose live metadata');
   assert(typeof flock.proof?.provider === 'string', 'FLock proof snapshot should expose provider metadata');
   assert(typeof flock.proof?.live === 'boolean', 'FLock proof snapshot should expose live metadata');
+  assert(flock.proof?.openSourceModel === true, 'FLock proof snapshot should preserve the open-source model flag');
+  assert(telegramStatus.channel === 'telegram', 'telegram status snapshot should preserve channel metadata');
   assert(Array.isArray(proofsAll.proofs) && proofsAll.proofs.length > 0, 'proof snapshot catalog should include proof cards');
+  assert(proofsAll.proofs.some((proof) => proof.kind === 'telegram'), 'proof snapshot catalog should include Telegram proof metadata');
+  const zaiProofs = readTempJson('hackathon-proofs-z-ai-general.json');
+  assert(zaiProofs.id === 'z-ai-general', 'Z.AI proof snapshot should expose top-level bounty metadata');
+  assert(zaiProofs.partnerLabel === 'Z.AI GLM', 'Z.AI proof snapshot should expose the partner label');
+  assert(!containsHan(JSON.stringify(glm)), 'GLM proof snapshot should stay English-only');
+  assert(!containsHan(JSON.stringify(proofsAll)), 'public proof snapshot should stay English-only');
 
   console.log('hackathon_proof_capture_smoke: PASS');
   fs.rmSync(tempEvidenceDir, { recursive: true, force: true });

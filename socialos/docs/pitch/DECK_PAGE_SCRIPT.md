@@ -100,9 +100,9 @@ Suggested read:
 ## Slide 12 · Appendix · Z.AI General
 Suggested read:
 
-"Z.AI General is integrated into the real multilingual product loop. GLM handles the judge-facing generation proof, and the same provider path is reused inside SocialOS where bilingual and platform-aware output actually matters."
+"Z.AI General is integrated into the real product loop. GLM handles the judge-facing generation proof, and the same provider path is reused inside SocialOS where production summaries and draft generation actually matter."
 
 ## Slide 13 · Appendix · AI Agents for Good
 Suggested read:
 
-"AI Agents for Good reframes the same memory and follow-through system as community support. Live FLock SDG triage labels the impact context, urgency, and next action, and then SocialOS carries that into relationship memory and follow-up."
+"AI Agents for Good reframes the same memory and follow-through system as community support. Live FLock SDG triage labels the impact context, urgency, and next action, and then SocialOS carries that into relationship memory, outreach lanes, and the optional Telegram volunteer channel."

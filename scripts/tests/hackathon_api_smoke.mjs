@@ -46,6 +46,7 @@ async function main() {
       assert(typeof bounty.localRecordRoute === 'string' && bounty.localRecordRoute.length > 0, 'bounty cards should expose local recording routes');
       assert(typeof bounty.publicAnchor === 'string' && bounty.publicAnchor.includes('#bounty-'), 'bounty cards should expose public anchors');
       assert(typeof bounty.proofJsonUrl === 'string' && bounty.proofJsonUrl.includes('/data/proofs/'), 'bounty cards should expose proof JSON URLs');
+      assert(typeof bounty.sponsor === 'string' && bounty.sponsor.length > 0, 'bounty cards should expose sponsor metadata');
       assert(typeof bounty.provider === 'string', 'bounty cards should expose provider metadata');
       assert(typeof bounty.live === 'boolean', 'bounty cards should expose live metadata');
       assert(typeof bounty.fallbackUsed === 'boolean', 'bounty cards should expose fallback metadata');
@@ -80,7 +81,13 @@ async function main() {
     assert(typeof flock.proof?.model === 'string', 'flock triage should expose model proof');
     assert(typeof flock.proof?.live === 'boolean', 'flock triage should expose live proof metadata');
     assert(typeof flock.proof?.fallbackUsed === 'boolean', 'flock triage should expose fallback proof metadata');
+    assert(flock.proof?.openSourceModel === true, 'flock triage should mark the open-source model requirement explicitly');
     assert(typeof flock.auditId === 'string' && flock.auditId.length > 0, 'flock triage should write audit evidence');
+
+    const telegramStatus = await getJson(api.baseUrl, '/integrations/telegram/status');
+    assert(telegramStatus.channel === 'telegram', 'telegram status should expose the telegram channel label');
+    assert(telegramStatus.transport === 'bot-api', 'telegram status should expose transport metadata');
+    assert(typeof telegramStatus.configured === 'boolean', 'telegram status should expose configured metadata');
 
     const workspace = await postJson(api.baseUrl, '/workspace/chat', {
       text: 'Help me remember the new friend I met at the workshop and prepare a follow-up.',
@@ -91,6 +98,8 @@ async function main() {
     assert(workspace.bountyMode === 'z-ai-general', 'workspace chat should retain bountyMode');
     assert(typeof workspace.modelRouting?.effectiveProvider === 'string', 'workspace chat should expose model routing');
     assert(typeof workspace.modelRouting?.fallbackUsed === 'boolean', 'workspace chat should expose routing fallback metadata');
+    assert(typeof workspace.modelRouting?.captureFallbackUsed === 'boolean', 'workspace chat should expose capture fallback metadata');
+    assert(typeof workspace.modelRouting?.workspaceFallbackUsed === 'boolean', 'workspace chat should expose workspace fallback metadata');
 
     const event = await postJson(api.baseUrl, '/events', {
       title: 'Hackathon Community Workshop Follow-up',
@@ -113,7 +122,18 @@ async function main() {
 
     const filteredProofs = await getJson(api.baseUrl, '/proofs?bounty=z-ai-general&limit=12');
     assert(filteredProofs.proofs.length > 0, 'filtered proofs should return the bounty-specific proof set');
+    assert(filteredProofs.id === 'z-ai-general', 'filtered proofs should expose the bounty id at the top level');
+    assert(filteredProofs.partnerLabel === 'Z.AI GLM', 'filtered proofs should expose the partner label at the top level');
+    assert(typeof filteredProofs.publicAnchor === 'string' && filteredProofs.publicAnchor.includes('#bounty-z-ai-general'), 'filtered proofs should expose the public anchor at the top level');
     assert(filteredProofs.proofs.every((proof) => typeof proof.proofJsonUrl === 'string' && proof.proofJsonUrl.length > 0), 'filtered proofs should expose public proof JSON links');
+
+    const aiProofs = await getJson(api.baseUrl, '/proofs?bounty=ai-agents-for-good&limit=12');
+    assert(aiProofs.id === 'ai-agents-for-good', 'AI Agents for Good proofs should expose the bounty id at the top level');
+    assert(aiProofs.sponsor === 'FLock.io', 'AI Agents for Good proofs should expose sponsor metadata at the top level');
+    assert(typeof aiProofs.live === 'boolean', 'AI Agents for Good proofs should expose live metadata at the top level');
+    assert(aiProofs.proofs.some((proof) => proof.kind === 'flock'), 'AI Agents for Good should include a FLock proof card');
+    assert(aiProofs.proofs.some((proof) => proof.kind === 'multi-channel'), 'AI Agents for Good should include a multi-channel proof card');
+    assert(aiProofs.proofs.some((proof) => proof.kind === 'telegram'), 'AI Agents for Good should include a Telegram proof card');
 
     if (liveKeysPresent) {
       assert(glm.proof.fallbackUsed === false, 'glm proof should be live when GLM_API_KEY is present');

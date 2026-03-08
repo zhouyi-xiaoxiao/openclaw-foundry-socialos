@@ -1,18 +1,18 @@
 {
-  "eventId": "event_8929199d8abb492d9b70a5df82141af7",
+  "eventId": "event_f35ccda2a5564b94b90b5df937c9fe42",
   "bountyMode": "z-ai-general",
   "provider": "glm",
   "count": 2,
   "drafts": [
     {
-      "draftId": "draft_9247052bb8484c478117c7aa5e522a06",
-      "eventId": "event_8929199d8abb492d9b70a5df82141af7",
+      "draftId": "draft_0fc0b0e5327c4a2fa6b7073e646b0622",
+      "eventId": "event_f35ccda2a5564b94b90b5df937c9fe42",
       "eventTitle": "Community Mentor Follow-up",
       "platform": "linkedin",
       "platformLabel": "LinkedIn",
       "platformShellLabel": "LinkedIn",
       "language": "en",
-      "content": "Had a great follow-up session with student mentors and organizers after our community workshop. The conversation reinforced something important: community building isn't just about enthusiasm. It's about having systems that actually support the work. We walked through how Quick Capture, People, Drafts, Queue, and Self Mirror function as one connected workflow. Not separate tools. One loop. For student leaders juggling classes, events, and community engagement, this kind of infrastructure matters. It turns scattered ideas into publishable content without the usual friction. The best part? Watching mentors connect the dots between their own workflows and what they can teach others. Grateful for the energy everyone brought. This is how we build lasting communities. What systems have helped you sustain your community work?",
+      "content": "Community Mentor Follow-up: Building systems, not just content Had a great session with student organizers and mentors after our community workshop. The conversation kept circling back to one thing: how do you sustain momentum after the energy fades? The answer isn't more motivation. It's better infrastructure. We walked through how Quick Capture, People, Drafts, Queue, and Self Mirror work together as one workflow. Not as separate tools you juggle, but as an operating loop that keeps community building sustainable. For student organizers juggling classes, events, and leadership roles, this matters. You stop losing ideas in notes apps. You stop forgetting follow-ups. You stop starting from zero every semester. The mentors in the room saw it immediately: this is how you hand off responsibilities without losing institutional memory. Grateful for the honest questions and real-world scenarios everyone brought. This is how SocialOS gets better. What's your biggest challenge with sustaining community momentum? Drop a comment below. #CommunityBuilding #StudentLeadership #SocialOS #Mentorship #Organizing",
       "metadata": {
         "source": "api.drafts_generate",
         "capability": {
@@ -53,7 +53,7 @@
           "codexAssist": [
             "Codex can further refine tone, structure, CTA, and media notes."
           ],
-          "preview": "Had a great follow-up session with student mentors and organizers after our community workshop. The conversation reinforced something important: community building isn't just about enthusiasm. It's about having systems that actually support the work. We walked through how Quick Capture, People, Drafts, Queue, and Self Mirror function as one connected workflow. Not separate tools. One loop. For student leaders juggling classes, events, and community engagement, this kind of infrastructure matters. It turns scattered ideas into publishable content without the usual friction. The best part? Watching mentors connect the dots between their own workflows and what they can teach others. Grateful for the energy everyone brought. This is how we build lasting communities. What systems have helped you sustain your community work?"
+          "preview": "Community Mentor Follow-up: Building systems, not just content Had a great session with student organizers and mentors after our community workshop. The conversation kept circling back to one thing: how do you sustain momentum after the energy fades? The answer isn't more motivation. It's better infrastructure. We walked through how Quick Capture, People, Drafts, Queue, and Self Mirror work together as one workflow. Not as separate tools you juggle, but as an operating loop that keeps community building sustainable. For student organizers juggling classes, events, and leadership roles, this matters. You stop losing ideas in notes apps. You stop forgetting follow-ups. You stop starting from zero every semester. The mentors in the room saw it immediately: this is how you hand off responsibilities without losing institutional memory. Grateful for the honest questions and real-world scenarios everyone brought. This is how SocialOS gets better. What's your biggest challenge with sustaining community momentum? Drop a comment below. #CommunityBuilding #StudentLeadership #SocialOS #Mentorship #Organizing"
         },
         "variants": [],
         "validation": null,
@@ -109,61 +109,61 @@
         "codexAssist": [
           "Codex can further refine tone, structure, CTA, and media notes."
         ],
-        "preview": "Had a great follow-up session with student mentors and organizers after our community workshop. The conversation reinforced something important: community building isn't just about enthusiasm. It's about having systems that actually support the work. We walked through how Quick Capture, People, Drafts, Queue, and Self Mirror function as one connected workflow. Not separate tools. One loop. For student leaders juggling classes, events, and community engagement, this kind of infrastructure matters. It turns scattered ideas into publishable content without the usual friction. The best part? Watching mentors connect the dots between their own workflows and what they can teach others. Grateful for the energy everyone brought. This is how we build lasting communities. What systems have helped you sustain your community work?"
+        "preview": "Community Mentor Follow-up: Building systems, not just content Had a great session with student organizers and mentors after our community workshop. The conversation kept circling back to one thing: how do you sustain momentum after the energy fades? The answer isn't more motivation. It's better infrastructure. We walked through how Quick Capture, People, Drafts, Queue, and Self Mirror work together as one workflow. Not as separate tools you juggle, but as an operating loop that keeps community building sustainable. For student organizers juggling classes, events, and leadership roles, this matters. You stop losing ideas in notes apps. You stop forgetting follow-ups. You stop starting from zero every semester. The mentors in the room saw it immediately: this is how you hand off responsibilities without losing institutional memory. Grateful for the honest questions and real-world scenarios everyone brought. This is how SocialOS gets better. What's your biggest challenge with sustaining community momentum? Drop a comment below. #CommunityBuilding #StudentLeadership #SocialOS #Mentorship #Organizing"
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T22:33:00.819Z"
+      "createdAt": "2026-03-07T23:59:15.567Z"
     },
     {
-      "draftId": "draft_00dc1ff2867e4366857c6679a586a454",
-      "eventId": "event_8929199d8abb492d9b70a5df82141af7",
+      "draftId": "draft_dc57f7646a7142f59842fbf0b9ae8fb1",
+      "eventId": "event_f35ccda2a5564b94b90b5df937c9fe42",
       "eventTitle": "Community Mentor Follow-up",
-      "platform": "zhihu",
-      "platformLabel": "Zhihu",
-      "platformShellLabel": "Zhihu",
-      "language": "zh",
-      "content": "社区导师跟进活动结束后，有几点实操心得想分享。 这次和学员导师、组织者的交流，让我对「后续跟进」这件事有了新的理解。 第一，跟进不是简单发个消息，而是建立可追溯的连接。SocialOS 的核心价值就在这里——录入、检索、生成、发布的数据连续性。导师反馈、学员问题、活动记录，如果散落在不同工具里，后续跟进就会变成「想起来才做」的事。 第二，卡点往往出现在信息断层。这次活动后，有导师提到：想回顾之前讨论的内容，但找不到入口。这说明我们的检索环节还不够顺畅。 第三，稳定演示比功能堆砌更重要。与其追求大而全，先让核心流程跑通——导师能快速找到历史记录，组织者能看到跟进状态。 如果你也在做社区运营或导师体系，欢迎聊聊你的跟进方式。 #社区运营 #导师体系 #SocialOS #实操复盘",
+      "platform": "x",
+      "platformLabel": "X",
+      "platformShellLabel": "X",
+      "language": "en",
+      "content": "Had a great follow-up session with our student mentors and organizers after the community workshop. The energy in the room was real. What stood out: the best community builders aren't chasing metrics. They're showing up consistently, listening first, and shipping second. That's…",
       "metadata": {
         "source": "api.drafts_generate",
         "capability": {
-          "supportLevel": "L1 Assisted",
-          "lane": "publish-package",
-          "entryTarget": "Zhihu editor",
-          "liveEligible": false,
-          "blockedBy": "final publish stays manual"
+          "supportLevel": "L2 Auto Publish (credentials gated)",
+          "lane": "publisher",
+          "entryTarget": "X web/API publishing lane",
+          "liveEligible": true,
+          "blockedBy": "requires live mode + credentials"
         },
         "publishPackage": {
-          "supportLevel": "L1 Assisted",
-          "lane": "publish-package",
-          "entryTarget": "Zhihu editor",
-          "entryUrl": "https://zhuanlan.zhihu.com/write",
-          "liveEligible": false,
-          "blockedBy": "final publish stays manual",
-          "localizedTitle": "这次推进的后续跟进",
-          "title": "如果把“这次推进的后续跟进”讲透，最值得说的是哪几件事？",
-          "hook": "这次我想用“拆解思路”的角度，面向想看完整拆解的人分享这次进展。",
-          "body": "对方主要在做社区运营。这次聊到的重点是社区运营。",
-          "cta": "如果你也在做类似方向，欢迎交流。",
+          "supportLevel": "L2 Auto Publish (credentials gated)",
+          "lane": "publisher",
+          "entryTarget": "X web/API publishing lane",
+          "entryUrl": "https://x.com/compose/post",
+          "liveEligible": true,
+          "blockedBy": "requires live mode + credentials",
+          "localizedTitle": "Community Mentor Follow-up",
+          "title": "Community Mentor Follow-up: one operator takeaway after shipping this.",
+          "hook": "Sharing this for builders shipping product and AI workflows, framed as operator update.",
+          "body": "The conversation was grounded in community. We focused on community building.",
+          "cta": "Reply if you want the short operator notes behind this workflow.",
           "hashtags": [
-            "#社交系统",
-            "#行动复盘",
-            "#内容实验",
-            "#增长"
+            "#socialos",
+            "#builder",
+            "#campaign",
+            "#ship"
           ],
           "imageIdeas": [
-            "一张能体现“这次推进的后续跟进”现场感或结果感的主图",
-            "一张细节图或过程图，帮助解释背景"
+            "A lead image that makes Community Mentor Follow-up feel tangible",
+            "A supporting detail shot or screenshot for context"
           ],
           "steps": [
-            "复制准备好的正文和说明。",
-            "打开Zhihu editor。",
-            "检查语气、标签、封面建议后再发布。"
+            "Queue for review in SocialOS.",
+            "If live mode + credentials are ready, promote through publisher.",
+            "Review tone, tags, and media notes before publishing."
           ],
           "codexAssist": [
-            "可以继续帮你改语气、改结构、补 CTA、补图文大纲"
+            "Codex can further refine tone, structure, CTA, and media notes."
           ],
-          "preview": "社区导师跟进活动结束后，有几点实操心得想分享。 这次和学员导师、组织者的交流，让我对「后续跟进」这件事有了新的理解。 第一，跟进不是简单发个消息，而是建立可追溯的连接。SocialOS 的核心价值就在这里——录入、检索、生成、发布的数据连续性。导师反馈、学员问题、活动记录，如果散落在不同工具里，后续跟进就会变成「想起来才做」的事。 第二，卡点往往出现在信息断层。这次活动后，有导师提到：想回顾之前讨论的内容，但找不到入口。这说明我们的检索环节还不够顺畅。 第三，稳定演示比功能堆砌更重要。与其追求大而全，先让核心流程跑通——导师能快速找到历史记录，组织者能看到跟进状态。 如果你也在做社区运营或导师体系，欢迎聊聊你的跟进方式。 #社区运营 #导师体系 #SocialOS #实操复盘"
+          "preview": "Had a great follow-up session with our student mentors and organizers after the community workshop. The energy in the room was real. What stood out: the best community builders aren't chasing metrics. They're showing up consistently, listening first, and shipping second. That's…"
         },
         "variants": [],
         "validation": null,
@@ -182,51 +182,51 @@
         }
       },
       "capability": {
-        "supportLevel": "L1 Assisted",
-        "lane": "publish-package",
-        "entryTarget": "Zhihu editor",
-        "liveEligible": false,
-        "blockedBy": "final publish stays manual"
+        "supportLevel": "L2 Auto Publish (credentials gated)",
+        "lane": "publisher",
+        "entryTarget": "X web/API publishing lane",
+        "liveEligible": true,
+        "blockedBy": "requires live mode + credentials"
       },
       "publishPackage": {
-        "supportLevel": "L1 Assisted",
-        "lane": "publish-package",
-        "entryTarget": "Zhihu editor",
-        "entryUrl": "https://zhuanlan.zhihu.com/write",
-        "liveEligible": false,
-        "blockedBy": "final publish stays manual",
-        "localizedTitle": "这次推进的后续跟进",
-        "title": "如果把“这次推进的后续跟进”讲透，最值得说的是哪几件事？",
-        "hook": "这次我想用“拆解思路”的角度，面向想看完整拆解的人分享这次进展。",
-        "body": "对方主要在做社区运营。这次聊到的重点是社区运营。",
-        "cta": "如果你也在做类似方向，欢迎交流。",
+        "supportLevel": "L2 Auto Publish (credentials gated)",
+        "lane": "publisher",
+        "entryTarget": "X web/API publishing lane",
+        "entryUrl": "https://x.com/compose/post",
+        "liveEligible": true,
+        "blockedBy": "requires live mode + credentials",
+        "localizedTitle": "Community Mentor Follow-up",
+        "title": "Community Mentor Follow-up: one operator takeaway after shipping this.",
+        "hook": "Sharing this for builders shipping product and AI workflows, framed as operator update.",
+        "body": "The conversation was grounded in community. We focused on community building.",
+        "cta": "Reply if you want the short operator notes behind this workflow.",
         "hashtags": [
-          "#社交系统",
-          "#行动复盘",
-          "#内容实验",
-          "#增长"
+          "#socialos",
+          "#builder",
+          "#campaign",
+          "#ship"
         ],
         "imageIdeas": [
-          "一张能体现“这次推进的后续跟进”现场感或结果感的主图",
-          "一张细节图或过程图，帮助解释背景"
+          "A lead image that makes Community Mentor Follow-up feel tangible",
+          "A supporting detail shot or screenshot for context"
         ],
         "steps": [
-          "复制准备好的正文和说明。",
-          "打开Zhihu editor。",
-          "检查语气、标签、封面建议后再发布。"
+          "Queue for review in SocialOS.",
+          "If live mode + credentials are ready, promote through publisher.",
+          "Review tone, tags, and media notes before publishing."
         ],
         "codexAssist": [
-          "可以继续帮你改语气、改结构、补 CTA、补图文大纲"
+          "Codex can further refine tone, structure, CTA, and media notes."
         ],
-        "preview": "社区导师跟进活动结束后，有几点实操心得想分享。 这次和学员导师、组织者的交流，让我对「后续跟进」这件事有了新的理解。 第一，跟进不是简单发个消息，而是建立可追溯的连接。SocialOS 的核心价值就在这里——录入、检索、生成、发布的数据连续性。导师反馈、学员问题、活动记录，如果散落在不同工具里，后续跟进就会变成「想起来才做」的事。 第二，卡点往往出现在信息断层。这次活动后，有导师提到：想回顾之前讨论的内容，但找不到入口。这说明我们的检索环节还不够顺畅。 第三，稳定演示比功能堆砌更重要。与其追求大而全，先让核心流程跑通——导师能快速找到历史记录，组织者能看到跟进状态。 如果你也在做社区运营或导师体系，欢迎聊聊你的跟进方式。 #社区运营 #导师体系 #SocialOS #实操复盘"
+        "preview": "Had a great follow-up session with our student mentors and organizers after the community workshop. The energy in the room was real. What stood out: the best community builders aren't chasing metrics. They're showing up consistently, listening first, and shipping second. That's…"
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T22:33:15.764Z"
+      "createdAt": "2026-03-07T23:59:25.241Z"
     }
   ],
-  "auditId": "audit_6bab8d7761cf45c880616079b0d72f88",
-  "digestId": "digest_18531966d0ad4e39bd5fe678c7d98e77",
+  "auditId": "audit_270f9fc6b4c3466b85abdf74a602acee",
+  "digestId": "digest_18e8bc8cf33a4dcd94e392506e55abaa",
   "proof": {
     "requestedProvider": "glm",
     "bountyMode": "z-ai-general",
@@ -238,10 +238,10 @@
     "model": "glm-5",
     "live": true,
     "fallbackUsed": false,
-    "capturedAt": "2026-03-07T22:33:15.768Z",
+    "capturedAt": "2026-03-07T23:59:25.251Z",
     "generations": [
       {
-        "draftId": "draft_9247052bb8484c478117c7aa5e522a06",
+        "draftId": "draft_0fc0b0e5327c4a2fa6b7073e646b0622",
         "platform": "linkedin",
         "language": "en",
         "provider": "glm",
@@ -251,9 +251,9 @@
         "reason": "provider-generated"
       },
       {
-        "draftId": "draft_00dc1ff2867e4366857c6679a586a454",
-        "platform": "zhihu",
-        "language": "zh",
+        "draftId": "draft_dc57f7646a7142f59842fbf0b9ae8fb1",
+        "platform": "x",
+        "language": "en",
         "provider": "glm",
         "model": "glm-5",
         "live": true,

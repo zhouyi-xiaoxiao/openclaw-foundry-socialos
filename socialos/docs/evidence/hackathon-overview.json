@@ -1,6 +1,6 @@
 {
   "mode": "all-bounties",
-  "generatedAt": "2026-03-07T22:33:17.966Z",
+  "generatedAt": "2026-03-07T23:59:27.752Z",
   "integrations": [
     {
       "id": "openclaw",
@@ -73,6 +73,30 @@
       "live": true,
       "fallbackUsed": false,
       "route": "/hackathon?bounty=ai-agents-for-good"
+    },
+    {
+      "id": "channels",
+      "label": "Multi-channel Outreach",
+      "configured": true,
+      "status": "ready",
+      "summary": "SocialOS already ships outreach lanes for LinkedIn, X, Instagram, Zhihu, Rednote, WeChat Moments, and WeChat Official Account.",
+      "provider": "social-channels",
+      "model": "",
+      "live": true,
+      "fallbackUsed": false,
+      "route": "/drafts"
+    },
+    {
+      "id": "telegram",
+      "label": "Telegram Volunteer Channel",
+      "configured": false,
+      "status": "pending",
+      "summary": "Add TELEGRAM_BOT_TOKEN and TELEGRAM_DEFAULT_CHAT_ID to activate the Telegram volunteer channel.",
+      "provider": "telegram",
+      "model": "",
+      "live": false,
+      "fallbackUsed": true,
+      "route": "/hackathon?bounty=ai-agents-for-good"
     }
   ],
   "routes": [
@@ -102,6 +126,7 @@
       "id": "claw-for-human",
       "label": "Claw for Human",
       "prize": "$500 USD",
+      "sponsor": "Imperial Blockchain",
       "route": "/demo",
       "localRecordRoute": "/demo",
       "partnerLabel": "OpenClaw Runtime",
@@ -115,6 +140,11 @@
       "integrationSummary": "OpenClaw runs the orchestration, memory, compliance, and publishing lanes while SocialOS exposes one guided loop across Workspace, Contacts, Drafts, Queue, and Mirror.",
       "technicalImplementation": "The Node API persists people, events, drafts, queue state, and mirror evidence in SQLite while the OpenClaw runtime keeps the product lanes separated behind the same UI.",
       "judgeClosing": "This is Claw translated into a usable relationship operating system, not left as a shell-only interface.",
+      "eligibilityChecklist": [
+        "Show a real OpenClaw-powered product instead of a shell-only workflow.",
+        "Use the shared demo route to make the orchestration legible to non-technical judges.",
+        "Close on the public hub anchor and proof JSON so the submission stays reviewable after the video."
+      ],
       "integrations": [
         "openclaw",
         "workspace",
@@ -205,6 +235,9 @@
           "publicAnchor": "/hackathon/",
           "proofJsonUrl": "/data/proofs/all.json",
           "deckAppendixSlide": "Shared appendix",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": false,
           "capturedAt": ""
         },
         {
@@ -230,6 +263,9 @@
           "publicAnchor": "/hackathon/",
           "proofJsonUrl": "/data/proofs/all.json",
           "deckAppendixSlide": "Shared appendix",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": false,
           "capturedAt": ""
         },
         {
@@ -254,6 +290,9 @@
           "publicAnchor": "/hackathon/",
           "proofJsonUrl": "/data/proofs/all.json",
           "deckAppendixSlide": "Shared appendix",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": false,
           "capturedAt": ""
         },
         {
@@ -281,6 +320,9 @@
           "publicAnchor": "/hackathon/",
           "proofJsonUrl": "/data/proofs/all.json",
           "deckAppendixSlide": "Shared appendix",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": false,
           "capturedAt": ""
         }
       ]
@@ -289,19 +331,25 @@
       "id": "animoca",
       "label": "Animoca Bounty",
       "prize": "$1,000 USD",
+      "sponsor": "Animoca Brands",
       "route": "/hackathon?bounty=animoca",
       "localRecordRoute": "/hackathon?bounty=animoca",
-      "partnerLabel": "Persistent Identity + OpenClaw Lanes",
+      "partnerLabel": "Animoca-style Identity, Memory, and Cognition",
       "apiSurface": "GET /proofs?bounty=animoca",
-      "infrastructure": "SQLite people graph + identity/event linking + multi-lane OpenClaw orchestration",
+      "infrastructure": "SQLite identity graph + event memory + OpenClaw lane coordination for long-horizon agent work",
       "audience": "judges looking for identity, memory, and multi-agent coordination",
       "problem": "Creator and community workflows break when identity, relationship memory, and long-horizon coordination are not persistent across sessions.",
-      "hook": "Position SocialOS as an identity-rich agent system for creator and community ops.",
-      "fit": "The repo already has persistent people memory, linked identities, and explicit agent lanes for memory, compliance, and publishing.",
+      "hook": "Position SocialOS as an identity-rich agent system for creator, operator, and community workflows.",
+      "fit": "The repo already has persistent people memory, linked identities, event continuity, and explicit agent lanes for memory, compliance, and publishing.",
       "uniqueAngle": "Persistent identity and long-horizon memory instead of a one-shot agent demo.",
-      "integrationSummary": "The same product loop already links Person, Identity, Interaction, Event, Draft, and Mirror state while OpenClaw coordinates the jobs needed to keep that memory actionable.",
-      "technicalImplementation": "The schema keeps linked people and event context first-class, and the runtime splits memory, compliance, and publishing responsibilities into visible lanes instead of a monolithic chatbot.",
+      "integrationSummary": "The same product loop already links Person, Identity, Interaction, Event, Draft, and Mirror state while OpenClaw coordinates the memory, compliance, and publishing jobs needed to keep that identity graph actionable.",
+      "technicalImplementation": "The schema keeps linked people and event context first-class, and the runtime splits memory, compliance, and publishing responsibilities into visible lanes instead of a monolithic chatbot. That gives SocialOS the identity, memory, and cognition posture Animoca is asking for.",
       "judgeClosing": "This is persistent identity and memory for creator-community operations, not a one-task assistant demo.",
+      "eligibilityChecklist": [
+        "Show identity, memory, and cognition working together across the same person or community thread.",
+        "Keep the demo focused on long-horizon continuity, not one-off generation.",
+        "Use the agent-lane trace to make the multi-agent shape explicit to judges."
+      ],
       "integrations": [
         "openclaw",
         "workspace",
@@ -392,6 +440,9 @@
           "publicAnchor": "/hackathon/",
           "proofJsonUrl": "/data/proofs/all.json",
           "deckAppendixSlide": "Shared appendix",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": false,
           "capturedAt": ""
         },
         {
@@ -417,6 +468,9 @@
           "publicAnchor": "/hackathon/",
           "proofJsonUrl": "/data/proofs/all.json",
           "deckAppendixSlide": "Shared appendix",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": false,
           "capturedAt": ""
         },
         {
@@ -442,6 +496,9 @@
           "publicAnchor": "/hackathon/",
           "proofJsonUrl": "/data/proofs/all.json",
           "deckAppendixSlide": "Shared appendix",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": false,
           "capturedAt": ""
         },
         {
@@ -469,6 +526,9 @@
           "publicAnchor": "/hackathon/",
           "proofJsonUrl": "/data/proofs/all.json",
           "deckAppendixSlide": "Shared appendix",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": false,
           "capturedAt": ""
         }
       ]
@@ -477,6 +537,7 @@
       "id": "human-for-claw",
       "label": "Human for Claw",
       "prize": "$500 USD",
+      "sponsor": "Imperial Blockchain",
       "route": "/buddy",
       "localRecordRoute": "/buddy",
       "partnerLabel": "Buddy Guardrails on OpenClaw",
@@ -490,6 +551,11 @@
       "integrationSummary": "Buddy mode keeps the same SocialOS memory loop but narrows users into four safe tasks and removes any pressure to publish or configure complex automation.",
       "technicalImplementation": "The web layer hides risky controls, keeps the product loop loopback-only and dry-run, and routes users into capture, memory, follow-up, and reflection flows instead of open-ended execution.",
       "judgeClosing": "Buddy mode is intentionally narrower, safer, and easier to trust than a general-purpose agent.",
+      "eligibilityChecklist": [
+        "Show the four constrained Buddy tasks instead of the full operator surface.",
+        "Make the safety rails visible: dry-run only, trust-first defaults, and simpler language.",
+        "Keep the route emotionally approachable for younger or first-time users."
+      ],
       "integrations": [
         "openclaw",
         "buddy",
@@ -580,6 +646,9 @@
           "publicAnchor": "/hackathon/",
           "proofJsonUrl": "/data/proofs/all.json",
           "deckAppendixSlide": "Shared appendix",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": false,
           "capturedAt": ""
         },
         {
@@ -605,6 +674,9 @@
           "publicAnchor": "/hackathon/",
           "proofJsonUrl": "/data/proofs/all.json",
           "deckAppendixSlide": "Shared appendix",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": false,
           "capturedAt": ""
         },
         {
@@ -629,6 +701,9 @@
           "publicAnchor": "/hackathon/",
           "proofJsonUrl": "/data/proofs/all.json",
           "deckAppendixSlide": "Shared appendix",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": false,
           "capturedAt": ""
         },
         {
@@ -656,6 +731,9 @@
           "publicAnchor": "/hackathon/",
           "proofJsonUrl": "/data/proofs/all.json",
           "deckAppendixSlide": "Shared appendix",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": false,
           "capturedAt": ""
         }
       ]
@@ -664,19 +742,25 @@
       "id": "z-ai-general",
       "label": "Z.AI General",
       "prize": "$4,000 USD",
+      "sponsor": "Z.AI",
       "route": "/hackathon?bounty=z-ai-general",
       "localRecordRoute": "/hackathon?bounty=z-ai-general",
       "partnerLabel": "Z.AI GLM",
       "apiSurface": "POST /integrations/glm/generate",
-      "infrastructure": "GLM model routing inside Workspace chat, bilingual summarization, and draft generation",
+      "infrastructure": "GLM model routing inside Workspace support, judge summaries, and production draft generation",
       "audience": "judges who want a real GLM-powered prototype",
-      "problem": "Multilingual relationship workflows are usually split between English-first product logic and separate Chinese-language generation tooling.",
-      "hook": "Use GLM in the core multilingual SocialOS workflow, not as a side widget.",
-      "fit": "Workspace responses, bilingual summarization, and draft generation all map naturally onto the current product loop.",
-      "uniqueAngle": "Chinese + English creator workflow where GLM is a core path, not a decorative provider option.",
-      "integrationSummary": "GLM is routed through the native SocialOS flow: Workspace chat, bilingual summary generation, and platform-native draft generation all call the GLM path instead of a mock adapter.",
+      "problem": "Production agent workflows often bolt a model onto a demo page instead of making that model a core part of the real product loop.",
+      "hook": "Use GLM in the core SocialOS workflow, not as a side widget.",
+      "fit": "Workspace support, judge summaries, and draft generation all map naturally onto the current product loop, so GLM can become a first-class provider instead of a decorative plug-in.",
+      "uniqueAngle": "GLM is a core production path for summaries, reasoning, and content generation, not a checkbox integration.",
+      "integrationSummary": "GLM is routed through the native SocialOS flow: judge-facing summary generation, Workspace support, and platform-native draft generation all call the same GLM path instead of a mock adapter.",
       "technicalImplementation": "The API exposes a live GLM endpoint, records proof metadata into audit evidence, and reuses the same provider-aware routing path inside Workspace and Draft generation so the bounty is part of the product, not a side panel.",
-      "judgeClosing": "GLM is integrated into the real multilingual product loop and captured as live proof, not demonstrated as a decorative plug-in.",
+      "judgeClosing": "GLM is integrated into the real SocialOS loop and captured as live proof, not demonstrated as a decorative plug-in.",
+      "eligibilityChecklist": [
+        "Keep GLM as a core product dependency in the live demo and proof JSON.",
+        "Show the real generation path inside Workspace or Drafts, not an isolated API call only.",
+        "Close on a runnable prototype, a public repo, and a live proof surface."
+      ],
       "integrations": [
         "glm",
         "workspace",
@@ -731,7 +815,7 @@
           "route": "/deck"
         }
       ],
-      "proofCount": 6,
+      "proofCount": 8,
       "recommendedRoute": "/hackathon?bounty=z-ai-general",
       "publicAnchor": "/hackathon/#bounty-z-ai-general",
       "proofJsonUrl": "/data/proofs/z-ai-general.json",
@@ -740,11 +824,11 @@
       "model": "glm-5",
       "live": true,
       "fallbackUsed": false,
-      "capturedAt": "2026-03-07T22:33:15.768Z",
+      "capturedAt": "2026-03-07T23:59:25.251Z",
       "liveProofSummary": "2 drafts generated for Community Mentor Follow-up.",
       "proofs": [
         {
-          "id": "audit_6bab8d7761cf45c880616079b0d72f88",
+          "id": "audit_270f9fc6b4c3466b85abdf74a602acee",
           "kind": "glm",
           "status": "captured",
           "title": "Hackathon draft package generated",
@@ -753,13 +837,16 @@
             "z-ai-general"
           ],
           "route": "/hackathon?bounty=z-ai-general",
-          "source": "Audit audit_6bab8d7761cf45c880616079b0d72f88",
-          "createdAt": "2026-03-07T22:33:15.768Z",
+          "source": "Audit audit_270f9fc6b4c3466b85abdf74a602acee",
+          "createdAt": "2026-03-07T23:59:25.251Z",
           "provider": "glm",
           "model": "glm-5",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": false,
           "live": true,
           "fallbackUsed": false,
-          "capturedAt": "2026-03-07T22:33:15.768Z",
+          "capturedAt": "2026-03-07T23:59:25.251Z",
           "label": "Hackathon draft package generated",
           "bountyId": "z-ai-general",
           "localRecordRoute": "/hackathon?bounty=z-ai-general",
@@ -768,22 +855,25 @@
           "deckAppendixSlide": "Slide 12"
         },
         {
-          "id": "audit_9bb9487b811047c088c8e428a3bda645",
+          "id": "audit_df6008e8799d4336b74423ec1c4eda70",
           "kind": "glm",
           "status": "captured",
           "title": "Workspace hackathon run",
-          "summary": "Found Minghan Xiao — the London hackathon organizer you spoke with about builder communities and operator dashboards. There are existing drafts for that follow-up. Want me to open…",
+          "summary": "The best next follow-up with Minghan Xiao is a brief, value-forward message referencing your conversation about builder communities and operator dashboards—ideally within 48 hours…",
           "bounties": [
             "z-ai-general"
           ],
           "route": "/hackathon?bounty=z-ai-general",
-          "source": "Audit audit_9bb9487b811047c088c8e428a3bda645",
-          "createdAt": "2026-03-07T22:32:50.049Z",
+          "source": "Audit audit_df6008e8799d4336b74423ec1c4eda70",
+          "createdAt": "2026-03-07T23:58:58.863Z",
           "provider": "glm",
           "model": "glm-5",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": false,
           "live": true,
           "fallbackUsed": false,
-          "capturedAt": "2026-03-07T22:32:50.049Z",
+          "capturedAt": "2026-03-07T23:58:58.863Z",
           "label": "Workspace hackathon run",
           "bountyId": "z-ai-general",
           "localRecordRoute": "/hackathon?bounty=z-ai-general",
@@ -792,23 +882,26 @@
           "deckAppendixSlide": "Slide 12"
         },
         {
-          "id": "audit_d178b7c3235442679663ede60ef8c9fb",
+          "id": "audit_9d8d0d8a60e04b04b153098806210fef",
           "kind": "glm",
-          "status": "captured",
-          "title": "GLM generation run",
-          "summary": "EN: SocialOS fits Z.AI General by deploying AI agents to automate social intelligence, offering scalable infrastructure for decentralized social ecosystems. ZH: SocialOS 符合 Z.AI Ge",
+          "status": "fallback",
+          "title": "Workspace hackathon run",
+          "summary": "I turned At The Hackathon into a contact draft first. Save it if it looks right, or keep talking and we can refine it together.",
           "bounties": [
             "z-ai-general"
           ],
           "route": "/hackathon?bounty=z-ai-general",
-          "source": "Audit audit_d178b7c3235442679663ede60ef8c9fb",
-          "createdAt": "2026-03-07T22:32:25.722Z",
-          "provider": "glm",
-          "model": "glm-5",
-          "live": true,
-          "fallbackUsed": false,
-          "capturedAt": "2026-03-07T22:32:25.722Z",
-          "label": "GLM generation run",
+          "source": "Audit audit_9d8d0d8a60e04b04b153098806210fef",
+          "createdAt": "2026-03-07T23:58:23.042Z",
+          "provider": "local",
+          "model": "",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": true,
+          "live": false,
+          "fallbackUsed": true,
+          "capturedAt": "2026-03-07T23:58:23.042Z",
+          "label": "Workspace hackathon run",
           "bountyId": "z-ai-general",
           "localRecordRoute": "/hackathon?bounty=z-ai-general",
           "publicAnchor": "/hackathon/#bounty-z-ai-general",
@@ -816,29 +909,31 @@
           "deckAppendixSlide": "Slide 12"
         },
         {
-          "id": "proof-workspace-loop",
-          "kind": "ui",
-          "status": "ready",
-          "title": "Judge-ready Workspace loop already exists",
-          "summary": "Quick Capture, Contacts, Drafts, Queue, and Mirror already operate inside one loopback-only product surface.",
+          "id": "audit_e2f9730404c44a689387f17bdf3a0538",
+          "kind": "glm",
+          "status": "captured",
+          "title": "GLM generation run",
+          "summary": "SocialOS is a production-ready GLM-powered agent system because it combines a robust multi-agent architecture with real-time social media integration, offering DoraHacks judges a f",
           "bounties": [
-            "claw-for-human",
-            "animoca",
             "z-ai-general"
           ],
-          "route": "/demo",
-          "source": "socialos/apps/web/server.mjs",
-          "provider": "workspace-ui",
-          "model": "",
+          "route": "/hackathon?bounty=z-ai-general",
+          "source": "Audit audit_e2f9730404c44a689387f17bdf3a0538",
+          "createdAt": "2026-03-07T23:57:42.999Z",
+          "provider": "glm",
+          "model": "glm-5",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": false,
           "live": true,
           "fallbackUsed": false,
-          "localRecordRoute": "/demo",
-          "label": "Judge-ready Workspace loop already exists",
-          "bountyId": "claw-for-human",
-          "publicAnchor": "/hackathon/",
-          "proofJsonUrl": "/data/proofs/all.json",
-          "deckAppendixSlide": "Shared appendix",
-          "capturedAt": ""
+          "capturedAt": "2026-03-07T23:57:42.999Z",
+          "label": "GLM generation run",
+          "bountyId": "z-ai-general",
+          "localRecordRoute": "/hackathon?bounty=z-ai-general",
+          "publicAnchor": "/hackathon/#bounty-z-ai-general",
+          "proofJsonUrl": "/data/proofs/z-ai-general.json",
+          "deckAppendixSlide": "Slide 12"
         }
       ]
     },
@@ -846,32 +941,42 @@
       "id": "ai-agents-for-good",
       "label": "AI Agents for Good",
       "prize": "$5,000 USDT",
+      "sponsor": "FLock.io",
       "route": "/hackathon?bounty=ai-agents-for-good",
       "localRecordRoute": "/hackathon?bounty=ai-agents-for-good",
-      "partnerLabel": "FLock SDG Triage",
-      "apiSurface": "POST /integrations/flock/sdg-triage",
-      "infrastructure": "FLock SDG triage + SocialOS contacts/events/drafts follow-through",
+      "partnerLabel": "FLock SDG Triage + OpenClaw + Multi-channel Outreach",
+      "apiSurface": "POST /integrations/flock/sdg-triage + POST /integrations/telegram/send",
+      "infrastructure": "FLock SDG triage + OpenClaw memory loop + outreach lanes + Telegram volunteer channel",
       "audience": "judges looking for impact-focused agent workflows",
       "problem": "Impact workflows usually stop at categorization instead of carrying urgency and next action into a real coordination loop.",
       "hook": "Turn SocialOS into a community support and volunteer coordination operating system.",
-      "fit": "Contacts, events, follow-up drafts, and evidence-backed coordination already exist; FLock adds SDG triage and urgency scoring.",
+      "fit": "Contacts, events, follow-up drafts, and evidence-backed coordination already exist; FLock adds SDG triage and urgency scoring while SocialOS already ships multi-channel outreach lanes.",
       "uniqueAngle": "Long-term relationship memory and follow-through for impact work, not a one-turn charity chatbot.",
-      "integrationSummary": "FLock adds live SDG labeling, urgency scoring, and next-step guidance, then SocialOS promotes that result into contacts, events, follow-up drafts, and queue-visible coordination.",
-      "technicalImplementation": "The API calls the live FLock structured model path, records provider metadata into proof evidence, and keeps the resulting action inside the same relationship-memory workflow used elsewhere in the product.",
+      "integrationSummary": "FLock adds live SDG labeling, urgency scoring, and next-step guidance, then SocialOS promotes that result into contacts, events, follow-up drafts, queue-visible coordination, and a Telegram volunteer channel when credentials are present.",
+      "technicalImplementation": "The API calls the live FLock structured-model path, marks the route as open-source-model-backed, records provider metadata into proof evidence, and keeps the resulting action inside the same OpenClaw-orchestrated relationship-memory workflow used elsewhere in the product. The impact track also exposes a Telegram send/status/webhook surface plus the existing outreach lanes for multi-channel deployment.",
       "judgeClosing": "This is not a charity chatbot. It is impact triage plus relationship memory and actual follow-through.",
+      "eligibilityChecklist": [
+        "Show OpenClaw, FLock, and the SDG-aligned triage result inside the same workflow.",
+        "Expose the multi-channel story through outreach lanes and the Telegram volunteer channel.",
+        "Make the open-source model requirement explicit in the proof metadata."
+      ],
       "integrations": [
         "openclaw",
         "flock",
+        "channels",
         "workspace"
       ],
       "proofKinds": [
         "flock",
         "openclaw",
-        "memory"
+        "memory",
+        "multi-channel",
+        "telegram"
       ],
       "demoSteps": [
         "Open /hackathon",
         "Run SDG triage",
+        "Show channel proof",
         "Promote the result into follow-up actions and drafts"
       ],
       "status": "ready",
@@ -901,6 +1006,18 @@
           "route": "/hackathon?bounty=ai-agents-for-good"
         },
         {
+          "id": "channels",
+          "label": "Multi-channel Outreach",
+          "configured": true,
+          "status": "ready",
+          "summary": "SocialOS already ships outreach lanes for LinkedIn, X, Instagram, Zhihu, Rednote, WeChat Moments, and WeChat Official Account.",
+          "provider": "social-channels",
+          "model": "",
+          "live": true,
+          "fallbackUsed": false,
+          "route": "/drafts"
+        },
+        {
           "id": "workspace",
           "label": "Workspace UI",
           "configured": true,
@@ -913,7 +1030,7 @@
           "route": "/demo"
         }
       ],
-      "proofCount": 5,
+      "proofCount": 7,
       "recommendedRoute": "/hackathon?bounty=ai-agents-for-good",
       "publicAnchor": "/hackathon/#bounty-ai-agents-for-good",
       "proofJsonUrl": "/data/proofs/ai-agents-for-good.json",
@@ -922,26 +1039,29 @@
       "model": "qwen3-235b-a22b-instruct-2507",
       "live": true,
       "fallbackUsed": false,
-      "capturedAt": "2026-03-07T22:33:17.936Z",
-      "liveProofSummary": "SDG 4: Quality Education · medium · Capture volunteer and student profiles, create a workshop event with bilingual reminders, and schedule automated follow-up messages to reinforce mentor-student connections.",
+      "capturedAt": "2026-03-07T23:59:27.697Z",
+      "liveProofSummary": "Live FLock triage is captured and the product also exposes multi-channel outreach lanes for volunteer follow-through.",
       "proofs": [
         {
-          "id": "audit_6146172c872f4e918b098aad7e4c4703",
+          "id": "audit_1a7b0275735b4d5998b7b5d9c05ef047",
           "kind": "flock",
           "status": "captured",
           "title": "FLock SDG triage run",
-          "summary": "SDG 4: Quality Education · medium · Capture volunteer and student profiles, create a workshop event with bilingual reminders, and schedule automated follow-up messages to reinforce mentor-student connections.",
+          "summary": "SDG 4: Quality Education · medium · Capture volunteer mentor profiles and student needs, create a workshop event, and generate automated follow-up tasks for post-workshop engagement.",
           "bounties": [
             "ai-agents-for-good"
           ],
           "route": "/hackathon?bounty=ai-agents-for-good",
-          "source": "Audit audit_6146172c872f4e918b098aad7e4c4703",
-          "createdAt": "2026-03-07T22:33:17.936Z",
+          "source": "Audit audit_1a7b0275735b4d5998b7b5d9c05ef047",
+          "createdAt": "2026-03-07T23:59:27.697Z",
           "provider": "flock",
           "model": "qwen3-235b-a22b-instruct-2507",
+          "channel": "web-workspace",
+          "transport": "http",
+          "openSourceModel": true,
           "live": true,
           "fallbackUsed": false,
-          "capturedAt": "2026-03-07T22:33:17.936Z",
+          "capturedAt": "2026-03-07T23:59:27.697Z",
           "label": "FLock SDG triage run",
           "bountyId": "ai-agents-for-good",
           "localRecordRoute": "/hackathon?bounty=ai-agents-for-good",
@@ -973,6 +1093,9 @@
           "publicAnchor": "/hackathon/",
           "proofJsonUrl": "/data/proofs/all.json",
           "deckAppendixSlide": "Shared appendix",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": false,
           "capturedAt": ""
         },
         {
@@ -998,6 +1121,9 @@
           "publicAnchor": "/hackathon/",
           "proofJsonUrl": "/data/proofs/all.json",
           "deckAppendixSlide": "Shared appendix",
+          "channel": "",
+          "transport": "",
+          "openSourceModel": false,
           "capturedAt": ""
         },
         {
@@ -1013,6 +1139,7 @@
           "source": "socialos/apps/api/server.mjs",
           "provider": "flock",
           "model": "qwen3-235b-a22b-instruct-2507",
+          "openSourceModel": true,
           "live": true,
           "fallbackUsed": false,
           "localRecordRoute": "/hackathon?bounty=ai-agents-for-good",
@@ -1021,6 +1148,8 @@
           "publicAnchor": "/hackathon/#bounty-ai-agents-for-good",
           "proofJsonUrl": "/data/proofs/ai-agents-for-good.json",
           "deckAppendixSlide": "Slide 13",
+          "channel": "",
+          "transport": "",
           "capturedAt": ""
         }
       ]
@@ -1028,22 +1157,25 @@
   ],
   "proofsPreview": [
     {
-      "id": "audit_6146172c872f4e918b098aad7e4c4703",
+      "id": "audit_1a7b0275735b4d5998b7b5d9c05ef047",
       "kind": "flock",
       "status": "captured",
       "title": "FLock SDG triage run",
-      "summary": "SDG 4: Quality Education · medium · Capture volunteer and student profiles, create a workshop event with bilingual reminders, and schedule automated follow-up messages to reinforce mentor-student connections.",
+      "summary": "SDG 4: Quality Education · medium · Capture volunteer mentor profiles and student needs, create a workshop event, and generate automated follow-up tasks for post-workshop engagement.",
       "bounties": [
         "ai-agents-for-good"
       ],
       "route": "/hackathon?bounty=ai-agents-for-good",
-      "source": "Audit audit_6146172c872f4e918b098aad7e4c4703",
-      "createdAt": "2026-03-07T22:33:17.936Z",
+      "source": "Audit audit_1a7b0275735b4d5998b7b5d9c05ef047",
+      "createdAt": "2026-03-07T23:59:27.697Z",
       "provider": "flock",
       "model": "qwen3-235b-a22b-instruct-2507",
+      "channel": "web-workspace",
+      "transport": "http",
+      "openSourceModel": true,
       "live": true,
       "fallbackUsed": false,
-      "capturedAt": "2026-03-07T22:33:17.936Z",
+      "capturedAt": "2026-03-07T23:59:27.697Z",
       "label": "FLock SDG triage run",
       "bountyId": "ai-agents-for-good",
       "localRecordRoute": "/hackathon?bounty=ai-agents-for-good",
@@ -1052,7 +1184,7 @@
       "deckAppendixSlide": "Slide 13"
     },
     {
-      "id": "audit_6bab8d7761cf45c880616079b0d72f88",
+      "id": "audit_270f9fc6b4c3466b85abdf74a602acee",
       "kind": "glm",
       "status": "captured",
       "title": "Hackathon draft package generated",
@@ -1061,13 +1193,16 @@
         "z-ai-general"
       ],
       "route": "/hackathon?bounty=z-ai-general",
-      "source": "Audit audit_6bab8d7761cf45c880616079b0d72f88",
-      "createdAt": "2026-03-07T22:33:15.768Z",
+      "source": "Audit audit_270f9fc6b4c3466b85abdf74a602acee",
+      "createdAt": "2026-03-07T23:59:25.251Z",
       "provider": "glm",
       "model": "glm-5",
+      "channel": "",
+      "transport": "",
+      "openSourceModel": false,
       "live": true,
       "fallbackUsed": false,
-      "capturedAt": "2026-03-07T22:33:15.768Z",
+      "capturedAt": "2026-03-07T23:59:25.251Z",
       "label": "Hackathon draft package generated",
       "bountyId": "z-ai-general",
       "localRecordRoute": "/hackathon?bounty=z-ai-general",
@@ -1076,22 +1211,25 @@
       "deckAppendixSlide": "Slide 12"
     },
     {
-      "id": "audit_9bb9487b811047c088c8e428a3bda645",
+      "id": "audit_df6008e8799d4336b74423ec1c4eda70",
       "kind": "glm",
       "status": "captured",
       "title": "Workspace hackathon run",
-      "summary": "Found Minghan Xiao — the London hackathon organizer you spoke with about builder communities and operator dashboards. There are existing drafts for that follow-up. Want me to open…",
+      "summary": "The best next follow-up with Minghan Xiao is a brief, value-forward message referencing your conversation about builder communities and operator dashboards—ideally within 48 hours…",
       "bounties": [
         "z-ai-general"
       ],
       "route": "/hackathon?bounty=z-ai-general",
-      "source": "Audit audit_9bb9487b811047c088c8e428a3bda645",
-      "createdAt": "2026-03-07T22:32:50.049Z",
+      "source": "Audit audit_df6008e8799d4336b74423ec1c4eda70",
+      "createdAt": "2026-03-07T23:58:58.863Z",
       "provider": "glm",
       "model": "glm-5",
+      "channel": "",
+      "transport": "",
+      "openSourceModel": false,
       "live": true,
       "fallbackUsed": false,
-      "capturedAt": "2026-03-07T22:32:50.049Z",
+      "capturedAt": "2026-03-07T23:58:58.863Z",
       "label": "Workspace hackathon run",
       "bountyId": "z-ai-general",
       "localRecordRoute": "/hackathon?bounty=z-ai-general",
@@ -1100,22 +1238,52 @@
       "deckAppendixSlide": "Slide 12"
     },
     {
-      "id": "audit_d178b7c3235442679663ede60ef8c9fb",
+      "id": "audit_9d8d0d8a60e04b04b153098806210fef",
       "kind": "glm",
-      "status": "captured",
-      "title": "GLM generation run",
-      "summary": "EN: SocialOS fits Z.AI General by deploying AI agents to automate social intelligence, offering scalable infrastructure for decentralized social ecosystems. ZH: SocialOS 符合 Z.AI Ge",
+      "status": "fallback",
+      "title": "Workspace hackathon run",
+      "summary": "I turned At The Hackathon into a contact draft first. Save it if it looks right, or keep talking and we can refine it together.",
       "bounties": [
         "z-ai-general"
       ],
       "route": "/hackathon?bounty=z-ai-general",
-      "source": "Audit audit_d178b7c3235442679663ede60ef8c9fb",
-      "createdAt": "2026-03-07T22:32:25.722Z",
+      "source": "Audit audit_9d8d0d8a60e04b04b153098806210fef",
+      "createdAt": "2026-03-07T23:58:23.042Z",
+      "provider": "local",
+      "model": "",
+      "channel": "",
+      "transport": "",
+      "openSourceModel": true,
+      "live": false,
+      "fallbackUsed": true,
+      "capturedAt": "2026-03-07T23:58:23.042Z",
+      "label": "Workspace hackathon run",
+      "bountyId": "z-ai-general",
+      "localRecordRoute": "/hackathon?bounty=z-ai-general",
+      "publicAnchor": "/hackathon/#bounty-z-ai-general",
+      "proofJsonUrl": "/data/proofs/z-ai-general.json",
+      "deckAppendixSlide": "Slide 12"
+    },
+    {
+      "id": "audit_e2f9730404c44a689387f17bdf3a0538",
+      "kind": "glm",
+      "status": "captured",
+      "title": "GLM generation run",
+      "summary": "SocialOS is a production-ready GLM-powered agent system because it combines a robust multi-agent architecture with real-time social media integration, offering DoraHacks judges a f",
+      "bounties": [
+        "z-ai-general"
+      ],
+      "route": "/hackathon?bounty=z-ai-general",
+      "source": "Audit audit_e2f9730404c44a689387f17bdf3a0538",
+      "createdAt": "2026-03-07T23:57:42.999Z",
       "provider": "glm",
       "model": "glm-5",
+      "channel": "",
+      "transport": "",
+      "openSourceModel": false,
       "live": true,
       "fallbackUsed": false,
-      "capturedAt": "2026-03-07T22:32:25.722Z",
+      "capturedAt": "2026-03-07T23:57:42.999Z",
       "label": "GLM generation run",
       "bountyId": "z-ai-general",
       "localRecordRoute": "/hackathon?bounty=z-ai-general",
@@ -1147,6 +1315,9 @@
       "publicAnchor": "/hackathon/",
       "proofJsonUrl": "/data/proofs/all.json",
       "deckAppendixSlide": "Shared appendix",
+      "channel": "",
+      "transport": "",
+      "openSourceModel": false,
       "capturedAt": ""
     },
     {
@@ -1172,6 +1343,9 @@
       "publicAnchor": "/hackathon/",
       "proofJsonUrl": "/data/proofs/all.json",
       "deckAppendixSlide": "Shared appendix",
+      "channel": "",
+      "transport": "",
+      "openSourceModel": false,
       "capturedAt": ""
     },
     {
@@ -1197,30 +1371,9 @@
       "publicAnchor": "/hackathon/",
       "proofJsonUrl": "/data/proofs/all.json",
       "deckAppendixSlide": "Shared appendix",
-      "capturedAt": ""
-    },
-    {
-      "id": "proof-buddy-guardrails",
-      "kind": "safety",
-      "status": "ready",
-      "title": "Buddy mode keeps the experience safe and narrow",
-      "summary": "The product stays loopback-only, dry-run by default, and Buddy mode funnels users into four friendly tasks.",
-      "bounties": [
-        "human-for-claw",
-        "claw-for-human"
-      ],
-      "route": "/buddy",
-      "source": "socialos/apps/web/server.mjs",
-      "provider": "openclaw",
-      "model": "",
-      "live": true,
-      "fallbackUsed": false,
-      "localRecordRoute": "/buddy",
-      "label": "Buddy mode keeps the experience safe and narrow",
-      "bountyId": "human-for-claw",
-      "publicAnchor": "/hackathon/",
-      "proofJsonUrl": "/data/proofs/all.json",
-      "deckAppendixSlide": "Shared appendix",
+      "channel": "",
+      "transport": "",
+      "openSourceModel": false,
       "capturedAt": ""
     }
   ]

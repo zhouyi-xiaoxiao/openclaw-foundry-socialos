@@ -1,7 +1,7 @@
 # Repo State Handoff
 
-- Generated: 2026-03-07T23:04:13.999Z
-- Branch: detached
+- Generated: 2026-03-07T23:34:01.756Z
+- Branch: main
 - Git head: a682dc8
 - Dirty working tree: true
 
@@ -41,6 +41,8 @@
 - Overnight: `scripts/overnight_supervisor.sh` refreshes the generated docs after writing the local summary.
 
 ## Evidence Files
+- `socialos/docs/evidence/ai-agents-for-good-telegram-proof.png`
+- `socialos/docs/evidence/buddy-public-proof.png`
 - `socialos/docs/evidence/hackathon-drafts-zai.json`
 - `socialos/docs/evidence/hackathon-flock-triage.json`
 - `socialos/docs/evidence/hackathon-glm-generate.json`
@@ -52,6 +54,9 @@
 - `socialos/docs/evidence/hackathon-proofs-claw-for-human.json`
 - `socialos/docs/evidence/hackathon-proofs-human-for-claw.json`
 - `socialos/docs/evidence/hackathon-proofs-z-ai-general.json`
+- `socialos/docs/evidence/hackathon-public-hub.png`
+- `socialos/docs/evidence/hackathon-telegram-send.json`
+- `socialos/docs/evidence/hackathon-telegram-status.json`
 - `socialos/docs/evidence/hackathon-workspace-zai.json`
 - `socialos/docs/evidence/sample-digest.md`
 - `socialos/docs/evidence/sample-run-report.json`
@@ -63,22 +68,22 @@
 - `socialos/docs/evidence/socialos-demo.gif`
 
 ## Dirty Summary
-- M QUEUE.md
--  M foundry/tasks/TASK-20260305210700851017.json
--  M scripts/overnight_supervisor.mjs
--  M scripts/tests/overnight_supervisor_parser_smoke.mjs
--  M socialos/docs/STATUS.md
--  M socialos/docs/agent/REPO_STATE.md
--  M socialos/docs/evidence/LATEST_VALIDATION.md
--  M socialos/docs/pitch/DECK_STATUS.json
-- ?? foundry/tasks/AUTO-OPT-BLOCKED-TRIAGE.json
-- ?? foundry/tasks/AUTO-OPT-DOC-DEBT.json
-- ?? foundry/tasks/AUTO-OPT-OBS-DEBT.json
-- ?? foundry/tasks/AUTO-OPT-PERF-DEBT.json
+- M .env.example
+-  M QUEUE.md
+-  M README.md
+-  M ROADMAP.md
+-  M scripts/capture_hackathon_proofs.mjs
+-  M scripts/devloop_once.sh
+-  M scripts/hackathon_live.sh
+-  M scripts/hackathon_preflight.sh
+-  M scripts/seed_demo_data.mjs
+-  M scripts/tests/hackathon_api_smoke.mjs
+-  M scripts/tests/hackathon_proof_capture_smoke.mjs
+-  M scripts/tests/review_demo_seed_smoke.mjs
 
 ## Overnight Context
-- Next focus: workspace-usability-and-demo-trust
-- Reason: Repo is healthy; continue aggressive product/core polish in Workspace, Contacts, Drafts, and Queue.
+- Next focus: respect-foundry-queue
+- Reason: Foundry already has active queue work; outer loop should bias to validation and repo trust.
 
 ## Script Entry Points
 - `bash scripts/demo.sh` -> install, deploy runtime, validate safety, start public demo

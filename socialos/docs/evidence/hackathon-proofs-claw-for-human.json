@@ -3,6 +3,19 @@
   "kind": "",
   "limit": 24,
   "count": 4,
+  "id": "claw-for-human",
+  "label": "Claw for Human",
+  "sponsor": "Imperial Blockchain",
+  "partnerLabel": "OpenClaw Runtime",
+  "localRecordRoute": "/demo",
+  "publicAnchor": "/hackathon/#bounty-claw-for-human",
+  "proofJsonUrl": "/data/proofs/claw-for-human.json",
+  "deckAppendixSlide": "Slide 9",
+  "provider": "openclaw",
+  "model": "",
+  "live": true,
+  "fallbackUsed": false,
+  "capturedAt": "",
   "proofs": [
     {
       "id": "proof-openclaw-runtime",
@@ -28,6 +41,9 @@
       "publicAnchor": "/hackathon/",
       "proofJsonUrl": "/data/proofs/all.json",
       "deckAppendixSlide": "Shared appendix",
+      "channel": "",
+      "transport": "",
+      "openSourceModel": false,
       "capturedAt": ""
     },
     {
@@ -53,6 +69,9 @@
       "publicAnchor": "/hackathon/",
       "proofJsonUrl": "/data/proofs/all.json",
       "deckAppendixSlide": "Shared appendix",
+      "channel": "",
+      "transport": "",
+      "openSourceModel": false,
       "capturedAt": ""
     },
     {
@@ -77,6 +96,9 @@
       "publicAnchor": "/hackathon/",
       "proofJsonUrl": "/data/proofs/all.json",
       "deckAppendixSlide": "Shared appendix",
+      "channel": "",
+      "transport": "",
+      "openSourceModel": false,
       "capturedAt": ""
     },
     {
@@ -104,6 +126,9 @@
       "publicAnchor": "/hackathon/",
       "proofJsonUrl": "/data/proofs/all.json",
       "deckAppendixSlide": "Shared appendix",
+      "channel": "",
+      "transport": "",
+      "openSourceModel": false,
       "capturedAt": ""
     }
   ]

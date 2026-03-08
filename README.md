@@ -79,6 +79,10 @@ Key environment variables:
 - `GLM_MODEL_ID`
 - `FLOCK_API_KEY`
 - `FLOCK_MODEL_ID`
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_WEBHOOK_SECRET`
+- `TELEGRAM_DEFAULT_CHAT_ID`
+- `TELEGRAM_BOT_USERNAME`
 - `STRUCTURED_MODEL_TIMEOUT_MS`
 
 ## Architecture Overview
@@ -108,6 +112,7 @@ Hackathon overlay:
 - `GET /proofs` returns structured proof cards.
 - `POST /integrations/glm/generate` captures the live `Z.AI General` proof path.
 - `POST /integrations/flock/sdg-triage` captures the live `AI Agents for Good` proof path.
+- `GET /integrations/telegram/status` and `POST /integrations/telegram/send` expose the optional Telegram volunteer channel used by the impact workflow.
 
 ## Bounty-Specific Integration
 SocialOS submits one product story to five tracks:
@@ -118,15 +123,15 @@ SocialOS submits one product story to five tracks:
 | `Animoca Bounty` | [`/hackathon/#bounty-animoca`](https://zhouyixiaoxiao.org/hackathon/#bounty-animoca) | `/hackathon?bounty=animoca` | Identity, memory, and agent-lane trace | [`animoca.json`](https://zhouyixiaoxiao.org/data/proofs/animoca.json) | `Slide 10` |
 | `Human for Claw` | [`/hackathon/#bounty-human-for-claw`](https://zhouyixiaoxiao.org/hackathon/#bounty-human-for-claw) | `/buddy` | Buddy-safe surface + `/proofs?bounty=human-for-claw` | [`human-for-claw.json`](https://zhouyixiaoxiao.org/data/proofs/human-for-claw.json) | `Slide 11` |
 | `Z.AI General` | [`/hackathon/#bounty-z-ai-general`](https://zhouyixiaoxiao.org/hackathon/#bounty-z-ai-general) | `/hackathon?bounty=z-ai-general` | `POST /integrations/glm/generate` | [`z-ai-general.json`](https://zhouyixiaoxiao.org/data/proofs/z-ai-general.json) | `Slide 12` |
-| `AI Agents for Good` | [`/hackathon/#bounty-ai-agents-for-good`](https://zhouyixiaoxiao.org/hackathon/#bounty-ai-agents-for-good) | `/hackathon?bounty=ai-agents-for-good` | `POST /integrations/flock/sdg-triage` | [`ai-agents-for-good.json`](https://zhouyixiaoxiao.org/data/proofs/ai-agents-for-good.json) | `Slide 13` |
+| `AI Agents for Good` | [`/hackathon/#bounty-ai-agents-for-good`](https://zhouyixiaoxiao.org/hackathon/#bounty-ai-agents-for-good) | `/hackathon?bounty=ai-agents-for-good` | `POST /integrations/flock/sdg-triage` + `POST /integrations/telegram/send` | [`ai-agents-for-good.json`](https://zhouyixiaoxiao.org/data/proofs/ai-agents-for-good.json) | `Slide 13` |
 
 Bounty fit at a glance:
 
 - `Claw for Human`: SocialOS turns OpenClaw-backed lanes into a calm, human-readable relationship workspace.
 - `Animoca Bounty`: SocialOS proves persistent identity, memory, and coordinated agent lanes instead of one-shot tasks.
 - `Human for Claw`: Buddy mode narrows the system to four safe, youth-friendly tasks.
-- `Z.AI General`: GLM is part of the real multilingual generation path, not a decorative side integration.
-- `AI Agents for Good`: FLock SDG triage feeds directly into volunteer follow-up and relationship memory.
+- `Z.AI General`: GLM is part of the real production generation path, not a decorative side integration.
+- `AI Agents for Good`: FLock SDG triage, OpenClaw orchestration, outreach lanes, and the Telegram volunteer channel feed directly into follow-up and relationship memory.
 
 Full submission source text lives in [socialos/docs/HACKATHON_BOUNTIES.md](socialos/docs/HACKATHON_BOUNTIES.md).
 
@@ -149,7 +154,7 @@ Record 5 independent `5-8 minute` videos, not one shared video with tiny swaps:
 2. `Animoca Bounty`: start from `/hackathon?bounty=animoca`, then close on `/hackathon/#bounty-animoca`.
 3. `Human for Claw`: start from `/buddy`, then close on `/hackathon/#bounty-human-for-claw`.
 4. `Z.AI General`: start from `/hackathon?bounty=z-ai-general`, show live GLM generation, then close on `/hackathon/#bounty-z-ai-general`.
-5. `AI Agents for Good`: start from `/hackathon?bounty=ai-agents-for-good`, show live FLock SDG triage, then close on `/hackathon/#bounty-ai-agents-for-good`.
+5. `AI Agents for Good`: start from `/hackathon?bounty=ai-agents-for-good`, show live FLock SDG triage plus the channel proof, then close on `/hackathon/#bounty-ai-agents-for-good`.
 
 Every video must clearly cover:
 
@@ -198,7 +203,6 @@ Agent-facing entrypoints:
 - [socialos/docs/pitch/DECK_PAGE_SCRIPT.md](socialos/docs/pitch/DECK_PAGE_SCRIPT.md)
 - [socialos/docs/pitch/DORAHACKS_MASTER_SCRIPT.md](socialos/docs/pitch/DORAHACKS_MASTER_SCRIPT.md)
 - [socialos/docs/pitch/DORAHACKS_BOUNTY_SWAPS.md](socialos/docs/pitch/DORAHACKS_BOUNTY_SWAPS.md)
-- [socialos/docs/pitch/REHEARSAL_CUES_CN.md](socialos/docs/pitch/REHEARSAL_CUES_CN.md)
 - [socialos/docs/pitch/RECORDING_AND_SUBMISSION_RUNBOOK.md](socialos/docs/pitch/RECORDING_AND_SUBMISSION_RUNBOOK.md)
 - [socialos/docs/pitch/VC_DECK_SPEC.md](socialos/docs/pitch/VC_DECK_SPEC.md)
 - [socialos/docs/pitch/DECK_MAINTENANCE.md](socialos/docs/pitch/DECK_MAINTENANCE.md)
@@ -218,6 +222,8 @@ Generated proof artifacts:
 - `socialos/docs/evidence/hackathon-proofs-all.json`
 - `socialos/docs/evidence/hackathon-proofs-z-ai-general.json`
 - `socialos/docs/evidence/hackathon-proofs-ai-agents-for-good.json`
+- `socialos/docs/evidence/hackathon-telegram-status.json`
+- `socialos/docs/evidence/hackathon-telegram-send.json`
 
 ## Safety Defaults
 - API exposure remains loopback-only (`127.0.0.1`)

@@ -118,6 +118,7 @@ async function main() {
     assertNoStaleTerms(loadTextRows(db, 'Audit', 'payload'), 'Audit');
     assertNoStaleTerms(loadTextRows(db, 'PostDraft', 'content'), 'PostDraft');
     assertNoStaleTerms(loadTextRows(db, 'Mirror', 'content'), 'Mirror');
+    assert(!containsHan(loadTextRows(db, 'PostDraft', 'content').join('\n')), 'seeded draft content should stay English-only');
 
     const mirrorRow = db.prepare('SELECT content FROM Mirror ORDER BY created_at DESC LIMIT 1').get();
     assert(mirrorRow?.content, 'seeded mirror should exist');
@@ -153,6 +154,7 @@ async function main() {
     const draftsHtml = await requestHtml(web.baseUrl, '/drafts');
     const queueHtml = await requestHtml(web.baseUrl, '/queue');
     const mirrorHtml = await requestHtml(web.baseUrl, '/self-mirror');
+    const buddyHtml = await requestHtml(web.baseUrl, '/buddy');
     const deckHtml = await requestHtml(web.baseUrl, '/deck');
 
     assert(quickCaptureHtml.includes('Minghan Xiao'), 'workspace page should show the approved review network');
@@ -163,6 +165,7 @@ async function main() {
     assert(queueHtml.includes('Safe rehearsal') || queueHtml.includes('Queue'), 'queue page should render review queue state');
     assert(mirrorHtml.includes('Weekly Mirror'), 'self-mirror page should render the review mirror');
     assert(!containsHan(mirrorHtml), 'self-mirror page should stay English in the review seed');
+    assert(!containsHan(buddyHtml), 'buddy page should stay English in the review seed');
     assert(deckHtml.includes('Minghan Xiao'), 'deck should stay aligned with the approved review network');
 
     console.log('review_demo_seed_smoke: PASS');

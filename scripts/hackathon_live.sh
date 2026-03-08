@@ -4,6 +4,19 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MODE="${1:-api}"
 
+load_env_file() {
+  local target="$1"
+  if [[ -f "${target}" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "${target}"
+    set +a
+  fi
+}
+
+load_env_file "${REPO_ROOT}/.env"
+load_env_file "${REPO_ROOT}/.env.local"
+
 export SOCIALOS_API_PORT="${SOCIALOS_API_PORT:-8787}"
 export SOCIALOS_WEB_PORT="${SOCIALOS_WEB_PORT:-4173}"
 export HACKATHON_MODE="${HACKATHON_MODE:-all-bounties}"
@@ -22,6 +35,10 @@ read_keychain_secret() {
 
 export GLM_API_KEY="${GLM_API_KEY:-$(read_keychain_secret 'Z.ai API key')}"
 export FLOCK_API_KEY="${FLOCK_API_KEY:-$(read_keychain_secret 'Flock API key')}"
+export TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-$(read_keychain_secret 'Telegram Bot Token')}"
+export TELEGRAM_WEBHOOK_SECRET="${TELEGRAM_WEBHOOK_SECRET:-$(read_keychain_secret 'Telegram Webhook Secret')}"
+export TELEGRAM_DEFAULT_CHAT_ID="${TELEGRAM_DEFAULT_CHAT_ID:-$(read_keychain_secret 'Telegram Default Chat ID')}"
+export TELEGRAM_BOT_USERNAME="${TELEGRAM_BOT_USERNAME:-$(read_keychain_secret 'Telegram Bot Username')}"
 
 require_secret() {
   local env_name="$1"
@@ -45,6 +62,7 @@ Commands:
 
 Notes:
   - Keys are read from macOS Keychain labels 'Z.ai API key' and 'Flock API key' by default.
+  - Telegram bot values are read from 'Telegram Bot Token', 'Telegram Webhook Secret', 'Telegram Default Chat ID', and 'Telegram Bot Username' when present.
   - Structured model calls time out after STRUCTURED_MODEL_TIMEOUT_MS (default 20000 ms).
   - Override GLM_MODEL_ID or FLOCK_MODEL_ID in the shell if you want a different model.
 EOF
@@ -68,6 +86,10 @@ case "$MODE" in
     exec env \
       GLM_API_KEY="${GLM_API_KEY}" \
       FLOCK_API_KEY="${FLOCK_API_KEY}" \
+      TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN}" \
+      TELEGRAM_WEBHOOK_SECRET="${TELEGRAM_WEBHOOK_SECRET}" \
+      TELEGRAM_DEFAULT_CHAT_ID="${TELEGRAM_DEFAULT_CHAT_ID}" \
+      TELEGRAM_BOT_USERNAME="${TELEGRAM_BOT_USERNAME}" \
       GLM_MODEL_ID="${GLM_MODEL_ID}" \
       FLOCK_MODEL_ID="${FLOCK_MODEL_ID}" \
       STRUCTURED_MODEL_TIMEOUT_MS="${STRUCTURED_MODEL_TIMEOUT_MS}" \
@@ -90,6 +112,26 @@ case "$MODE" in
       echo "FLOCK_API_KEY=present"
     else
       echo "FLOCK_API_KEY=missing"
+    fi
+    if [[ -n "${TELEGRAM_BOT_TOKEN:-}" ]]; then
+      echo "TELEGRAM_BOT_TOKEN=present"
+    else
+      echo "TELEGRAM_BOT_TOKEN=missing"
+    fi
+    if [[ -n "${TELEGRAM_DEFAULT_CHAT_ID:-}" ]]; then
+      echo "TELEGRAM_DEFAULT_CHAT_ID=present"
+    else
+      echo "TELEGRAM_DEFAULT_CHAT_ID=missing"
+    fi
+    if [[ -n "${TELEGRAM_WEBHOOK_SECRET:-}" ]]; then
+      echo "TELEGRAM_WEBHOOK_SECRET=present"
+    else
+      echo "TELEGRAM_WEBHOOK_SECRET=missing"
+    fi
+    if [[ -n "${TELEGRAM_BOT_USERNAME:-}" ]]; then
+      echo "TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME}"
+    else
+      echo "TELEGRAM_BOT_USERNAME=missing"
     fi
     ;;
   -h|--help|help)
