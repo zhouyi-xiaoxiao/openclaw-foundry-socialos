@@ -1,8 +1,8 @@
 # Repo State Handoff
 
-- Generated: 2026-03-08T16:07:36.948Z
+- Generated: 2026-03-08T16:09:12.027Z
 - Branch: automation-socialos-overnight-2
-- Git head: de1a1b8
+- Git head: 14ddb09
 - Dirty working tree: true
 
 ## Canonical Chain
@@ -73,6 +73,7 @@
 -  M socialos/docs/agent/REPO_STATE.md
 -  M socialos/docs/evidence/LATEST_VALIDATION.md
 -  M socialos/docs/pitch/DECK_STATUS.json
+- ?? .tmp-hackathon-proof-capture-OoaavO/
 
 ## Overnight Context
 - Next focus: triage-blocked-foundry-queue
