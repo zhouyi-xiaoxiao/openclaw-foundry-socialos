@@ -18,6 +18,8 @@ The hosted site at [zhouyixiaoxiao.org](https://zhouyixiaoxiao.org/) is the publ
 
 ## Start Here
 
+### Watch / verify
+
 If you want the fastest public overview first:
 
 - [Pitch site / deck](https://zhouyixiaoxiao.org/)
@@ -27,6 +29,42 @@ If you want the fastest public overview first:
 - [Z.AI General video](https://zhouyixiaoxiao.org/videos/z-ai-general/)
 - [AI Agents for Good video](https://zhouyixiaoxiao.org/videos/ai-agents-for-good/)
 - [Animoca video](https://zhouyixiaoxiao.org/videos/animoca/)
+
+### Clone / run / reuse
+
+```bash
+git clone https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos.git
+cd openclaw-foundry-socialos
+bash scripts/quickstart.sh
+bash scripts/provider_doctor.sh
+```
+
+Start a blank personal workspace instead of the seeded demo:
+
+```bash
+bash scripts/quickstart.sh --profile local
+```
+
+### What runs without any API keys
+
+- local web app
+- local API
+- seeded demo dataset
+- local embeddings fallback
+- core relationship-memory workflow
+
+### What API keys unlock
+
+- `OPENAI_API_KEY` -> better embeddings plus optional voice transcription/refinement
+- `GLM_API_KEY` -> live Z.AI route and GLM-backed generation
+- `FLOCK_API_KEY` -> live SDG triage
+- `TELEGRAM_*` -> optional Telegram volunteer channel
+
+### Recommended first run
+
+- `bash scripts/quickstart.sh`
+- `bash scripts/provider_doctor.sh`
+- `bash scripts/quickstart.sh --profile local`
 
 ## Project Overview
 
@@ -57,6 +95,12 @@ That command will:
 - seed the demo profile
 - start the local API and web app
 - print the exact URLs to open
+
+Then inspect optional provider setup:
+
+```bash
+bash scripts/provider_doctor.sh
+```
 
 If you want your own blank workspace instead of the seeded demo:
 
@@ -93,6 +137,12 @@ bash scripts/quickstart.sh
 
 Current environment defaults live in `.env.example`. Profile selection and DB routing are usually managed automatically through `.env.local`.
 
+API onboarding and optional live-provider setup are documented in:
+
+- [socialos/docs/API_SETUP.md](socialos/docs/API_SETUP.md)
+- [socialos/docs/REUSE_SOCIALOS.md](socialos/docs/REUSE_SOCIALOS.md)
+- [socialos/docs/EMBEDDINGS.md](socialos/docs/EMBEDDINGS.md)
+
 Secondary lifecycle commands:
 
 ```bash
@@ -110,6 +160,9 @@ bash scripts/test.sh
 
 # Stop local services
 bash scripts/stop_demo.sh
+
+# Check optional providers and feature unlocks
+bash scripts/provider_doctor.sh
 
 # Capture fresh hackathon proofs
 node scripts/capture_hackathon_proofs.mjs
@@ -157,6 +210,8 @@ The local profile uses:
 This keeps your own notes, contacts, and follow-up history separate from the public demo dataset.
 
 More reuse notes live in [socialos/docs/REUSE_SOCIALOS.md](socialos/docs/REUSE_SOCIALOS.md).
+API setup guidance lives in [socialos/docs/API_SETUP.md](socialos/docs/API_SETUP.md).
+Embeddings behavior is documented in [socialos/docs/EMBEDDINGS.md](socialos/docs/EMBEDDINGS.md).
 
 ## Architecture Overview
 
@@ -226,6 +281,9 @@ Public proof and verification links:
 - [Z.AI General video](https://zhouyixiaoxiao.org/videos/z-ai-general/)
 - [AI Agents for Good video](https://zhouyixiaoxiao.org/videos/ai-agents-for-good/)
 - [Animoca video](https://zhouyixiaoxiao.org/videos/animoca/)
+- [Reuse guide](https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos/blob/main/socialos/docs/REUSE_SOCIALOS.md)
+- [API setup guide](https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos/blob/main/socialos/docs/API_SETUP.md)
+- [Embeddings guide](https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos/blob/main/socialos/docs/EMBEDDINGS.md)
 
 The public site is read-only and proof-first. The interactive product remains local-first by design.
 

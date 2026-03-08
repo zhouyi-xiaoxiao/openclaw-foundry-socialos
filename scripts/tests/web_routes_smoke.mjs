@@ -51,6 +51,9 @@ async function main() {
     assert(deck.status === 200, `/deck should render the VC deck (got ${deck.status})`);
     assert(deckHtml.includes('SocialOS VC Deck'), '/deck should render the deck title');
     assert(deckHtml.includes('Slide 9 · Claw for Human'), '/deck should include the bounty appendix slides');
+    assert(deckHtml.includes('Reuse SocialOS'), '/deck should expose the public reuse path');
+    assert(deckHtml.includes('Run locally'), '/deck should expose the quickstart link');
+    assert(deckHtml.includes('API setup guide'), '/deck should expose the API setup guide');
     assert(!deckHtml.includes('href="/quick-capture"'), '/deck should not reuse the dashboard shell nav');
 
     for (const page of DASHBOARD_PAGES) {
@@ -97,6 +100,9 @@ async function main() {
     assert(hackathonPublicHtml.includes('Canonical public bounty hub'), '/hackathon?mode=public should expose the canonical public proof notice');
     assert(hackathonPublicHtml.includes('/data/proofs/'), '/hackathon?mode=public should link to static proof JSON');
     assert(hackathonPublicHtml.includes('#bounty-z-ai-general'), '/hackathon?mode=public should expose same-page bounty anchors');
+    assert(hackathonPublicHtml.includes('Run SocialOS Yourself'), '/hackathon?mode=public should expose the local reuse panel');
+    assert(hackathonPublicHtml.includes('Run locally'), '/hackathon?mode=public should expose the quickstart link');
+    assert(hackathonPublicHtml.includes('API setup guide'), '/hackathon?mode=public should expose the API setup guide');
     assert(!hackathonPublicHtml.includes('127.0.0.1'), '/hackathon?mode=public should not expose localhost links');
 
     const buddy = await fetch(`${web.baseUrl}/buddy`, { redirect: 'manual' });

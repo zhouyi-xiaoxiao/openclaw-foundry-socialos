@@ -82,9 +82,13 @@ async function main() {
     const cname = fs.readFileSync(path.join(deckSite, 'CNAME'), 'utf8').trim();
 
     assert(indexHtml.includes('SocialOS VC Deck'), 'exported root index should contain the deck title');
+    assert(indexHtml.includes('Run locally'), 'exported public deck should expose the quickstart link');
+    assert(indexHtml.includes('API setup guide'), 'exported public deck should expose the API setup guide');
     assert(printHtml.includes('data-print-pdf="true"'), 'exported print variant should preserve print mode');
     assert(demoHtml.includes('Auxiliary public proof page'), 'exported demo page should render in public proof mode');
     assert(hackathonHtml.includes('Canonical public bounty hub'), 'exported hackathon page should render in public proof mode');
+    assert(hackathonHtml.includes('Run SocialOS Yourself'), 'exported public hackathon should expose the local reuse panel');
+    assert(hackathonHtml.includes('Run locally'), 'exported public hackathon should expose the quickstart link');
     assert(hackathonHtml.includes('id="bounty-z-ai-general"'), 'exported hackathon page should keep same-page bounty anchors');
     assert(buddyHtml.includes('Auxiliary public Buddy page'), 'exported buddy page should render in public proof mode');
     assert(videoPlaceholderHtml.includes('Open final video on OneDrive'), 'exported video page should render the hosted video link');

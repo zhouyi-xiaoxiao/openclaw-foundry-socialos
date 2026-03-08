@@ -5,6 +5,8 @@ SocialOS supports two local profiles:
 - `demo`: a seeded review/demo workspace for quick reproduction, recordings, and judge verification
 - `local`: a blank workspace for your own notes, contacts, and follow-up loops
 
+For API-backed features and optional live providers, see [API_SETUP.md](API_SETUP.md).
+
 ## Quickstart
 
 Clone and run the public demo profile:
@@ -20,6 +22,53 @@ Start your own blank local workspace:
 ```bash
 bash scripts/quickstart.sh --profile local
 ```
+
+Check optional providers and API-backed features:
+
+```bash
+bash scripts/provider_doctor.sh
+```
+
+## Demo reproduction
+
+Use the `demo` profile when you want the public proof-ready state:
+
+```bash
+bash scripts/quickstart.sh
+```
+
+This gives you:
+
+- seeded review/demo data
+- the public-proof routes locally
+- the same relationship-memory workflow used in the recorded demos
+
+## Personal reuse
+
+Use the `local` profile when you want your own blank workspace:
+
+```bash
+bash scripts/quickstart.sh --profile local
+```
+
+This gives you:
+
+- a blank SQLite workspace
+- no automatic demo seeding
+- a safe separation from the public demo data
+
+## Optional live-provider setup
+
+SocialOS does not need any API keys to boot.
+
+Add providers only when you want better retrieval or live bounty integrations:
+
+- OpenAI for semantic embeddings and optional voice transcription
+- GLM for live Z.AI generation
+- FLock for live SDG triage
+- Telegram for the optional volunteer channel
+
+See [API_SETUP.md](API_SETUP.md) and [EMBEDDINGS.md](EMBEDDINGS.md) for the exact variables and behavior.
 
 ## What the script does
 
@@ -59,6 +108,9 @@ bash scripts/quickstart.sh --profile demo --reset-demo
 
 # Run the full repo test suite
 bash scripts/test.sh
+
+# Check optional providers and what they unlock
+bash scripts/provider_doctor.sh
 ```
 
 ## Troubleshooting

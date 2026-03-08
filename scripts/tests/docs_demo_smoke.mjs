@@ -42,6 +42,10 @@ assert(readme.includes('node scripts/refresh_public_docs.mjs'), 'README should e
 assert(readme.includes('socialos/docs/HACKATHON_BOUNTIES.md'), 'README should link to the hackathon bounty guide');
 assert(readme.includes('socialos/docs/pitch/DORAHACKS_MASTER_SCRIPT.md'), 'README should link to the DoraHacks master script');
 assert(readme.includes('socialos/docs/pitch/RECORDING_AND_SUBMISSION_RUNBOOK.md'), 'README should link to the recording runbook');
+assert(readme.includes('socialos/docs/API_SETUP.md'), 'README should link to the API setup guide');
+assert(readme.includes('socialos/docs/REUSE_SOCIALOS.md'), 'README should link to the reuse guide');
+assert(readme.includes('socialos/docs/EMBEDDINGS.md'), 'README should link to the embeddings guide');
+assert(readme.includes('bash scripts/provider_doctor.sh'), 'README should expose the provider doctor command');
 assert(readme.includes('5 independent `5-8 minute` videos'), 'README should explain the five independent DoraHacks videos');
 assert(readme.includes('Canonical Bounty Hub'), 'README should position /hackathon as the canonical public bounty hub');
 

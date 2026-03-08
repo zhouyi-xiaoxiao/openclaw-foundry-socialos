@@ -29,6 +29,8 @@ const EVIDENCE_AI_GOOD_TELEGRAM_PATH = path.join(EVIDENCE_DIR, 'ai-agents-for-go
 const HACKATHON_OVERVIEW_EVIDENCE_PATH = path.join(EVIDENCE_DIR, 'hackathon-overview.json');
 const HACKATHON_PROOFS_ALL_EVIDENCE_PATH = path.join(EVIDENCE_DIR, 'hackathon-proofs-all.json');
 const PUBLIC_REPO_URL = 'https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos';
+const PUBLIC_REPO_QUICKSTART_URL = `${PUBLIC_REPO_URL}#quickstart`;
+const PUBLIC_API_SETUP_URL = `${PUBLIC_REPO_URL}/blob/main/socialos/docs/API_SETUP.md`;
 const PUBLIC_DECK_URL = 'https://zhouyixiaoxiao.org/';
 let apiBaseUrlOverride = '';
 const fileTextCache = new Map();
@@ -723,7 +725,32 @@ function renderDeckVideoDock() {
           return `<a class="deck-video-dock-link" href="${escapeHtml(href)}">${escapeHtml(bounty.label)}</a>`;
         }).join('')}
       </div>
+      <div class="deck-video-dock-help">
+        <span>Reuse SocialOS</span>
+        <div class="deck-video-dock-help-links">
+          <a href="${escapeHtml(PUBLIC_REPO_URL)}">View GitHub repo</a>
+          <a href="${escapeHtml(PUBLIC_REPO_QUICKSTART_URL)}">Run locally</a>
+          <a href="${escapeHtml(PUBLIC_API_SETUP_URL)}">API setup guide</a>
+        </div>
+      </div>
     </aside>
+  `;
+}
+
+function renderPublicReuseLinks() {
+  return `
+    <div class="stack-card compact-card">
+      <div class="stack-meta">
+        <strong>Reuse SocialOS locally</strong>
+        ${renderPill('builder path', 'soft')}
+      </div>
+      <p>The public site is proof-first. The interactive product is reusable on your own machine with quickstart and optional API keys.</p>
+      <div class="inline-actions">
+        <a class="mini-link" href="${escapeHtml(PUBLIC_REPO_URL)}">View GitHub repo</a>
+        <a class="mini-link" href="${escapeHtml(PUBLIC_REPO_QUICKSTART_URL)}">Run locally</a>
+        <a class="mini-link" href="${escapeHtml(PUBLIC_API_SETUP_URL)}">API setup guide</a>
+      </div>
+    </div>
   `;
 }
 
@@ -3666,6 +3693,7 @@ async function renderHackathonPage(page, requestUrl) {
     )}
     ${renderPanel('Bounty Map', renderHackathonBountyCards(bounties, normalizedBounty, { publicMode }), publicMode ? 'Start here, jump to the matching bounty section, then open the linked proof JSON if a judge wants structured evidence.' : 'Use this page as the control room while recording each independent bounty video.')}
     <div class="grid two-up">
+      ${renderPanel('Run SocialOS Yourself', renderPublicReuseLinks(), 'Use the public proof site for review, then jump to GitHub if you want to clone the local-first product or wire up optional providers.')}
       ${renderPanel('Live Partner / API Matrix', integrationMatrixHtml, 'This is the live integration matrix for the partner APIs and shared product infrastructure that power the five bounty tracks.')}
       ${renderPanel('Submission Pack', submissionPackHtml, 'The repo, deck, public hub, and video pack must tell the same story without drift in wording or proof posture.')}
     </div>
@@ -4843,6 +4871,35 @@ function renderDeckDocument(requestUrl) {
       .deck-video-dock-links {
         display: grid;
         gap: 8px;
+      }
+      .deck-video-dock-help {
+        display: grid;
+        gap: 8px;
+        padding-top: 2px;
+      }
+      .deck-video-dock-help span {
+        font-size: 11px;
+        line-height: 1.2;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--deck-accent);
+      }
+      .deck-video-dock-help-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .deck-video-dock-help-links a {
+        display: inline-flex;
+        align-items: center;
+        padding: 9px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--deck-line);
+        background: rgba(255, 251, 245, 0.96);
+        color: var(--deck-ink);
+        text-decoration: none;
+        font-size: 12px;
+        line-height: 1.2;
       }
       .deck-video-dock-primary,
       .deck-video-dock-link {
@@ -6124,6 +6181,9 @@ function renderDeckDocument(requestUrl) {
         }
         .deck-video-dock {
           width: min(420px, calc(100vw - 68px));
+        }
+        .deck-video-dock-help-links {
+          align-items: stretch;
         }
         .deck-inline-flow {
           gap: 10px;

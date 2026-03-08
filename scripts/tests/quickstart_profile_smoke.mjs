@@ -78,6 +78,7 @@ function main() {
   assert(envLocal.includes(`SOCIALOS_DB_PATH=${localDbPath}`), 'quickstart should write db path into env.local');
   assert(quickstartOutput.includes('App workspace: http://127.0.0.1:4173/quick-capture'), 'quickstart should print the app URL');
   assert(quickstartOutput.includes('Start a blank local workspace'), 'quickstart should print the local profile hint');
+  assert(quickstartOutput.includes('Check optional providers: bash') && quickstartOutput.includes('scripts/provider_doctor.sh'), 'quickstart should advertise the provider doctor command');
 
   run('bash', [
     'scripts/quickstart.sh',
@@ -104,6 +105,10 @@ function main() {
   ]) {
     assert(readme.includes(heading), `README should include ${heading}`);
   }
+  assert(readme.includes('### Watch / verify'), 'README should expose the judge path near the top');
+  assert(readme.includes('### Clone / run / reuse'), 'README should expose the builder path near the top');
+  assert(readme.includes('bash scripts/provider_doctor.sh'), 'README should expose the provider doctor command');
+  assert(readme.includes('socialos/docs/API_SETUP.md'), 'README should link to the API setup guide');
   assert(readme.includes('https://zhouyixiaoxiao.org/videos/claw-for-human/'), 'README should expose stable public video links');
   assert(readme.includes('bash scripts/quickstart.sh --profile local'), 'README should expose the blank local workspace command');
   assert(
