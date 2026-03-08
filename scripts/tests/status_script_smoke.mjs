@@ -202,6 +202,30 @@ try {
     studioJsonResult.stdout.includes('Blocked queue head:\nStudio blocked task A\nStudio blocked task B'),
     'studio status blocked head should drive blocked queue output',
   );
+  const studioJsonBlockedByResult = spawnSync('bash', [script], {
+    cwd: root,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      SOCIALOS_STUDIO_STATUS_JSON: JSON.stringify({
+        queue: {
+          pending: 0,
+          inProgress: 0,
+          blocked: 1,
+          done: 0,
+          currentTask: 'none',
+        },
+        blockedHead: [{ task: 'Studio blocked task C', blockedBy: 'missing credentials' }],
+      }),
+      SOCIALOS_RUN_DIR: runDir,
+      SOCIALOS_LATEST_DIGEST_FILE: latestDigest,
+    },
+  });
+  assert(studioJsonBlockedByResult.status === 0, `status script with studio blockedBy JSON should exit 0, got ${studioJsonBlockedByResult.status}`);
+  assert(
+    studioJsonBlockedByResult.stdout.includes('Studio blocked task C (blocked by: missing credentials)'),
+    'studio status blocked head should include blockedBy context when present',
+  );
   console.log('status_script_smoke: PASS');
 } finally {
   fs.rmSync(tempDir, { recursive: true, force: true });

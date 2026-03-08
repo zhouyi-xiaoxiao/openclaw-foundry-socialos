@@ -227,7 +227,12 @@ process.stdin.on("end", () => {
     const lines = blockedHead
       .map((entry) => {
         if (typeof entry === "string") return entry.trim();
-        if (entry && typeof entry === "object" && typeof entry.task === "string") return entry.task.trim();
+        if (entry && typeof entry === "object" && typeof entry.task === "string") {
+          const task = entry.task.trim();
+          const blockedBy = typeof entry.blockedBy === "string" ? entry.blockedBy.trim() : "";
+          if (blockedBy) return `${task} (blocked by: ${blockedBy})`;
+          return task;
+        }
         return "";
       })
       .filter(Boolean)

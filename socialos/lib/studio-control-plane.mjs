@@ -1148,6 +1148,7 @@ export function createStudioControlPlane({ db, repoRoot, dbPath, env = process.e
         .map((task, index) => ({
           line: index + 1,
           task: `${task.taskId} ${task.title}`.trim(),
+          blockedBy: readOptionalString(task.metadata?.blockedBy, ''),
         })),
       latestDigest: latestRun ? formatDigest(latestRun) : '',
     };
