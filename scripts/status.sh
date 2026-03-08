@@ -3,6 +3,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 QUEUE_FILE="${SOCIALOS_QUEUE_FILE:-${REPO_ROOT}/QUEUE.md}"
+STUDIO_STATUS_JSON_OVERRIDE="${SOCIALOS_STUDIO_STATUS_JSON:-}"
 PAUSE_FILE="${REPO_ROOT}/.foundry/PAUSED"
 LOCK_DIR="${REPO_ROOT}/.locks/devloop.lock"
 LOCK_META="${LOCK_DIR}/meta.env"
@@ -41,20 +42,57 @@ blocked_count="0"
 done_count="0"
 current_task="none"
 queue_notice=""
-if [[ -f "${QUEUE_FILE}" ]]; then
-  pending_count="$(grep -cE '^[[:space:]]*-[[:space:]]+\[ \][[:space:]]+' "${QUEUE_FILE}" || true)"
-  in_progress_count="$(grep -cE '^[[:space:]]*-[[:space:]]+\[-\][[:space:]]+' "${QUEUE_FILE}" || true)"
-  blocked_count="$(grep -cE '^[[:space:]]*-[[:space:]]+\[!\][[:space:]]+' "${QUEUE_FILE}" || true)"
-  # Keep queue accounting aligned with API parsing, which treats both [x] and [X] as done.
-  done_count="$(grep -cE '^[[:space:]]*-[[:space:]]+\[[xX]\][[:space:]]+' "${QUEUE_FILE}" || true)"
-  # Prefer in-progress work as the active task, then fall back to pending work.
-  current_task="$(grep -E '^[[:space:]]*-[[:space:]]+\[-\][[:space:]]+' "${QUEUE_FILE}" | head -n 1 | sed -E 's/^[[:space:]]*-[[:space:]]+\[[^]]\][[:space:]]+//' || true)"
-  if [[ -z "${current_task}" ]]; then
-    current_task="$(grep -E '^[[:space:]]*-[[:space:]]+\[ \][[:space:]]+' "${QUEUE_FILE}" | head -n 1 | sed -E 's/^[[:space:]]*-[[:space:]]+\[[^]]\][[:space:]]+//' || true)"
+studio_status_json=""
+studio_status_ok="0"
+if [[ -z "${SOCIALOS_QUEUE_FILE:-}" ]]; then
+  if [[ -n "${STUDIO_STATUS_JSON_OVERRIDE}" ]]; then
+    studio_status_json="${STUDIO_STATUS_JSON_OVERRIDE}"
+  else
+    studio_status_json="$(bash "${REPO_ROOT}/scripts/studio.sh" status 2>/dev/null || true)"
   fi
-  [[ -z "${current_task}" ]] && current_task="none"
-else
-  queue_notice="missing (${QUEUE_FILE})"
+
+  if [[ -n "${studio_status_json}" ]]; then
+    studio_queue_summary="$(printf '%s' "${studio_status_json}" | node -e '
+let data = "";
+process.stdin.on("data", (chunk) => { data += chunk; });
+process.stdin.on("end", () => {
+  try {
+    const payload = JSON.parse(data);
+    const queue = payload && typeof payload.queue === "object" ? payload.queue : {};
+    const pending = Number.isFinite(Number(queue.pending)) ? Number(queue.pending) : 0;
+    const inProgress = Number.isFinite(Number(queue.inProgress)) ? Number(queue.inProgress) : 0;
+    const blocked = Number.isFinite(Number(queue.blocked)) ? Number(queue.blocked) : 0;
+    const done = Number.isFinite(Number(queue.done)) ? Number(queue.done) : 0;
+    const currentTask = typeof queue.currentTask === "string" && queue.currentTask.trim() ? queue.currentTask.trim() : "none";
+    process.stdout.write(`${pending}\t${inProgress}\t${blocked}\t${done}\t${currentTask}`);
+  } catch {
+    process.stdout.write("");
+  }
+});
+')"
+    if [[ -n "${studio_queue_summary}" ]]; then
+      IFS=$'\t' read -r pending_count in_progress_count blocked_count done_count current_task <<< "${studio_queue_summary}"
+      studio_status_ok="1"
+    fi
+  fi
+fi
+
+if [[ "${studio_status_ok}" != "1" ]]; then
+  if [[ -f "${QUEUE_FILE}" ]]; then
+    pending_count="$(grep -cE '^[[:space:]]*-[[:space:]]+\[ \][[:space:]]+' "${QUEUE_FILE}" || true)"
+    in_progress_count="$(grep -cE '^[[:space:]]*-[[:space:]]+\[-\][[:space:]]+' "${QUEUE_FILE}" || true)"
+    blocked_count="$(grep -cE '^[[:space:]]*-[[:space:]]+\[!\][[:space:]]+' "${QUEUE_FILE}" || true)"
+    # Keep queue accounting aligned with API parsing, which treats both [x] and [X] as done.
+    done_count="$(grep -cE '^[[:space:]]*-[[:space:]]+\[[xX]\][[:space:]]+' "${QUEUE_FILE}" || true)"
+    # Prefer in-progress work as the active task, then fall back to pending work.
+    current_task="$(grep -E '^[[:space:]]*-[[:space:]]+\[-\][[:space:]]+' "${QUEUE_FILE}" | head -n 1 | sed -E 's/^[[:space:]]*-[[:space:]]+\[[^]]\][[:space:]]+//' || true)"
+    if [[ -z "${current_task}" ]]; then
+      current_task="$(grep -E '^[[:space:]]*-[[:space:]]+\[ \][[:space:]]+' "${QUEUE_FILE}" | head -n 1 | sed -E 's/^[[:space:]]*-[[:space:]]+\[[^]]\][[:space:]]+//' || true)"
+    fi
+    [[ -z "${current_task}" ]] && current_task="none"
+  else
+    queue_notice="missing (${QUEUE_FILE})"
+  fi
 fi
 
 latest_json="$(node - "${RUN_DIR}" <<'NODE'
@@ -178,7 +216,34 @@ else
 fi
 echo
 echo "Blocked queue head:"
-if [[ -f "${QUEUE_FILE}" ]]; then
+if [[ "${studio_status_ok}" == "1" ]]; then
+  blocked_head="$(printf '%s' "${studio_status_json}" | node -e '
+let data = "";
+process.stdin.on("data", (chunk) => { data += chunk; });
+process.stdin.on("end", () => {
+  try {
+    const payload = JSON.parse(data);
+    const blockedHead = Array.isArray(payload?.blockedHead) ? payload.blockedHead : [];
+    const lines = blockedHead
+      .map((entry) => {
+        if (typeof entry === "string") return entry.trim();
+        if (entry && typeof entry === "object" && typeof entry.task === "string") return entry.task.trim();
+        return "";
+      })
+      .filter(Boolean)
+      .slice(0, 5);
+    process.stdout.write(lines.join("\n"));
+  } catch {
+    process.stdout.write("");
+  }
+});
+')"
+  if [[ -n "${blocked_head}" ]]; then
+    printf '%s\n' "${blocked_head}"
+  else
+    echo "none"
+  fi
+elif [[ -f "${QUEUE_FILE}" ]]; then
   blocked_head="$(grep -E '^[[:space:]]*-[[:space:]]+\[!\][[:space:]]+' "${QUEUE_FILE}" | head -n 5 | sed -E 's/^[[:space:]]*-[[:space:]]+\[!\][[:space:]]+//' || true)"
   if [[ -n "${blocked_head}" ]]; then
     printf '%s\n' "${blocked_head}"

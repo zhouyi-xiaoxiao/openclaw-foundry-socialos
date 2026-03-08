@@ -134,6 +134,26 @@ const missingRunDirResult = spawnSync('bash', [script], {
   },
 });
 
+const studioJsonResult = spawnSync('bash', [script], {
+  cwd: root,
+  encoding: 'utf8',
+  env: {
+    ...process.env,
+    SOCIALOS_STUDIO_STATUS_JSON: JSON.stringify({
+      queue: {
+        pending: 2,
+        inProgress: 1,
+        blocked: 3,
+        done: 9,
+        currentTask: 'Studio primary task',
+      },
+      blockedHead: [{ task: 'Studio blocked task A' }, { task: 'Studio blocked task B' }],
+    }),
+    SOCIALOS_RUN_DIR: runDir,
+    SOCIALOS_LATEST_DIGEST_FILE: latestDigest,
+  },
+});
+
 try {
   assert(result.status === 0, `status script should exit 0, got ${result.status}`);
   assert(result.stdout.includes('== Foundry Status =='), 'status output header missing');
@@ -169,6 +189,19 @@ try {
   );
   assert(missingRunDirResult.status === 0, `status script with missing run dir should exit 0, got ${missingRunDirResult.status}`);
   assert(missingRunDirResult.stdout.includes('run_reports_dir: missing'), 'status should report missing run reports directory');
+  assert(studioJsonResult.status === 0, `status script with studio queue JSON should exit 0, got ${studioJsonResult.status}`);
+  assert(
+    studioJsonResult.stdout.includes('pending=2 in_progress=1 blocked=3 done=9'),
+    'studio status queue counts should drive status queue summary when no queue override is set',
+  );
+  assert(
+    studioJsonResult.stdout.includes('current_task: Studio primary task'),
+    'studio status current task should drive current task output',
+  );
+  assert(
+    studioJsonResult.stdout.includes('Blocked queue head:\nStudio blocked task A\nStudio blocked task B'),
+    'studio status blocked head should drive blocked queue output',
+  );
   console.log('status_script_smoke: PASS');
 } finally {
   fs.rmSync(tempDir, { recursive: true, force: true });
