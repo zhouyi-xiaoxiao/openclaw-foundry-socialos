@@ -3,7 +3,7 @@
 ## Runtime shape
 - `socialos/apps/web`: local dashboard UI
 - `socialos/apps/api`: loopback-only HTTP API
-- `infra/db/socialos.db`: SQLite-first persistence
+- `infra/db/*.db`: profile-managed SQLite persistence (`socialos.demo.db`, `socialos.local.db`)
 - `socialos/lib/product-core.mjs`: product heuristics for capture, validation, mirror
 - `socialos/lib/studio-control-plane.mjs`: DB-backed Studio control plane for tasks, runs, agents, settings, and evidence export
 - `socialos/lib/foundry-tasks.mjs`: legacy task export helpers for Studio evidence

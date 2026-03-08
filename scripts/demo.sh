@@ -2,6 +2,8 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck disable=SC1091
+source "${REPO_ROOT}/scripts/socialos_profile.sh"
 DEPLOY_LOG="/tmp/socialos_deploy.log"
 POLICY_LOG="/tmp/socialos_demo_policy.log"
 API_PORT="${SOCIALOS_API_PORT:-8787}"
@@ -10,6 +12,7 @@ API_URL="http://127.0.0.1:${API_PORT}"
 WEB_URL="http://127.0.0.1:${WEB_PORT}"
 NODE_BIN="$(command -v node)"
 CONTROL_SCRIPT="${REPO_ROOT}/scripts/demo_service_control.mjs"
+DEMO_DB_PATH="$(socialos_default_db_path "${REPO_ROOT}" demo)"
 
 wait_for_http() {
   local url="$1"
@@ -28,7 +31,8 @@ wait_for_http() {
 echo "== SocialOS Demo Bootstrap (one command) =="
 
 echo "[1/3] Install + seed local DB"
-"${REPO_ROOT}/scripts/install.sh"
+socialos_write_env_local "${REPO_ROOT}/.env.local" demo "${DEMO_DB_PATH}"
+"${REPO_ROOT}/scripts/install.sh" --profile demo --db-path "${DEMO_DB_PATH}"
 
 echo "[2/3] Deploy runtime profile"
 if "${REPO_ROOT}/scripts/deploy_runtime.sh" >"${DEPLOY_LOG}" 2>&1; then
@@ -48,6 +52,7 @@ if ! "${NODE_BIN}" --input-type=module -e "await import('node:sqlite')" >/dev/nu
   exit 1
 fi
 
+node "${CONTROL_SCRIPT}" stop >/dev/null 2>&1 || true
 node "${CONTROL_SCRIPT}" start
 
 if wait_for_http "${API_URL}/health"; then
@@ -90,5 +95,6 @@ echo "- Follow runbook: ${REPO_ROOT}/socialos/docs/DEMO_SCRIPT.md"
 echo "- Workspace: ${WEB_URL}/quick-capture"
 echo "- Settings / Ops Digest: ${WEB_URL}/settings?panel=ops"
 echo "- API ops: ${API_URL}/ops/status"
+echo "- Demo DB: ${DEMO_DB_PATH}"
 echo "- Run one automation pass: bash ${REPO_ROOT}/scripts/foundry_dispatch.sh RUN_DEVLOOP_ONCE"
 echo "- Public evidence: ${REPO_ROOT}/socialos/docs/EVIDENCE.md"

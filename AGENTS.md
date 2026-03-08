@@ -68,7 +68,7 @@ Authoritative file:
 ## Public Evidence Rules
 - Curate public evidence into `socialos/docs/evidence/`
 - Do not commit:
-  - `infra/db/socialos.db`
+  - `infra/db/*.db`
   - `reports/LATEST.md`
   - rolling `reports/runs/*`
   - runtime/auth state
@@ -101,6 +101,7 @@ Authoritative file:
 
 ## Canonical Commands
 - `bash scripts/demo.sh`
+- `bash scripts/quickstart.sh`
 - `bash scripts/demo_status.sh`
 - `bash scripts/hackathon_preflight.sh`
 - `bash scripts/hackathon_live.sh env-check`

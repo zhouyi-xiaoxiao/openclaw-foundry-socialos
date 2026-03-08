@@ -7,90 +7,152 @@
 [![Pitch Pack](https://img.shields.io/badge/docs-pitch-blue)](socialos/docs/pitch/PITCH_5_MIN.md)
 [![VC Deck](https://img.shields.io/badge/deck-vc_pitch-blue)](socialos/docs/pitch/VC_DECK_SPEC.md)
 
-SocialOS is a local-first relationship and identity operating system. It turns messy real-world inputs into structured people memory, event context, multilingual draft packages, trust-first queue handoff, and evidence-backed self reflection.
+SocialOS is a local-first relationship and identity operating system. It turns messy real-world input into structured people memory, event context, platform-native drafts, trust-first queue handoff, and evidence-backed reflection.
 
-This repository is judge-ready for DoraHacks. The public proof surface stays at [zhouyixiaoxiao.org](https://zhouyixiaoxiao.org/), while the live interactive product remains localhost-only and `dry-run` by default.
+This repo now supports two equally important entry paths:
+
+- `quick demo reproduction` for judges, reviewers, and curious GitHub visitors
+- `reusable local workspace` for builders who want to adapt SocialOS on their own machine
+
+The hosted site at [zhouyixiaoxiao.org](https://zhouyixiaoxiao.org/) is the public proof surface. The real interactive product remains loopback-only and local-first.
 
 ## Project Overview
-What SocialOS already does today:
 
-- Captures text, voice, screenshots, and cards into structured `Person`, `Identity`, `Interaction`, `Event`, and `SelfCheckin` memory.
-- Recalls people and events from fuzzy context instead of exact-keyword lookup only.
-- Generates platform-native drafts across `LinkedIn`, `X`, `Instagram`, `Zhihu`, `Rednote`, `WeChat Moments`, and `WeChat Official Account`.
-- Keeps publishing trust-first through review, queueing, and manual handoff.
-- Produces evidence-backed daily and weekly self mirror summaries.
-- Exposes a judge-facing bounty layer without splitting SocialOS into five separate products.
+SocialOS already supports:
 
-Canonical public URLs:
+- structured people memory and identity linkage
+- event context and reusable follow-up history
+- platform-native draft generation
+- trust-first queue handoff before publishing
+- evidence-backed reflection loops
+- judge-facing proof routes without exposing the full local runtime publicly
 
-- [Pitch Deck](https://zhouyixiaoxiao.org/)
-- [Canonical Bounty Hub](https://zhouyixiaoxiao.org/hackathon/)
-- [Auxiliary Claw for Human Proof Page](https://zhouyixiaoxiao.org/demo/)
-- [Auxiliary Human for Claw Proof Page](https://zhouyixiaoxiao.org/buddy/)
-- [All Proof JSON](https://zhouyixiaoxiao.org/data/proofs/all.json)
+## Quickstart
 
-Canonical local recording URLs:
+Clone the repo and run the default demo profile with one command:
 
-- `http://127.0.0.1:4173/quick-capture`
-- `http://127.0.0.1:4173/demo`
-- `http://127.0.0.1:4173/hackathon`
-- `http://127.0.0.1:4173/buddy`
+```bash
+git clone https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos.git
+cd openclaw-foundry-socialos
+bash scripts/quickstart.sh
+```
+
+That command will:
+
+- verify `node`, `python3`, and `sqlite3`
+- create `.env.local` if needed
+- initialize the profile-specific SQLite database
+- seed the demo profile
+- start the local API and web app
+- print the exact URLs to open
+
+If you want your own blank workspace instead of the seeded demo:
+
+```bash
+bash scripts/quickstart.sh --profile local
+```
+
+## What You Get Locally
+
+After quickstart, you have:
+
+- a local web app at `http://127.0.0.1:4173/quick-capture`
+- a local API at `http://127.0.0.1:8787/health`
+- a reusable relationship-memory workflow for people, events, drafts, queue handoff, and reflection
+- a separate demo DB and local DB so demo resets do not overwrite personal data
 
 ## Setup & Installation
-Clone and boot the local demo:
+
+Current prerequisites:
+
+- macOS or Linux
+- Node 22 or newer
+- `sqlite3`
+- `python3`
+
+Recommended first run:
 
 ```bash
 git clone https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos.git
 cd openclaw-foundry-socialos
 cp .env.example .env
-bash scripts/demo.sh
-node scripts/seed_demo_data.mjs --reset-review-demo
+bash scripts/quickstart.sh
 ```
 
-Judge-day lifecycle:
+Current environment defaults live in `.env.example`. Profile selection and DB routing are usually managed automatically through `.env.local`.
+
+Secondary lifecycle commands:
 
 ```bash
+# Demo-first bootstrap with runtime validation
 bash scripts/demo.sh
+
+# Health check
 bash scripts/demo_status.sh
+
+# Judge-day preflight
 bash scripts/hackathon_preflight.sh
+
+# Full test suite
 bash scripts/test.sh
+
+# Stop local services
 bash scripts/stop_demo.sh
-```
 
-Live provider verification:
-
-```bash
-bash scripts/hackathon_live.sh env-check
-bash scripts/hackathon_live.sh proofs
-```
-
-Public export and evidence refresh:
-
-```bash
+# Capture fresh hackathon proofs
 node scripts/capture_hackathon_proofs.mjs
+
+# Export the static deck/public site
 node scripts/export_vc_deck.mjs
+
+# Refresh generated public docs
 node scripts/refresh_public_docs.mjs
 ```
 
-Key environment variables:
+## Run the Demo Profile
 
-- `HACKATHON_MODE`
-- `GLM_API_KEY`
-- `GLM_MODEL_ID`
-- `FLOCK_API_KEY`
-- `FLOCK_MODEL_ID`
-- `TELEGRAM_BOT_TOKEN`
-- `TELEGRAM_WEBHOOK_SECRET`
-- `TELEGRAM_DEFAULT_CHAT_ID`
-- `TELEGRAM_BOT_USERNAME`
-- `STRUCTURED_MODEL_TIMEOUT_MS`
+Use the seeded review/demo workspace when you want the hackathon-ready state:
+
+```bash
+bash scripts/quickstart.sh
+```
+
+Reset the seeded demo profile if you want to replay the canonical walkthrough from a clean state:
+
+```bash
+bash scripts/quickstart.sh --profile demo --reset-demo
+```
+
+The demo profile uses:
+
+- DB: `infra/db/socialos.demo.db`
+- Routes: `/quick-capture`, `/demo`, `/hackathon`, `/buddy`
+
+## Start Your Own Local Workspace
+
+Use the blank profile when you want to reuse SocialOS for yourself instead of the review demo:
+
+```bash
+bash scripts/quickstart.sh --profile local
+```
+
+The local profile uses:
+
+- DB: `infra/db/socialos.local.db`
+- the same local app and API
+- no automatic demo seeding
+
+This keeps your own notes, contacts, and follow-up history separate from the public demo dataset.
+
+More reuse notes live in [socialos/docs/REUSE_SOCIALOS.md](socialos/docs/REUSE_SOCIALOS.md).
 
 ## Architecture Overview
+
 Core system shape:
 
 - Frontend: loopback-only Node web app in `socialos/apps/web`
 - API: loopback-only Node service in `socialos/apps/api`
-- Database: SQLite in `infra/db/socialos.db`
+- Database: profile-managed SQLite under `infra/db/`
 - Runtime: OpenClaw product profile in `socialos/openclaw/runtime.openclaw.json5`
 - Control plane: Studio task, run, agent, and policy layer in SQLite and `foundry/`
 
@@ -115,6 +177,7 @@ Hackathon overlay:
 - `GET /integrations/telegram/status` and `POST /integrations/telegram/send` expose the optional Telegram volunteer channel used by the impact workflow.
 
 ## Bounty-Specific Integration
+
 SocialOS submits one product story to five tracks:
 
 | Bounty | Public Hub Anchor | Local Demo Route | Integration Endpoint | Proof JSON | Deck Appendix |
@@ -125,30 +188,61 @@ SocialOS submits one product story to five tracks:
 | `Z.AI General` | [`/hackathon/#bounty-z-ai-general`](https://zhouyixiaoxiao.org/hackathon/#bounty-z-ai-general) | `/hackathon?bounty=z-ai-general` | `POST /integrations/glm/generate` | [`z-ai-general.json`](https://zhouyixiaoxiao.org/data/proofs/z-ai-general.json) | `Slide 12` |
 | `AI Agents for Good` | [`/hackathon/#bounty-ai-agents-for-good`](https://zhouyixiaoxiao.org/hackathon/#bounty-ai-agents-for-good) | `/hackathon?bounty=ai-agents-for-good` | `POST /integrations/flock/sdg-triage` + `POST /integrations/telegram/send` | [`ai-agents-for-good.json`](https://zhouyixiaoxiao.org/data/proofs/ai-agents-for-good.json) | `Slide 13` |
 
-Bounty fit at a glance:
+High-level fit:
 
 - `Claw for Human`: SocialOS turns OpenClaw-backed lanes into a calm, human-readable relationship workspace.
 - `Animoca Bounty`: SocialOS proves persistent identity, memory, and coordinated agent lanes instead of one-shot tasks.
-- `Human for Claw`: Buddy mode narrows the system to four safe, youth-friendly tasks.
+- `Human for Claw`: Buddy mode narrows the system to four safe, youth-friendly social tasks.
 - `Z.AI General`: GLM is part of the real production generation path, not a decorative side integration.
-- `AI Agents for Good`: FLock SDG triage, OpenClaw orchestration, outreach lanes, and the Telegram volunteer channel feed directly into follow-up and relationship memory.
+- `AI Agents for Good`: FLock SDG triage, OpenClaw orchestration, outreach lanes, and Telegram follow-through feed directly into relationship memory.
 
 Full submission source text lives in [socialos/docs/HACKATHON_BOUNTIES.md](socialos/docs/HACKATHON_BOUNTIES.md).
 
-## Public Proof URLs
-The public site is proof-first and read-only:
+## Public Links
 
-- [Deck Root](https://zhouyixiaoxiao.org/)
+Public proof and verification links:
+
+- [Repo homepage](https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos)
+- [Deck root](https://zhouyixiaoxiao.org/)
+- Local deck route: `/deck`
 - [Canonical Bounty Hub](https://zhouyixiaoxiao.org/hackathon/)
-- [Auxiliary Demo Proof](https://zhouyixiaoxiao.org/demo/)
-- [Auxiliary Buddy Proof](https://zhouyixiaoxiao.org/buddy/)
-- [Overview JSON](https://zhouyixiaoxiao.org/data/hackathon-overview.json)
-- [All Proof JSON](https://zhouyixiaoxiao.org/data/proofs/all.json)
+- [Auxiliary demo proof](https://zhouyixiaoxiao.org/demo/)
+- [Auxiliary buddy proof](https://zhouyixiaoxiao.org/buddy/)
+- [All proof JSON](https://zhouyixiaoxiao.org/data/proofs/all.json)
+- [Claw for Human video](https://zhouyixiaoxiao.org/videos/claw-for-human/)
+- [Human for Claw video](https://zhouyixiaoxiao.org/videos/human-for-claw/)
+- [Z.AI General video](https://zhouyixiaoxiao.org/videos/z-ai-general/)
+- [AI Agents for Good video](https://zhouyixiaoxiao.org/videos/ai-agents-for-good/)
+- [Animoca video](https://zhouyixiaoxiao.org/videos/animoca/)
 
-The live interactive demo remains localhost-only by design.
+The public site is read-only and proof-first. The interactive product remains local-first by design.
+
+## GitHub-First Distribution
+
+This repository is set up to be usable directly from GitHub:
+
+- clone from `main`
+- use the one-command quickstart for demo reproduction
+- switch to `--profile local` for your own workspace
+- use the hosted URLs above for public verification
+
+Recommended clone path:
+
+```bash
+git clone https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos.git
+cd openclaw-foundry-socialos
+```
+
+Recommended branch expectation:
+
+- default branch: `main`
+- feature branches: `codex/*` or your own branch naming
+
+The repo is also ready to be used as a GitHub template for local-first reuse.
 
 ## Demo Flow
-Record 5 independent `5-8 minute` videos, not one shared video with tiny swaps:
+
+Record or replay 5 independent `5-8 minute` videos:
 
 1. `Claw for Human`: start from `/demo`, then close on `/hackathon/#bounty-claw-for-human`.
 2. `Animoca Bounty`: start from `/hackathon?bounty=animoca`, then close on `/hackathon/#bounty-animoca`.
@@ -156,7 +250,7 @@ Record 5 independent `5-8 minute` videos, not one shared video with tiny swaps:
 4. `Z.AI General`: start from `/hackathon?bounty=z-ai-general`, show live GLM generation, then close on `/hackathon/#bounty-z-ai-general`.
 5. `AI Agents for Good`: start from `/hackathon?bounty=ai-agents-for-good`, show live FLock SDG triage plus the channel proof, then close on `/hackathon/#bounty-ai-agents-for-good`.
 
-Every video must clearly cover:
+Every video must cover:
 
 - the problem
 - the solution
@@ -166,7 +260,32 @@ Every video must clearly cover:
 
 The exact recording order, tabs, narration, and DoraHacks paste-ready copy live in [socialos/docs/pitch/RECORDING_AND_SUBMISSION_RUNBOOK.md](socialos/docs/pitch/RECORDING_AND_SUBMISSION_RUNBOOK.md).
 
+## Troubleshooting
+
+- `sqlite3 is required`: install SQLite and rerun the quickstart command
+- `Node 22 or newer is required`: upgrade Node and rerun the quickstart command
+- `stale demo process`: run `bash scripts/stop_demo.sh`, then rerun quickstart
+- `seed/reset confusion`: demo and local profiles use different DB files; switch profile instead of reusing the same database
+- `missing .env`: run `cp .env.example .env` and rerun quickstart
+
+## For Contributors
+
+Useful commands before pushing:
+
+```bash
+bash scripts/test.sh
+bash scripts/demo_status.sh
+```
+
+Contributor cautions:
+
+- use `bash scripts/quickstart.sh --profile local` for your own workspace
+- use `bash scripts/quickstart.sh --profile demo --reset-demo` only when you intentionally want the canonical seeded demo
+- do not widen gateway exposure or change the default `dry-run` publishing posture
+- avoid committing local DBs, `.env.local`, or private workspace data
+
 ## OpenClaw / Studio Integration
+
 SocialOS is backed by two coordinated multi-agent layers:
 
 - Product runtime agents:
@@ -196,6 +315,7 @@ Agent-facing entrypoints:
 - [socialos/docs/DOCS_INDEX.md](socialos/docs/DOCS_INDEX.md)
 
 ## Judge Pitch Pack
+
 - [socialos/docs/pitch/PITCH_5_MIN.md](socialos/docs/pitch/PITCH_5_MIN.md)
 - [socialos/docs/pitch/PITCH_5_MIN_VC_SCRIPT.md](socialos/docs/pitch/PITCH_5_MIN_VC_SCRIPT.md)
 - [socialos/docs/pitch/JUDGE_BRIEF.md](socialos/docs/pitch/JUDGE_BRIEF.md)
@@ -209,6 +329,7 @@ Agent-facing entrypoints:
 - [socialos/docs/HACKATHON_LIVE_PROVIDER_SETUP.md](socialos/docs/HACKATHON_LIVE_PROVIDER_SETUP.md)
 
 ## Public Evidence
+
 Curated static evidence:
 
 - [socialos/docs/EVIDENCE.md](socialos/docs/EVIDENCE.md)
@@ -226,12 +347,14 @@ Generated proof artifacts:
 - `socialos/docs/evidence/hackathon-telegram-send.json`
 
 ## Safety Defaults
+
 - API exposure remains loopback-only (`127.0.0.1`)
 - default publish mode remains `dry-run`
 - live publish still requires explicit credentials and user intent
 - do **not** widen `gateway.bind`, `gateway.tailscale`, or `gateway.auth`
 
 ## Public Docs
+
 - [socialos/docs/PRODUCT.md](socialos/docs/PRODUCT.md)
 - [socialos/docs/ARCHITECTURE.md](socialos/docs/ARCHITECTURE.md)
 - [socialos/docs/DEMO_SCRIPT.md](socialos/docs/DEMO_SCRIPT.md)
