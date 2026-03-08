@@ -5765,10 +5765,15 @@ function buildCockpitSummary(statements) {
   const followUps = buildFollowUpCandidates(statements, 5);
   const draftEventIds = new Set(recentDrafts.map((draft) => draft.eventId).filter(Boolean));
   const eventsNeedingDrafts = recentEvents.filter((event) => !draftEventIds.has(event.eventId)).slice(0, 4);
-  const queuedTasks = recentQueueTasks.filter((task) => task.status === 'queued').slice(0, 4);
-  const manualSteps = recentQueueTasks.filter((task) => task.status === 'manual_step_needed').slice(0, 4);
-  const postedTasks = recentQueueTasks.filter((task) => task.status === 'posted').slice(0, 4);
-  const failedTasks = recentQueueTasks.filter((task) => task.status === 'failed').slice(0, 4);
+  const queuedTaskTotals = recentQueueTasks.filter((task) => task.status === 'queued');
+  const manualStepTotals = recentQueueTasks.filter((task) => task.status === 'manual_step_needed');
+  const postedTaskTotals = recentQueueTasks.filter((task) => task.status === 'posted');
+  const failedTaskTotals = recentQueueTasks.filter((task) => task.status === 'failed');
+
+  const queuedTasks = queuedTaskTotals.slice(0, 4);
+  const manualSteps = manualStepTotals.slice(0, 4);
+  const postedTasks = postedTaskTotals.slice(0, 4);
+  const failedTasks = failedTaskTotals.slice(0, 4);
 
   const actions = [];
   if (followUps[0]) {
@@ -5826,10 +5831,10 @@ function buildCockpitSummary(statements) {
       contacts: recentPeople.length,
       events: recentEvents.length,
       drafts: recentDrafts.length,
-      queued: queuedTasks.length,
-      manualSteps: manualSteps.length,
-      posted: postedTasks.length,
-      failed: failedTasks.length,
+      queued: queuedTaskTotals.length,
+      manualSteps: manualStepTotals.length,
+      posted: postedTaskTotals.length,
+      failed: failedTaskTotals.length,
       checkins: recentCheckins.length,
     },
     summaryText: [
