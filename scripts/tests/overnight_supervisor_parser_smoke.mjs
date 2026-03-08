@@ -159,6 +159,19 @@ const decisionPaused = determineDecision({
 assert(decisionPaused.decision === 'stop', 'paused foundry mode should stop unattended overnight iteration');
 assert(decisionPaused.nextFocus === 'stabilize-foundry', 'paused foundry mode should route to foundry stabilization');
 
+const decisionUnknownMode = determineDecision({
+  publishMode: 'dry-run',
+  demo: { allHealthy: true },
+  foundry: {
+    mode: 'unknown',
+    commandOk: true,
+    consecutiveFailures: 0,
+    queue: { pending: 0, inProgress: 0, blocked: 0, done: 0, currentTask: 'none' },
+  },
+});
+assert(decisionUnknownMode.decision === 'stop', 'unknown foundry mode should stop unattended overnight iteration');
+assert(decisionUnknownMode.nextFocus === 'stabilize-foundry', 'unknown foundry mode should route to foundry stabilization');
+
 const decisionActive = determineDecision({
   publishMode: 'dry-run',
   demo: { allHealthy: true },

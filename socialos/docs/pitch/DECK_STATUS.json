@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-03-08T03:03:55.761Z",
-  "latestGreenValidationAt": "2026-03-08T03:03:55.761Z",
-  "repoHead": "5fc7703",
+  "generatedAt": "2026-03-08T04:02:38.691Z",
+  "latestGreenValidationAt": "2026-03-08T04:02:38.691Z",
+  "repoHead": "d806701",
   "validationSource": "scripts/test.sh",
   "demo": {
     "healthy": true,
@@ -15,7 +15,7 @@
         "pid": "none",
         "pidAlive": false,
         "stalePid": false,
-        "listeningPid": "79650",
+        "listeningPid": "11570",
         "unmanagedHealthy": true,
         "healthUrl": "http://127.0.0.1:8787/health"
       },
@@ -27,7 +27,7 @@
         "pid": "none",
         "pidAlive": false,
         "stalePid": false,
-        "listeningPid": "79693",
+        "listeningPid": "11609",
         "unmanagedHealthy": true,
         "healthUrl": "http://127.0.0.1:4173/quick-capture"
       }

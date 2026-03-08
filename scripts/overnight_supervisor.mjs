@@ -434,6 +434,14 @@ export function determineDecision({ demo, foundry, publishMode }) {
     };
   }
 
+  if (foundry.mode === 'unknown') {
+    return {
+      decision: 'stop',
+      nextFocus: 'stabilize-foundry',
+      reason: 'Foundry status mode is unknown; avoid unattended iteration on ambiguous control-plane state.',
+    };
+  }
+
   if (foundry.mode === 'PAUSED') {
     return {
       decision: 'stop',
