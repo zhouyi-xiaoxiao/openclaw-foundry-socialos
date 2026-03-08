@@ -1,8 +1,8 @@
 # Repo State Handoff
 
-- Generated: 2026-03-08T09:04:17.355Z
+- Generated: 2026-03-08T10:06:13.375Z
 - Branch: detached
-- Git head: 2815aff
+- Git head: 01ef2b8
 - Dirty working tree: true
 
 ## Canonical Chain
@@ -73,6 +73,7 @@
 -  M socialos/docs/agent/REPO_STATE.md
 -  M socialos/docs/evidence/LATEST_VALIDATION.md
 -  M socialos/docs/pitch/DECK_STATUS.json
+-  M socialos/lib/studio-control-plane.mjs
 
 ## Overnight Context
 - Next focus: triage-blocked-foundry-queue
