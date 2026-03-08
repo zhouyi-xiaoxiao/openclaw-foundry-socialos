@@ -106,6 +106,34 @@ async function main() {
       'history status filter should only return requested status'
     );
 
+    const scopedByDraft = await requestJson(api.baseUrl, `/queue/tasks?draftId=${encodeURIComponent(draftId)}&limit=10`);
+    assert(scopedByDraft.count >= 2, 'queue/tasks draftId filter should return all matching task history');
+    assert(
+      scopedByDraft.queueTasks.every((task) => task.draftId === draftId),
+      'queue/tasks draftId filter should only return tasks for the requested draft'
+    );
+
+    const scopedByEvent = await requestJson(api.baseUrl, `/queue/tasks?eventId=${encodeURIComponent(event.eventId)}&limit=10`);
+    assert(scopedByEvent.count >= 2, 'queue/tasks eventId filter should return matching tasks');
+    assert(
+      scopedByEvent.queueTasks.every((task) => task.eventId === event.eventId),
+      'queue/tasks eventId filter should only return tasks for the requested event'
+    );
+
+    const scopedByPlatform = await requestJson(api.baseUrl, '/queue/tasks?platform=LinkedIn&limit=10');
+    assert(scopedByPlatform.count >= 2, 'queue/tasks platform filter should be case-insensitive and return matching tasks');
+    assert(
+      scopedByPlatform.queueTasks.every((task) => task.platform === 'linkedin'),
+      'queue/tasks platform filter should only return tasks for the requested platform'
+    );
+
+    const scopedLatest = await requestJson(
+      api.baseUrl,
+      `/queue/tasks?latestOnly=true&draftId=${encodeURIComponent(draftId)}&eventId=${encodeURIComponent(event.eventId)}&platform=linkedin&limit=10`
+    );
+    assert(scopedLatest.count === 1, 'queue/tasks scoped latestOnly filter should still dedupe to one latest task');
+    assert(scopedLatest.queueTasks[0].taskId === secondTask.taskId, 'scoped latestOnly filter should keep the newest task');
+
     console.log('queue_tasks_coherence_smoke: PASS');
   } finally {
     await api.close();

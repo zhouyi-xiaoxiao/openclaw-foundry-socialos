@@ -8020,12 +8020,18 @@ async function routeRequest(req, res, statements) {
   if (method === 'GET' && pathname === '/queue/tasks') {
     const limit = normalizeOpsLimit(requestUrl.searchParams.get('limit'), 24, 100);
     const statusFilter = readOptionalString(requestUrl.searchParams.get('status'), '').toLowerCase();
+    const draftIdFilter = readOptionalString(requestUrl.searchParams.get('draftId'), '');
+    const eventIdFilter = readOptionalString(requestUrl.searchParams.get('eventId'), '');
+    const platformFilter = readOptionalString(requestUrl.searchParams.get('platform'), '').toLowerCase();
     const includeHistory = readBooleanLike(requestUrl.searchParams.get('includeHistory'), false);
     const latestOnly = readBooleanLike(requestUrl.searchParams.get('latestOnly'), false);
     const dedupeLatestOnly = latestOnly && !includeHistory;
     const queueTaskRows = statements.listRecentQueueTasks.all(limit * 6).map(formatQueueTaskRow);
     const queueTasks = (dedupeLatestOnly ? dedupeLatestQueueTasks(queueTaskRows, limit * 3) : queueTaskRows)
       .filter((task) => !statusFilter || task.status.toLowerCase() === statusFilter)
+      .filter((task) => !draftIdFilter || task.draftId === draftIdFilter)
+      .filter((task) => !eventIdFilter || task.eventId === eventIdFilter)
+      .filter((task) => !platformFilter || task.platform === platformFilter)
       .slice(0, limit);
     sendJson(res, 200, { limit, count: queueTasks.length, queueTasks });
     return;
