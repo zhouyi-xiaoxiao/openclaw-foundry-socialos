@@ -110,7 +110,7 @@ SocialOS fits `AI Agents for Good` by reframing the same relationship-memory eng
 The partner integration is `OpenClaw + FLock + multi-channel follow-through`. OpenClaw orchestrates the workflow, FLock performs the structured SDG triage on an open-source model path, and SocialOS carries the next action into Web Workspace, outreach drafts, and Telegram volunteer handoff when the channel is configured. The important proof is not just the label. It is the fact that the label lands inside a longer-running coordination loop.
 
 ### Judge-Facing Closing Line
-“This is not a charity chatbot. It is live SDG triage plus relationship memory and actual action follow-through.”
+“This is not a charity chatbot. It is live SDG triage plus relationship memory and actual multi-channel action follow-through through Telegram and the outreach lanes.”
 
 ## Recording Pack
 - Shared backbone: `socialos/docs/pitch/DORAHACKS_MASTER_SCRIPT.md`

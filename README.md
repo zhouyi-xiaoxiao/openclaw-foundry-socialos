@@ -58,7 +58,7 @@ bash scripts/quickstart.sh --profile local
 - `OPENAI_API_KEY` -> better embeddings plus optional voice transcription/refinement
 - `GLM_API_KEY` -> live Z.AI route and GLM-backed generation
 - `FLOCK_API_KEY` -> live SDG triage
-- `TELEGRAM_*` -> optional Telegram volunteer channel
+- `TELEGRAM_*` -> optional Telegram volunteer channel for multi-channel follow-through
 
 ### Recommended first run
 
@@ -261,7 +261,7 @@ High-level fit:
 - `Animoca Bounty`: SocialOS proves persistent identity, memory, and coordinated agent lanes instead of one-shot tasks.
 - `Human for Claw`: Buddy mode narrows the system to four safe, youth-friendly social tasks.
 - `Z.AI General`: GLM is part of the real production generation path, not a decorative side integration.
-- `AI Agents for Good`: FLock SDG triage, OpenClaw orchestration, outreach lanes, and Telegram follow-through feed directly into relationship memory.
+- `AI Agents for Good`: FLock SDG triage, OpenClaw orchestration, and Telegram-powered multi-channel follow-through feed directly into relationship memory.
 
 Full submission source text lives in [socialos/docs/HACKATHON_BOUNTIES.md](socialos/docs/HACKATHON_BOUNTIES.md).
 

@@ -218,10 +218,10 @@ const HACKATHON_PAGE_FALLBACK = Object.freeze([
     proofJsonUrl: '/data/proofs/ai-agents-for-good.json',
     deckAppendixSlide: 'Slide 13',
     problem: 'Impact tooling often stops at classification instead of carrying urgency and next action into real coordination.',
-    uniqueAngle: 'Impact workflows with SDG triage, long-term relationship memory, and follow-through.',
-    integrationSummary: 'FLock supplies live SDG triage and SocialOS turns that result into contact memory, event context, and follow-up actions.',
-    liveProofSummary: 'The public hub surfaces the live FLock triage result and the follow-through path into the SocialOS coordination loop.',
-    integrations: ['FLock SDG Triage', 'OpenClaw Runtime', 'Events + Drafts'],
+    uniqueAngle: 'Impact workflows with SDG triage, long-term relationship memory, and multi-channel follow-through via Telegram.',
+    integrationSummary: 'FLock supplies live SDG triage and SocialOS turns that result into contact memory, event context, outreach actions, and Telegram volunteer handoff.',
+    liveProofSummary: 'The public hub surfaces the live FLock triage result, the OpenClaw coordination loop, and the Telegram channel proof for multi-channel follow-through.',
+    integrations: ['FLock SDG Triage', 'OpenClaw Runtime', 'Events + Drafts', 'Telegram Volunteer Channel'],
   }),
 ]);
 
@@ -3466,7 +3466,7 @@ function renderHackathonShotGallery() {
     },
     {
       title: 'AI Agents for Good Channel Proof',
-      caption: 'Telegram or outreach-channel proof for volunteer follow-through lives beside the FLock SDG story.',
+      caption: 'Telegram is the explicit multi-channel proof for volunteer follow-through alongside the FLock SDG story.',
       image: readDataUriCached(EVIDENCE_AI_GOOD_TELEGRAM_PATH),
     },
   ];
