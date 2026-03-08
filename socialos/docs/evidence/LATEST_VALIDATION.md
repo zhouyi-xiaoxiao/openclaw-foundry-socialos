@@ -1,9 +1,9 @@
 # Latest Validation Snapshot
 
-- Generated: 2026-03-08T18:06:33.324Z
-- Refreshed by: refresh_public_docs_smoke
-- Latest green validation: 2026-03-08T18:06:33.324Z
-- Git head: 3f98ad9
+- Generated: 2026-03-08T19:05:44.339Z
+- Refreshed by: scripts/test.sh
+- Latest green validation: 2026-03-08T19:05:44.339Z
+- Git head: aef5aeb
 
 ## Current Health Snapshot
 - Demo healthy: true

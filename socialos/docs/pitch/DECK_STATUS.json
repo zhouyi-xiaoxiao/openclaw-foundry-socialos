@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-03-08T18:06:33.324Z",
-  "latestGreenValidationAt": "2026-03-08T18:06:33.324Z",
-  "repoHead": "3f98ad9",
-  "validationSource": "refresh_public_docs_smoke",
+  "generatedAt": "2026-03-08T19:05:44.339Z",
+  "latestGreenValidationAt": "2026-03-08T19:05:44.339Z",
+  "repoHead": "aef5aeb",
+  "validationSource": "scripts/test.sh",
   "demo": {
     "healthy": true,
     "summary": "Local demo services are healthy and ready for rehearsal.",
