@@ -260,7 +260,10 @@ process.stdin.on("end", () => {
         if (entry && typeof entry === "object" && typeof entry.task === "string") {
           const task = entry.task.trim();
           const reason = normalizeReason(entry.blockedBy);
-          return reason ? `${task} (blocked by: ${reason})` : task;
+          if (reason && !/\(blocked by:/iu.test(task)) {
+            return `${task} (blocked by: ${reason})`;
+          }
+          return task;
         }
         return "";
       })

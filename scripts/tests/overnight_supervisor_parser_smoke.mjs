@@ -115,7 +115,7 @@ const jsonStatusOutput = JSON.stringify(
       consecutiveFailures: 5,
     },
     latestRun: null,
-    blockedHead: [{ line: 1, task: 'Blocked from JSON object' }, 'Blocked from JSON string'],
+    blockedHead: [{ line: 1, task: 'Blocked from JSON object', blockedBy: 'missing credentials' }, 'Blocked from JSON string'],
     latestDigest: ['digest line 1', 'digest line 2'],
   },
   null,
@@ -132,7 +132,10 @@ assert(parsedJsonStatus.queue.currentTask === 'none', 'json currentTask should n
 assert(parsedJsonStatus.consecutiveFailures === 5, 'json health.consecutiveFailures should parse');
 assert(parsedJsonStatus.latestRun.runId === 'unknown', 'missing latest run fields should normalize to unknown');
 assert(parsedJsonStatus.blockedHead.length === 2, 'json blocked head entries should normalize');
-assert(parsedJsonStatus.blockedHead[0] === 'Blocked from JSON object', 'json blocked head object should use task field');
+assert(
+  parsedJsonStatus.blockedHead[0] === 'Blocked from JSON object (blocked by: missing credentials)',
+  'json blocked head object should include blockedBy context when available',
+);
 assert(parsedJsonStatus.latestDigest.length === 2, 'json digest entries should parse');
 
 const jsonStatusWithStringDigest = JSON.stringify({

@@ -264,7 +264,15 @@ function parseFoundryStatusJson(output, commandOk) {
     blockedHead: blockedHead
       .map((entry) => {
         if (typeof entry === 'string') return entry.trim();
-        if (entry && typeof entry === 'object' && typeof entry.task === 'string') return entry.task.trim();
+        if (entry && typeof entry === 'object' && typeof entry.task === 'string') {
+          const task = entry.task.trim();
+          const blockedBy =
+            typeof entry.blockedBy === 'string' ? entry.blockedBy.trim().replace(/^blocked by:\s*/iu, '') : '';
+          if (blockedBy && !/\(blocked by:/iu.test(task)) {
+            return `${task} (blocked by: ${blockedBy})`;
+          }
+          return task;
+        }
         return '';
       })
       .filter(Boolean),
