@@ -1,8 +1,16 @@
 {
-  "ok": false,
+  "ok": true,
+  "chatId": "8740218746",
+  "messageId": 6,
+  "text": "SocialOS AI Agents for Good proof: SDG triage is ready and the next volunteer follow-up is now queued.",
   "provider": "telegram",
-  "live": false,
-  "fallbackUsed": true,
-  "reason": "telegram-not-configured",
-  "capturedAt": "2026-03-07T23:59:27.888Z"
+  "model": "frelkjsdf_bot",
+  "channel": "telegram",
+  "transport": "bot-api",
+  "live": true,
+  "fallbackUsed": false,
+  "capturedAt": "2026-03-08T00:47:05.375Z",
+  "auditId": "audit_c30a41c346f44753b0788fe87e0ffa1a",
+  "digestId": "digest_229cffe4749c4e8f8816b43c00f3cfc0",
+  "createdAt": "2026-03-08T00:47:05.375Z"
 }

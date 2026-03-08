@@ -385,10 +385,15 @@ async function getJson(baseUrl, pathname) {
 }
 
 async function postJson(baseUrl, pathname, body) {
+  return postJsonWithHeaders(baseUrl, pathname, body);
+}
+
+async function postJsonWithHeaders(baseUrl, pathname, body, headers = {}) {
   const response = await fetch(`${baseUrl}${pathname}`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
+      ...headers,
     },
     body: JSON.stringify(body),
   });
@@ -461,7 +466,7 @@ function logStep(message) {
   console.log(`capture_hackathon_proofs: ${message}`);
 }
 
-function buildSummary({ overview, glmGenerate, flockTriage, workspaceChat, drafts, telegramStatus, telegramSend, screenshotsCaptured }) {
+function buildSummary({ overview, glmGenerate, flockTriage, workspaceChat, drafts, telegramStatus, telegramSend, telegramWebhook, screenshotsCaptured }) {
   const integrationLines = Array.isArray(overview.integrations)
     ? overview.integrations.map(
         (item) =>
@@ -478,6 +483,7 @@ function buildSummary({ overview, glmGenerate, flockTriage, workspaceChat, draft
 - ${formatProofLine('FLock SDG triage', flockTriage.proof)}
 - Telegram status: configured=${Boolean(telegramStatus?.configured)}, bot=${telegramStatus?.botUsername || 'n/a'}, fallbackUsed=${Boolean(telegramStatus?.fallbackUsed)}
 - Telegram send: ${telegramSend ? `provider=${telegramSend.provider}, live=${Boolean(telegramSend.live)}, messageId=${telegramSend.messageId || 'n/a'}` : 'not captured'}
+- Telegram webhook: ${telegramWebhook ? `received=${Boolean(telegramWebhook.received)}, updateId=${telegramWebhook.updateId || 'n/a'}` : 'not captured'}
 - Workspace routing: provider=${workspaceChat.modelRouting?.effectiveProvider || 'unknown'}, model=${workspaceChat.modelRouting?.workspaceModel || 'unknown'}, fallbackUsed=${Boolean(workspaceChat.modelRouting?.fallbackUsed)}
 - ${formatProofLine('Draft generation', drafts.proof)}
 - Screenshots refreshed: ${screenshotsCaptured ? 'yes' : 'no'}
@@ -499,6 +505,7 @@ ${integrationLines.join('\n') || '- No integration summary available.'}
 - hackathon-flock-triage.json
 - hackathon-telegram-status.json
 - hackathon-telegram-send.json
+- hackathon-telegram-webhook.json
 `;
 }
 
@@ -557,8 +564,40 @@ async function main() {
           text: 'SocialOS AI Agents for Good proof: SDG triage is ready and the next volunteer follow-up is now queued.',
         })
       : null;
+    const telegramWebhook =
+      telegramStatus.configured && process.env.TELEGRAM_WEBHOOK_SECRET
+        ? await postJsonWithHeaders(
+            api.baseUrl,
+            '/integrations/telegram/webhook',
+            {
+              update_id: 963164001,
+              message: {
+                message_id: 101,
+                from: {
+                  id: Number(process.env.TELEGRAM_DEFAULT_CHAT_ID || '0') || 8740218746,
+                  is_bot: false,
+                  first_name: 'xiaoxiao',
+                  username: 'xiaoxiao',
+                },
+                chat: {
+                  id: Number(process.env.TELEGRAM_DEFAULT_CHAT_ID || '0') || 8740218746,
+                  first_name: 'xiaoxiao',
+                  type: 'private',
+                },
+                date: 1772932800,
+                text: 'Volunteer mentor check-in received in Telegram',
+              },
+            },
+            {
+              'x-telegram-bot-api-secret-token': process.env.TELEGRAM_WEBHOOK_SECRET,
+            }
+          )
+        : null;
     if (telegramSend) {
       logStep(`telegram send live=${Boolean(telegramSend.live)} messageId=${telegramSend.messageId || 'n/a'}`);
+    }
+    if (telegramWebhook) {
+      logStep(`telegram webhook received=${Boolean(telegramWebhook.received)} updateId=${telegramWebhook.updateId || 'n/a'}`);
     }
 
     if (requireLiveProofs) {
@@ -577,6 +616,7 @@ async function main() {
       );
       if (telegramStatus.configured) {
         assertLive(Boolean(telegramSend && telegramSend.live === true && telegramSend.fallbackUsed === false), 'Telegram send did not complete in live mode');
+        assertLive(Boolean(telegramWebhook && telegramWebhook.received === true), 'Telegram webhook proof did not complete in live mode');
       }
     }
 
@@ -621,12 +661,26 @@ async function main() {
       reason: 'telegram-not-configured',
       capturedAt: new Date().toISOString(),
     });
+    await writeJson('hackathon-telegram-webhook.json', telegramWebhook || {
+      ok: false,
+      received: false,
+      provider: 'telegram',
+      live: false,
+      fallbackUsed: true,
+      reason: 'telegram-webhook-not-configured',
+      capturedAt: new Date().toISOString(),
+    });
 
     let screenshotsCaptured = false;
     const chromeBinary = findChromeBinary();
     if (chromeBinary) {
       for (const target of screenshotTargets) {
-        await captureChromeScreenshot(chromeBinary, web.baseUrl, target, path.join(evidenceDir, target.fileName));
+        const outputPath = path.join(evidenceDir, target.fileName);
+        if (target.fileName === 'ai-agents-for-good-telegram-proof.png' && commandExists('wkhtmltoimage')) {
+          captureScreenshot(web.baseUrl, target, outputPath);
+        } else {
+          await captureChromeScreenshot(chromeBinary, web.baseUrl, target, outputPath);
+        }
       }
       screenshotsCaptured = true;
       logStep(`screenshots refreshed via chrome-headless=${screenshotTargets.length}`);
@@ -672,6 +726,7 @@ async function main() {
         drafts,
         telegramStatus,
         telegramSend,
+        telegramWebhook,
         screenshotsCaptured,
       })
     );

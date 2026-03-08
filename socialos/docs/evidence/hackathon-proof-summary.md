@@ -1,14 +1,15 @@
 # Hackathon Proof Snapshot
 
-- Generated: 2026-03-08T00:00:00.526Z
+- Generated: 2026-03-08T00:47:46.362Z
 - Proof mode: live-required
 - Bounties: 5
-- GLM generation: provider=glm, model=glm-5, live=true, fallbackUsed=false, capturedAt=2026-03-07T23:57:34.570Z
-- FLock SDG triage: provider=flock, model=qwen3-235b-a22b-instruct-2507, live=true, fallbackUsed=false, capturedAt=2026-03-07T23:59:25.256Z
-- Telegram status: configured=false, bot=n/a, fallbackUsed=true
-- Telegram send: not captured
+- GLM generation: provider=glm, model=glm-5, live=true, fallbackUsed=false, capturedAt=2026-03-08T00:44:08.830Z
+- FLock SDG triage: provider=flock, model=qwen3-235b-a22b-instruct-2507, live=true, fallbackUsed=false, capturedAt=2026-03-08T00:47:03.026Z
+- Telegram status: configured=true, bot=frelkjsdf_bot, fallbackUsed=false
+- Telegram send: provider=telegram, live=true, messageId=6
+- Telegram webhook: received=true, updateId=963164001
 - Workspace routing: provider=glm, model=glm-5, fallbackUsed=false
-- Draft generation: provider=glm, model=glm-5, live=true, fallbackUsed=false, capturedAt=2026-03-07T23:59:25.251Z
+- Draft generation: provider=glm, model=glm-5, live=true, fallbackUsed=false, capturedAt=2026-03-08T00:47:03.019Z
 - Screenshots refreshed: yes
 
 ## Integration status
@@ -19,7 +20,7 @@
 - Z.AI GLM: status=ready, provider=glm, model=glm-5, live=true, fallbackUsed=false
 - FLock: status=ready, provider=flock, model=qwen3-235b-a22b-instruct-2507, live=true, fallbackUsed=false
 - Multi-channel Outreach: status=ready, provider=social-channels, model=n/a, live=true, fallbackUsed=false
-- Telegram Volunteer Channel: status=pending, provider=telegram, model=n/a, live=false, fallbackUsed=true
+- Telegram Volunteer Channel: status=ready, provider=telegram, model=frelkjsdf_bot, live=true, fallbackUsed=false
 
 ## Stable evidence files
 - hackathon-overview.json
@@ -35,3 +36,4 @@
 - hackathon-flock-triage.json
 - hackathon-telegram-status.json
 - hackathon-telegram-send.json
+- hackathon-telegram-webhook.json

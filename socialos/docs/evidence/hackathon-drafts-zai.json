@@ -1,18 +1,18 @@
 {
-  "eventId": "event_f35ccda2a5564b94b90b5df937c9fe42",
+  "eventId": "event_e54e61b2944e4cdcb8a2a9169cd0e695",
   "bountyMode": "z-ai-general",
   "provider": "glm",
   "count": 2,
   "drafts": [
     {
-      "draftId": "draft_0fc0b0e5327c4a2fa6b7073e646b0622",
-      "eventId": "event_f35ccda2a5564b94b90b5df937c9fe42",
+      "draftId": "draft_df7896e8eaf84333b96f97f76419ffa7",
+      "eventId": "event_e54e61b2944e4cdcb8a2a9169cd0e695",
       "eventTitle": "Community Mentor Follow-up",
       "platform": "linkedin",
       "platformLabel": "LinkedIn",
       "platformShellLabel": "LinkedIn",
       "language": "en",
-      "content": "Community Mentor Follow-up: Building systems, not just content Had a great session with student organizers and mentors after our community workshop. The conversation kept circling back to one thing: how do you sustain momentum after the energy fades? The answer isn't more motivation. It's better infrastructure. We walked through how Quick Capture, People, Drafts, Queue, and Self Mirror work together as one workflow. Not as separate tools you juggle, but as an operating loop that keeps community building sustainable. For student organizers juggling classes, events, and leadership roles, this matters. You stop losing ideas in notes apps. You stop forgetting follow-ups. You stop starting from zero every semester. The mentors in the room saw it immediately: this is how you hand off responsibilities without losing institutional memory. Grateful for the honest questions and real-world scenarios everyone brought. This is how SocialOS gets better. What's your biggest challenge with sustaining community momentum? Drop a comment below. #CommunityBuilding #StudentLeadership #SocialOS #Mentorship #Organizing",
+      "content": "Had a great follow-up session with student mentors and organizers after our community workshop. The conversation reinforced something important: community building isn't just about showing up. It's about having systems that work together. We walked through how Quick Capture, People, Drafts, Queue, and Self Mirror function as one connected workflow. The goal is simple: turn content creation into an operating loop instead of a growing pile of unfinished drafts. For the mentors and organizers in the room, this means less time managing tools and more time doing what matters: building real connections. Grateful for the energy and questions from this group. The future of community leadership is in good hands. #socialos #communitybuilding #studentleaders #mentors #leadership",
       "metadata": {
         "source": "api.drafts_generate",
         "capability": {
@@ -53,7 +53,7 @@
           "codexAssist": [
             "Codex can further refine tone, structure, CTA, and media notes."
           ],
-          "preview": "Community Mentor Follow-up: Building systems, not just content Had a great session with student organizers and mentors after our community workshop. The conversation kept circling back to one thing: how do you sustain momentum after the energy fades? The answer isn't more motivation. It's better infrastructure. We walked through how Quick Capture, People, Drafts, Queue, and Self Mirror work together as one workflow. Not as separate tools you juggle, but as an operating loop that keeps community building sustainable. For student organizers juggling classes, events, and leadership roles, this matters. You stop losing ideas in notes apps. You stop forgetting follow-ups. You stop starting from zero every semester. The mentors in the room saw it immediately: this is how you hand off responsibilities without losing institutional memory. Grateful for the honest questions and real-world scenarios everyone brought. This is how SocialOS gets better. What's your biggest challenge with sustaining community momentum? Drop a comment below. #CommunityBuilding #StudentLeadership #SocialOS #Mentorship #Organizing"
+          "preview": "Had a great follow-up session with student mentors and organizers after our community workshop. The conversation reinforced something important: community building isn't just about showing up. It's about having systems that work together. We walked through how Quick Capture, People, Drafts, Queue, and Self Mirror function as one connected workflow. The goal is simple: turn content creation into an operating loop instead of a growing pile of unfinished drafts. For the mentors and organizers in the room, this means less time managing tools and more time doing what matters: building real connections. Grateful for the energy and questions from this group. The future of community leadership is in good hands. #socialos #communitybuilding #studentleaders #mentors #leadership"
         },
         "variants": [],
         "validation": null,
@@ -109,21 +109,21 @@
         "codexAssist": [
           "Codex can further refine tone, structure, CTA, and media notes."
         ],
-        "preview": "Community Mentor Follow-up: Building systems, not just content Had a great session with student organizers and mentors after our community workshop. The conversation kept circling back to one thing: how do you sustain momentum after the energy fades? The answer isn't more motivation. It's better infrastructure. We walked through how Quick Capture, People, Drafts, Queue, and Self Mirror work together as one workflow. Not as separate tools you juggle, but as an operating loop that keeps community building sustainable. For student organizers juggling classes, events, and leadership roles, this matters. You stop losing ideas in notes apps. You stop forgetting follow-ups. You stop starting from zero every semester. The mentors in the room saw it immediately: this is how you hand off responsibilities without losing institutional memory. Grateful for the honest questions and real-world scenarios everyone brought. This is how SocialOS gets better. What's your biggest challenge with sustaining community momentum? Drop a comment below. #CommunityBuilding #StudentLeadership #SocialOS #Mentorship #Organizing"
+        "preview": "Had a great follow-up session with student mentors and organizers after our community workshop. The conversation reinforced something important: community building isn't just about showing up. It's about having systems that work together. We walked through how Quick Capture, People, Drafts, Queue, and Self Mirror function as one connected workflow. The goal is simple: turn content creation into an operating loop instead of a growing pile of unfinished drafts. For the mentors and organizers in the room, this means less time managing tools and more time doing what matters: building real connections. Grateful for the energy and questions from this group. The future of community leadership is in good hands. #socialos #communitybuilding #studentleaders #mentors #leadership"
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T23:59:15.567Z"
+      "createdAt": "2026-03-08T00:46:53.273Z"
     },
     {
-      "draftId": "draft_dc57f7646a7142f59842fbf0b9ae8fb1",
-      "eventId": "event_f35ccda2a5564b94b90b5df937c9fe42",
+      "draftId": "draft_b8d45d0454274134906c61a5f505852e",
+      "eventId": "event_e54e61b2944e4cdcb8a2a9169cd0e695",
       "eventTitle": "Community Mentor Follow-up",
       "platform": "x",
       "platformLabel": "X",
       "platformShellLabel": "X",
       "language": "en",
-      "content": "Had a great follow-up session with our student mentors and organizers after the community workshop. The energy in the room was real. What stood out: the best community builders aren't chasing metrics. They're showing up consistently, listening first, and shipping second. That's…",
+      "content": "Had a great session with our student mentors and organizers following the community workshop. The energy was real. One thing stood out: the best community builders aren't the loudest voices. They're the ones who show up consistently, follow through, and make space for others. To…",
       "metadata": {
         "source": "api.drafts_generate",
         "capability": {
@@ -163,7 +163,7 @@
           "codexAssist": [
             "Codex can further refine tone, structure, CTA, and media notes."
           ],
-          "preview": "Had a great follow-up session with our student mentors and organizers after the community workshop. The energy in the room was real. What stood out: the best community builders aren't chasing metrics. They're showing up consistently, listening first, and shipping second. That's…"
+          "preview": "Had a great session with our student mentors and organizers following the community workshop. The energy was real. One thing stood out: the best community builders aren't the loudest voices. They're the ones who show up consistently, follow through, and make space for others. To…"
         },
         "variants": [],
         "validation": null,
@@ -218,15 +218,15 @@
         "codexAssist": [
           "Codex can further refine tone, structure, CTA, and media notes."
         ],
-        "preview": "Had a great follow-up session with our student mentors and organizers after the community workshop. The energy in the room was real. What stood out: the best community builders aren't chasing metrics. They're showing up consistently, listening first, and shipping second. That's…"
+        "preview": "Had a great session with our student mentors and organizers following the community workshop. The energy was real. One thing stood out: the best community builders aren't the loudest voices. They're the ones who show up consistently, follow through, and make space for others. To…"
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T23:59:25.241Z"
+      "createdAt": "2026-03-08T00:47:03.015Z"
     }
   ],
-  "auditId": "audit_270f9fc6b4c3466b85abdf74a602acee",
-  "digestId": "digest_18e8bc8cf33a4dcd94e392506e55abaa",
+  "auditId": "audit_cf3d95c465564278b2bf59e9404d8777",
+  "digestId": "digest_e9d8a1c7cca648fb83aafd57d57ced92",
   "proof": {
     "requestedProvider": "glm",
     "bountyMode": "z-ai-general",
@@ -238,10 +238,10 @@
     "model": "glm-5",
     "live": true,
     "fallbackUsed": false,
-    "capturedAt": "2026-03-07T23:59:25.251Z",
+    "capturedAt": "2026-03-08T00:47:03.019Z",
     "generations": [
       {
-        "draftId": "draft_0fc0b0e5327c4a2fa6b7073e646b0622",
+        "draftId": "draft_df7896e8eaf84333b96f97f76419ffa7",
         "platform": "linkedin",
         "language": "en",
         "provider": "glm",
@@ -251,7 +251,7 @@
         "reason": "provider-generated"
       },
       {
-        "draftId": "draft_dc57f7646a7142f59842fbf0b9ae8fb1",
+        "draftId": "draft_b8d45d0454274134906c61a5f505852e",
         "platform": "x",
         "language": "en",
         "provider": "glm",

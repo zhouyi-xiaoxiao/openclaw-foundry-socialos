@@ -1,26 +1,24 @@
 {
-  "responseId": "workspace_d14694582d744434922b51c019be55a0",
-  "intent": "capture",
+  "responseId": "workspace_dbf9796e045547bda21c85513e2bac64",
+  "intent": "mixed",
   "bountyMode": "z-ai-general",
-  "summary": "The best next follow-up with Minghan Xiao is a brief, value-forward message referencing your conversation about builder communities and operator dashboards—ideally within 48 hours while the context is fresh. This matters because hackathon organizers like Minghan are key connectors in the ecosystem; a timely, specific follow-up (perhaps sharing a relevant resource or asking a thoughtful question about his community-building work) transforms a casual encounter into a lasting professional relationship, positioning you as someone who listens and adds value rather than just another attendee seeking favors.",
+  "summary": "Hi Minghan, great meeting you at the London hackathon. I really enjoyed our conversation about builder communities and the potential for operator dashboards. Would love to stay in touch and explore how we might collaborate. Let me know if you'd be open to a quick chat sometime.",
   "presentation": {
-    "mode": "search",
-    "answer": "The best next follow-up with Minghan Xiao is a brief, value-forward message referencing your conversation about builder communities and operator dashboards—ideally within 48 hours while the context is fresh. This matters because hackathon…",
+    "mode": "capture",
+    "answer": "Hi Minghan, great meeting you at the London hackathon. I really enjoyed our conversation about builder communities and the potential for operator dashboards. Would love to stay in touch and explore how we might collaborate. Let me know if…",
     "primaryCard": {
-      "type": "contact",
-      "kicker": "Contact",
-      "title": "Minghan Xiao",
-      "body": "Talked about builder communities, operator dashboards, and how SocialOS could support organiser follow-up.",
+      "type": "draft",
+      "kicker": "Draft ready",
+      "title": "LinkedIn · London hackathon organiser follow-up",
+      "body": "I turned a real conversation with Minghan Xiao and the London hackathon organiser circle into a local-first SocialOS flow: one note becomes relationship memory, linked events, pla…",
       "subtitle": "",
-      "href": "/people/person_demo_lilei",
+      "href": "/drafts?eventId=event_demo_campaign",
       "badges": [
-        "london-hackathon",
-        "imperial",
-        "organiser"
+        "en",
+        "L1 Assisted"
       ],
       "detailLines": [
-        "Next follow-up: 2026-03-09T23:57:23.363Z",
-        "Updated: 2026-03-07T23:37:23.363Z"
+        "Entry: LinkedIn publish surface"
       ]
     },
     "related": {
@@ -38,8 +36,8 @@
             "organiser"
           ],
           "detailLines": [
-            "Next follow-up: 2026-03-09T23:57:23.363Z",
-            "Updated: 2026-03-07T23:37:23.363Z"
+            "Next follow-up: 2026-03-10T00:43:55.394Z",
+            "Updated: 2026-03-08T00:23:55.394Z"
           ]
         },
         {
@@ -55,8 +53,8 @@
             "cross-border"
           ],
           "detailLines": [
-            "Next follow-up: 2026-03-12T23:57:23.367Z",
-            "Updated: 2026-03-07T23:17:23.367Z"
+            "Next follow-up: 2026-03-13T00:43:55.398Z",
+            "Updated: 2026-03-08T00:03:55.398Z"
           ]
         },
         {
@@ -72,8 +70,8 @@
             "bristol"
           ],
           "detailLines": [
-            "Next follow-up: 2026-03-17T23:57:23.376Z",
-            "Updated: 2026-03-07T21:57:23.376Z"
+            "Next follow-up: 2026-03-18T00:43:55.407Z",
+            "Updated: 2026-03-07T22:43:55.407Z"
           ]
         }
       ],
@@ -89,7 +87,7 @@
             "builders and community organisers"
           ],
           "detailLines": [
-            "Created: 2026-03-07T22:47:23.378Z"
+            "Created: 2026-03-07T23:33:55.408Z"
           ]
         },
         {
@@ -103,26 +101,11 @@
             "cross-border founders and legal operators"
           ],
           "detailLines": [
-            "Created: 2026-03-07T19:37:23.379Z"
+            "Created: 2026-03-07T20:23:55.410Z"
           ]
         }
       ],
       "drafts": [
-        {
-          "type": "draft",
-          "kicker": "Draft",
-          "title": "WeChat Official Account · London hackathon organiser follow-up",
-          "body": "This is not just another content tool. It is a relationship operating system that helps you meet people, remember context, follow through, and turn the work into clear output. The…",
-          "subtitle": "",
-          "href": "/drafts?eventId=event_demo_campaign",
-          "badges": [
-            "zh",
-            "L1.5 Rich Article Package"
-          ],
-          "detailLines": [
-            "Entry: WeChat Official Account publish surface"
-          ]
-        },
         {
           "type": "draft",
           "kicker": "Draft",
@@ -141,8 +124,8 @@
         {
           "type": "draft",
           "kicker": "Draft",
-          "title": "WeChat Moments · London hackathon organiser follow-up",
-          "body": "This WeChat Moments-ready draft captures the strongest update from the demo week: the same follow-up now flows through chat, contacts, content, and reflection inside one system.",
+          "title": "Rednote · London hackathon organiser follow-up",
+          "body": "This Rednote-ready draft turns one real London hackathon organiser conversation into a visual SocialOS story: one note becomes a contact card, an event trail, and fresh content id…",
           "subtitle": "",
           "href": "/drafts?eventId=event_demo_campaign",
           "badges": [
@@ -150,7 +133,22 @@
             "L1 Assisted"
           ],
           "detailLines": [
-            "Entry: WeChat Moments publish surface"
+            "Entry: Rednote publish surface"
+          ]
+        },
+        {
+          "type": "draft",
+          "kicker": "Draft",
+          "title": "Instagram · London hackathon organiser follow-up",
+          "body": "Today I turned one real conversation with London hackathon organiser Minghan Xiao into a SocialOS loop that keeps people, context, and follow-up alive.",
+          "subtitle": "",
+          "href": "/drafts?eventId=event_demo_campaign",
+          "badges": [
+            "en",
+            "L1 Assisted"
+          ],
+          "detailLines": [
+            "Entry: Instagram publish surface"
           ]
         }
       ],
@@ -168,25 +166,43 @@
             "stretched"
           ],
           "detailLines": [
-            "Updated: 2026-03-07T23:57:23.361Z"
+            "Updated: 2026-03-08T00:43:55.388Z"
           ]
         }
       ]
     },
     "secondaryCards": [
       {
-        "type": "draft",
-        "kicker": "Draft ready",
-        "title": "WeChat Official Account · London hackathon organiser follow-up",
-        "body": "This is not just another content tool. It is a relationship operating system that helps you meet people, remember context, follow through, and turn the work into clear output. The…",
+        "type": "contact",
+        "kicker": "Contact",
+        "title": "Minghan Xiao",
+        "body": "Talked about builder communities, operator dashboards, and how SocialOS could support organiser follow-up.",
         "subtitle": "",
-        "href": "/drafts?eventId=event_demo_campaign",
+        "href": "/people/person_demo_lilei",
         "badges": [
-          "zh",
-          "L1.5 Rich Article Package"
+          "london-hackathon",
+          "imperial",
+          "organiser"
         ],
         "detailLines": [
-          "Entry: WeChat Official Account publish surface"
+          "Next follow-up: 2026-03-10T00:43:55.394Z",
+          "Updated: 2026-03-08T00:23:55.394Z"
+        ]
+      },
+      {
+        "type": "contact",
+        "kicker": "Ready to review",
+        "title": "Minghan Xiao",
+        "body": "Draft short English follow-up note mentioning builder communities and operator dashboards.",
+        "subtitle": "Ready to review before saving",
+        "href": "",
+        "badges": [
+          "London hackathon",
+          "builder communities",
+          "operator dashboards"
+        ],
+        "detailLines": [
+          "Context: Met at London hackathon. Topics: builder communities, operator dashboards."
         ]
       },
       {
@@ -200,33 +216,11 @@
           "builders and community organisers"
         ],
         "detailLines": [
-          "Created: 2026-03-07T22:47:23.378Z"
-        ]
-      },
-      {
-        "type": "mirror",
-        "kicker": "Mirror",
-        "title": "Weekly reflection",
-        "body": "This week centered on energized (1), social (1), stretched (1). Strongest lift: After a day of strong product conversations, I felt energized and wanted to lock in the follow-up quickly. Watch-out: A…",
-        "subtitle": "",
-        "href": "/self-mirror",
-        "badges": [
-          "energized",
-          "social",
-          "stretched"
-        ],
-        "detailLines": [
-          "Updated: 2026-03-07T23:57:23.361Z"
+          "Created: 2026-03-07T23:33:55.408Z"
         ]
       }
     ],
     "actions": [
-      {
-        "id": "open-contact",
-        "kind": "link",
-        "href": "/people/person_demo_lilei",
-        "label": "Open Contact"
-      },
       {
         "id": "review-drafts",
         "kind": "link",
@@ -235,38 +229,39 @@
       }
     ]
   },
-  "text": "Use one English paragraph to explain the next best follow-up for the organizer I met at the hackathon, including why that follow-up matters.",
+  "text": "Write one short English follow-up note to Minghan Xiao after the London hackathon. Mention builder communities and operator dashboards.",
   "assets": [],
   "captureDraft": {
-    "rawText": "Use one English paragraph to explain the next best follow-up for the organizer I met at the hackathon, including why that follow-up matters.",
-    "combinedText": "Use one English paragraph to explain the next best follow-up for the organizer I met at the hackathon, including why that follow-up matters.",
-    "source": "hackathon_proof_capture_1_2",
+    "rawText": "Write one short English follow-up note to Minghan Xiao after the London hackathon. Mention builder communities and operator dashboards.",
+    "combinedText": "Write one short English follow-up note to Minghan Xiao after the London hackathon. Mention builder communities and operator dashboards.",
+    "source": "hackathon_proof_capture_2_2",
     "personDraft": {
-      "name": "",
-      "displayName": "Unconfirmed contact",
-      "isConfirmedName": false,
-      "requiresNameConfirmation": true,
+      "name": "Minghan Xiao",
+      "displayName": "Minghan Xiao",
+      "isConfirmedName": true,
+      "requiresNameConfirmation": false,
       "tags": [
-        "hackathon",
-        "organizer"
+        "London hackathon",
+        "builder communities",
+        "operator dashboards"
       ],
-      "notes": "User seeks advice on the best follow-up strategy for a hackathon organizer.",
+      "notes": "Follow-up needed re: builder communities and operator dashboards post-London hackathon.",
       "nextFollowUpAt": "",
-      "followUpSuggestion": "Draft a follow-up message for the organizer.",
+      "followUpSuggestion": "Draft short English follow-up note mentioning builder communities and operator dashboards.",
       "identities": []
     },
     "selfCheckinDraft": {
       "energy": 0,
       "emotions": [
-        "social"
+        "neutral"
       ],
-      "triggerText": "hackathon_proof_capture_1_2",
-      "reflection": "Use one English paragraph to explain the next best follow-up for the organizer I met at the hackathon, including why that follow-up matters."
+      "triggerText": "hackathon_proof_capture_2_2",
+      "reflection": "Write one short English follow-up note to Minghan Xiao after the London hackathon. Mention builder communities and operator dashboards."
     },
     "interactionDraft": {
-      "summary": "Met an organizer at a hackathon.",
+      "summary": "Met at London hackathon. Topics: builder communities, operator dashboards.",
       "happenedAt": "",
-      "evidence": "met at the hackathon"
+      "evidence": "Write one short English follow-up note to Minghan Xiao after the London hackathon. Mention builder communities and operator dashboards."
     },
     "assets": [],
     "extraction": {
@@ -293,9 +288,9 @@
         "ic"
       ],
       "notes": "London hackathon organiser at Imperial College. From Tianjin, China. Very nice guy. Shared both his X and LinkedIn.",
-      "nextFollowUpAt": "2026-03-09T23:57:23.363Z",
-      "updatedAt": "2026-03-07T23:37:23.363Z",
-      "score": 1.6688,
+      "nextFollowUpAt": "2026-03-10T00:43:55.394Z",
+      "updatedAt": "2026-03-08T00:23:55.394Z",
+      "score": 4.7279,
       "evidenceSnippet": "Talked about builder communities, operator dashboards, and how SocialOS could support organiser follow-up."
     },
     {
@@ -309,9 +304,9 @@
         "chengdu"
       ],
       "notes": "Independent lawyer focused on cross-border and intellectual property work. Met through a Chamber of Commerce event in Chengdu. Later visited her office and she treated me to a meal. Trusted partner contact.",
-      "nextFollowUpAt": "2026-03-12T23:57:23.367Z",
-      "updatedAt": "2026-03-07T23:17:23.367Z",
-      "score": 1.0718,
+      "nextFollowUpAt": "2026-03-13T00:43:55.398Z",
+      "updatedAt": "2026-03-08T00:03:55.398Z",
+      "score": 0.8762,
       "evidenceSnippet": "Met at a Chamber of Commerce event in Chengdu."
     },
     {
@@ -324,9 +319,9 @@
         "ecef"
       ],
       "notes": "Associate Pro Vice-Chancellor for Enterprise and Innovation. Organises Early Career Enterprise Fellows, and I am one of the recipients.",
-      "nextFollowUpAt": "2026-03-17T23:57:23.376Z",
-      "updatedAt": "2026-03-07T21:57:23.376Z",
-      "score": 1.0233,
+      "nextFollowUpAt": "2026-03-18T00:43:55.407Z",
+      "updatedAt": "2026-03-07T22:43:55.407Z",
+      "score": 0.8762,
       "evidenceSnippet": "Met through the Early Career Enterprise Fellows context."
     },
     {
@@ -339,9 +334,9 @@
         "merchant-venturers"
       ],
       "notes": "Lecturer at the University of Bristol. Met in the EngiMath staff kitchen during a dynamics workshop. Shared her first-year experiences. I want to invite her for lunch or dinner. Office is in the Merchant Venturers Build…",
-      "nextFollowUpAt": "2026-03-10T23:57:23.375Z",
-      "updatedAt": "2026-03-07T22:07:23.375Z",
-      "score": 0.9748,
+      "nextFollowUpAt": "2026-03-11T00:43:55.406Z",
+      "updatedAt": "2026-03-07T22:53:55.406Z",
+      "score": 0.821,
       "evidenceSnippet": "Met at a dynamics workshop in the EngiMath staff kitchen."
     }
   ],
@@ -364,8 +359,8 @@
           "focus": "hackathons, builder communities, and operator dashboards"
         }
       },
-      "createdAt": "2026-03-07T22:47:23.378Z",
-      "score": 0.8075,
+      "createdAt": "2026-03-07T23:33:55.408Z",
+      "score": 0.9105,
       "snippet": "Turned one London organiser conversation into a SocialOS follow-up, draft, and reflection loop."
     },
     {
@@ -379,24 +374,9 @@
           "summary": "Captured the Candice Tang relationship thread from a Chengdu Chamber event into a reusable follow-up context."
         }
       },
-      "createdAt": "2026-03-07T19:37:23.379Z",
-      "score": 0.5375,
+      "createdAt": "2026-03-07T20:23:55.410Z",
+      "score": 0.5553,
       "snippet": "Captured the Candice Tang relationship thread from a Chengdu Chamber event into a reusable follow-up context."
-    },
-    {
-      "eventId": "event_demo_exeter_industry_programme",
-      "title": "Exeter research-industry programme",
-      "payload": {
-        "audience": "research and defence collaborators",
-        "language": "en",
-        "tone": "practical",
-        "details": {
-          "summary": "Captured James Sibson and Clare Rees-Zimmerman in the same research-industry context."
-        }
-      },
-      "createdAt": "2026-03-07T15:17:23.383Z",
-      "score": 0.5375,
-      "snippet": "Captured James Sibson and Clare Rees-Zimmerman in the same research-industry context."
     },
     {
       "eventId": "event_demo_sf_ihealth_circle",
@@ -409,78 +389,27 @@
           "summary": "Remembered the James Wu conversation from iHealth in San Francisco and preserved the entrepreneurship narrative."
         }
       },
-      "createdAt": "2026-03-07T18:37:23.380Z",
-      "score": 0.47,
+      "createdAt": "2026-03-07T19:23:55.410Z",
+      "score": 0.4842,
       "snippet": "Remembered the James Wu conversation from iHealth in San Francisco and preserved the entrepreneurship narrative."
+    },
+    {
+      "eventId": "event_demo_exeter_industry_programme",
+      "title": "Exeter research-industry programme",
+      "payload": {
+        "audience": "research and defence collaborators",
+        "language": "en",
+        "tone": "practical",
+        "details": {
+          "summary": "Captured James Sibson and Clare Rees-Zimmerman in the same research-industry context."
+        }
+      },
+      "createdAt": "2026-03-07T16:03:55.412Z",
+      "score": 0.4842,
+      "snippet": "Captured James Sibson and Clare Rees-Zimmerman in the same research-industry context."
     }
   ],
   "relatedDrafts": [
-    {
-      "draftId": "draft_demo_wechat_official",
-      "eventId": "event_demo_campaign",
-      "eventTitle": "London hackathon organiser follow-up",
-      "platform": "wechat_official",
-      "platformLabel": "WeChat Official Account",
-      "platformShellLabel": "WeChat Official Account",
-      "language": "zh",
-      "content": "This is not just another content tool. It is a relationship operating system that helps you meet people, remember context, follow through, and turn the work into clear output. The demo uses a real London hackathon organiser thread to show that loop end to end.",
-      "metadata": {
-        "capability": {
-          "supportLevel": "L1.5 Rich Article Package",
-          "entryTarget": "wechat_official publish surface"
-        },
-        "publishPackage": {
-          "title": "WeChat Official Account demo package",
-          "body": "A reusable wechat_official package for the London organiser follow-up event.",
-          "hashtags": [
-            "#SocialOS",
-            "#OpenClaw"
-          ],
-          "cta": "Reply if you want to compare notes.",
-          "entryTarget": "WeChat Official Account publish surface",
-          "supportLevel": "L1.5 Rich Article Package",
-          "assetChecklist": [
-            "1 hero visual",
-            "1 follow-up note"
-          ],
-          "steps": [
-            "Copy content",
-            "Open platform entry",
-            "Post or mark manual complete"
-          ]
-        },
-        "validation": null
-      },
-      "capability": {
-        "supportLevel": "L1.5 Rich Article Package",
-        "entryTarget": "wechat_official publish surface"
-      },
-      "publishPackage": {
-        "title": "WeChat Official Account demo package",
-        "body": "A reusable wechat_official package for the London organiser follow-up event.",
-        "hashtags": [
-          "#SocialOS",
-          "#OpenClaw"
-        ],
-        "cta": "Reply if you want to compare notes.",
-        "entryTarget": "WeChat Official Account publish surface",
-        "supportLevel": "L1.5 Rich Article Package",
-        "assetChecklist": [
-          "1 hero visual",
-          "1 follow-up note"
-        ],
-        "steps": [
-          "Copy content",
-          "Open platform entry",
-          "Post or mark manual complete"
-        ]
-      },
-      "validation": null,
-      "variants": [],
-      "createdAt": "2026-03-07T22:37:23.393Z",
-      "score": 0.43478260869565216,
-      "snippet": "This is not just another content tool. It is a relationship operating system that helps you meet people, remember context, follow through, and turn the work into clear output. The…"
-    },
     {
       "draftId": "draft_demo_linkedin",
       "eventId": "event_demo_campaign",
@@ -543,33 +472,33 @@
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T22:37:23.391Z",
-      "score": 0.43478260869565216,
+      "createdAt": "2026-03-07T23:23:55.420Z",
+      "score": 0.47368421052631576,
       "snippet": "I turned a real conversation with Minghan Xiao and the London hackathon organiser circle into a local-first SocialOS flow: one note becomes relationship memory, linked events, pla…"
     },
     {
-      "draftId": "draft_demo_wechat_moments",
+      "draftId": "draft_demo_xiaohongshu",
       "eventId": "event_demo_campaign",
       "eventTitle": "London hackathon organiser follow-up",
-      "platform": "wechat_moments",
-      "platformLabel": "WeChat Moments",
-      "platformShellLabel": "WeChat Moments",
+      "platform": "xiaohongshu",
+      "platformLabel": "Rednote",
+      "platformShellLabel": "Rednote",
       "language": "zh",
-      "content": "This WeChat Moments-ready draft captures the strongest update from the demo week: the same follow-up now flows through chat, contacts, content, and reflection inside one system.",
+      "content": "This Rednote-ready draft turns one real London hackathon organiser conversation into a visual SocialOS story: one note becomes a contact card, an event trail, and fresh content ideas.",
       "metadata": {
         "capability": {
           "supportLevel": "L1 Assisted",
-          "entryTarget": "wechat_moments publish surface"
+          "entryTarget": "xiaohongshu publish surface"
         },
         "publishPackage": {
-          "title": "WeChat Moments demo package",
-          "body": "A reusable wechat_moments package for the London organiser follow-up event.",
+          "title": "Rednote demo package",
+          "body": "A reusable xiaohongshu package for the London organiser follow-up event.",
           "hashtags": [
             "#SocialOS",
             "#OpenClaw"
           ],
           "cta": "Reply if you want to compare notes.",
-          "entryTarget": "WeChat Moments publish surface",
+          "entryTarget": "Rednote publish surface",
           "supportLevel": "L1 Assisted",
           "assetChecklist": [
             "1 hero visual",
@@ -585,17 +514,17 @@
       },
       "capability": {
         "supportLevel": "L1 Assisted",
-        "entryTarget": "wechat_moments publish surface"
+        "entryTarget": "xiaohongshu publish surface"
       },
       "publishPackage": {
-        "title": "WeChat Moments demo package",
-        "body": "A reusable wechat_moments package for the London organiser follow-up event.",
+        "title": "Rednote demo package",
+        "body": "A reusable xiaohongshu package for the London organiser follow-up event.",
         "hashtags": [
           "#SocialOS",
           "#OpenClaw"
         ],
         "cta": "Reply if you want to compare notes.",
-        "entryTarget": "WeChat Moments publish surface",
+        "entryTarget": "Rednote publish surface",
         "supportLevel": "L1 Assisted",
         "assetChecklist": [
           "1 hero visual",
@@ -609,9 +538,75 @@
       },
       "validation": null,
       "variants": [],
-      "createdAt": "2026-03-07T22:37:23.392Z",
-      "score": 0.34782608695652173,
-      "snippet": "This WeChat Moments-ready draft captures the strongest update from the demo week: the same follow-up now flows through chat, contacts, content, and reflection inside one system."
+      "createdAt": "2026-03-07T23:23:55.421Z",
+      "score": 0.3684210526315789,
+      "snippet": "This Rednote-ready draft turns one real London hackathon organiser conversation into a visual SocialOS story: one note becomes a contact card, an event trail, and fresh content id…"
+    },
+    {
+      "draftId": "draft_demo_instagram",
+      "eventId": "event_demo_campaign",
+      "eventTitle": "London hackathon organiser follow-up",
+      "platform": "instagram",
+      "platformLabel": "Instagram",
+      "platformShellLabel": "Instagram",
+      "language": "en",
+      "content": "Today I turned one real conversation with London hackathon organiser Minghan Xiao into a SocialOS loop that keeps people, context, and follow-up alive.",
+      "metadata": {
+        "capability": {
+          "supportLevel": "L1 Assisted",
+          "entryTarget": "instagram publish surface"
+        },
+        "publishPackage": {
+          "title": "Instagram demo package",
+          "body": "A reusable instagram package for the London organiser follow-up event.",
+          "hashtags": [
+            "#SocialOS",
+            "#OpenClaw"
+          ],
+          "cta": "Reply if you want to compare notes.",
+          "entryTarget": "Instagram publish surface",
+          "supportLevel": "L1 Assisted",
+          "assetChecklist": [
+            "1 hero visual",
+            "1 follow-up note"
+          ],
+          "steps": [
+            "Copy content",
+            "Open platform entry",
+            "Post or mark manual complete"
+          ]
+        },
+        "validation": null
+      },
+      "capability": {
+        "supportLevel": "L1 Assisted",
+        "entryTarget": "instagram publish surface"
+      },
+      "publishPackage": {
+        "title": "Instagram demo package",
+        "body": "A reusable instagram package for the London organiser follow-up event.",
+        "hashtags": [
+          "#SocialOS",
+          "#OpenClaw"
+        ],
+        "cta": "Reply if you want to compare notes.",
+        "entryTarget": "Instagram publish surface",
+        "supportLevel": "L1 Assisted",
+        "assetChecklist": [
+          "1 hero visual",
+          "1 follow-up note"
+        ],
+        "steps": [
+          "Copy content",
+          "Open platform entry",
+          "Post or mark manual complete"
+        ]
+      },
+      "validation": null,
+      "variants": [],
+      "createdAt": "2026-03-07T23:23:55.420Z",
+      "score": 0.3684210526315789,
+      "snippet": "Today I turned one real conversation with London hackathon organiser Minghan Xiao into a SocialOS loop that keeps people, context, and follow-up alive."
     }
   ],
   "related": {
@@ -629,8 +624,8 @@
           "organiser"
         ],
         "detailLines": [
-          "Next follow-up: 2026-03-09T23:57:23.363Z",
-          "Updated: 2026-03-07T23:37:23.363Z"
+          "Next follow-up: 2026-03-10T00:43:55.394Z",
+          "Updated: 2026-03-08T00:23:55.394Z"
         ]
       },
       {
@@ -646,8 +641,8 @@
           "cross-border"
         ],
         "detailLines": [
-          "Next follow-up: 2026-03-12T23:57:23.367Z",
-          "Updated: 2026-03-07T23:17:23.367Z"
+          "Next follow-up: 2026-03-13T00:43:55.398Z",
+          "Updated: 2026-03-08T00:03:55.398Z"
         ]
       },
       {
@@ -663,8 +658,8 @@
           "bristol"
         ],
         "detailLines": [
-          "Next follow-up: 2026-03-17T23:57:23.376Z",
-          "Updated: 2026-03-07T21:57:23.376Z"
+          "Next follow-up: 2026-03-18T00:43:55.407Z",
+          "Updated: 2026-03-07T22:43:55.407Z"
         ]
       }
     ],
@@ -680,7 +675,7 @@
           "builders and community organisers"
         ],
         "detailLines": [
-          "Created: 2026-03-07T22:47:23.378Z"
+          "Created: 2026-03-07T23:33:55.408Z"
         ]
       },
       {
@@ -694,26 +689,11 @@
           "cross-border founders and legal operators"
         ],
         "detailLines": [
-          "Created: 2026-03-07T19:37:23.379Z"
+          "Created: 2026-03-07T20:23:55.410Z"
         ]
       }
     ],
     "drafts": [
-      {
-        "type": "draft",
-        "kicker": "Draft",
-        "title": "WeChat Official Account · London hackathon organiser follow-up",
-        "body": "This is not just another content tool. It is a relationship operating system that helps you meet people, remember context, follow through, and turn the work into clear output. The…",
-        "subtitle": "",
-        "href": "/drafts?eventId=event_demo_campaign",
-        "badges": [
-          "zh",
-          "L1.5 Rich Article Package"
-        ],
-        "detailLines": [
-          "Entry: WeChat Official Account publish surface"
-        ]
-      },
       {
         "type": "draft",
         "kicker": "Draft",
@@ -732,8 +712,8 @@
       {
         "type": "draft",
         "kicker": "Draft",
-        "title": "WeChat Moments · London hackathon organiser follow-up",
-        "body": "This WeChat Moments-ready draft captures the strongest update from the demo week: the same follow-up now flows through chat, contacts, content, and reflection inside one system.",
+        "title": "Rednote · London hackathon organiser follow-up",
+        "body": "This Rednote-ready draft turns one real London hackathon organiser conversation into a visual SocialOS story: one note becomes a contact card, an event trail, and fresh content id…",
         "subtitle": "",
         "href": "/drafts?eventId=event_demo_campaign",
         "badges": [
@@ -741,7 +721,22 @@
           "L1 Assisted"
         ],
         "detailLines": [
-          "Entry: WeChat Moments publish surface"
+          "Entry: Rednote publish surface"
+        ]
+      },
+      {
+        "type": "draft",
+        "kicker": "Draft",
+        "title": "Instagram · London hackathon organiser follow-up",
+        "body": "Today I turned one real conversation with London hackathon organiser Minghan Xiao into a SocialOS loop that keeps people, context, and follow-up alive.",
+        "subtitle": "",
+        "href": "/drafts?eventId=event_demo_campaign",
+        "badges": [
+          "en",
+          "L1 Assisted"
+        ],
+        "detailLines": [
+          "Entry: Instagram publish surface"
         ]
       }
     ],
@@ -759,14 +754,14 @@
           "stretched"
         ],
         "detailLines": [
-          "Updated: 2026-03-07T23:57:23.361Z"
+          "Updated: 2026-03-08T00:43:55.388Z"
         ]
       }
     ]
   },
   "suggestedEvent": {
     "title": "Follow-up with Minghan Xiao",
-    "audience": "people interested in hackathon, organizer",
+    "audience": "people interested in London hackathon, builder communities, operator dashboards",
     "languageStrategy": "platform-native",
     "tone": "platform-native",
     "payload": {
@@ -774,13 +769,13 @@
       "sourceType": "workspace-chat",
       "personName": "Minghan Xiao",
       "personId": "person_demo_lilei",
-      "summary": "Use one English paragraph to explain the next best follow-up for the organizer I met at the hackathon, including why that follow-up matters.",
-      "combinedText": "Use one English paragraph to explain the next best follow-up for the organizer I met at the hackathon, including why that follow-up matters.",
-      "followUpSuggestion": "Draft a follow-up message for the organizer."
+      "summary": "Write one short English follow-up note to Minghan Xiao after the London hackathon. Mention builder communities and operator dashboards.",
+      "combinedText": "Write one short English follow-up note to Minghan Xiao after the London hackathon. Mention builder communities and operator dashboards.",
+      "followUpSuggestion": "Draft short English follow-up note mentioning builder communities and operator dashboards."
     }
   },
   "ui": {
-    "showMemoryAction": true,
+    "showMemoryAction": false,
     "showEventSuggestion": false,
     "people": [
       {
@@ -795,9 +790,9 @@
           "ic"
         ],
         "notes": "London hackathon organiser at Imperial College. From Tianjin, China. Very nice guy. Shared both his X and LinkedIn.",
-        "nextFollowUpAt": "2026-03-09T23:57:23.363Z",
-        "updatedAt": "2026-03-07T23:37:23.363Z",
-        "score": 1.6688,
+        "nextFollowUpAt": "2026-03-10T00:43:55.394Z",
+        "updatedAt": "2026-03-08T00:23:55.394Z",
+        "score": 4.7279,
         "evidenceSnippet": "Talked about builder communities, operator dashboards, and how SocialOS could support organiser follow-up."
       }
     ],
@@ -846,36 +841,37 @@
     }
   ],
   "commitPayload": {
-    "text": "Use one English paragraph to explain the next best follow-up for the organizer I met at the hackathon, including why that follow-up matters.",
-    "source": "hackathon_proof_capture_1_2",
+    "text": "Write one short English follow-up note to Minghan Xiao after the London hackathon. Mention builder communities and operator dashboards.",
+    "source": "hackathon_proof_capture_2_2",
     "assetIds": [],
-    "combinedText": "Use one English paragraph to explain the next best follow-up for the organizer I met at the hackathon, including why that follow-up matters.",
+    "combinedText": "Write one short English follow-up note to Minghan Xiao after the London hackathon. Mention builder communities and operator dashboards.",
     "personDraft": {
-      "name": "",
-      "displayName": "Unconfirmed contact",
-      "isConfirmedName": false,
-      "requiresNameConfirmation": true,
+      "name": "Minghan Xiao",
+      "displayName": "Minghan Xiao",
+      "isConfirmedName": true,
+      "requiresNameConfirmation": false,
       "tags": [
-        "hackathon",
-        "organizer"
+        "London hackathon",
+        "builder communities",
+        "operator dashboards"
       ],
-      "notes": "User seeks advice on the best follow-up strategy for a hackathon organizer.",
+      "notes": "Follow-up needed re: builder communities and operator dashboards post-London hackathon.",
       "nextFollowUpAt": "",
-      "followUpSuggestion": "Draft a follow-up message for the organizer.",
+      "followUpSuggestion": "Draft short English follow-up note mentioning builder communities and operator dashboards.",
       "identities": []
     },
     "selfCheckinDraft": {
       "energy": 0,
       "emotions": [
-        "social"
+        "neutral"
       ],
-      "triggerText": "hackathon_proof_capture_1_2",
-      "reflection": "Use one English paragraph to explain the next best follow-up for the organizer I met at the hackathon, including why that follow-up matters."
+      "triggerText": "hackathon_proof_capture_2_2",
+      "reflection": "Write one short English follow-up note to Minghan Xiao after the London hackathon. Mention builder communities and operator dashboards."
     },
     "interactionDraft": {
-      "summary": "Met an organizer at a hackathon.",
+      "summary": "Met at London hackathon. Topics: builder communities, operator dashboards.",
       "happenedAt": "",
-      "evidence": "met at the hackathon"
+      "evidence": "Write one short English follow-up note to Minghan Xiao after the London hackathon. Mention builder communities and operator dashboards."
     },
     "provider": "glm",
     "bountyMode": "z-ai-general"
@@ -916,7 +912,7 @@
       "id": "self",
       "label": "Self Mirror Agent",
       "status": "updated",
-      "summary": "Energy 0 with social signal."
+      "summary": "Energy 0 with neutral signal."
     },
     {
       "id": "campaign",
@@ -949,6 +945,6 @@
       }
     ]
   },
-  "auditId": "audit_df6008e8799d4336b74423ec1c4eda70",
-  "digestId": "digest_71164c07f70743028840eb0630ec71c5"
+  "auditId": "audit_771348c398fd4f5a916230f972ccb38e",
+  "digestId": "digest_b6fd6bd4342c4913a53ca1995baa56a9"
 }
