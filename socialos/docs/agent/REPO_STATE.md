@@ -1,9 +1,9 @@
 # Repo State Handoff
 
-- Generated: 2026-03-07T23:34:01.756Z
+- Generated: 2026-03-08T00:03:15.965Z
 - Branch: main
-- Git head: a682dc8
-- Dirty working tree: true
+- Git head: 4a02a1c
+- Dirty working tree: false
 
 ## Canonical Chain
 - `README.md` -> human and judge entrypoint
@@ -66,20 +66,6 @@
 - `socialos/docs/evidence/socialos-demo-step04.png`
 - `socialos/docs/evidence/socialos-demo-step08.png`
 - `socialos/docs/evidence/socialos-demo.gif`
-
-## Dirty Summary
-- M .env.example
--  M QUEUE.md
--  M README.md
--  M ROADMAP.md
--  M scripts/capture_hackathon_proofs.mjs
--  M scripts/devloop_once.sh
--  M scripts/hackathon_live.sh
--  M scripts/hackathon_preflight.sh
--  M scripts/seed_demo_data.mjs
--  M scripts/tests/hackathon_api_smoke.mjs
--  M scripts/tests/hackathon_proof_capture_smoke.mjs
--  M scripts/tests/review_demo_seed_smoke.mjs
 
 ## Overnight Context
 - Next focus: respect-foundry-queue
