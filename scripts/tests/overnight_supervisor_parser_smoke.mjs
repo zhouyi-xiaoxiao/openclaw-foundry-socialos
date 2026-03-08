@@ -127,24 +127,25 @@ assert(parsedJsonStatus.blockedHead.length === 2, 'json blocked head entries sho
 assert(parsedJsonStatus.blockedHead[0] === 'Blocked from JSON object', 'json blocked head object should use task field');
 assert(parsedJsonStatus.latestDigest.length === 2, 'json digest entries should parse');
 
-const jsonStatusWithStringDigest = JSON.stringify(
-  {
-    mode: 'ACTIVE',
-    queue: {
-      pending: 1,
-      inProgress: 0,
-      blocked: 0,
-      done: 2,
-      currentTask: null,
-    },
-    latestDigest: 'digest line alpha\ndigest line beta',
-  },
-  null,
-  2
-);
+const jsonStatusWithStringDigest = JSON.stringify({
+  mode: 'ACTIVE',
+  queue: { pending: 0, inProgress: 0, blocked: 1, done: 2, currentTask: 'none' },
+  lock: { present: false },
+  health: { consecutiveFailures: 0 },
+  blockedHead: 'Blocked alpha\nBlocked beta',
+  latestDigest: 'No digest yet.\nDigest line preserved',
+});
 const parsedJsonStatusWithStringDigest = parseFoundryStatus(jsonStatusWithStringDigest, { commandOk: true });
-assert(parsedJsonStatusWithStringDigest.latestDigest.length === 2, 'string digest should split into normalized lines');
-assert(parsedJsonStatusWithStringDigest.latestDigest[0] === 'digest line alpha', 'first string digest line should parse');
+assert(parsedJsonStatusWithStringDigest.blockedHead.length === 2, 'string blocked head should split into entries');
+assert(parsedJsonStatusWithStringDigest.blockedHead[1] === 'Blocked beta', 'string blocked head should preserve order');
+assert(
+  parsedJsonStatusWithStringDigest.latestDigest.length === 1,
+  'string digest should ignore boilerplate and keep meaningful lines'
+);
+assert(
+  parsedJsonStatusWithStringDigest.latestDigest[0] === 'Digest line preserved',
+  'string digest should preserve non-boilerplate entries'
+);
 
 const warnedJsonStatusOutput = `(node:12345) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 ${jsonStatusOutput}

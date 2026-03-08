@@ -210,7 +210,11 @@ function parseFoundryStatusJson(output, commandOk) {
   const lock = parsed.lock && typeof parsed.lock === 'object' ? parsed.lock : {};
   const latestRun = parsed.latestRun && typeof parsed.latestRun === 'object' ? parsed.latestRun : {};
   const health = parsed.health && typeof parsed.health === 'object' ? parsed.health : {};
-  const blockedHead = Array.isArray(parsed.blockedHead) ? parsed.blockedHead : [];
+  const blockedHead = Array.isArray(parsed.blockedHead)
+    ? parsed.blockedHead
+    : typeof parsed.blockedHead === "string"
+      ? parsed.blockedHead.split(/\r?\n/u)
+      : [];
   const latestDigest = normalizeDigestEntries(parsed.latestDigest);
 
   return {
