@@ -657,6 +657,16 @@ function renderVideoPlaceholderPage(bounty) {
   const proofPageHref = readOptionalString(bounty?.publicAnchor, `/hackathon/#bounty-${encodeURIComponent(bountyId)}`);
   const proofJsonHref = readOptionalString(bounty?.proofJsonUrl, buildPublicProofDataHref(bountyId));
   const videoHref = buildVideoPlaceholderPath(bountyId, { trailingSlash: true });
+  const videoSwitcher = HACKATHON_PAGE_FALLBACK.map((item) => {
+    const href = buildVideoPlaceholderPath(item.id, { trailingSlash: true });
+    const isCurrent = item.id === bountyId;
+    return `
+      <a class="mini-link" href="${escapeHtml(href)}" aria-current="${isCurrent ? 'page' : 'false'}">
+        ${escapeHtml(item.label)}
+        ${isCurrent ? renderPill('current', 'accent') : ''}
+      </a>
+    `;
+  }).join('');
   const heroMetrics = [
     renderMetric('5-8 min', 'planned demo'),
     renderMetric(readOptionalString(bounty?.sponsor, 'DoraHacks'), 'track sponsor'),
@@ -680,6 +690,11 @@ function renderVideoPlaceholderPage(bounty) {
     ${renderPublicProofNotice(
       'Demo video upload in progress',
       'This URL is reserved for the final SocialOS demo video for this bounty. Until the recording is uploaded, judges can review the proof page, repo, deck, and structured JSON below.'
+    )}
+    ${renderPanel(
+      'All Bounty Videos',
+      `<div class="stack">${videoSwitcher}</div>`,
+      'Each submitted URL should still point directly to its matching bounty page, but judges can switch tracks here if they landed on the wrong video link.'
     )}
     ${renderPanel(
       'Planned Video',
