@@ -58,20 +58,27 @@ process.stdin.on("data", (chunk) => { data += chunk; });
 process.stdin.on("end", () => {
   try {
     const payload = JSON.parse(data);
+    const rawMode = typeof payload.mode === "string" ? payload.mode.trim().toUpperCase() : "";
+    const mode = rawMode === "RUNNING" ? "ACTIVE" : rawMode;
     const queue = payload && typeof payload.queue === "object" ? payload.queue : {};
     const pending = Number.isFinite(Number(queue.pending)) ? Number(queue.pending) : 0;
     const inProgress = Number.isFinite(Number(queue.inProgress)) ? Number(queue.inProgress) : 0;
     const blocked = Number.isFinite(Number(queue.blocked)) ? Number(queue.blocked) : 0;
     const done = Number.isFinite(Number(queue.done)) ? Number(queue.done) : 0;
     const currentTask = typeof queue.currentTask === "string" && queue.currentTask.trim() ? queue.currentTask.trim() : "none";
-    process.stdout.write(`${pending}\t${inProgress}\t${blocked}\t${done}\t${currentTask}`);
+    process.stdout.write(`${mode}\t${pending}\t${inProgress}\t${blocked}\t${done}\t${currentTask}`);
   } catch {
     process.stdout.write("");
   }
 });
 ')"
     if [[ -n "${studio_queue_summary}" ]]; then
-      IFS=$'\t' read -r pending_count in_progress_count blocked_count done_count current_task <<< "${studio_queue_summary}"
+      IFS=$'\t' read -r studio_mode pending_count in_progress_count blocked_count done_count current_task <<< "${studio_queue_summary}"
+      case "${studio_mode}" in
+        ACTIVE|PAUSED|STOPPED)
+          mode="${studio_mode}"
+          ;;
+      esac
       studio_status_ok="1"
     fi
   fi

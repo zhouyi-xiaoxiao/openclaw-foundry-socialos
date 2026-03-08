@@ -140,6 +140,7 @@ const studioJsonResult = spawnSync('bash', [script], {
   env: {
     ...process.env,
     SOCIALOS_STUDIO_STATUS_JSON: JSON.stringify({
+      mode: 'ACTIVE',
       queue: {
         pending: 2,
         inProgress: 1,
@@ -213,6 +214,7 @@ try {
   assert(missingRunDirResult.status === 0, `status script with missing run dir should exit 0, got ${missingRunDirResult.status}`);
   assert(missingRunDirResult.stdout.includes('run_reports_dir: missing'), 'status should report missing run reports directory');
   assert(studioJsonResult.status === 0, `status script with studio queue JSON should exit 0, got ${studioJsonResult.status}`);
+  assert(studioJsonResult.stdout.includes('mode: ACTIVE'), 'studio status mode should drive displayed Foundry mode');
   assert(
     studioJsonResult.stdout.includes('pending=2 in_progress=1 blocked=3 done=9'),
     'studio status queue counts should drive status queue summary when no queue override is set',
