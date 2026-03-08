@@ -7618,7 +7618,10 @@ function dedupeLatestDrafts(drafts, limit = drafts.length) {
   const latestByKey = new Map();
 
   for (const draft of drafts) {
-    const key = [draft.eventId || '', draft.platform || '', draft.language || ''].join('::');
+    const scopeKey = draft.eventId
+      ? `event:${draft.eventId}`
+      : `draft:${draft.draftId || `${draft.createdAt || ''}:${cleanText(draft.content || '').slice(0, 32)}`}`;
+    const key = [scopeKey, draft.platform || '', draft.language || ''].join('::');
     const existing = latestByKey.get(key);
     const draftTime = Date.parse(draft.createdAt || 0);
     const existingTime = existing ? Date.parse(existing.createdAt || 0) : 0;
