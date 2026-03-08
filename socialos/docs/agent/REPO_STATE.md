@@ -1,8 +1,8 @@
 # Repo State Handoff
 
-- Generated: 2026-03-08T01:07:09.756Z
+- Generated: 2026-03-08T02:02:55.154Z
 - Branch: detached
-- Git head: 243e3f3
+- Git head: b826826
 - Dirty working tree: true
 
 ## Canonical Chain
@@ -69,22 +69,16 @@
 - `socialos/docs/evidence/socialos-demo.gif`
 
 ## Dirty Summary
-- M QUEUE.md
--  M foundry/tasks/TASK-20260305210700851017.json
--  M scripts/capture_hackathon_proofs.mjs
--  M scripts/overnight_supervisor.mjs
--  M scripts/tests/overnight_supervisor_parser_smoke.mjs
+- M scripts/studio.sh
+-  M scripts/tests/studio_control_plane_smoke.mjs
 -  M socialos/docs/STATUS.md
 -  M socialos/docs/agent/REPO_STATE.md
 -  M socialos/docs/evidence/LATEST_VALIDATION.md
 -  M socialos/docs/pitch/DECK_STATUS.json
-- ?? .tmp-hackathon-proof-capture-RigRTK/
-- ?? .tmp-hackathon-proof-capture-dw0U0m/
-- ?? foundry/tasks/AUTO-OPT-BLOCKED-TRIAGE.json
 
 ## Overnight Context
-- Next focus: stabilize-foundry
-- Reason: Foundry is paused; resume intentionally before unattended overnight iteration.
+- Next focus: workspace-usability-and-demo-trust
+- Reason: Repo is healthy; continue aggressive product/core polish in Workspace, Contacts, Drafts, and Queue.
 
 ## Script Entry Points
 - `bash scripts/demo.sh` -> install, deploy runtime, validate safety, start public demo

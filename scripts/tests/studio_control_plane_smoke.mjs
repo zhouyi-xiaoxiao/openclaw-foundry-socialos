@@ -131,6 +131,17 @@ async function main() {
     const cliPayload = JSON.parse(cli.stdout);
     assert(typeof cliPayload.mode === 'string', 'studio cli should expose status mode');
 
+    const wrapper = run('bash', [path.join(sourceRoot, 'scripts/studio.sh'), 'status', '--db', dbPath], {
+      cwd: sourceRoot,
+      env: {
+        SOCIALOS_REPO_ROOT: tempRoot,
+        SOCIALOS_FOUNDRY_MOCK: '1',
+      },
+    });
+    const wrapperPayload = JSON.parse(wrapper.stdout);
+    assert(typeof wrapperPayload.mode === 'string', 'studio wrapper should expose status mode');
+    assert(!wrapper.stderr.trim(), 'studio wrapper should keep stderr quiet for machine parsing');
+
     console.log('studio_control_plane_smoke: PASS');
   } finally {
     await api.close();

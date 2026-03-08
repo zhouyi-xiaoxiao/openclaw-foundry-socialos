@@ -1,20 +1,20 @@
 # Public Status
 
-- Generated: 2026-03-08T01:07:09.756Z
+- Generated: 2026-03-08T02:02:55.154Z
 - Product posture: local-first
 - Network exposure: loopback-only
 - Publish mode: Safe rehearsal
 - Demo healthy: true
-- Git head: 243e3f3
+- Git head: b826826
 
 ## Current Readout
 - The repo is currently healthy enough to present as a judge-facing local-first package.
-- Overnight supervisor reason: Foundry is paused; resume intentionally before unattended overnight iteration.
-- Next focus: stabilize-foundry
+- Overnight supervisor reason: Repo is healthy; continue aggressive product/core polish in Workspace, Contacts, Drafts, and Queue.
+- Next focus: workspace-usability-and-demo-trust
 
 ## Demo Endpoints
-- socialos-api: ready=true healthy=true pidAlive=true stalePid=false url=http://127.0.0.1:8787/health
-- socialos-web: ready=true healthy=true pidAlive=true stalePid=false url=http://127.0.0.1:4173/quick-capture
+- socialos-api: ready=true healthy=true pidAlive=false stalePid=false url=http://127.0.0.1:8787/health
+- socialos-web: ready=true healthy=true pidAlive=false stalePid=false url=http://127.0.0.1:4173/quick-capture
 
 ## Public Docs
 - Human landing page: `README.md`

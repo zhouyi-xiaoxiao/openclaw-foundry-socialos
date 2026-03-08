@@ -1,14 +1,14 @@
 # Latest Validation Snapshot
 
-- Generated: 2026-03-08T01:07:09.756Z
+- Generated: 2026-03-08T02:02:55.154Z
 - Refreshed by: scripts/test.sh
-- Latest green validation: 2026-03-08T01:07:09.756Z
-- Git head: 243e3f3
+- Latest green validation: 2026-03-08T02:02:55.154Z
+- Git head: b826826
 
 ## Current Health Snapshot
 - Demo healthy: true
-- socialos-api: ready=true healthy=true pidAlive=true stalePid=false
-- socialos-web: ready=true healthy=true pidAlive=true stalePid=false
+- socialos-api: ready=true healthy=true pidAlive=false stalePid=false
+- socialos-web: ready=true healthy=true pidAlive=false stalePid=false
 
 ## Evidence Pointers
 - `socialos/docs/evidence/ai-agents-for-good-telegram-proof.png`
