@@ -165,7 +165,6 @@ function parseBooleanField(value, fallback = false) {
   if (value === 'false') return false;
   return fallback;
 }
-
 export function parseDemoStatus(output) {
   const services = output
     .split('\n')
@@ -217,7 +216,7 @@ export function parseDemoStatus(output) {
 
   return {
     services,
-    allHealthy: services.length >= 2 && services.every((service) => service.ready),
+    allHealthy: services.length >= 2 && services.every((service) => service.ready && service.healthy),
   };
 }
 
