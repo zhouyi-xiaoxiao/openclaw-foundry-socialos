@@ -223,6 +223,19 @@ const HACKATHON_PAGE_FALLBACK = Object.freeze([
   }),
 ]);
 
+const BOUNTY_VIDEO_LINKS = Object.freeze({
+  'claw-for-human':
+    'https://uob-my.sharepoint.com/:v:/g/personal/ae23069_bristol_ac_uk/IQBxTqTsMkjiRIwRmASfUab4AQhI3v7SUjhmiQepmwrSYwo?e=o1CLyv',
+  'human-for-claw':
+    'https://uob-my.sharepoint.com/:v:/g/personal/ae23069_bristol_ac_uk/IQBZOh-shgqtRKYUyw2gwCg9Acdg5zKTWBVR28rgoSggaSQ?e=cBcMCA',
+  animoca:
+    'https://uob-my.sharepoint.com/:v:/g/personal/ae23069_bristol_ac_uk/IQBkixSJ3Ox2Rq29NsHWNFljAUBtqPL4wh3Uh0H0Eku_1p0?e=9FffwV',
+  'z-ai-general':
+    'https://uob-my.sharepoint.com/:v:/g/personal/ae23069_bristol_ac_uk/IQDy5eJ2myl1Q5C8wR4INiqXAcymJ0ZEsO16aEXniYiW55E?e=Ae6n3E',
+  'ai-agents-for-good':
+    'https://uob-my.sharepoint.com/:v:/g/personal/ae23069_bristol_ac_uk/IQDjSamRfhqPSbT8N3c-5l0uAWpsxEUjrk1k9bNtmZ0kBwk?e=yiZsDH',
+});
+
 function readOptionalString(value, fallback) {
   if (typeof value !== 'string') return fallback;
   const trimmed = value.trim();
@@ -495,6 +508,11 @@ function getHackathonBountyById(bountyId = '') {
   return HACKATHON_PAGE_FALLBACK.find((item) => item.id === normalized) || null;
 }
 
+function getBountyVideoHref(bountyId = '') {
+  const normalized = readOptionalString(bountyId, '');
+  return readOptionalString(BOUNTY_VIDEO_LINKS[normalized], '');
+}
+
 function buildPublicPageHref(route = '') {
   const raw = readOptionalString(route, '');
   if (!raw) return '';
@@ -657,6 +675,8 @@ function renderVideoPlaceholderPage(bounty) {
   const proofPageHref = readOptionalString(bounty?.publicAnchor, `/hackathon/#bounty-${encodeURIComponent(bountyId)}`);
   const proofJsonHref = readOptionalString(bounty?.proofJsonUrl, buildPublicProofDataHref(bountyId));
   const videoHref = buildVideoPlaceholderPath(bountyId, { trailingSlash: true });
+  const hostedVideoHref = getBountyVideoHref(bountyId);
+  const hasHostedVideo = Boolean(hostedVideoHref);
   const videoSwitcher = HACKATHON_PAGE_FALLBACK.map((item) => {
     const href = buildVideoPlaceholderPath(item.id, { trailingSlash: true });
     const isCurrent = item.id === bountyId;
@@ -670,26 +690,34 @@ function renderVideoPlaceholderPage(bounty) {
   const heroMetrics = [
     renderMetric('5-8 min', 'planned demo'),
     renderMetric(readOptionalString(bounty?.sponsor, 'DoraHacks'), 'track sponsor'),
-    renderMetric('live', 'placeholder URL'),
+    renderMetric(hasHostedVideo ? 'ready' : 'pending', hasHostedVideo ? 'video host' : 'placeholder URL'),
   ].join('');
   const heroAside = `
     <div class="stack-card">
       <div class="stack-meta"><strong>Submit this URL</strong>${renderPill(videoHref, 'soft')}</div>
-      <p>This page is a stable video placeholder. Keep the same link in DoraHacks now, then replace the placeholder with the final uploaded demo later.</p>
+      <p>${
+        hasHostedVideo
+          ? 'This public watch page now routes judges to the final hosted demo while keeping the DoraHacks submission URL stable.'
+          : 'This page is a stable video placeholder. Keep the same link in DoraHacks now, then replace the placeholder with the final uploaded demo later.'
+      }</p>
     </div>
   `;
   return `
     ${renderHero(
       {
-        title: `${readOptionalString(bounty?.label, 'Hackathon')} Video Placeholder`,
-        summary: 'Stable public placeholder page for the final SocialOS demo video while upload and hosting are still in progress.',
+        title: `${readOptionalString(bounty?.label, 'Hackathon')} Video`,
+        summary: hasHostedVideo
+          ? 'Stable public watch page for the final SocialOS demo video, with public proof links kept alongside the hosted recording.'
+          : 'Stable public placeholder page for the final SocialOS demo video while upload and hosting are still in progress.',
       },
       heroMetrics,
       heroAside,
     )}
     ${renderPublicProofNotice(
-      'Demo video upload in progress',
-      'This URL is reserved for the final SocialOS demo video for this bounty. Until the recording is uploaded, judges can review the proof page, repo, deck, and structured JSON below.'
+      hasHostedVideo ? 'Final video is live' : 'Demo video upload in progress',
+      hasHostedVideo
+        ? 'Use the watch button below to open the final hosted recording. The proof page, repo, deck, and structured JSON stay on this page for fast judge verification.'
+        : 'This URL is reserved for the final SocialOS demo video for this bounty. Until the recording is uploaded, judges can review the proof page, repo, deck, and structured JSON below.'
     )}
     ${renderPanel(
       'All Bounty Videos',
@@ -697,18 +725,36 @@ function renderVideoPlaceholderPage(bounty) {
       'Each submitted URL should still point directly to its matching bounty page, but judges can switch tracks here if they landed on the wrong video link.'
     )}
     ${renderPanel(
-      'Planned Video',
+      hasHostedVideo ? 'Watch Video' : 'Planned Video',
       `<div class="stack">
         <div class="stack-card">
           <strong>Video title</strong>
           <p>SocialOS for ${escapeHtml(readOptionalString(bounty?.label, 'this bounty'))}</p>
         </div>
         <div class="stack-card">
-          <strong>What the final video will cover</strong>
-          <p>The final recording will show the problem, the SocialOS solution, the technical implementation, the bounty integration, and a short live demo.</p>
+          <strong>${hasHostedVideo ? 'Hosted recording' : 'What the final video will cover'}</strong>
+          <p>${
+            hasHostedVideo
+              ? `Open the final recording on OneDrive: ${escapeHtml(hostedVideoHref)}`
+              : 'The final recording will show the problem, the SocialOS solution, the technical implementation, the bounty integration, and a short live demo.'
+          }</p>
+        </div>
+        ${
+          hasHostedVideo
+            ? `<div class="stack-card">
+          <strong>Watch now</strong>
+          <p><a class="mini-link" href="${escapeHtml(hostedVideoHref)}">Open final video on OneDrive</a></p>
+        </div>`
+            : ''
+        }
+        <div class="stack-card">
+          <strong>Submission URL</strong>
+          <p><a class="mini-link" href="${escapeHtml(videoHref)}">${escapeHtml(videoHref)}</a></p>
         </div>
       </div>`,
-      'Use this public page in the submission form now. When the video is ready, embed it here or replace the placeholder content without changing the URL.'
+      hasHostedVideo
+        ? 'Keep using this stable /videos/... URL in DoraHacks. It now routes judges to the final recording while preserving proof links on the same page.'
+        : 'Use this public page in the submission form now. When the video is ready, embed it here or replace the placeholder content without changing the URL.'
     )}
     ${renderPanel(
       'What Judges Can Review Now',

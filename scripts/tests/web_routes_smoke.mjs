@@ -114,8 +114,9 @@ async function main() {
 
     const videoPlaceholder = await fetch(`${web.baseUrl}/videos/z-ai-general`, { redirect: 'manual' });
     const videoPlaceholderHtml = await videoPlaceholder.text();
-    assert(videoPlaceholder.status === 200, `/videos/z-ai-general should render a public video placeholder page (got ${videoPlaceholder.status})`);
-    assert(videoPlaceholderHtml.includes('Demo video upload in progress'), '/videos/z-ai-general should explain that the video upload is pending');
+    assert(videoPlaceholder.status === 200, `/videos/z-ai-general should render a public video page (got ${videoPlaceholder.status})`);
+    assert(videoPlaceholderHtml.includes('Open final video on OneDrive'), '/videos/z-ai-general should expose the final hosted video link');
+    assert(videoPlaceholderHtml.includes('https://uob-my.sharepoint.com/'), '/videos/z-ai-general should include the hosted OneDrive URL');
     assert(videoPlaceholderHtml.includes('/data/proofs/z-ai-general.json'), '/videos/z-ai-general should link to the matching proof JSON');
     assert(!videoPlaceholderHtml.includes('127.0.0.1'), '/videos/z-ai-general should not expose localhost links');
     assert(!videoPlaceholderHtml.includes('data-api-form'), '/videos/z-ai-general should not expose interactive forms');

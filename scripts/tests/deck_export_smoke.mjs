@@ -87,7 +87,8 @@ async function main() {
     assert(hackathonHtml.includes('Canonical public bounty hub'), 'exported hackathon page should render in public proof mode');
     assert(hackathonHtml.includes('id="bounty-z-ai-general"'), 'exported hackathon page should keep same-page bounty anchors');
     assert(buddyHtml.includes('Auxiliary public Buddy page'), 'exported buddy page should render in public proof mode');
-    assert(videoPlaceholderHtml.includes('Demo video upload in progress'), 'exported video placeholder page should render the upload notice');
+    assert(videoPlaceholderHtml.includes('Open final video on OneDrive'), 'exported video page should render the hosted video link');
+    assert(videoPlaceholderHtml.includes('https://uob-my.sharepoint.com/'), 'exported video page should include the hosted OneDrive URL');
     assert(videoPlaceholderHtml.includes('/data/proofs/z-ai-general.json'), 'exported video placeholder page should keep the matching proof JSON link');
     assert(cname === 'zhouyixiaoxiao.org', 'deck export should target the custom domain');
     assert(!indexHtml.includes('127.0.0.1'), 'exported public deck should not expose localhost-only links');
