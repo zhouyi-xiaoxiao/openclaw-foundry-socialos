@@ -16,6 +16,18 @@ This repo now supports two equally important entry paths:
 
 The hosted site at [zhouyixiaoxiao.org](https://zhouyixiaoxiao.org/) is the public proof surface. The real interactive product remains loopback-only and local-first.
 
+## Start Here
+
+If you want the fastest public overview first:
+
+- [Pitch site / deck](https://zhouyixiaoxiao.org/)
+- [Canonical bounty hub](https://zhouyixiaoxiao.org/hackathon/)
+- [Claw for Human video](https://zhouyixiaoxiao.org/videos/claw-for-human/)
+- [Human for Claw video](https://zhouyixiaoxiao.org/videos/human-for-claw/)
+- [Z.AI General video](https://zhouyixiaoxiao.org/videos/z-ai-general/)
+- [AI Agents for Good video](https://zhouyixiaoxiao.org/videos/ai-agents-for-good/)
+- [Animoca video](https://zhouyixiaoxiao.org/videos/animoca/)
+
 ## Project Overview
 
 SocialOS already supports:

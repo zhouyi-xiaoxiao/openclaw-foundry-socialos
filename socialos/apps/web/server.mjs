@@ -670,6 +670,63 @@ function renderPublicProofNotice(label, detail) {
   `;
 }
 
+function renderWatchVideoCards({ currentBountyId = '', includeHostedLinks = false } = {}) {
+  return `
+    <div class="stack">
+      <article class="stack-card compact-card">
+        <div class="stack-meta">
+          <strong>Start with the final video pack</strong>
+          ${renderPill('judge-ready', 'accent')}
+        </div>
+        <p>Open the matching bounty recording directly, or use the canonical bounty hub if you want the full proof matrix first.</p>
+        <div class="inline-actions">
+          <a class="mini-link" href="/hackathon/">Open Bounty Hub</a>
+          <a class="mini-link" href="/">Open Pitch Deck</a>
+        </div>
+      </article>
+      ${HACKATHON_PAGE_FALLBACK.map((bounty) => {
+        const videoPageHref = buildVideoPlaceholderPath(bounty.id, { trailingSlash: true });
+        const hostedVideoHref = getBountyVideoHref(bounty.id);
+        const isCurrent = bounty.id === currentBountyId;
+        return `
+          <article class="stack-card compact-card">
+            <div class="stack-meta">
+              <strong>${escapeHtml(bounty.label)}</strong>
+              ${renderPill(readOptionalString(bounty.sponsor, 'DoraHacks'), 'soft')}
+              ${isCurrent ? renderPill('current page', 'accent') : ''}
+            </div>
+            <p>${escapeHtml(readOptionalString(bounty.uniqueAngle, 'Watch the final recording, then open the matching proof JSON if needed.'))}</p>
+            <div class="inline-actions">
+              <a class="mini-link" href="${escapeHtml(videoPageHref)}">Watch final video</a>
+              ${includeHostedLinks && hostedVideoHref ? `<a class="mini-link" href="${escapeHtml(hostedVideoHref)}">Open OneDrive</a>` : ''}
+              <a class="mini-link" href="${escapeHtml(readOptionalString(bounty.publicAnchor, '/hackathon/'))}">Proof page</a>
+            </div>
+          </article>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderDeckVideoDock() {
+  return `
+    <aside class="deck-video-dock" aria-label="Watch final bounty videos">
+      <div class="deck-video-dock-head">
+        <span class="deck-video-dock-kicker">Judge-ready videos</span>
+        <strong>Watch the 5 final bounty demos</strong>
+        <p>Start with the matching video, then open the public proof hub if you want the full verification pack.</p>
+      </div>
+      <div class="deck-video-dock-links">
+        <a class="deck-video-dock-primary" href="/hackathon/">Open bounty hub</a>
+        ${HACKATHON_PAGE_FALLBACK.map((bounty) => {
+          const href = buildVideoPlaceholderPath(bounty.id, { trailingSlash: true });
+          return `<a class="deck-video-dock-link" href="${escapeHtml(href)}">${escapeHtml(bounty.label)}</a>`;
+        }).join('')}
+      </div>
+    </aside>
+  `;
+}
+
 function renderVideoPlaceholderPage(bounty) {
   const bountyId = readOptionalString(bounty?.id, '');
   const proofPageHref = readOptionalString(bounty?.publicAnchor, `/hackathon/#bounty-${encodeURIComponent(bountyId)}`);
@@ -720,12 +777,7 @@ function renderVideoPlaceholderPage(bounty) {
         : 'This URL is reserved for the final SocialOS demo video for this bounty. Until the recording is uploaded, judges can review the proof page, repo, deck, and structured JSON below.'
     )}
     ${renderPanel(
-      'All Bounty Videos',
-      `<div class="stack">${videoSwitcher}</div>`,
-      'Each submitted URL should still point directly to its matching bounty page, but judges can switch tracks here if they landed on the wrong video link.'
-    )}
-    ${renderPanel(
-      hasHostedVideo ? 'Watch Video' : 'Planned Video',
+      hasHostedVideo ? 'Watch Final Video Now' : 'Planned Video',
       `<div class="stack">
         <div class="stack-card">
           <strong>Video title</strong>
@@ -744,6 +796,9 @@ function renderVideoPlaceholderPage(bounty) {
             ? `<div class="stack-card">
           <strong>Watch now</strong>
           <p><a class="mini-link" href="${escapeHtml(hostedVideoHref)}">Open final video on OneDrive</a></p>
+          <div class="inline-actions">
+            <a class="mini-link" href="${escapeHtml(videoHref)}">Keep using stable /videos URL</a>
+          </div>
         </div>`
             : ''
         }
@@ -755,6 +810,16 @@ function renderVideoPlaceholderPage(bounty) {
       hasHostedVideo
         ? 'Keep using this stable /videos/... URL in DoraHacks. It now routes judges to the final recording while preserving proof links on the same page.'
         : 'Use this public page in the submission form now. When the video is ready, embed it here or replace the placeholder content without changing the URL.'
+    )}
+    ${renderPanel(
+      'All Bounty Videos',
+      `${renderWatchVideoCards({ currentBountyId: bountyId, includeHostedLinks: true })}
+      <div class="stack-card compact-card">
+        <div class="stack-meta"><strong>Fast switcher</strong>${renderPill('same stable URLs', 'soft')}</div>
+        <p>Each DoraHacks submission should still point to its own /videos/... page, but judges can switch tracks here if they land on the wrong recording.</p>
+        <div class="inline-actions">${videoSwitcher}</div>
+      </div>`,
+      'Keep the watch experience obvious: one stable page per bounty, plus a fast switcher across all five final recordings.'
     )}
     ${renderPanel(
       'What Judges Can Review Now',
@@ -3592,6 +3657,13 @@ async function renderHackathonPage(page, requestUrl) {
       `<div class="info-card"><strong>Canonical bounty hub</strong><p>This is the single public submission page for all five DoraHacks bounties. SocialOS stays one product, while each bounty section exposes its own framing, integration, live proof, recording route, and deck appendix reference.</p></div>`
     )}
     ${publicNotice}
+    ${renderPanel(
+      'Watch Final Videos',
+      renderWatchVideoCards({ currentBountyId: normalizedBounty, includeHostedLinks: false }),
+      publicMode
+        ? 'Start here if you want the recordings first. Each card opens the stable /videos/... watch page, then links back into the matching proof surface.'
+        : 'Use these direct watch pages while checking the final recording pack or confirming the submitted URLs before publishing.'
+    )}
     ${renderPanel('Bounty Map', renderHackathonBountyCards(bounties, normalizedBounty, { publicMode }), publicMode ? 'Start here, jump to the matching bounty section, then open the linked proof JSON if a judge wants structured evidence.' : 'Use this page as the control room while recording each independent bounty video.')}
     <div class="grid two-up">
       ${renderPanel('Live Partner / API Matrix', integrationMatrixHtml, 'This is the live integration matrix for the partner APIs and shared product infrastructure that power the five bounty tracks.')}
@@ -4730,6 +4802,65 @@ function renderDeckDocument(requestUrl) {
       }
       .deck-ribbon strong {
         color: var(--deck-ink);
+      }
+      .deck-video-dock {
+        position: fixed;
+        top: 22px;
+        left: 24px;
+        z-index: 20;
+        width: min(360px, calc(100vw - 48px));
+        display: grid;
+        gap: 14px;
+        padding: 18px 18px 16px;
+        border-radius: 26px;
+        background: rgba(255, 252, 246, 0.95);
+        border: 1px solid var(--deck-line);
+        box-shadow: var(--deck-shadow);
+        backdrop-filter: blur(12px);
+      }
+      .deck-video-dock-head {
+        display: grid;
+        gap: 6px;
+      }
+      .deck-video-dock-kicker {
+        font-size: 11px;
+        line-height: 1.2;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--deck-accent);
+      }
+      .deck-video-dock-head strong {
+        font-family: var(--deck-display);
+        font-size: 26px;
+        line-height: 1.02;
+      }
+      .deck-video-dock-head p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--deck-ink-soft);
+      }
+      .deck-video-dock-links {
+        display: grid;
+        gap: 8px;
+      }
+      .deck-video-dock-primary,
+      .deck-video-dock-link {
+        display: block;
+        padding: 11px 14px;
+        border-radius: 16px;
+        border: 1px solid var(--deck-line);
+        text-decoration: none;
+        color: var(--deck-ink);
+        background: rgba(255, 251, 245, 0.96);
+        font-size: 14px;
+        line-height: 1.35;
+      }
+      .deck-video-dock-primary {
+        background: rgba(21, 111, 106, 0.14);
+        border-color: rgba(21, 111, 106, 0.2);
+        color: var(--deck-accent);
+        font-weight: 700;
       }
       .reveal {
         color: var(--deck-ink);
@@ -5977,7 +6108,7 @@ function renderDeckDocument(requestUrl) {
         .deck-slide-shell {
           grid-template-columns: 1fr;
           gap: 26px;
-          padding: 48px 34px 96px;
+          padding: 170px 34px 96px;
         }
         .deck-three-column,
         .deck-proof-grid,
@@ -5990,6 +6121,9 @@ function renderDeckDocument(requestUrl) {
         }
         .deck-flow {
           flex-direction: column;
+        }
+        .deck-video-dock {
+          width: min(420px, calc(100vw - 68px));
         }
         .deck-inline-flow {
           gap: 10px;
@@ -6215,7 +6349,8 @@ function renderDeckDocument(requestUrl) {
         }
         .reveal .controls,
         .reveal .progress,
-        .deck-ribbon {
+        .deck-ribbon,
+        .deck-video-dock {
           display: none;
         }
         .deck-mobile-pager {
@@ -6275,6 +6410,7 @@ function renderDeckDocument(requestUrl) {
     </style>
   </head>
   <body class="deck-mode">
+    ${renderDeckVideoDock()}
     <div class="deck-ribbon">
       <strong>SocialOS VC Deck</strong>
       <span class="deck-status-pill">${escapeHtml(deckStatusLabel)}</span>
