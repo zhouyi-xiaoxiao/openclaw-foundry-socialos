@@ -43,6 +43,17 @@ function normalizeCount(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function normalizeDigestEntries(value) {
+  const source = Array.isArray(value)
+    ? value
+    : typeof value === 'string'
+      ? value.split(/\r?\n/u)
+      : [];
+  return source
+    .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+    .filter((entry) => Boolean(entry) && !/^none(?:\b|$)/iu.test(entry) && !/^no digest yet\.?$/iu.test(entry));
+}
+
 function extractJsonObjects(raw) {
   if (typeof raw !== 'string' || !raw.includes('{')) return [];
   const objects = [];
@@ -102,7 +113,7 @@ function statusShapeScore(value) {
   if (value.health && typeof value.health === 'object') score += 1;
   if (value.latestRun && typeof value.latestRun === 'object') score += 1;
   if (Array.isArray(value.blockedHead)) score += 1;
-  if (Array.isArray(value.latestDigest)) score += 1;
+  if (Array.isArray(value.latestDigest) || typeof value.latestDigest === 'string') score += 1;
   if (typeof value.consecutiveFailures === 'number') score += 1;
   return score;
 }
@@ -191,7 +202,7 @@ function parseFoundryStatusJson(output, commandOk) {
   const latestRun = parsed.latestRun && typeof parsed.latestRun === 'object' ? parsed.latestRun : {};
   const health = parsed.health && typeof parsed.health === 'object' ? parsed.health : {};
   const blockedHead = Array.isArray(parsed.blockedHead) ? parsed.blockedHead : [];
-  const latestDigest = Array.isArray(parsed.latestDigest) ? parsed.latestDigest : [];
+  const latestDigest = normalizeDigestEntries(parsed.latestDigest);
 
   return {
     commandOk,
@@ -217,7 +228,7 @@ function parseFoundryStatusJson(output, commandOk) {
         return '';
       })
       .filter(Boolean),
-    latestDigest: latestDigest.map((line) => (typeof line === 'string' ? line.trim() : '')).filter(Boolean),
+    latestDigest,
   };
 }
 
