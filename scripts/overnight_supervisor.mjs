@@ -33,6 +33,11 @@ function safeTrim(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+export function combineProbeOutput(primary = '', secondary = '') {
+  const parts = [safeTrim(primary), safeTrim(secondary)].filter(Boolean);
+  return parts.join('\n');
+}
+
 function normalizeCount(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -484,13 +489,13 @@ function main() {
   const demo = restartDemoIfNeeded(initialDemo, actions);
 
   const foundryStatusResult = run('bash', [FOUNDRY_DISPATCH_SCRIPT, 'STATUS']);
-  const foundryStatusOutput = safeTrim(foundryStatusResult.stdout);
+  const foundryStatusOutput = combineProbeOutput(foundryStatusResult.stdout, foundryStatusResult.stderr);
   const foundryCommandOk = foundryStatusResult.status === 0 && Boolean(foundryStatusOutput);
   if (!foundryCommandOk) {
-    const detail = safeTrim(foundryStatusResult.stderr) || foundryStatusOutput || 'empty output';
+    const detail = foundryStatusOutput || 'empty output';
     actions.push(`Foundry STATUS check failed: ${detail}`);
   }
-  const foundry = parseFoundryStatus(foundryStatusResult.stdout, { commandOk: foundryCommandOk });
+  const foundry = parseFoundryStatus(foundryStatusOutput, { commandOk: foundryCommandOk });
   const publishMode = detectPublishMode();
   const decision = determineDecision({ demo, foundry, publishMode });
 

@@ -1,4 +1,4 @@
-import { determineDecision, parseFoundryStatus } from '../overnight_supervisor.mjs';
+import { combineProbeOutput, determineDecision, parseFoundryStatus } from '../overnight_supervisor.mjs';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -140,6 +140,11 @@ const parsedJsonWithLeadingNoiseObject = parseFoundryStatus(jsonWithLeadingNoise
 assert(parsedJsonWithLeadingNoiseObject.mode === 'ACTIVE', 'parser should prefer the status-shaped JSON object');
 assert(parsedJsonWithLeadingNoiseObject.queue.inProgress === 2, 'parser should ignore leading non-status JSON objects');
 assert(parsedJsonWithLeadingNoiseObject.queue.blocked === 3, 'parser should keep queue metrics when leading JSON noise exists');
+
+const probeFromStderrOnly = combineProbeOutput('', '\n  {"mode":"ACTIVE"}  \n');
+assert(probeFromStderrOnly === '{"mode":"ACTIVE"}', 'probe output should trim and keep stderr-only status payloads');
+const probeFromBothStreams = combineProbeOutput('status on stdout', 'status on stderr');
+assert(probeFromBothStreams === 'status on stdout\nstatus on stderr', 'probe output should preserve both streams in order');
 
 const decisionPaused = determineDecision({
   publishMode: 'dry-run',
