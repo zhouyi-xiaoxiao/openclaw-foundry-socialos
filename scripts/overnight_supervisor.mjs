@@ -458,6 +458,14 @@ export function determineDecision({ demo, foundry, publishMode }) {
     };
   }
 
+  if (foundry.queue.blocked > 0) {
+    return {
+      decision: 'continue',
+      nextFocus: 'triage-blocked-foundry-queue',
+      reason: 'Foundry has blocked queue items; prioritize safe unblock and queue coherence before new polish work.',
+    };
+  }
+
   return {
     decision: 'continue',
     nextFocus: 'workspace-usability-and-demo-trust',

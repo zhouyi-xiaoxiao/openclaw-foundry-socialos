@@ -184,5 +184,25 @@ const decisionActive = determineDecision({
   },
 });
 assert(decisionActive.decision === 'continue', 'healthy active foundry mode should continue');
+assert(
+  decisionActive.nextFocus === 'workspace-usability-and-demo-trust',
+  'healthy active foundry mode should keep workspace polish focus'
+);
+
+const decisionBlockedQueue = determineDecision({
+  publishMode: 'dry-run',
+  demo: { allHealthy: true },
+  foundry: {
+    mode: 'ACTIVE',
+    commandOk: true,
+    consecutiveFailures: 0,
+    queue: { pending: 0, inProgress: 0, blocked: 3, done: 0, currentTask: 'none' },
+  },
+});
+assert(decisionBlockedQueue.decision === 'continue', 'blocked queue should continue under active dry-run mode');
+assert(
+  decisionBlockedQueue.nextFocus === 'triage-blocked-foundry-queue',
+  'blocked queue should prioritize queue triage focus'
+);
 
 console.log('overnight_supervisor_parser_smoke: PASS');
