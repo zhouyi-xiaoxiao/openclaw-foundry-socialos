@@ -211,9 +211,9 @@ assert(
 assert(parsedTaskTitleVariantStatus.blockedHead[1] === 'Needs DB access', 'title-only blocked entries should normalize');
 assert(parsedTaskTitleVariantStatus.blockedHead[2] === 'TASK-999', 'taskId-only blocked entries should normalize');
 
-const demoStatusOutput = `socialos-api: ready=true healthy=true pid=none pidAlive=false stalePid=false listeningPid=11570 unmanagedHealthy=true health=http://127.0.0.1:8787/health
+const unhealthyDemoStatusOutput = `socialos-api: ready=true healthy=true pid=none pidAlive=false stalePid=false listeningPid=11570 unmanagedHealthy=true health=http://127.0.0.1:8787/health
 socialos-web: ready=true healthy=false pid=none pidAlive=false stalePid=false listeningPid=11609 unmanagedHealthy=true health=http://127.0.0.1:4173/quick-capture`;
-const parsedUnhealthyDemoStatus = parseDemoStatus(demoStatusOutput);
+const parsedUnhealthyDemoStatus = parseDemoStatus(unhealthyDemoStatusOutput);
 assert(parsedUnhealthyDemoStatus.services.length === 2, 'demo status should parse two services');
 assert(parsedUnhealthyDemoStatus.services[1].ready === true, 'demo parser should preserve ready=true on unhealthy service');
 assert(parsedUnhealthyDemoStatus.services[1].healthy === false, 'demo parser should preserve healthy=false from probe output');
