@@ -47,6 +47,21 @@ async function writeText(fileName, content) {
   return target;
 }
 
+async function copyTrackedScreenshotFallback(target) {
+  const sourcePath = path.join(repoRoot, 'socialos', 'docs', 'evidence', target.fileName);
+  const outputPath = path.join(evidenceDir, target.fileName);
+  if (path.resolve(sourcePath) === path.resolve(outputPath)) {
+    return false;
+  }
+
+  try {
+    await fsp.copyFile(sourcePath, outputPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function commandExists(command) {
   try {
     execFileSync('bash', ['-lc', `command -v ${command}`], { stdio: 'ignore' });
@@ -511,7 +526,17 @@ async function main() {
       screenshotsCaptured = true;
       logStep(`screenshots refreshed via wkhtmltoimage=${screenshotTargets.length}`);
     } else {
-      logStep('no screenshot tool available; screenshot refresh skipped');
+      let copiedCount = 0;
+      for (const target of screenshotTargets) {
+        if (await copyTrackedScreenshotFallback(target)) {
+          copiedCount += 1;
+        }
+      }
+      logStep(
+        copiedCount === screenshotTargets.length
+          ? `no screenshot tool available; copied tracked screenshot fallbacks=${copiedCount}`
+          : 'no screenshot tool available; screenshot refresh skipped'
+      );
     }
 
     await writeText(
