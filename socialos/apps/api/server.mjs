@@ -630,6 +630,35 @@ function normalizeStringList(value, fallback = []) {
   return [...fallback];
 }
 
+function normalizeIdentityPlatform(value) {
+  return readOptionalString(value, '').toLowerCase();
+}
+
+function normalizeIdentityHandle(value) {
+  return cleanText(value || '');
+}
+
+function normalizeIdentityUrl(value) {
+  const raw = cleanText(value || '');
+  if (!raw) return '';
+
+  try {
+    const parsed = new URL(raw);
+    const host = parsed.hostname.toLowerCase();
+    const pathname = parsed.pathname.replace(/\/+$/u, '').toLowerCase();
+    return `${host}${pathname}`;
+  } catch {
+    return raw
+      .toLowerCase()
+      .replace(/^https?:\/\//u, '')
+      .replace(/\/+$/u, '');
+  }
+}
+
+function buildIdentityDedupeKey({ platform = '', handle = '', url = '' } = {}) {
+  return `${normalizeIdentityPlatform(platform)}::${normalizeIdentityHandle(handle).toLowerCase()}::${normalizeIdentityUrl(url)}`;
+}
+
 function normalizeModelProvider(value, fallback = MODEL_PROVIDER_AUTO) {
   if (typeof value !== 'string') return fallback;
   const normalized = value.trim().toLowerCase();
@@ -6868,11 +6897,7 @@ function ensurePersonRecord(statements, personDraft = {}, preferredPersonId = ''
 
 function syncPersonIdentities(statements, personId, identities = []) {
   const existingRows = statements.listIdentitiesByPersonId.all(personId);
-  const seen = new Set(
-    existingRows.map((row) =>
-      `${row.platform}::${cleanText(row.handle).toLowerCase()}::${cleanText(row.url).toLowerCase()}`
-    )
-  );
+  const seen = new Set(existingRows.map((row) => buildIdentityDedupeKey(row)));
 
   const inserted = [];
   const normalizedIdentities = Array.isArray(identities)
@@ -6880,11 +6905,11 @@ function syncPersonIdentities(statements, personId, identities = []) {
     : [];
 
   for (const identity of normalizedIdentities) {
-    const platform = readOptionalString(identity.platform, '').toLowerCase();
-    const handle = cleanText(identity.handle || '');
+    const platform = normalizeIdentityPlatform(identity.platform);
+    const handle = normalizeIdentityHandle(identity.handle);
     const url = cleanText(identity.url || '');
     if (!platform || (!handle && !url)) continue;
-    const dedupeKey = `${platform}::${handle.toLowerCase()}::${url.toLowerCase()}`;
+    const dedupeKey = buildIdentityDedupeKey({ platform, handle, url });
     if (seen.has(dedupeKey)) continue;
     const identityId = makeId('identity');
     statements.insertIdentity.run(
@@ -8349,10 +8374,22 @@ async function routeRequest(req, res, statements) {
     const person = statements.selectPersonById.get(personId);
     if (!person) throw new HttpError(404, 'personId not found');
     const body = await readJsonBody(req);
-    const platform = requireString(body.platform, 'platform').toLowerCase();
-    const handle = cleanText(body.handle || '');
+    const platform = normalizeIdentityPlatform(requireString(body.platform, 'platform'));
+    const handle = normalizeIdentityHandle(body.handle);
     const url = cleanText(body.url || '');
     if (!handle && !url) throw new HttpError(400, 'handle or url is required');
+    const existingIdentity = statements
+      .listIdentitiesByPersonId
+      .all(personId)
+      .find((row) => buildIdentityDedupeKey(row) === buildIdentityDedupeKey({ platform, handle, url }));
+    if (existingIdentity) {
+      sendJson(res, 200, {
+        action: 'existing',
+        identity: formatIdentityRow(existingIdentity),
+        detail: buildPeopleDetailPayload(statements, personId),
+      });
+      return;
+    }
     const identityId = makeId('identity');
     statements.insertIdentity.run(
       identityId,

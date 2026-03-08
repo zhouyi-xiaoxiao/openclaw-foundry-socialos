@@ -19,6 +19,18 @@ async function requestJson(baseUrl, pathname, { method = 'GET', body } = {}) {
   return payload;
 }
 
+async function requestJsonWithStatus(baseUrl, pathname, { method = 'GET', body } = {}) {
+  const response = await fetch(`${baseUrl}${pathname}`, {
+    method,
+    headers: body ? { 'content-type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const raw = await response.text();
+  const payload = raw ? JSON.parse(raw) : {};
+  if (!response.ok) throw new Error(`${pathname} failed (${response.status}): ${raw}`);
+  return { status: response.status, payload };
+}
+
 async function main() {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'socialos-people-detail-'));
   const dbPath = path.join(tempDir, 'people.detail.db');
@@ -44,6 +56,21 @@ async function main() {
         note: 'Primary professional profile',
       },
     });
+    const duplicateIdentity = await requestJsonWithStatus(
+      api.baseUrl,
+      `/people/${encodeURIComponent(personId)}/identity`,
+      {
+        method: 'POST',
+        body: {
+          platform: 'LinkedIn',
+          handle: 'ALICE-EVIDENCE',
+          url: 'https://linkedin.com/in/alice-evidence/',
+          note: 'Duplicate format variant',
+        },
+      }
+    );
+    assert(duplicateIdentity.status === 200, 'duplicate identity should be idempotent');
+    assert(duplicateIdentity.payload.action === 'existing', 'duplicate identity should report existing action');
     await requestJson(api.baseUrl, `/people/${encodeURIComponent(personId)}/interaction`, {
       method: 'POST',
       body: {
