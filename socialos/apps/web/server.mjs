@@ -2439,37 +2439,10 @@ function renderDigestRunList(runs) {
 }
 
 function renderBlockedList(blocked) {
-  const normalized = normalizeBlockedItems(blocked);
-  if (!normalized.length) return renderEmptyState('No blocked queue items right now.');
-  return `<ul class="blocked-list">${normalized
+  if (!blocked.length) return renderEmptyState('No blocked queue items right now.');
+  return `<ul class="blocked-list">${blocked
     .map((item) => `<li><strong>line ${escapeHtml(String(item.line))}</strong> ${escapeHtml(item.task)}</li>`)
     .join('')}</ul>`;
-}
-
-function normalizeBlockedItems(...lists) {
-  const normalized = [];
-  for (const list of lists) {
-    if (!Array.isArray(list)) continue;
-    for (const item of list) {
-      const fallbackLine = normalized.length + 1;
-      if (typeof item === 'string') {
-        const task = item.trim();
-        if (task) normalized.push({ line: fallbackLine, task });
-        continue;
-      }
-      if (!item || typeof item !== 'object') continue;
-      const task =
-        readOptionalString(item.task, '') ||
-        `${readOptionalString(item.taskId, '')} ${readOptionalString(item.title, '')}`.trim() ||
-        readOptionalString(item.title, '');
-      if (!task) continue;
-      const blockedBy = readOptionalString(item.blockedBy, '').replace(/^blocked by:\s*/iu, '');
-      const taskWithReason = blockedBy && !/\(blocked by:/iu.test(task) ? `${task} (blocked by: ${blockedBy})` : task;
-      const line = Number.isFinite(Number(item.line)) && Number(item.line) > 0 ? Number(item.line) : fallbackLine;
-      normalized.push({ line, task: taskWithReason });
-    }
-  }
-  return normalized;
 }
 
 function renderClusterCards(cluster) {
@@ -3992,9 +3965,7 @@ async function renderDevDigestPage(page) {
 
   const status = statusRes.ok ? statusRes.payload : {};
   const runs = runsRes.ok ? runsRes.payload.runs || [] : [];
-  const blockedStatusHead = Array.isArray(status.blockedHead) ? status.blockedHead : [];
-  const blockedFallback = blockedRes.ok ? blockedRes.payload.blockedTasks || [] : [];
-  const blocked = normalizeBlockedItems(blockedStatusHead, blockedFallback);
+  const blocked = blockedRes.ok ? blockedRes.payload.blockedTasks || [] : [];
   const digests = digestRes.ok ? digestRes.payload.digests || [] : [];
   const latestRun = status.latestRun || runs[0] || null;
 
@@ -4923,6 +4894,9 @@ function renderDeckDocument(requestUrl) {
         border: 1px solid var(--deck-line);
         box-shadow: var(--deck-shadow);
         backdrop-filter: blur(12px);
+      }
+      .deck-video-dock-panel[hidden] {
+        display: none !important;
       }
       .deck-video-dock-head {
         display: grid;
