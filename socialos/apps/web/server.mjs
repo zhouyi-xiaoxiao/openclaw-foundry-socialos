@@ -712,25 +712,37 @@ function renderWatchVideoCards({ currentBountyId = '', includeHostedLinks = fals
 
 function renderDeckVideoDock() {
   return `
-    <aside class="deck-video-dock" aria-label="Watch final bounty videos">
-      <div class="deck-video-dock-head">
-        <span class="deck-video-dock-kicker">Judge-ready videos</span>
-        <strong>Watch the 5 final bounty demos</strong>
-        <p>Start with the matching video, then open the public proof hub if you want the full verification pack.</p>
-      </div>
-      <div class="deck-video-dock-links">
-        <a class="deck-video-dock-primary" href="/hackathon/">Open bounty hub</a>
-        ${HACKATHON_PAGE_FALLBACK.map((bounty) => {
-          const href = buildVideoPlaceholderPath(bounty.id, { trailingSlash: true });
-          return `<a class="deck-video-dock-link" href="${escapeHtml(href)}">${escapeHtml(bounty.label)}</a>`;
-        }).join('')}
-      </div>
-      <div class="deck-video-dock-help">
-        <span>Reuse SocialOS</span>
-        <div class="deck-video-dock-help-links">
-          <a href="${escapeHtml(PUBLIC_REPO_URL)}">View GitHub repo</a>
-          <a href="${escapeHtml(PUBLIC_REPO_QUICKSTART_URL)}">Run locally</a>
-          <a href="${escapeHtml(PUBLIC_API_SETUP_URL)}">API setup guide</a>
+    <aside class="deck-video-dock" data-open="false" aria-label="Watch final bounty videos">
+      <button
+        class="deck-video-dock-toggle"
+        type="button"
+        data-deck-video-toggle
+        aria-expanded="false"
+        aria-controls="deck-video-dock-panel"
+      >
+        <span class="deck-video-dock-toggle-label">Videos & Reuse</span>
+        <span class="deck-video-dock-toggle-meta">5 demos</span>
+      </button>
+      <div class="deck-video-dock-panel" id="deck-video-dock-panel" data-deck-video-panel hidden>
+        <div class="deck-video-dock-head">
+          <span class="deck-video-dock-kicker">Judge-ready videos</span>
+          <strong>Watch the 5 final bounty demos</strong>
+          <p>Start with the matching video, then open the public proof hub if you want the full verification pack.</p>
+        </div>
+        <div class="deck-video-dock-links">
+          <a class="deck-video-dock-primary" href="/hackathon/">Open bounty hub</a>
+          ${HACKATHON_PAGE_FALLBACK.map((bounty) => {
+            const href = buildVideoPlaceholderPath(bounty.id, { trailingSlash: true });
+            return `<a class="deck-video-dock-link" href="${escapeHtml(href)}">${escapeHtml(bounty.label)}</a>`;
+          }).join('')}
+        </div>
+        <div class="deck-video-dock-help">
+          <span>Reuse SocialOS</span>
+          <div class="deck-video-dock-help-links">
+            <a href="${escapeHtml(PUBLIC_REPO_URL)}">View GitHub repo</a>
+            <a href="${escapeHtml(PUBLIC_REPO_QUICKSTART_URL)}">Run locally</a>
+            <a href="${escapeHtml(PUBLIC_API_SETUP_URL)}">API setup guide</a>
+          </div>
         </div>
       </div>
     </aside>
@@ -4865,6 +4877,43 @@ function renderDeckDocument(requestUrl) {
         top: 22px;
         left: 24px;
         z-index: 20;
+        display: grid;
+        gap: 10px;
+        justify-items: start;
+      }
+      .deck-video-dock-toggle {
+        appearance: none;
+        border: 1px solid var(--deck-line);
+        border-radius: 999px;
+        background: rgba(255, 252, 246, 0.96);
+        box-shadow: var(--deck-shadow);
+        backdrop-filter: blur(12px);
+        color: var(--deck-ink);
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 11px 14px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .deck-video-dock-toggle-label {
+        letter-spacing: 0.01em;
+      }
+      .deck-video-dock-toggle-meta {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: var(--deck-accent-soft);
+        color: var(--deck-accent);
+        font-size: 11px;
+        line-height: 1;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .deck-video-dock-panel {
         width: min(360px, calc(100vw - 48px));
         display: grid;
         gap: 14px;
@@ -4947,6 +4996,10 @@ function renderDeckDocument(requestUrl) {
         border-color: rgba(21, 111, 106, 0.2);
         color: var(--deck-accent);
         font-weight: 700;
+      }
+      .deck-video-dock[data-open="true"] .deck-video-dock-toggle {
+        background: rgba(21, 111, 106, 0.12);
+        border-color: rgba(21, 111, 106, 0.2);
       }
       .reveal {
         color: var(--deck-ink);
@@ -6194,7 +6247,7 @@ function renderDeckDocument(requestUrl) {
         .deck-slide-shell {
           grid-template-columns: 1fr;
           gap: 26px;
-          padding: 170px 34px 96px;
+          padding: 112px 34px 96px;
         }
         .deck-three-column,
         .deck-proof-grid,
@@ -6208,7 +6261,7 @@ function renderDeckDocument(requestUrl) {
         .deck-flow {
           flex-direction: column;
         }
-        .deck-video-dock {
+        .deck-video-dock-panel {
           width: min(420px, calc(100vw - 68px));
         }
         .deck-video-dock-help-links {
@@ -6553,6 +6606,28 @@ function renderDeckDocument(requestUrl) {
         };
       };
       document.documentElement.setAttribute('data-deck-mobile', useMobileStack ? 'true' : 'false');
+      const deckVideoDock = document.querySelector('.deck-video-dock');
+      const deckVideoToggle = document.querySelector('[data-deck-video-toggle]');
+      const deckVideoPanel = document.querySelector('[data-deck-video-panel]');
+      const setDeckVideoDockOpen = (nextOpen) => {
+        if (!deckVideoDock || !deckVideoToggle || !deckVideoPanel) {
+          return;
+        }
+        deckVideoDock.dataset.open = nextOpen ? 'true' : 'false';
+        deckVideoToggle.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
+        deckVideoPanel.hidden = !nextOpen;
+      };
+      if (deckVideoDock && deckVideoToggle && deckVideoPanel) {
+        setDeckVideoDockOpen(false);
+        deckVideoToggle.addEventListener('click', () => {
+          setDeckVideoDockOpen(deckVideoDock.dataset.open !== 'true');
+        });
+        window.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') {
+            setDeckVideoDockOpen(false);
+          }
+        });
+      }
       const mobileSections = Array.from(document.querySelectorAll('.reveal .slides > section'));
       const mobilePager = document.querySelector('.deck-mobile-pager');
       const mobilePrevButton = document.querySelector('[data-deck-mobile-prev]');
