@@ -71,7 +71,7 @@ async function main() {
     assert(fs.existsSync(path.join(deckSite, 'data', 'hackathon-overview.json')), 'deck export should write hackathon overview JSON');
     assert(fs.existsSync(path.join(deckSite, 'data', 'proofs', 'all.json')), 'deck export should write proof catalog JSON');
     assert(fs.existsSync(path.join(deckSite, 'data', 'proofs', 'z-ai-general.json')), 'deck export should write bounty proof JSON');
-    assert(fs.existsSync(path.join(deckSite, 'CNAME')), 'deck export should write CNAME');
+    assert(!fs.existsSync(path.join(deckSite, 'CNAME')), 'deck export should not claim a custom domain by default');
 
     const indexHtml = fs.readFileSync(path.join(deckSite, 'index.html'), 'utf8');
     const printHtml = fs.readFileSync(path.join(deckSite, 'deck', 'print', 'index.html'), 'utf8');
@@ -79,22 +79,25 @@ async function main() {
     const hackathonHtml = fs.readFileSync(path.join(deckSite, 'hackathon', 'index.html'), 'utf8');
     const buddyHtml = fs.readFileSync(path.join(deckSite, 'buddy', 'index.html'), 'utf8');
     const videoPlaceholderHtml = fs.readFileSync(path.join(deckSite, 'videos', 'z-ai-general', 'index.html'), 'utf8');
-    const cname = fs.readFileSync(path.join(deckSite, 'CNAME'), 'utf8').trim();
 
-    assert(indexHtml.includes('SocialOS VC Deck'), 'exported root index should contain the deck title');
+    assert(indexHtml.includes('SocialOS · pitch deck, March 2026'), 'exported root index should contain the deck title');
     assert(indexHtml.includes('Run locally'), 'exported public deck should expose the quickstart link');
     assert(indexHtml.includes('API setup guide'), 'exported public deck should expose the API setup guide');
     assert(printHtml.includes('data-print-pdf="true"'), 'exported print variant should preserve print mode');
     assert(demoHtml.includes('Auxiliary public proof page'), 'exported demo page should render in public proof mode');
-    assert(hackathonHtml.includes('Canonical public bounty hub'), 'exported hackathon page should render in public proof mode');
+    assert(hackathonHtml.includes('Bounty hub, kept as submitted'), 'exported hackathon page should render in public proof mode');
     assert(hackathonHtml.includes('Run SocialOS Yourself'), 'exported public hackathon should expose the local reuse panel');
     assert(hackathonHtml.includes('Run locally'), 'exported public hackathon should expose the quickstart link');
     assert(hackathonHtml.includes('id="bounty-z-ai-general"'), 'exported hackathon page should keep same-page bounty anchors');
     assert(buddyHtml.includes('Auxiliary public Buddy page'), 'exported buddy page should render in public proof mode');
     assert(videoPlaceholderHtml.includes('Open final video on OneDrive'), 'exported video page should render the hosted video link');
     assert(videoPlaceholderHtml.includes('https://uob-my.sharepoint.com/'), 'exported video page should include the hosted OneDrive URL');
-    assert(videoPlaceholderHtml.includes('/data/proofs/z-ai-general.json'), 'exported video placeholder page should keep the matching proof JSON link');
-    assert(cname === 'zhouyixiaoxiao.org', 'deck export should target the custom domain');
+    assert(videoPlaceholderHtml.includes('/openclaw-foundry-socialos/data/proofs/z-ai-general.json'), 'exported video placeholder page should keep the matching proof JSON link');
+    for (const [name, html] of Object.entries({ indexHtml, demoHtml, hackathonHtml, buddyHtml, videoPlaceholderHtml })) {
+      const rootLinks = html.match(/\s(?:href|src|action)="\/(?!\/|openclaw-foundry-socialos\/)/gu) || [];
+      assert(rootLinks.length === 0, `${name} should keep every site link under the GitHub Pages project path`);
+    }
+    assert(!/href="[^"]*\/(?:studio|drafts)(?:[?"])/u.test(hackathonHtml), 'exported hackathon page should not link to local-only routes');
     assert(!indexHtml.includes('127.0.0.1'), 'exported public deck should not expose localhost-only links');
     assert(!demoHtml.includes('127.0.0.1'), 'exported public demo should not expose localhost-only links');
     assert(!hackathonHtml.includes('127.0.0.1'), 'exported public hackathon should not expose localhost-only links');

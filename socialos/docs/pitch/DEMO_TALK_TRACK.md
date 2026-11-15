@@ -15,10 +15,10 @@ For slide-by-slide deck reading, see `socialos/docs/pitch/DECK_PAGE_SCRIPT.md`.
 - Settings: `http://127.0.0.1:4173/settings`
 
 Public proof pages:
-- `https://zhouyixiaoxiao.org/`
-- `https://zhouyixiaoxiao.org/demo/`
-- `https://zhouyixiaoxiao.org/hackathon/`
-- `https://zhouyixiaoxiao.org/buddy/`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/demo/`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/buddy/`
 
 ## Recommended Sequence
 ### 1. Workspace capture

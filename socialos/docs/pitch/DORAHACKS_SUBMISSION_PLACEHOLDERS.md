@@ -4,7 +4,7 @@ This file is the fastest copy-and-paste pack for submitting SocialOS before the 
 
 ## Recommended Placeholder Format
 
-Use one stable public video page URL per bounty on `zhouyixiaoxiao.org`.
+Use one stable public video page URL per bounty on the public site.
 
 Do not submit:
 
@@ -28,11 +28,11 @@ Use this if a submission field expects a public demo link:
 
 These are the best video placeholder URLs because they are short, stable, and clearly read like watch pages:
 
-- `Claw for Human`: `https://zhouyixiaoxiao.org/videos/claw-for-human/`
-- `Animoca Bounty`: `https://zhouyixiaoxiao.org/videos/animoca/`
-- `Human for Claw`: `https://zhouyixiaoxiao.org/videos/human-for-claw/`
-- `Z.AI General`: `https://zhouyixiaoxiao.org/videos/z-ai-general/`
-- `AI Agents for Good`: `https://zhouyixiaoxiao.org/videos/ai-agents-for-good/`
+- `Claw for Human`: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/claw-for-human/`
+- `Animoca Bounty`: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/animoca/`
+- `Human for Claw`: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/human-for-claw/`
+- `Z.AI General`: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/z-ai-general/`
+- `AI Agents for Good`: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/ai-agents-for-good/`
 
 If you want short internal names for your own tracking, use:
 
@@ -74,7 +74,7 @@ Use this for the general project description:
 
 **Placeholder URL**
 
-`https://zhouyixiaoxiao.org/videos/claw-for-human/`
+`https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/claw-for-human/`
 
 **Describe the problem which this project solves**
 
@@ -90,7 +90,7 @@ Use this for the general project description:
 
 **Placeholder URL**
 
-`https://zhouyixiaoxiao.org/videos/animoca/`
+`https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/animoca/`
 
 **Describe the problem which this project solves**
 
@@ -106,7 +106,7 @@ Use this for the general project description:
 
 **Placeholder URL**
 
-`https://zhouyixiaoxiao.org/videos/human-for-claw/`
+`https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/human-for-claw/`
 
 **Describe the problem which this project solves**
 
@@ -122,7 +122,7 @@ Use this for the general project description:
 
 **Placeholder URL**
 
-`https://zhouyixiaoxiao.org/videos/z-ai-general/`
+`https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/z-ai-general/`
 
 **Describe the problem which this project solves**
 
@@ -138,7 +138,7 @@ Use this for the general project description:
 
 **Placeholder URL**
 
-`https://zhouyixiaoxiao.org/videos/ai-agents-for-good/`
+`https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/ai-agents-for-good/`
 
 **Describe the problem which this project solves**
 
@@ -157,6 +157,6 @@ If DoraHacks gives you only one link field per submission, use the matching plac
 If DoraHacks lets you add more context, pair the placeholder URL with:
 
 - GitHub repo: `https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos`
-- public deck root: `https://zhouyixiaoxiao.org/`
-- canonical bounty hub: `https://zhouyixiaoxiao.org/hackathon/`
+- public deck root: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/`
+- canonical bounty hub: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/`
 - matching proof JSON from the same bounty section

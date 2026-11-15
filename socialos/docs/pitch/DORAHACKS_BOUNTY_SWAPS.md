@@ -9,8 +9,8 @@ Local route:
 
 Public close:
 
-- `https://zhouyixiaoxiao.org/hackathon/#bounty-claw-for-human`
-- `https://zhouyixiaoxiao.org/data/proofs/claw-for-human.json`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-claw-for-human`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/claw-for-human.json`
 
 Say:
 
@@ -23,8 +23,8 @@ Local route:
 
 Public close:
 
-- `https://zhouyixiaoxiao.org/hackathon/#bounty-animoca`
-- `https://zhouyixiaoxiao.org/data/proofs/animoca.json`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-animoca`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/animoca.json`
 
 Say:
 
@@ -37,8 +37,8 @@ Local route:
 
 Public close:
 
-- `https://zhouyixiaoxiao.org/hackathon/#bounty-human-for-claw`
-- `https://zhouyixiaoxiao.org/data/proofs/human-for-claw.json`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-human-for-claw`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/human-for-claw.json`
 
 Say:
 
@@ -51,8 +51,8 @@ Local route:
 
 Public close:
 
-- `https://zhouyixiaoxiao.org/hackathon/#bounty-z-ai-general`
-- `https://zhouyixiaoxiao.org/data/proofs/z-ai-general.json`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-z-ai-general`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/z-ai-general.json`
 
 Say:
 
@@ -65,8 +65,8 @@ Local route:
 
 Public close:
 
-- `https://zhouyixiaoxiao.org/hackathon/#bounty-ai-agents-for-good`
-- `https://zhouyixiaoxiao.org/data/proofs/ai-agents-for-good.json`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-ai-agents-for-good`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/ai-agents-for-good.json`
 
 Say:
 

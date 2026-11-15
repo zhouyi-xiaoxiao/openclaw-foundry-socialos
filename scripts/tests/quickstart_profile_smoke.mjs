@@ -109,7 +109,7 @@ function main() {
   assert(readme.includes('### Clone / run / reuse'), 'README should expose the builder path near the top');
   assert(readme.includes('bash scripts/provider_doctor.sh'), 'README should expose the provider doctor command');
   assert(readme.includes('socialos/docs/API_SETUP.md'), 'README should link to the API setup guide');
-  assert(readme.includes('https://zhouyixiaoxiao.org/videos/claw-for-human/'), 'README should expose stable public video links');
+  assert(readme.includes('https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/claw-for-human/'), 'README should expose stable public video links');
   assert(readme.includes('bash scripts/quickstart.sh --profile local'), 'README should expose the blank local workspace command');
   assert(
     readme.includes('The public site is read-only and proof-first. The interactive product remains local-first by design.'),

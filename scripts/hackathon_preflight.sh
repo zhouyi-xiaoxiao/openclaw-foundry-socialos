@@ -6,7 +6,7 @@ API_PORT="${SOCIALOS_API_PORT:-8787}"
 WEB_PORT="${SOCIALOS_WEB_PORT:-4173}"
 LOCAL_API="http://127.0.0.1:${API_PORT}"
 LOCAL_WEB="http://127.0.0.1:${WEB_PORT}"
-PUBLIC_WEB="${SOCIALOS_PUBLIC_WEB_URL:-https://zhouyixiaoxiao.org}"
+PUBLIC_WEB="${SOCIALOS_PUBLIC_WEB_URL:-https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos}"
 
 load_env_file() {
   local target="$1"

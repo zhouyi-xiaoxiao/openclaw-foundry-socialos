@@ -7,7 +7,15 @@ const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), '
 const outputRoot = path.join(repoRoot, '.deck-site');
 const webBaseUrl = process.env.SOCIALOS_WEB_BASE_URL || 'http://127.0.0.1:4173';
 const evidenceRoot = path.join(repoRoot, 'socialos', 'docs', 'evidence');
-const customDomain = process.env.SOCIALOS_DECK_DOMAIN || 'zhouyixiaoxiao.org';
+// The public site is served from GitHub Pages under the project path. Set
+// SOCIALOS_DECK_DOMAIN to export for a custom domain served from its root instead.
+const customDomain = (process.env.SOCIALOS_DECK_DOMAIN || '').trim();
+const basePath = customDomain
+  ? ''
+  : (process.env.SOCIALOS_DECK_BASE_PATH ?? '/openclaw-foundry-socialos').replace(/\/+$/u, '');
+const publicOrigin = customDomain
+  ? `https://${customDomain}`
+  : `https://zhouyi-xiaoxiao.github.io${basePath}`;
 const bountyIds = ['claw-for-human', 'animoca', 'human-for-claw', 'z-ai-general', 'ai-agents-for-good'];
 
 async function ensureDir(target) {
@@ -27,6 +35,12 @@ async function fetchText(url) {
   return await response.text();
 }
 
+// Pages are rendered for a site root; prefix root-relative links with the base path.
+function withBasePath(html) {
+  if (!basePath) return html;
+  return html.replace(/(\s(?:href|src|action)=")\/(?!\/)/gu, `$1${basePath}/`);
+}
+
 async function copyFile(sourcePath, outputPath) {
   const content = await fs.readFile(sourcePath, 'utf8');
   await writeFile(outputPath, content);
@@ -39,7 +53,7 @@ function buildRedirectHtml(targetPath) {
     <meta charset="utf-8" />
     <meta http-equiv="refresh" content="0; url=${targetPath}" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SocialOS VC Deck Redirect</title>
+    <title>SocialOS</title>
   </head>
   <body>
     <p>Redirecting to <a href="${targetPath}">${targetPath}</a>…</p>
@@ -75,26 +89,32 @@ async function main() {
 
   for (const page of htmlPages) {
     const html = await fetchText(page.source);
-    await writeFile(path.join(outputRoot, page.output), html);
+    await writeFile(path.join(outputRoot, page.output), withBasePath(html));
   }
 
   for (const item of jsonExports) {
     await copyFile(item.source, path.join(outputRoot, item.output));
   }
 
-  await writeFile(path.join(outputRoot, '404.html'), buildRedirectHtml('/'));
-  await writeFile(path.join(outputRoot, 'CNAME'), `${customDomain}\n`);
-  await writeFile(
-    path.join(outputRoot, 'robots.txt'),
-    ['User-agent: *', 'Allow: /', 'Sitemap: https://zhouyixiaoxiao.org/'].join('\n') + '\n',
-  );
+  await writeFile(path.join(outputRoot, '404.html'), buildRedirectHtml(`${basePath}/`));
+  if (customDomain) {
+    await writeFile(path.join(outputRoot, 'CNAME'), `${customDomain}\n`);
+  }
+  await writeFile(path.join(outputRoot, 'robots.txt'), ['User-agent: *', 'Allow: /'].join('\n') + '\n');
 
   const statusPayload = {
     generatedAt: new Date().toISOString(),
     source: webBaseUrl,
-    customDomain,
-    evidenceRoot,
-    exportedFiles: [...htmlPages.map((page) => page.output), ...jsonExports.map((item) => item.output), '404.html', 'CNAME', 'robots.txt'],
+    customDomain: customDomain || null,
+    publicOrigin,
+    basePath,
+    exportedFiles: [
+      ...htmlPages.map((page) => page.output),
+      ...jsonExports.map((item) => item.output),
+      '404.html',
+      ...(customDomain ? ['CNAME'] : []),
+      'robots.txt',
+    ],
   };
   await writeFile(path.join(outputRoot, 'deck-status.json'), JSON.stringify(statusPayload, null, 2));
 

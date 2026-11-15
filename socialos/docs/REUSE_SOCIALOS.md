@@ -122,6 +122,6 @@ bash scripts/provider_doctor.sh
 
 ## Public proof vs local product
 
-The hosted site at [zhouyixiaoxiao.org](https://zhouyixiaoxiao.org/) is the read-only proof surface.
+The hosted site at [zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/) is the read-only proof surface.
 
 The reusable interactive product is the local app you run on your own machine.

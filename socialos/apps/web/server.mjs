@@ -31,7 +31,9 @@ const HACKATHON_PROOFS_ALL_EVIDENCE_PATH = path.join(EVIDENCE_DIR, 'hackathon-pr
 const PUBLIC_REPO_URL = 'https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos';
 const PUBLIC_REPO_QUICKSTART_URL = `${PUBLIC_REPO_URL}#quickstart`;
 const PUBLIC_API_SETUP_URL = `${PUBLIC_REPO_URL}/blob/main/socialos/docs/API_SETUP.md`;
-const PUBLIC_DECK_URL = 'https://zhouyixiaoxiao.org/';
+const PUBLIC_DECK_URL = 'https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/';
+const PUBLIC_OWNER_URL = 'https://zhouyixiaoxiao.com/';
+const PUBLIC_EVENT_LINE = 'Built in five days for the UK AI Agent Hack EP4, 5–9 March 2026.';
 let apiBaseUrlOverride = '';
 const fileTextCache = new Map();
 const dataUriCache = new Map();
@@ -790,10 +792,10 @@ function renderVideoPlaceholderPage(bounty) {
   ].join('');
   const heroAside = `
     <div class="stack-card">
-      <div class="stack-meta"><strong>Submit this URL</strong>${renderPill(videoHref, 'soft')}</div>
+      <div class="stack-meta"><strong>${hasHostedVideo ? 'Submitted link' : 'Submit this URL'}</strong>${renderPill(videoHref, 'soft')}</div>
       <p>${
         hasHostedVideo
-          ? 'This public watch page now routes judges to the final hosted demo while keeping the DoraHacks submission URL stable.'
+          ? 'This was the watch link submitted for this bounty in March 2026. The button below opens the recording.'
           : 'This page is a stable video placeholder. Keep the same link in DoraHacks now, then replace the placeholder with the final uploaded demo later.'
       }</p>
     </div>
@@ -810,9 +812,9 @@ function renderVideoPlaceholderPage(bounty) {
       heroAside,
     )}
     ${renderPublicProofNotice(
-      hasHostedVideo ? 'Final video is live' : 'Demo video upload in progress',
+      hasHostedVideo ? 'Recording' : 'Demo video upload in progress',
       hasHostedVideo
-        ? 'Use the watch button below to open the final hosted recording. The proof page, repo, deck, and structured JSON stay on this page for fast judge verification.'
+        ? 'The watch button below opens the recording. The proof page, repository, deck and structured JSON are linked from this page.'
         : 'This URL is reserved for the final SocialOS demo video for this bounty. Until the recording is uploaded, judges can review the proof page, repo, deck, and structured JSON below.'
     )}
     ${renderPanel(
@@ -835,9 +837,6 @@ function renderVideoPlaceholderPage(bounty) {
             ? `<div class="stack-card">
           <strong>Watch now</strong>
           <p><a class="mini-link" href="${escapeHtml(hostedVideoHref)}">Open final video on OneDrive</a></p>
-          <div class="inline-actions">
-            <a class="mini-link" href="${escapeHtml(videoHref)}">Keep using stable /videos URL</a>
-          </div>
         </div>`
             : ''
         }
@@ -847,7 +846,7 @@ function renderVideoPlaceholderPage(bounty) {
         </div>
       </div>`,
       hasHostedVideo
-        ? 'Keep using this stable /videos/... URL in DoraHacks. It now routes judges to the final recording while preserving proof links on the same page.'
+        ? 'The recording is hosted on OneDrive; this page keeps it next to the proof for the same track.'
         : 'Use this public page in the submission form now. When the video is ready, embed it here or replace the placeholder content without changing the URL.'
     )}
     ${renderPanel(
@@ -3640,8 +3639,8 @@ async function renderHackathonPage(page, requestUrl) {
   ].join('');
   const publicNotice = publicMode
     ? renderPublicProofNotice(
-        'Canonical public bounty hub',
-        'This page is the judge-facing proof surface. /demo/ and /buddy/ remain auxiliary proof pages, while the interactive product stays localhost-only in the recorded videos.'
+        'Bounty hub, kept as submitted',
+        'SocialOS was entered in five DoraHacks bounty tracks at the UK AI Agent Hack EP4 in March 2026. This page was the public entry for all five and is kept as it was submitted. /demo/ and /buddy/ are supporting pages; the interactive product runs only on a local machine, as shown in the videos.'
       )
     : '';
   const integrationMatrixHtml = integrations.length
@@ -3656,7 +3655,7 @@ async function renderHackathonPage(page, requestUrl) {
               </div>
               <p>${escapeHtml(truncate(integration.summary || '', 180))}</p>
               <div class="inline-actions">
-                ${integration.route ? `<a class="mini-link" href="${escapeHtml(integration.route)}">Open</a>` : ''}
+                ${(publicMode ? buildPublicPageHref(integration.route) : integration.route) ? `<a class="mini-link" href="${escapeHtml(publicMode ? buildPublicPageHref(integration.route) : integration.route)}">Open</a>` : ''}
                 ${integration.model ? renderPill(integration.model, 'soft') : ''}
               </div>
             </article>
@@ -3693,7 +3692,9 @@ async function renderHackathonPage(page, requestUrl) {
     ${renderHero(
       page,
       heroMetrics,
-      `<div class="info-card"><strong>Canonical bounty hub</strong><p>This is the single public submission page for all five DoraHacks bounties. SocialOS stays one product, while each bounty section exposes its own framing, integration, live proof, recording route, and deck appendix reference.</p></div>`
+      publicMode
+        ? `<div class="info-card"><strong>One product, five tracks</strong><p>SocialOS stayed one product across the five DoraHacks bounties. Each section below gives one track its framing, integration, live proof, recording route and deck appendix slide.</p></div>`
+        : `<div class="info-card"><strong>Canonical bounty hub</strong><p>This is the single public submission page for all five DoraHacks bounties. SocialOS stays one product, while each bounty section exposes its own framing, integration, live proof, recording route, and deck appendix reference.</p></div>`
     )}
     ${publicNotice}
     ${renderPanel(
@@ -4789,8 +4790,8 @@ function renderDeckDocument(requestUrl) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SocialOS VC Deck</title>
-    <meta name="description" content="VC-facing SocialOS deck: a local-first relationship and identity operating system." />
+    <title>SocialOS · pitch deck, March 2026</title>
+    <meta name="description" content="SocialOS, a local-first relationship and identity operating system: the pitch deck from the UK AI Agent Hack EP4, March 2026." />
     <style>${revealCss}</style>
     <style>
       :root {
@@ -4824,12 +4825,18 @@ function renderDeckDocument(requestUrl) {
       body.deck-mode {
         overflow-x: hidden;
       }
-      .deck-ribbon {
+      .deck-topbar {
         position: fixed;
         top: 22px;
         right: 24px;
         z-index: 20;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .deck-ribbon {
         display: inline-flex;
+        flex-wrap: wrap;
         gap: 10px;
         align-items: center;
         padding: 10px 16px;
@@ -4843,11 +4850,19 @@ function renderDeckDocument(requestUrl) {
       .deck-ribbon strong {
         color: var(--deck-ink);
       }
+      .deck-ribbon-link {
+        color: var(--deck-accent);
+        text-decoration: none;
+      }
+      .deck-ribbon-link:hover {
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+      .deck-ribbon-mobile {
+        display: none;
+      }
       .deck-video-dock {
-        position: fixed;
-        top: 22px;
-        left: 24px;
-        z-index: 20;
+        position: relative;
         display: grid;
         gap: 10px;
         justify-items: start;
@@ -4885,6 +4900,9 @@ function renderDeckDocument(requestUrl) {
         text-transform: uppercase;
       }
       .deck-video-dock-panel {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
         width: min(360px, calc(100vw - 48px));
         display: grid;
         gap: 14px;
@@ -6052,9 +6070,11 @@ function renderDeckDocument(requestUrl) {
           height: 100%;
           min-height: 0;
         }
-        .deck-ribbon {
+        .deck-topbar {
           top: 14px;
           right: 16px;
+        }
+        .deck-ribbon {
           padding: 9px 14px;
         }
       }
@@ -6465,9 +6485,29 @@ function renderDeckDocument(requestUrl) {
         }
         .reveal .controls,
         .reveal .progress,
-        .deck-ribbon,
         .deck-video-dock {
           display: none;
+        }
+        .deck-topbar {
+          position: absolute;
+          top: 18px;
+          left: 20px;
+          right: 20px;
+        }
+        .deck-ribbon {
+          border-radius: 22px;
+          gap: 4px 10px;
+        }
+        .deck-ribbon,
+        .deck-ribbon span,
+        .deck-ribbon a {
+          font-size: 14px;
+        }
+        .deck-ribbon-mobile {
+          display: inline;
+        }
+        .reveal .slides > section:first-child .deck-slide-shell {
+          padding-top: 132px;
         }
         .deck-mobile-pager {
           position: fixed;
@@ -6513,7 +6553,7 @@ function renderDeckDocument(requestUrl) {
         body {
           background: #fff;
         }
-        .deck-ribbon,
+        .deck-topbar,
         .deck-rehearsal-panel,
         .reveal .controls,
         .reveal .progress {
@@ -6526,11 +6566,19 @@ function renderDeckDocument(requestUrl) {
     </style>
   </head>
   <body class="deck-mode">
-    ${renderDeckVideoDock()}
-    <div class="deck-ribbon">
-      <strong>SocialOS VC Deck</strong>
-      <span class="deck-status-pill">${escapeHtml(deckStatusLabel)}</span>
-      <span>${escapeHtml(readOptionalString(deckStatus.generatedAt, 'generated status unavailable'))}</span>
+    <div class="deck-topbar">
+      ${renderDeckVideoDock()}
+      <div class="deck-ribbon">
+        <strong>SocialOS</strong>
+        ${
+          rehearsalMode
+            ? `<span class="deck-status-pill">${escapeHtml(deckStatusLabel)}</span>
+        <span>${escapeHtml(readOptionalString(deckStatus.generatedAt, 'generated status unavailable'))}</span>`
+            : `<span>Pitch deck · UK AI Agent Hack EP4 · March 2026</span>
+        <a class="deck-ribbon-link deck-ribbon-mobile" href="/hackathon/">Videos and proof</a>
+        <a class="deck-ribbon-link" href="${escapeHtml(PUBLIC_OWNER_URL)}">Xiaoxiao Zhouyi</a>`
+        }
+      </div>
     </div>
     <div class="reveal">
       <div class="slides">
@@ -9245,9 +9293,13 @@ function renderLayout({ currentPath, title, body, publicMode = false }) {
         color: var(--ink-soft);
         font-size: 13px;
       }
+      footer a {
+        color: inherit;
+        text-underline-offset: 3px;
+      }
       @media (max-width: 1360px) {
         .shell {
-          grid-template-columns: 1fr;
+          grid-template-columns: minmax(0, 1fr);
         }
         nav {
           min-height: auto;
@@ -9295,7 +9347,7 @@ function renderLayout({ currentPath, title, body, publicMode = false }) {
       }
       @media (max-width: 1080px) {
         .shell {
-          grid-template-columns: 1fr;
+          grid-template-columns: minmax(0, 1fr);
         }
         nav {
           min-height: auto;
@@ -9379,20 +9431,24 @@ function renderLayout({ currentPath, title, body, publicMode = false }) {
   <body>
     <div class="shell">
       <nav>
-        <p class="brand">${publicMode ? 'Judge-ready public proof surface' : 'Local-first social operating system'}</p>
+        <p class="brand">${publicMode ? 'UK AI Agent Hack EP4 · March 2026' : 'Local-first social operating system'}</p>
         <h2 class="brand-title">SocialOS</h2>
         <div class="nav-links">
           ${renderNavigation(currentPath, { publicMode })}
         </div>
         <div class="nav-footer">
-          <p>${publicMode ? 'Read-only proof pages for judges and reviewers.' : 'Local-first by default, calm by design.'}</p>
-          <p>${publicMode ? 'The full interactive demo remains localhost-only.' : 'Memory, follow-up, and content stay in one loop.'}</p>
+          <p>${publicMode ? 'A read-only snapshot of a hackathon entry, kept as submitted.' : 'Local-first by default, calm by design.'}</p>
+          <p>${publicMode ? 'The working app runs only on your own machine.' : 'Memory, follow-up, and content stay in one loop.'}</p>
         </div>
       </nav>
       <main>
         <div class="flash" data-flash hidden></div>
         ${body}
-        <footer>Relationship memory, follow-up, content, and reflection — in one local-first workspace.</footer>
+        <footer>${
+          publicMode
+            ? `SocialOS. ${escapeHtml(PUBLIC_EVENT_LINE)} <a href="${escapeHtml(PUBLIC_OWNER_URL)}">Xiaoxiao Zhouyi · zhouyixiaoxiao.com</a>`
+            : 'Relationship memory, follow-up, content, and reflection — in one local-first workspace.'
+        }</footer>
       </main>
     </div>
     ${publicMode ? '' : renderClientScript()}

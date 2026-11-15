@@ -30,9 +30,9 @@ Local:
 
 Public:
 
-- `https://zhouyixiaoxiao.org/`
-- `https://zhouyixiaoxiao.org/hackathon/`
-- `https://zhouyixiaoxiao.org/data/proofs/all.json`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/all.json`
 
 ## 3. Video Pack Strategy
 Submit `5 independent videos`, one per bounty. Each video should be `5-8 minutes` and stand on its own.
@@ -56,36 +56,36 @@ Use:
 ### Claw for Human
 - Local start: `http://127.0.0.1:4173/demo`
 - What to show: `Workspace -> Contacts -> Drafts -> Queue -> Self Mirror`, then OpenClaw trace
-- Public close: `https://zhouyixiaoxiao.org/hackathon/#bounty-claw-for-human`
-- Proof JSON: `https://zhouyixiaoxiao.org/data/proofs/claw-for-human.json`
+- Public close: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-claw-for-human`
+- Proof JSON: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/claw-for-human.json`
 - Deck appendix: `Slide 9`
 
 ### Animoca Bounty
 - Local start: `http://127.0.0.1:4173/hackathon?bounty=animoca`
 - What to show: persistent people memory, linked identities, linked events, agent lanes
-- Public close: `https://zhouyixiaoxiao.org/hackathon/#bounty-animoca`
-- Proof JSON: `https://zhouyixiaoxiao.org/data/proofs/animoca.json`
+- Public close: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-animoca`
+- Proof JSON: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/animoca.json`
 - Deck appendix: `Slide 10`
 
 ### Human for Claw
 - Local start: `http://127.0.0.1:4173/buddy`
 - What to show: four safe tasks, no risky publish lane, calm reflection
-- Public close: `https://zhouyixiaoxiao.org/hackathon/#bounty-human-for-claw`
-- Proof JSON: `https://zhouyixiaoxiao.org/data/proofs/human-for-claw.json`
+- Public close: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-human-for-claw`
+- Proof JSON: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/human-for-claw.json`
 - Deck appendix: `Slide 11`
 
 ### Z.AI General
 - Local start: `http://127.0.0.1:4173/hackathon?bounty=z-ai-general`
 - What to show: live GLM proof summary, `POST /integrations/glm/generate`, English-only review output, real draft flow
-- Public close: `https://zhouyixiaoxiao.org/hackathon/#bounty-z-ai-general`
-- Proof JSON: `https://zhouyixiaoxiao.org/data/proofs/z-ai-general.json`
+- Public close: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-z-ai-general`
+- Proof JSON: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/z-ai-general.json`
 - Deck appendix: `Slide 12`
 
 ### AI Agents for Good
 - Local start: `http://127.0.0.1:4173/hackathon?bounty=ai-agents-for-good`
 - What to show: live FLock SDG triage, urgency, suggested action, open-source-model proof, and the channel proof or outreach-lane proof
-- Public close: `https://zhouyixiaoxiao.org/hackathon/#bounty-ai-agents-for-good`
-- Proof JSON: `https://zhouyixiaoxiao.org/data/proofs/ai-agents-for-good.json`
+- Public close: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-ai-agents-for-good`
+- Proof JSON: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/ai-agents-for-good.json`
 - Deck appendix: `Slide 13`
 
 ## 5. DoraHacks Paste-Ready Repo Description
@@ -114,8 +114,8 @@ For each bounty, attach:
 
 - one bounty-specific `5-8 minute` video
 - the public GitHub repo
-- the deck root: `https://zhouyixiaoxiao.org/`
-- the canonical public bounty hub: `https://zhouyixiaoxiao.org/hackathon/`
+- the deck root: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/`
+- the canonical public bounty hub: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/`
 - the matching proof JSON
 
 ## 8. Final GitHub / Pages Steps
@@ -126,4 +126,4 @@ For each bounty, attach:
 5. Commit the repo changes
 6. Push to `main`
 7. Wait for `.github/workflows/deploy-deck.yml`
-8. Re-open `https://zhouyixiaoxiao.org/` and `https://zhouyixiaoxiao.org/hackathon/`
+8. Re-open `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/` and `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/`

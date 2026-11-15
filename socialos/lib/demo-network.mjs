@@ -271,7 +271,7 @@ export const DEMO_NETWORK_EVENTS = Object.freeze([
       audience: 'builders and community organisers',
       language: 'bilingual',
       tone: 'clear and warm',
-      links: ['https://zhouyixiaoxiao.org/deck'],
+      links: ['https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/deck'],
       assets: ['asset_demo_card'],
       details: {
         summary: 'Turned one London organiser conversation into a SocialOS follow-up, draft, and reflection loop.',

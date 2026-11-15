@@ -49,7 +49,7 @@ async function main() {
     const deck = await fetch(`${web.baseUrl}/deck`, { redirect: 'manual' });
     const deckHtml = await deck.text();
     assert(deck.status === 200, `/deck should render the VC deck (got ${deck.status})`);
-    assert(deckHtml.includes('SocialOS VC Deck'), '/deck should render the deck title');
+    assert(deckHtml.includes('SocialOS · pitch deck, March 2026'), '/deck should render the deck title');
     assert(deckHtml.includes('Slide 9 · Claw for Human'), '/deck should include the bounty appendix slides');
     assert(deckHtml.includes('Reuse SocialOS'), '/deck should expose the public reuse path');
     assert(deckHtml.includes('Run locally'), '/deck should expose the quickstart link');
@@ -97,7 +97,7 @@ async function main() {
     const hackathonPublic = await fetch(`${web.baseUrl}/hackathon?mode=public`, { redirect: 'manual' });
     const hackathonPublicHtml = await hackathonPublic.text();
     assert(hackathonPublic.status === 200, `/hackathon?mode=public should render public proof mode (got ${hackathonPublic.status})`);
-    assert(hackathonPublicHtml.includes('Canonical public bounty hub'), '/hackathon?mode=public should expose the canonical public proof notice');
+    assert(hackathonPublicHtml.includes('Bounty hub, kept as submitted'), '/hackathon?mode=public should expose the canonical public proof notice');
     assert(hackathonPublicHtml.includes('/data/proofs/'), '/hackathon?mode=public should link to static proof JSON');
     assert(hackathonPublicHtml.includes('#bounty-z-ai-general'), '/hackathon?mode=public should expose same-page bounty anchors');
     assert(hackathonPublicHtml.includes('Run SocialOS Yourself'), '/hackathon?mode=public should expose the local reuse panel');

@@ -98,10 +98,10 @@ This document is the curated source of truth for the public VC deck served from 
 - Keep the deck self-contained and repo-native.
 
 ## Public Proof Links
-- Public deck root: `https://zhouyixiaoxiao.org/`
-- Public demo proof: `https://zhouyixiaoxiao.org/demo/`
-- Public hackathon hub: `https://zhouyixiaoxiao.org/hackathon/`
-- Public buddy proof: `https://zhouyixiaoxiao.org/buddy/`
+- Public deck root: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/`
+- Public demo proof: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/demo/`
+- Public hackathon hub: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/`
+- Public buddy proof: `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/buddy/`
 
 ## Out Of Scope
 - Do not turn the deck into a general product dashboard.

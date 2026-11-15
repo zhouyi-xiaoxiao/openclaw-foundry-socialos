@@ -19,9 +19,9 @@ Excluded on purpose:
 ## Canonical Surfaces
 Public:
 
-- [Deck Root](https://zhouyixiaoxiao.org/)
-- [Canonical Bounty Hub](https://zhouyixiaoxiao.org/hackathon/)
-- [All Proof JSON](https://zhouyixiaoxiao.org/data/proofs/all.json)
+- [Deck Root](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/)
+- [Canonical Bounty Hub](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/)
+- [All Proof JSON](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/all.json)
 
 Local recording:
 
@@ -41,11 +41,11 @@ Shared proof APIs:
 ## Submission Matrix
 | Bounty | Sponsor | Local Route | Public Anchor | Proof JSON | Deck Appendix |
 | --- | --- | --- | --- | --- | --- |
-| `Claw for Human` | `Imperial Blockchain` | `/demo` | [`#bounty-claw-for-human`](https://zhouyixiaoxiao.org/hackathon/#bounty-claw-for-human) | [`claw-for-human.json`](https://zhouyixiaoxiao.org/data/proofs/claw-for-human.json) | `Slide 9` |
-| `Animoca Bounty` | `Animoca Brands` | `/hackathon?bounty=animoca` | [`#bounty-animoca`](https://zhouyixiaoxiao.org/hackathon/#bounty-animoca) | [`animoca.json`](https://zhouyixiaoxiao.org/data/proofs/animoca.json) | `Slide 10` |
-| `Human for Claw` | `Imperial Blockchain` | `/buddy` | [`#bounty-human-for-claw`](https://zhouyixiaoxiao.org/hackathon/#bounty-human-for-claw) | [`human-for-claw.json`](https://zhouyixiaoxiao.org/data/proofs/human-for-claw.json) | `Slide 11` |
-| `Z.AI General` | `Z.AI` | `/hackathon?bounty=z-ai-general` | [`#bounty-z-ai-general`](https://zhouyixiaoxiao.org/hackathon/#bounty-z-ai-general) | [`z-ai-general.json`](https://zhouyixiaoxiao.org/data/proofs/z-ai-general.json) | `Slide 12` |
-| `AI Agents for Good` | `FLock.io` | `/hackathon?bounty=ai-agents-for-good` | [`#bounty-ai-agents-for-good`](https://zhouyixiaoxiao.org/hackathon/#bounty-ai-agents-for-good) | [`ai-agents-for-good.json`](https://zhouyixiaoxiao.org/data/proofs/ai-agents-for-good.json) | `Slide 13` |
+| `Claw for Human` | `Imperial Blockchain` | `/demo` | [`#bounty-claw-for-human`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-claw-for-human) | [`claw-for-human.json`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/claw-for-human.json) | `Slide 9` |
+| `Animoca Bounty` | `Animoca Brands` | `/hackathon?bounty=animoca` | [`#bounty-animoca`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-animoca) | [`animoca.json`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/animoca.json) | `Slide 10` |
+| `Human for Claw` | `Imperial Blockchain` | `/buddy` | [`#bounty-human-for-claw`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-human-for-claw) | [`human-for-claw.json`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/human-for-claw.json) | `Slide 11` |
+| `Z.AI General` | `Z.AI` | `/hackathon?bounty=z-ai-general` | [`#bounty-z-ai-general`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-z-ai-general) | [`z-ai-general.json`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/z-ai-general.json) | `Slide 12` |
+| `AI Agents for Good` | `FLock.io` | `/hackathon?bounty=ai-agents-for-good` | [`#bounty-ai-agents-for-good`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-ai-agents-for-good) | [`ai-agents-for-good.json`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/ai-agents-for-good.json) | `Slide 13` |
 
 ## Claw for Human
 ### Short Summary

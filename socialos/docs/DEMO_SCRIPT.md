@@ -123,7 +123,7 @@ Talk track:
 - Open `http://127.0.0.1:4173/buddy` for the `Human for Claw` Friendship & Gratitude Coach flow
 - Use `POST /integrations/glm/generate` to capture GLM proof for `Z.AI General`
 - Use `POST /integrations/flock/sdg-triage` to capture SDG proof for `AI Agents for Good`
-- Open `https://zhouyixiaoxiao.org/`, `/demo/`, `/hackathon/`, and `/buddy/` only for the public proof segment, not for the interactive demo loop
+- Open `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/`, `/demo/`, `/hackathon/`, and `/buddy/` only for the public proof segment, not for the interactive demo loop
 
 ## 6. Safety line to say out loud
 - API stays loopback-only.

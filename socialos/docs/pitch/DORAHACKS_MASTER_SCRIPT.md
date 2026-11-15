@@ -67,8 +67,8 @@ Say:
 
 Open:
 
-- `https://zhouyixiaoxiao.org/`
-- `https://zhouyixiaoxiao.org/hackathon/`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/`
+- `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/`
 - the matching bounty proof JSON
 
 ## 7:10-7:40 Close

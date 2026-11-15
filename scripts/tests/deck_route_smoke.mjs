@@ -12,14 +12,14 @@ async function main() {
     const html = await response.text();
 
     assert(response.status === 200, `/deck should return 200 (got ${response.status})`);
-    assert(html.includes('SocialOS VC Deck'), '/deck should include the deck title');
+    assert(html.includes('SocialOS · pitch deck, March 2026'), '/deck should include the deck title');
     assert(html.includes('class="reveal"'), '/deck should render the Reveal shell');
     assert(html.includes('People, context, content, and self-understanding drift apart.'), '/deck should include the problem slide');
     assert(html.includes('A local-first relationship and identity operating system.'), '/deck should include the product definition slide');
     assert(html.includes('Minghan Xiao'), '/deck should include the real seeded contact network');
     assert(html.includes('Contacts with real named network'), '/deck should include the contacts proof screenshot');
     assert(html.includes('Design partners and intros for the next unlock.'), '/deck should include the closing ask slide');
-    assert(html.includes('https://zhouyixiaoxiao.org/'), '/deck should expose the public deck domain');
+    assert(html.includes('https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/'), '/deck should expose the public deck URL');
     assert(
       html.includes('.reveal-viewport') &&
         html.includes('.reveal .slides > section') &&

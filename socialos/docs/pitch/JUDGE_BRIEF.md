@@ -20,7 +20,7 @@ It connects all three loops:
 - multilingual or platform-native draft generation
 - trust-first queue handoff
 - `Self Mirror` grounded in evidence
-- public verification on `https://zhouyixiaoxiao.org/hackathon/`
+- public verification on `https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/`
 
 ## Why Local-First Matters
 The most valuable data in this product is private and relational:
