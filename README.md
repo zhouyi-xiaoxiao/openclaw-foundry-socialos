@@ -1,34 +1,23 @@
 # SocialOS
 
-[![CI](https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos/actions/workflows/ci.yml/badge.svg)](https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos/actions/workflows/ci.yml)
-[![Demo Docs](https://img.shields.io/badge/docs-demo-blue)](socialos/docs/DEMO_SCRIPT.md)
-[![Architecture](https://img.shields.io/badge/docs-architecture-blue)](socialos/docs/ARCHITECTURE.md)
-[![Evidence](https://img.shields.io/badge/docs-evidence-blue)](socialos/docs/EVIDENCE.md)
-[![Pitch Pack](https://img.shields.io/badge/docs-pitch-blue)](socialos/docs/pitch/PITCH_5_MIN.md)
-[![VC Deck](https://img.shields.io/badge/deck-vc_pitch-blue)](socialos/docs/pitch/VC_DECK_SPEC.md)
+SocialOS turns raw notes, voice memos, screenshots and encounters into structured memory about people and events, reflections grounded in that memory, and drafts for each platform. Nothing is published until a person approves it in the queue. It runs on your own machine (a local web app, a local API and a SQLite database) and works without any API keys; model providers are optional.
 
-SocialOS is a local-first relationship and identity operating system. It turns messy real-world input into structured people memory, event context, platform-native drafts, trust-first queue handoff, and evidence-backed reflection.
+It was built in five days for the UK AI Agent Hack EP4, which opened on 1 March 2026 at Imperial College London, and entered in five DoraHacks bounty tracks. The whole build is in the history: 1,222 commits between 5 and 9 March 2026, 1,084 of them tagged `[autodev]` — commits made by the automated coding agents set up for that week. Development stopped on 9 March 2026; later commits only add a licence and repair the public links. Read it as a working hackathon prototype, not a maintained product.
 
-This repo now supports two equally important entry paths:
-
-- `quick demo reproduction` for judges, reviewers, and curious GitHub visitors
-- `reusable local workspace` for builders who want to adapt SocialOS on their own machine
-
-The hosted site at [zhouyixiaoxiao.org](https://zhouyixiaoxiao.org/) is the public proof surface. The real interactive product remains loopback-only and local-first.
+By Xiaoxiao Zhouyi · [zhouyixiaoxiao.com](https://zhouyixiaoxiao.com/)
 
 ## Start Here
 
 ### Watch / verify
 
-If you want the fastest public overview first:
+The public site keeps the entry as it was submitted:
 
-- [Pitch site / deck](https://zhouyixiaoxiao.org/)
-- [Canonical bounty hub](https://zhouyixiaoxiao.org/hackathon/)
-- [Claw for Human video](https://zhouyixiaoxiao.org/videos/claw-for-human/)
-- [Human for Claw video](https://zhouyixiaoxiao.org/videos/human-for-claw/)
-- [Z.AI General video](https://zhouyixiaoxiao.org/videos/z-ai-general/)
-- [AI Agents for Good video](https://zhouyixiaoxiao.org/videos/ai-agents-for-good/)
-- [Animoca video](https://zhouyixiaoxiao.org/videos/animoca/)
+- [Pitch deck](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/)
+- [Bounty hub](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/): one section per track, with its integration and proof JSON
+- Demo videos, one per track: [Claw for Human](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/claw-for-human/) · [Human for Claw](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/human-for-claw/) · [Z.AI General](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/z-ai-general/) · [AI Agents for Good](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/ai-agents-for-good/) · [Animoca](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/animoca/)
+- [Architecture](socialos/docs/ARCHITECTURE.md), [evidence](socialos/docs/EVIDENCE.md) and the [five-minute pitch](socialos/docs/pitch/PITCH_5_MIN.md)
+
+The site is read-only. The interactive product is not hosted anywhere; it runs locally, as below.
 
 ### Clone / run / reuse
 
@@ -249,11 +238,11 @@ SocialOS submits one product story to five tracks:
 
 | Bounty | Public Hub Anchor | Local Demo Route | Integration Endpoint | Proof JSON | Deck Appendix |
 | --- | --- | --- | --- | --- | --- |
-| `Claw for Human` | [`/hackathon/#bounty-claw-for-human`](https://zhouyixiaoxiao.org/hackathon/#bounty-claw-for-human) | `/demo` | OpenClaw runtime + `/proofs?bounty=claw-for-human` | [`claw-for-human.json`](https://zhouyixiaoxiao.org/data/proofs/claw-for-human.json) | `Slide 9` |
-| `Animoca Bounty` | [`/hackathon/#bounty-animoca`](https://zhouyixiaoxiao.org/hackathon/#bounty-animoca) | `/hackathon?bounty=animoca` | Identity, memory, and agent-lane trace | [`animoca.json`](https://zhouyixiaoxiao.org/data/proofs/animoca.json) | `Slide 10` |
-| `Human for Claw` | [`/hackathon/#bounty-human-for-claw`](https://zhouyixiaoxiao.org/hackathon/#bounty-human-for-claw) | `/buddy` | Buddy-safe surface + `/proofs?bounty=human-for-claw` | [`human-for-claw.json`](https://zhouyixiaoxiao.org/data/proofs/human-for-claw.json) | `Slide 11` |
-| `Z.AI General` | [`/hackathon/#bounty-z-ai-general`](https://zhouyixiaoxiao.org/hackathon/#bounty-z-ai-general) | `/hackathon?bounty=z-ai-general` | `POST /integrations/glm/generate` | [`z-ai-general.json`](https://zhouyixiaoxiao.org/data/proofs/z-ai-general.json) | `Slide 12` |
-| `AI Agents for Good` | [`/hackathon/#bounty-ai-agents-for-good`](https://zhouyixiaoxiao.org/hackathon/#bounty-ai-agents-for-good) | `/hackathon?bounty=ai-agents-for-good` | `POST /integrations/flock/sdg-triage` + `POST /integrations/telegram/send` | [`ai-agents-for-good.json`](https://zhouyixiaoxiao.org/data/proofs/ai-agents-for-good.json) | `Slide 13` |
+| `Claw for Human` | [`/hackathon/#bounty-claw-for-human`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-claw-for-human) | `/demo` | OpenClaw runtime + `/proofs?bounty=claw-for-human` | [`claw-for-human.json`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/claw-for-human.json) | `Slide 9` |
+| `Animoca Bounty` | [`/hackathon/#bounty-animoca`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-animoca) | `/hackathon?bounty=animoca` | Identity, memory, and agent-lane trace | [`animoca.json`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/animoca.json) | `Slide 10` |
+| `Human for Claw` | [`/hackathon/#bounty-human-for-claw`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-human-for-claw) | `/buddy` | Buddy-safe surface + `/proofs?bounty=human-for-claw` | [`human-for-claw.json`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/human-for-claw.json) | `Slide 11` |
+| `Z.AI General` | [`/hackathon/#bounty-z-ai-general`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-z-ai-general) | `/hackathon?bounty=z-ai-general` | `POST /integrations/glm/generate` | [`z-ai-general.json`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/z-ai-general.json) | `Slide 12` |
+| `AI Agents for Good` | [`/hackathon/#bounty-ai-agents-for-good`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/#bounty-ai-agents-for-good) | `/hackathon?bounty=ai-agents-for-good` | `POST /integrations/flock/sdg-triage` + `POST /integrations/telegram/send` | [`ai-agents-for-good.json`](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/ai-agents-for-good.json) | `Slide 13` |
 
 High-level fit:
 
@@ -270,17 +259,17 @@ Full submission source text lives in [socialos/docs/HACKATHON_BOUNTIES.md](socia
 Public proof and verification links:
 
 - [Repo homepage](https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos)
-- [Deck root](https://zhouyixiaoxiao.org/)
+- [Deck root](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/)
 - Local deck route: `/deck`
-- [Canonical Bounty Hub](https://zhouyixiaoxiao.org/hackathon/)
-- [Auxiliary demo proof](https://zhouyixiaoxiao.org/demo/)
-- [Auxiliary buddy proof](https://zhouyixiaoxiao.org/buddy/)
-- [All proof JSON](https://zhouyixiaoxiao.org/data/proofs/all.json)
-- [Claw for Human video](https://zhouyixiaoxiao.org/videos/claw-for-human/)
-- [Human for Claw video](https://zhouyixiaoxiao.org/videos/human-for-claw/)
-- [Z.AI General video](https://zhouyixiaoxiao.org/videos/z-ai-general/)
-- [AI Agents for Good video](https://zhouyixiaoxiao.org/videos/ai-agents-for-good/)
-- [Animoca video](https://zhouyixiaoxiao.org/videos/animoca/)
+- [Canonical Bounty Hub](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/)
+- [Auxiliary demo proof](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/demo/)
+- [Auxiliary buddy proof](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/buddy/)
+- [All proof JSON](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/data/proofs/all.json)
+- [Claw for Human video](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/claw-for-human/)
+- [Human for Claw video](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/human-for-claw/)
+- [Z.AI General video](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/z-ai-general/)
+- [AI Agents for Good video](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/ai-agents-for-good/)
+- [Animoca video](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/animoca/)
 - [Reuse guide](https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos/blob/main/socialos/docs/REUSE_SOCIALOS.md)
 - [API setup guide](https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos/blob/main/socialos/docs/API_SETUP.md)
 - [Embeddings guide](https://github.com/zhouyi-xiaoxiao/openclaw-foundry-socialos/blob/main/socialos/docs/EMBEDDINGS.md)
