@@ -6071,11 +6071,15 @@ function renderDeckDocument(requestUrl) {
           min-height: 0;
         }
         .deck-topbar {
-          top: 14px;
+          top: 12px;
           right: 16px;
         }
         .deck-ribbon {
           padding: 9px 14px;
+        }
+        .deck-video-dock-toggle {
+          padding: 7px 12px;
+          font-size: 13px;
         }
       }
       @media (min-width: 921px) and (max-height: 980px) {
