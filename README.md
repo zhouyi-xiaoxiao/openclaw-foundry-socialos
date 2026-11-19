@@ -2,7 +2,7 @@
 
 SocialOS turns raw notes, voice memos, screenshots and encounters into structured memory about people and events, reflections grounded in that memory, and drafts for each platform. Nothing is published until a person approves it in the queue. It runs on your own machine (a local web app, a local API and a SQLite database) and works without any API keys; model providers are optional.
 
-It was built in five days for the UK AI Agent Hack EP4, which opened on 1 March 2026 at Imperial College London, and entered in five DoraHacks bounty tracks. The whole build is in the history: 1,222 commits between 5 and 9 March 2026, 1,084 of them tagged `[autodev]` — commits made by the automated coding agents set up for that week. Development stopped on 9 March 2026; later commits only add a licence and repair the public links. Read it as a working hackathon prototype, not a maintained product.
+It was built in five days for the UK AI Agent Hack EP4, which opened on 1 March 2026 at Imperial College London, and entered in five DoraHacks bounty tracks. The whole build is in the history: 1,222 commits between 5 and 9 March 2026, 1,084 of them tagged `[autodev]` — commits made by the automated coding agents set up for that week. Development stopped on 9 March 2026; later commits only add a licence and repair the public site's links, wording and phone layout. Read it as a working hackathon prototype, not a maintained product.
 
 By Xiaoxiao Zhouyi · [zhouyixiaoxiao.com](https://zhouyixiaoxiao.com/)
 
@@ -10,7 +10,7 @@ By Xiaoxiao Zhouyi · [zhouyixiaoxiao.com](https://zhouyixiaoxiao.com/)
 
 ### Watch / verify
 
-The public site keeps the entry as it was submitted:
+The public site keeps the entry's content unchanged, with its links repaired:
 
 - [Pitch deck](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/)
 - [Bounty hub](https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/hackathon/): one section per track, with its integration and proof JSON

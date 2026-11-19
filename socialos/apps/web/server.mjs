@@ -3640,7 +3640,7 @@ async function renderHackathonPage(page, requestUrl) {
   const publicNotice = publicMode
     ? renderPublicProofNotice(
         'Bounty hub, kept as submitted',
-        'SocialOS was entered in five DoraHacks bounty tracks at the UK AI Agent Hack EP4 in March 2026. This page was the public entry for all five and is kept as it was submitted. /demo/ and /buddy/ are supporting pages; the interactive product runs only on a local machine, as shown in the videos.'
+        'SocialOS was entered in five DoraHacks bounty tracks at the UK AI Agent Hack EP4 in March 2026. This page was the public entry for all five and is kept with its content unchanged and its links repaired. /demo/ and /buddy/ are supporting pages; the interactive product runs only on a local machine, as shown in the videos.'
       )
     : '';
   const integrationMatrixHtml = integrations.length
@@ -4724,8 +4724,8 @@ function renderDeckDocument(requestUrl) {
         <p class="deck-lead">The multi-agent layer matters because capture, people memory, reflection, validation, and publishing are different jobs. The user still experiences one calm product surface.</p>
         <div class="deck-proof-grid">
           ${renderDeckMetric('Public repo', 'live')}
-          ${renderDeckMetric('Validation', latestValidation)}
-          ${renderDeckMetric('Repo head', repoHead)}
+          ${renderDeckMetric('Automated checks last passed', latestValidation)}
+          ${renderDeckMetric('Repository head at that check', repoHead)}
           ${renderDeckMetric('Product posture', 'local-first · safe rehearsal')}
         </div>
       `,
