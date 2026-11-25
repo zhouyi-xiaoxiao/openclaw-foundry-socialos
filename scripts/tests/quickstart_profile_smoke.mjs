@@ -96,25 +96,17 @@ function main() {
   const readme = readText(path.join(REPO_ROOT, 'README.md'));
   for (const heading of [
     '## Project Overview',
-    '## Quickstart',
-    '## Setup & Installation',
+    '## See it',
+    '## Run it locally',
     '## Architecture Overview',
-    '## Start Your Own Local Workspace',
     '## Bounty-Specific Integration',
-    '## Public Links',
   ]) {
     assert(readme.includes(heading), `README should include ${heading}`);
   }
-  assert(readme.includes('### Watch / verify'), 'README should expose the judge path near the top');
-  assert(readme.includes('### Clone / run / reuse'), 'README should expose the builder path near the top');
-  assert(readme.includes('bash scripts/provider_doctor.sh'), 'README should expose the provider doctor command');
-  assert(readme.includes('socialos/docs/API_SETUP.md'), 'README should link to the API setup guide');
+  assert(readme.includes('socialos/docs/evidence/socialos-demo-step01.png'), 'README should show the Workspace screenshot');
   assert(readme.includes('https://zhouyi-xiaoxiao.github.io/openclaw-foundry-socialos/videos/claw-for-human/'), 'README should expose stable public video links');
   assert(readme.includes('bash scripts/quickstart.sh --profile local'), 'README should expose the blank local workspace command');
-  assert(
-    readme.includes('The public site is read-only and proof-first. The interactive product remains local-first by design.'),
-    'README should explain the public vs local boundary'
-  );
+  assert(readme.includes('Hackathon materials: [socialos/docs/pitch/]'), 'README should point to the pitch materials');
 
   console.log('quickstart_profile_smoke: PASS');
 }

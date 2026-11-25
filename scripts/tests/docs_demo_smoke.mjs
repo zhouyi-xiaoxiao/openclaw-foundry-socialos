@@ -13,41 +13,22 @@ function assert(condition, message) {
 
 const readme = read('README.md');
 assert(readme.includes('## Project Overview'), 'README must include a Project Overview section');
-assert(readme.includes('## Setup & Installation'), 'README must include a Setup & Installation section');
+assert(readme.includes('## See it'), 'README must include a public verification section');
+assert(readme.includes('## Run it locally'), 'README must include a single local run section');
+assert(readme.includes('socialos/docs/evidence/socialos-demo-step01.png'), 'README must show the Workspace screenshot');
 assert(readme.includes('## Architecture Overview'), 'README must include an Architecture Overview section');
 assert(readme.includes('## Bounty-Specific Integration'), 'README must include a Bounty-Specific Integration section');
-assert(readme.includes('bash scripts/demo.sh'), 'README must expose one-command demo bootstrap command');
-assert(readme.includes('bash scripts/demo_status.sh'), 'README must expose demo status command');
-assert(readme.includes('bash scripts/stop_demo.sh'), 'README must expose demo stop command');
 assert(/loopback-only/i.test(readme), 'README must mention loopback-only posture');
 assert(readme.includes('dry-run'), 'README must mention dry-run safety default');
 assert(
   readme.includes('gateway.bind') && readme.includes('gateway.tailscale') && readme.includes('gateway.auth'),
   'README must keep gateway exposure constraints explicit'
 );
-assert(readme.includes('AGENTS.md'), 'README should link to repo-level AGENTS.md');
-assert(readme.includes('socialos/docs/SYSTEM_MANIFEST.json'), 'README should link to the system manifest');
-assert(readme.includes('socialos/docs/EVIDENCE.md'), 'README should link to curated evidence');
-assert(readme.includes('socialos/docs/DOCS_INDEX.md'), 'README should link to the docs index');
-assert(readme.includes('socialos/docs/pitch/PITCH_5_MIN.md'), 'README should link to the 5-minute pitch');
-assert(readme.includes('socialos/docs/pitch/VC_DECK_SPEC.md'), 'README should link to the VC deck spec');
-assert(readme.includes('socialos/docs/pitch/DECK_MAINTENANCE.md'), 'README should link to the deck maintenance doc');
-assert(readme.includes('/deck'), 'README should mention the deck route');
 assert(readme.includes('/demo') && readme.includes('/hackathon') && readme.includes('/buddy'), 'README should mention the hackathon routes');
-assert(readme.includes('node scripts/export_vc_deck.mjs'), 'README should expose the deck export command');
-assert(readme.includes('bash scripts/hackathon_preflight.sh'), 'README should expose the hackathon preflight command');
-assert(readme.includes('node scripts/capture_hackathon_proofs.mjs'), 'README should expose the hackathon proof capture command');
-assert(readme.includes('socialos/docs/STATUS.md'), 'README should link to generated public status');
-assert(readme.includes('node scripts/refresh_public_docs.mjs'), 'README should expose the public docs refresh command');
 assert(readme.includes('socialos/docs/HACKATHON_BOUNTIES.md'), 'README should link to the hackathon bounty guide');
-assert(readme.includes('socialos/docs/pitch/DORAHACKS_MASTER_SCRIPT.md'), 'README should link to the DoraHacks master script');
-assert(readme.includes('socialos/docs/pitch/RECORDING_AND_SUBMISSION_RUNBOOK.md'), 'README should link to the recording runbook');
-assert(readme.includes('socialos/docs/API_SETUP.md'), 'README should link to the API setup guide');
-assert(readme.includes('socialos/docs/REUSE_SOCIALOS.md'), 'README should link to the reuse guide');
-assert(readme.includes('socialos/docs/EMBEDDINGS.md'), 'README should link to the embeddings guide');
-assert(readme.includes('bash scripts/provider_doctor.sh'), 'README should expose the provider doctor command');
-assert(readme.includes('5 independent `5-8 minute` videos'), 'README should explain the five independent DoraHacks videos');
-assert(readme.includes('Canonical Bounty Hub'), 'README should position /hackathon as the canonical public bounty hub');
+assert(readme.includes('Hackathon materials: [socialos/docs/pitch/]'), 'README should point to the pitch materials');
+assert(!readme.includes('## Demo Flow'), 'README should not include an archived recording instruction section');
+assert(!readme.includes('cp .env.example .env'), 'README should not describe a conflicting environment setup');
 
 const demoDoc = read('socialos/docs/DEMO_SCRIPT.md');
 for (const cmd of ['bash scripts/demo.sh', 'bash scripts/demo_status.sh', 'bash scripts/test.sh', 'bash scripts/stop_demo.sh']) {

@@ -68,7 +68,14 @@ Authoritative task logic:
   - auth profiles
   - local logs/pids
 
-## 5a. Find the right docs fast
+## 5a. Archived hackathon capture
+The recording and proof-capture commands remain available for historical reproduction:
+```bash
+bash scripts/hackathon_preflight.sh
+node scripts/capture_hackathon_proofs.mjs
+```
+
+## 5b. Find the right docs fast
 - Product demo story: `socialos/docs/pitch/`
 - Public VC deck route: `/deck`
 - Deck source of truth: `socialos/docs/pitch/VC_DECK_SPEC.md`
