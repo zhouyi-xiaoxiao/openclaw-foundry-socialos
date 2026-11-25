@@ -1,5 +1,7 @@
 # SocialOS Foundry Queue
 
+Archived: hackathon backlog as of 9 March 2026.
+
 Legend:
 - `[ ]` pending
 - `[-]` in progress

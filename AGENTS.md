@@ -1,16 +1,15 @@
 # SocialOS Agent Handoff
 
-This repository is a public, local-first SocialOS build. Treat it as a product repo first, and a runtime/automation repo second.
+Archived hackathon prototype (UK AI Agent Hack EP4, 5–9 March 2026). Not maintained. Treat it as a product repo first, and a runtime/automation repo second.
 
 ## What SocialOS Is
 - SocialOS is a relationship + identity operating system for capturing people, interactions, events, self signals, and turning them into follow-up actions plus platform-native draft packages.
-- The current public build is a stable `P1`:
+- The prototype includes:
   - one unified `Workspace` home surface
   - local API + local web UI
   - SQLite-backed product memory
   - OpenClaw product runtime
   - Studio control plane for tasks, runs, agents, and policies
-- The public repo is intentionally generic. Specific bounty mappings can be layered on top later without changing the product loop.
 
 ## Safe Defaults
 - Local-first only

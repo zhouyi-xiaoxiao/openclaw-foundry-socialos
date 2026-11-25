@@ -20,3 +20,4 @@ infra/db/*.db
 infra/assets/
 *.log
 *.pid
+.foundry/*.json

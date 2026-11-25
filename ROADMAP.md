@@ -1,5 +1,7 @@
 # SocialOS Runtime Roadmap (Autopilot)
 
+Archived: hackathon backlog as of 9 March 2026.
+
 ## Phase P0 — End-to-end local-first MVP
 1. Runtime skeleton + agent policies + publish safety gates
 2. socialos-tools plugin contract + dry-run publish path
